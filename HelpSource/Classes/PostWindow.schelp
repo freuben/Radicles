@@ -1,0 +1,141 @@
+class:: PostWindow
+summary:: A call window
+related:: Classes/CallWindow, Classes/Window
+categories:: GUI>Views
+
+Description::
+
+An additional window that can be used as a post window in other environments.
+
+
+classmethods::
+
+method::new
+
+Create a new TextView for a post window.
+
+argument::
+A Window in which to place the TextView.
+argument::
+A Rect for the TextView
+argument::
+A Font.
+argument::
+A QPalette.
+
+method::window
+
+Create a new Window with the TextView.
+
+argument::
+A String for the name of the Window.
+argument::
+A Rect for the Window
+argument::
+A Font.
+argument::
+A QPalette.
+
+
+instancemethods::
+
+method::addToFork
+
+argument::thisObject
+Object to be posted in window.
+argument:: changeTime
+Change time of routine that writes string into post window.
+argument:: changeDev
+Change time deviation of routine that writes string into post window.
+
+Examples::
+
+code::
+
+p = PostWindow.window("My Post Window");
+
+p.addLineToFork("hello");
+10.do{p.addLine(Array.rand(10,0.1,2.0));};
+
+(
+["hello", "how", "are", "you", "isn't", "this", "a", "lot", "of", "nonsense" ].scramble.do{|item|
+p.addToFork(item);
+};
+)
+
+p.clear; //clear window
+p.addPost(Array.series(10,0,10))
+p.addLine("boom");
+
+Window.closeAll;
+
+//using extra displays
+
+Window.extraScreenBounds; //if you have another display, this posts screehBounds for other display(s) arg: offset in pixels, otherwise native screenBound width
+
+p = PostWindow.window("hello", Window.win4TopLeft(Rect(1440, -180, 1920, 1080)) );
+
+10.do{p.addLine(["la", "le", "li", "lo", "lu"].choose);};
+
+Window.closeAll;
+
+
+//using one window with serveral TextViews
+
+(
+w = Window("Window into my code", Window.screenBounds).front;
+b = Window.screenBounds;
+b.height = b.height - 40 - 10;
+~p1 = PostWindow(w, Window.win4BottomLeft(b, menuSpacer:0,winBorder:0));
+~p2 = PostWindow(w, Window.win4TopLeft(b, menuSpacer:0,winBorder:0));
+~p3 = PostWindow(w, Window.win4BottomRight(b, menuSpacer:0,winBorder:0));
+~p4 = PostWindow(w, Window.win4TopRight(b, menuSpacer:0,winBorder:0));
+)
+
+~maxChar = 2700;
+(
+~r1 = {
+	inf.do{
+		Array.rand(10,0,10).postin(\gui, \post, ~p1);
+		~p1.clearFrom(~maxChar);
+		rrand(0.2,0.1).yield;
+	};
+}.fork(AppClock);
+~r2 = {
+	inf.do{
+		["la", "le", "li", "lo", "lu"].choose.postin(\gui, \post, ~p2);
+		~p2.clearFrom(~maxChar);
+		rrand(0.5,0.1).yield;
+	};
+}.fork(AppClock);
+~r3 = {
+	inf.do{
+		["hello", "how", "are", "you", "isn't", "this", "a", "lot", "of", "nonsense" ].choose.postin(\gui, \ln, ~p3);
+		~p3.clearFrom(~maxChar);
+		rrand(1.1,1.5).yield;
+	};
+}.fork(AppClock);
+~r4 = {
+	inf.do{
+		"boom".postin(\gui, \post, ~p4);
+		~p4.clearFrom(~maxChar);
+		rrand(0.2,0.05).yield;
+	};
+}.fork(AppClock);
+w.front;
+);
+
+~r1.stop;
+~r2.stop;
+~r3.stop;
+~r4.stop;
+
+~p1.clear;
+~p2.clear;
+~p3.clear;
+~p4.clear;
+
+Window.closeAll;
+
+
+::

@@ -1,0 +1,141 @@
+class:: CallWindow
+summary:: A call window
+related:: Classes/PostWindow, Classes/Window
+categories:: GUI>Views
+
+Description::
+
+A call window
+
+
+classmethods::
+
+method::new
+
+Create a new CallWindow
+
+instancemethods::
+
+method::callFunc
+
+argument::string
+String associated with a function to evaluate.
+argument::post
+Boolean to determine if function gets posted in post window.
+
+
+Examples::
+
+code::
+
+c = CallWindow.window;
+
+c.add(\add, [\str, \num, \num], {|str, num1, num2| (num1 + num2).postln;}, "adds two numbers");
+
+c.callFunc("add 1 2");
+
+c.listSettings;
+
+c.add(\addTask, [\str], {a = {inf.do{c.callFunc("add " ++ rrand(0,100).asString ++ " " ++ rrand(0,100).asString); 0.1.yield}}.fork}, "routine of random adding");
+
+c.add(\stopTask, [\str], {a.stop}, "stop add routine");
+
+c.add(\add, [\str, \num, \arr], {|str, num, arr| (num + arr).postln;}, "adds one number with an array");
+
+c.add(\boot, [\str], { s.boot }, "boot server");
+
+c.add(\sine, [\str, \num, \num], {|str, num1, num2| {SinOsc.ar(num1, 0, num2)}.play }, "play sine wave");
+
+c.add(\sineArr, [\str, \arr, \arr, \num], {|str,arr1,arr2,num| {SinOsc.ar(arr1, num, arr2)}.play }, "play sine wave");
+
+c.addAll([[\ls, [\str], {c.listSettings;}, "prints one item commnads"], [\mul, [\str, \num, \num], {|str, num1, num2| (num1 * num2).postln;}, "multiply two numbers"]]);
+
+//array of ids
+c.addArr([\la, \le, \li, \lo, \lu], [\str, \num], {|a,b| (a ++ " is this shit and " ++ b.asString ++ " is the shat").postln; }, "array of cmds");
+
+//numbers and arrays as ID
+c.add(\number, [\num], {|str,a| if(a > 6, {"number greater than 6".postln}, {"number smaller than 6".postln}) }, "number greater or smaller than 6");
+
+c.add(\array, [\arr, \arr], {|str,a,b| (a + b).postln;}, "adds two arrays");
+
+c.add(\array, [\dash], {|str,a| a.postln;}, "use dash as array");
+
+//replace the new command with the old one
+c.add(\array, [\arr, \arr], {|str,a,b| (a * b).postln;}, "multipy two arrays", replace: true);
+
+c.add(\free, [\str], { s.freeAll; }, "free all synths");
+
+c.add(\sc, [\str], {|str| c.lang = \sc;}, "supercollider environment"); //switch to sc environment
+c.add(\cmd, [\str], {|str| c.lang = \cmd;}, "call window environment"); //switch to call window
+
+c.listSettings;
+
+c.writeSettings("helpSettings"); //writeSettings to file (beware that if you use variables, they will be stored as such)
+
+c.storeArr = []; //clear memory
+
+c.addSettings("helpSettings"); //add the settings from file
+
+c.listSettings;
+
+//////
+
+c = CallWindow.window("Other call window", Window.win2Left, Font("Helvetica", 18), QPalette.light, "callwindow1");
+
+c.listSettings;
+
+c.add(\ls, [\str], {"this is the new list";}, "replace list function", replace: true); //replace listSettings command with string
+
+c.listSettings;
+
+c.removeAt(0); //remove first function
+
+c.listSettings;
+
+//////////
+
+c.lang = \sc;
+
+c.lang = \cmd;
+
+
+//////////
+
+(
+w = Window("Window into my code", Window.screenBounds).front;
+b = Window.screenBounds;
+b.height = b.height - 40 - 10;
+p = PostWindow(w, Window.win2Right(b, menuSpacer:0));
+c = CallWindow(w, Window.win2Left(b, menuSpacer:0), qpalette: QPalette.light, postWhere: \both, postType: \ln, postWin: p);
+)
+
+c.add(\add, [\str, \num, \num], {|str, num1, num2| (num1 + num2).postin(\both, \ln, p);}, "adds two numbers");
+
+c.addAll([[\ls, [\str], {c.listSettings(\both, \doln, p);}, "prints one item commnads"], [\mul, [\str, \num, \num], {|str, num1, num2| (num1 * num2).postin(\both, \ln, p);}, "multiply two numbers"]]);
+
+c.add(\array, [\dash], {|str,a| a.postin(\both, \ln, p);}, "use dash as array");
+
+c.removeAt(2);
+
+c.add(\clear, [\str], {p.clear;}, "clear post");
+
+//////////
+
+c = CallWindow.window;
+
+c.add(\add, [\str, \num, \num], {|str, num1, num2| (num1 + num2).postln;}, "adds two numbers");
+c.addAll([[\ls, [\str], {c.listSettings;}, "prints one item commnads"], [\mul, [\str, \num, \num], {|str, num1, num2| (num1 * num2).postln;}, "multiply two numbers"]]);
+
+c.startHistory("thisSession");
+c.recordHistory = false;
+
+a = c.arrHistoryFiles;
+
+c.readHistory(a.last);
+
+c.viewHistory(a.last);
+
+c.playHistory(a.last);
+
+
+::
