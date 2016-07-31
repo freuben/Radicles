@@ -1,4 +1,4 @@
-CallWindow {var s, <text, <>storeArr, <>lang, <>post=true, <>rootDir;
+CallWindow {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 	var <>recordHistory, startTime, historyPath, <keyFunc;
 
 	*new {arg window, bounds, font, qpalette, settings,
