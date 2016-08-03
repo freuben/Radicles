@@ -1,21 +1,32 @@
-Plane {classvar <planeInfo, <planes;
+Plane {classvar <planeIDs, <planes;
 
 	*new {arg type, subtype, voice, settings;
 		^super.new.initNewPlane(type, subtype, voice, settings);
 	}
 
 	initNewPlane {arg type, subtype, voice, settings;
-		planeInfo = planeInfo.add([type, subtype, voice, settings]);
+		planeIDs = planeIDs.add([type, subtype, voice, settings]);
 	}
 
 	*removeAt {arg index;
 		planes[index].remove;
 		planes.removeAt(index);
-		planeInfo.removeAt(index);
+		planeIDs.removeAt(index);
 	}
+
+	*info {
+		this.indexArr.postin(\ide, \doln);
+	}
+
+	*indexArr {var result;
+		result = ([Array.series(planeIDs.size)] ++ [planeIDs]).flop;
+		^result;
+	}
+
 }
 
 APlane : Plane {
+	classvar <aplanes;
 
 	* add {arg type, settings;
 		var voice, aplane;
@@ -28,6 +39,19 @@ APlane : Plane {
 		this.new(\aplane, type, voice, settings);
 		planes = planes.add(aplane);
 		^aplane;
+	}
+
+	* info {var planeArr, resultArr;
+
+		planeArr = this.indexArr;
+
+		planeArr.do{|item, index|
+			if((item[1][0] == \aplane), {
+				resultArr = resultArr.add(item);
+			});
+		}
+
+		^resultArr.postin(\ide, \doln);
 	}
 
 }
