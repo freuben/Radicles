@@ -38,4 +38,8 @@
 		};
 	}
 
+	dopostln {
+		this.postin(\ide, \doln);
+	}
+
 }

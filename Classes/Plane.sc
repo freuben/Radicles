@@ -9,26 +9,26 @@ Plane {classvar <planeIDs, <planes;
 	}
 
 	*removeAt {arg index;
-		planes[index].remove;
 		planes.removeAt(index);
 		planeIDs.removeAt(index);
 	}
 
 	*info {
-		this.indexArr.postin(\ide, \doln);
+		planeIDs.postin(\ide, \doln);
 	}
 
 	*indexArr {var result;
-		result = ([Array.series(planeIDs.size)] ++ [planeIDs]).flop;
+		if(planeIDs.notNil, {
+			result = ([Array.series(planeIDs.size)] ++ [planeIDs]).flop;
+		});
 		^result;
 	}
 
 }
 
 APlane : Plane {
-	classvar <aplanes;
 
-	* add {arg type, settings;
+	*add {arg type, settings;
 		var voice, aplane;
 
 		case
@@ -41,17 +41,54 @@ APlane : Plane {
 		^aplane;
 	}
 
-	* info {var planeArr, resultArr;
-
-		planeArr = this.indexArr;
-
+	*aplanes {var resultArr, planeArr;
+		planeArr = super.indexArr;
 		planeArr.do{|item, index|
 			if((item[1][0] == \aplane), {
 				resultArr = resultArr.add(item);
 			});
 		}
+		^resultArr;
+	}
 
-		^resultArr.postin(\ide, \doln);
+	*indexArr {var arr, result, aplaneArr;
+		arr = this.aplanes;
+		if(arr.notNil, {
+			aplaneArr = this.aplanes.flop[1];
+			result = ([Array.series(aplaneArr.size)] ++ [aplaneArr]).flop;
+		});
+		^result;
+	}
+
+	*info {var arr;
+		arr = this.indexArr;
+		if(arr.notNil, {
+			arr.postin(\ide, \doln);
+		}, {
+			"No active APlanes".warn;
+		});
+	}
+
+	*planeIndeces {var arr, resultArr;
+		arr = this.aplanes;
+		if(arr.notNil, {
+			resultArr = arr.flop[0];
+		});
+		^resultArr;
+	}
+
+	*removeAt {arg index;
+		var arr;
+		arr = this.planeIndeces;
+		if(arr.notNil, {
+			if((index > (arr.size-1)).or(index.isNegative), {
+				"Index out of bounds".warn;
+			}, {
+				super.removeAt(arr[index]);
+			});
+		}, {
+			"No active APlanes".warn;
+		});
 	}
 
 }
@@ -91,6 +128,56 @@ DPlane : Plane {
 		^dplane;
 	}
 
+*dplanes {var resultArr, planeArr;
+		planeArr = super.indexArr;
+		planeArr.do{|item, index|
+			if((item[1][0] == \dplane), {
+				resultArr = resultArr.add(item);
+			});
+		}
+		^resultArr;
+	}
+
+	*indexArr {var arr, result, aplaneArr;
+		arr = this.dplanes;
+		if(arr.notNil, {
+			aplaneArr = this.dplanes.flop[1];
+			result = ([Array.series(aplaneArr.size)] ++ [aplaneArr]).flop;
+		});
+		^result;
+	}
+
+	*info {var arr;
+		arr = this.indexArr;
+		if(arr.notNil, {
+			arr.postin(\ide, \doln);
+		}, {
+			"No active DPlanes".warn;
+		});
+	}
+
+	*planeIndeces {var arr, resultArr;
+		arr = this.dplanes;
+		if(arr.notNil, {
+			resultArr = arr.flop[0];
+		});
+		^resultArr;
+	}
+
+	*removeAt {arg index;
+		var arr;
+		arr = this.planeIndeces;
+		if(arr.notNil, {
+			if((index > (arr.size-1)).or(index.isNegative), {
+				"Index out of bounds".warn;
+			}, {
+				super.removeAt(arr[index]);
+			});
+		}, {
+			"No active DPlanes".warn;
+		});
+	}
+
 }
 
 GPlane : Plane {
@@ -105,6 +192,56 @@ GPlane : Plane {
 		this.new(\gplane, type, voice, settings);
 		planes = planes.add(gplane);
 		^gplane;
+	}
+
+	*gplanes {var resultArr, planeArr;
+		planeArr = super.indexArr;
+		planeArr.do{|item, index|
+			if((item[1][0] == \gplane), {
+				resultArr = resultArr.add(item);
+			});
+		}
+		^resultArr;
+	}
+
+	*indexArr {var arr, result, aplaneArr;
+		arr = this.gplanes;
+		if(arr.notNil, {
+			aplaneArr = this.gplanes.flop[1];
+			result = ([Array.series(aplaneArr.size)] ++ [aplaneArr]).flop;
+		});
+		^result;
+	}
+
+	*info {var arr;
+		arr = this.indexArr;
+		if(arr.notNil, {
+			arr.postin(\ide, \doln);
+		}, {
+			"No active GPlanes".warn;
+		});
+	}
+
+	*planeIndeces {var arr, resultArr;
+		arr = this.gplanes;
+		if(arr.notNil, {
+			resultArr = arr.flop[0];
+		});
+		^resultArr;
+	}
+
+	*removeAt {arg index;
+		var arr;
+		arr = this.planeIndeces;
+		if(arr.notNil, {
+			if((index > (arr.size-1)).or(index.isNegative), {
+				"Index out of bounds".warn;
+			}, {
+				super.removeAt(arr[index]);
+			});
+		}, {
+			"No active GPlanes".warn;
+		});
 	}
 
 }
