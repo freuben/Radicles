@@ -1,15 +1,21 @@
-Plane {classvar <planes;
+Plane {classvar <planeInfo, <planes;
 
 	*new {arg type, subtype, voice, settings;
 		^super.new.initNewPlane(type, subtype, voice, settings);
 	}
 
 	initNewPlane {arg type, subtype, voice, settings;
-		planes = planes.add([type, subtype, voice, settings]);
+		planeInfo = planeInfo.add([type, subtype, voice, settings]);
+	}
+
+	*removeAt {arg index;
+		planes[index].remove;
+		planes.removeAt(index);
+		planeInfo.removeAt(index);
 	}
 }
 
-APlane : Plane {classvar <aplanes;
+APlane : Plane {
 
 	* add {arg type, settings;
 		var voice, aplane;
@@ -20,12 +26,8 @@ APlane : Plane {classvar <aplanes;
 		{} {};
 
 		this.new(\aplane, type, voice, settings);
-		aplanes = aplanes.add(aplane);
+		planes = planes.add(aplane);
 		^aplane;
-	}
-
-	*remove {
-
 	}
 
 }
@@ -34,6 +36,10 @@ FFTPlane : APlane {
 
 	*start {arg settings;
 		settings.postln;
+	}
+
+	*remove {
+		"remove FFT plane".postln;
 	}
 
 }
@@ -50,13 +56,15 @@ PitchPlane : APlane {
 DPlane : Plane {
 
 	* add {arg type, settings;
-		var voice;
+		var voice, dplane;
 
 		case
-		{type == \midiFile} { voice = \poly; }
-		{type == \midiFileTrack} { voice = \mono };
+		{type == \midiFile} { voice = \poly; dplane = "a MIDI File"}
+		{type == \midiFileTrack} { voice = \mono; dplane = "a MIDI File Track" };
 
 		this.new(\dplane, type, voice, settings);
+		planes = planes.add(dplane);
+		^dplane;
 	}
 
 }
@@ -64,12 +72,15 @@ DPlane : Plane {
 GPlane : Plane {
 
 	* add {arg type, settings;
-		var voice;
+		var voice, gplane;
 
 		case
-		{type == \chain} { voice = \mono }
-		{type == \network} { voice = \poly };
+		{type == \chain} { voice = \mono; gplane = "a chain" }
+		{type == \network} { voice = \poly; gplane = "a network" };
+
 		this.new(\gplane, type, voice, settings);
+		planes = planes.add(gplane);
+		^gplane;
 	}
 
 }
