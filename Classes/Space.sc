@@ -6,7 +6,6 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 
 	initSpace {arg arrNdef, sysType, numChan, arrPan, timeFade;
 		var autoStart;
-		"init".postln;
 		if(arrNdef.isNil, {autoStart = false;}, {autoStart = true;});
 
 		ndefArr = arrNdef;
@@ -25,8 +24,7 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 			ndef = Ndef(\space);
 			ndef.ar(numChan);
 		}
-		{system == \multi} {
-			"multiboob".postln;
+		{system == \split} {
 			numChan ?? {numChan = 8};
 			ndef = Ndef(\space);
 			ndef.ar(numChan);
@@ -80,7 +78,7 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 			};
 			}.fork;
 		}
-		{system == \multi} {
+		{system == \split} {
 
 			arrPan ?? {arrPan = (0,1..chanNum); panArr = arrPan;};
 			{
@@ -105,6 +103,7 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 		{
 		Ndef(\space).clear(fadeTime);
 			fadeTime.yield;
+			0.1.yield;
 			this.initSpace(ndefArr, system, chanNum, panArr, fadeTime);
 			if(playNdef, {Ndef(\space).play});
 		}.fork;

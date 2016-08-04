@@ -1,0 +1,151 @@
+class:: Space
+summary:: A spatial tool for Ndefs
+related:: Classes/Ndef, Classes/Pan2,  Classes/PanB
+categories:: Libraries>JITLib>NodeProxy, LiveCoding
+
+Description::
+
+A tool for automatially spatialising Ndefs.
+
+
+classmethods::
+
+method::new
+
+Create a new Space to spatialise Ndefs.
+
+argument::
+An array of mono Ndef's to be spatialised.
+argument::
+Spatial system.
+argument::
+Number of channels.
+argument::
+An array of panning values.
+argument::
+Ndef fadeTime.
+
+instancemethods::
+
+method::set
+
+argument::.
+Array of Ndefs to be outputed by system
+argument::
+Array of panning values
+
+
+Examples::
+
+code::
+
+s.boot;
+
+(
+Ndef(\x, {SinOsc.ar(440,0,0.1)}).ar(1);
+Ndef(\y, {SinOsc.ar(880,0,0.1)}).ar(1);
+~arr = [Ndef(\x), Ndef(\y)];
+)
+
+n = Space(~arr, \pan2, [-1,1]);
+n.ndef.play;
+
+Stethoscope.new
+
+n.chanNum; //number of channels
+
+n.set(~arr, Array.panDis(~arr.size, ~arr.size).scramble.postln); //evaluate several times
+
+Ndef.all.do(_.fadeTime = 6); //set fadeTimes for all Ndefs
+
+Ndef(\z, {Impulse.ar(5)}).ar(1);
+
+~arr = ~arr.add(Ndef(\z));
+
+~arr.do{|item| item.numChannels.postln};
+
+n.set(~arr, Array.panDis(~arr.size, rrand(~arr.size, ~arr.size*3)).scramble.postln);
+
+Ndef(\x, {Impulse.ar(3)});
+Ndef(\y, {Impulse.ar(7)});
+
+[\z,\x,\y].do{|i| Ndef(i, {0});};
+
+[\z,\x,\y].do{|it,ind| Ndef(it, {SinOsc.ar(220*(ind+1),0,0.1)});}
+
+
+n.reset(~arr, \panB); //start a new system
+
+n.reset(~arr, \pan2);
+
+n.ndef.numChannels;
+
+
+Ndef.clear(6);
+
+/////////////////////////////////////
+
+s.boot;
+
+n = Space(system: \panB);
+
+n.ndef.play;
+
+n.ndef.numChannels;
+
+Stethoscope.new(s, 4);
+
+
+Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
+Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
+
+~arr = [Ndef(\x), Ndef(\y)];
+
+n.ndef.fadeTime = 2;
+
+n.set(~arr, [[-0.5pi,0.5pi],[-0.25pi,0.25pi]]); //azimuth, elevation
+
+n.set(~arr, [[0.75pi, -0.75pi],[0,0]]); //azimuth, elevation
+
+n.set(~arr, [[-pi,pi],[-0.5pi,0.5pi]]); //azimuth, elevation
+
+n.set(~arr, [[0.5pi,-0.5pi],[0.25pi, -0.25pi]]); //azimuth, elevation
+
+Ndef.clear(1);
+
+/////////////////////////////////////
+
+s.boot;
+
+n = Space(system: \split, chanNum: 6);
+
+n.ndef.play;
+
+n.ndef.numChannels;
+
+Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
+Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
+
+~arr = [Ndef(\x), Ndef(\y)];
+
+Stethoscope.new(s, 6);
+
+n.set(~arr, [0,2]);
+
+n.set(~arr, [1,3]);
+
+n.set(Array.fill(6, {~arr.choose.postln}));
+
+n.clear;
+
+n = Space(system: \split, chanNum: 8);
+n.ndef.play;
+
+n.set(Array.fill(8, {~arr.choose.postln}));
+
+Ndef.clear;
+
+
+
+
+::
