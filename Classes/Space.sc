@@ -58,7 +58,6 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 				signal = (sigArr.sum.flat * vol);});
 		}
 		{system == \panB} {
-			{
 			Ndef(\space, {arg vol=1;
 				var a, b, signal, sigArr;
 				arrPan ?? {
@@ -73,30 +72,25 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 					sigArr = sigArr.add(DecodeB2.ar(chanNum, w, x, y);)
 				});
 				signal = (sigArr.sum * vol);});
-				0.1.yield;
-			arrayOut.do{|item, index|
-				("Ndef('space') <<>.in" ++ index.asString ++ " " ++ item.cs).interpret;
-			};
-			}.fork;
 		}
 		{system == \split} {
-
-			arrPan ?? {arrPan = (0,1..chanNum); panArr = arrPan;};
-			{
 			Ndef(\space, {arg vol=1;
 				var signal, sigArr, sig;
+				arrPan ?? {arrPan = (0,1..chanNum); panArr = arrPan;};
 				arrayOut.do({|item, index|
 					sig = (\in++index).asSymbol.ar([0]);
 					sigArr = sigArr.add(Out.ar(arrPan[index], sig));
 				});
 				signal = (sigArr.sum * vol);
 			});
-			0.1.yield;
+		};
+
+		{
+		0.1.yield;
 			arrayOut.do{|item, index|
 				("Ndef('space') <<>.in" ++ index.asString ++ " " ++ item.cs).interpret;
 			};
 		}.fork;
-		};
 
 	}
 
