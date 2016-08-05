@@ -38,7 +38,6 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 	}
 
 	set {arg arrayOut, arrPan;
-		var a,b;
 
 		arrayOut ?? {arrayOut = ndefArr};
 
@@ -52,14 +51,16 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 				arrPan ?? {arrPan = Array.panDis(arrayOut.size);
 					panArr = arrPan;};
 				arrayOut.do({|item, index|
-					sigArr = sigArr.add(Pan2.ar(item.ar, arrPan[index]);)
+					var sig;
+					sig = (\in++index).asSymbol.ar([0]);
+					sigArr = sigArr.add(Pan2.ar(sig, arrPan[index]);)
 				});
 				signal = (sigArr.sum.flat * vol);});
 		}
 		{system == \panB} {
 			{
 			Ndef(\space, {arg vol=1;
-				var signal, sigArr;
+				var a, b, signal, sigArr;
 				arrPan ?? {
 					a = Array.interpolation(arrayOut.size,-0.5,0.5).clump(arrayOut.size/2);
 					a.do({|item| b = b.add(item.reverse) });
