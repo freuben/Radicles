@@ -1,109 +1,102 @@
-Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
+Space {var <ndef, <>objectFile, <numChannels, <inputArr, <arrPan, thisIndex, object;
 
-	*new {arg ndefArr, system=\pan2, chanNum, panArr, fadeTime=1;
-		^super.new.initSpace(ndefArr, system, chanNum, panArr, fadeTime);
+	*new {arg ndefArr, system=\pan2, panArr, chanNum, fadeTime;
+		^super.new.initSpace(ndefArr, system, panArr, chanNum, fadeTime);
 	}
 
-	initSpace {arg arrNdef, sysType, numChan, arrPan, timeFade;
+	initSpace {arg ndefArr, system, panArr, chanNum, fadeTime;
 		var autoStart;
-		if(arrNdef.isNil, {autoStart = false;}, {autoStart = true;});
 
-		ndefArr = arrNdef;
-		system = sysType;
-		panArr = arrPan;
-		fadeTime = timeFade;
+		objectFile = [
+			[\pan2, {arg numChan; numChan ?? {numChan = 2}},
+				{arg inputArr, panArr, chanNum, vol=1;
+					panArr ?? {panArr = Array.panDis(inputArr.size);};
+					{var signal, sigArr;
+						inputArr.do({|item, index|
+							var sig;
+							sig = (\in++index).asSymbol.ar([0]);
+							sigArr = sigArr.add(Pan2.ar(sig, panArr[index]);)
+						});
+						signal = (sigArr.sum.flat * vol);};
+				};
+			],
+			[\panB, {arg numChan; numChan ?? {numChan = 4}},
+				{arg inputArr, panArr, chanNum, vol=1;
+					var a, b;
+					panArr ?? {
+						a = Array.interpolation(inputArr.size,-0.5,0.5).clump(inputArr.size/2);
+						a.do({|item| b = b.add(item.reverse) });
+						panArr = [Array.panDis(inputArr.size, inputArr.size)*pi, b.flat * pi];
+					};
+					{var signal, sigArr;
+						inputArr.do({|item, index|
+							var  w, x, y, z, sig;
+							sig = (\in++index).asSymbol.ar([0]);
+							#w, x, y, z = PanB.ar(sig, panArr[0][index], panArr[1][index]);
+							sigArr = sigArr.add(DecodeB2.ar(chanNum, w, x, y);)
+						});
+						signal = (sigArr.sum * vol);};
+				};
+			],
+			[\split, {arg numChan; numChan ?? {numChan = 8}},
+				{arg inputArr, panArr, chanNum, vol=1;
+					panArr ?? {panArr = (0,1..(chanNum-1)); };
+					{arg vol=1;
+						var signal, sigArr, sig;
+						inputArr.do({|item, index|
+							sig = (\in++index).asSymbol.ar([0]);
+							sigArr = sigArr.add(Out.ar(panArr[index], sig));
+						});
+						signal = (sigArr.sum * vol);
+					};
+				}
+			],
+		];
 
-		case
-		{[\pan2].includes(system)} {
-			numChan = 2;
-			ndef = Ndef(\space);
-			ndef.ar(numChan);
-		}
-		{[\panB].includes(system)} {
-			numChan ?? {numChan = 4};
-			ndef = Ndef(\space);
-			ndef.ar(numChan);
-		}
-		{system == \split} {
-			numChan ?? {numChan = 8};
-			ndef = Ndef(\space);
-			ndef.ar(numChan);
-		};
+		thisIndex = objectFile.flop[0].indexOf(system);
+		numChannels = objectFile.flop[1][thisIndex].value(chanNum);
+		object = objectFile.flop[2][thisIndex];
 
+		inputArr = ndefArr;
+		arrPan = panArr;
+
+		if(inputArr.isNil, {autoStart = false;}, {autoStart = true;});
+
+		ndef = Ndef(\space);
+		ndef.ar(numChannels);
+
+		fadeTime ?? {fadeTime = Ndef(\space).fadeTime};
 		Ndef(\space).fadeTime = fadeTime;
 
-		chanNum = numChan;
+		if(autoStart, {this.set(inputArr, arrPan)});
 
-		if(autoStart, {this.set(ndefArr, panArr)});
 	}
 
-	set {arg arrayOut, arrPan;
-		var a,b;
+	set {arg ndefArr, panArr;
 
-		arrayOut ?? {arrayOut = ndefArr};
+		ndefArr ?? {ndefArr = inputArr};
 
-		ndefArr = arrayOut;
-		panArr = arrPan;
+		inputArr = ndefArr;
 
 		{
-		case
-		{system == \pan2} {
-			Ndef(\space, {arg vol=1;
-				var signal, sigArr;
-				arrPan ?? {arrPan = Array.panDis(arrayOut.size);
-					panArr = arrPan;};
-				arrayOut.do({|item, index|
-					var sig;
-					sig = (\in++index).asSymbol.ar([0]);
-					sigArr = sigArr.add(Pan2.ar(sig, arrPan[index]);)
-				});
-				signal = (sigArr.sum.flat * vol);});
-		}
-		{system == \panB} {
-			Ndef(\space, {arg vol=1;
-				var signal, sigArr;
-				arrPan ?? {
-					a = Array.interpolation(arrayOut.size,-0.5,0.5).clump(arrayOut.size/2);
-					a.do({|item| b = b.add(item.reverse) });
-					arrPan = [Array.panDis(arrayOut.size, arrayOut.size)*pi, b.flat * pi];
-					panArr = arrPan;};
-				arrayOut.do({|item, index|
-					var  w, x, y, z, sig;
-					sig = (\in++index).asSymbol.ar([0]);
-					#w, x, y, z = PanB.ar(sig, arrPan[0][index], arrPan[1][index]);
-					sigArr = sigArr.add(DecodeB2.ar(chanNum, w, x, y);)
-				});
-				signal = (sigArr.sum * vol);});
-		}
-		{system == \split} {
-
-			arrPan ?? {arrPan = (0,1..chanNum); panArr = arrPan;};
-
-			Ndef(\space, {arg vol=1;
-				var signal, sigArr, sig;
-				arrayOut.do({|item, index|
-					sig = (\in++index).asSymbol.ar([0]);
-					sigArr = sigArr.add(Out.ar(arrPan[index], sig));
-				});
-				signal = (sigArr.sum * vol);
-			});
-
-		};
-
-		0.1.yield;
-			arrayOut.do{|item, index|
+			Ndef(\space, object.value(inputArr, panArr, numChannels));
+			0.1.yield;
+			inputArr.do{|item, index|
 				("Ndef('space') <<>.in" ++ index.asString ++ " " ++ item.cs).interpret;
+				0.1.yield;
 			};
-			}.fork;
+		}.fork;
 
 	}
 
-	reset {arg ndefArr, system=\pan2, chanNum, panArr, playNdef=true;
+	reset {arg ndefArr, system=\pan2, panArr, chanNum, playNdef=true;
+		var fadeTime;
+		fadeTime = Ndef(\space).fadeTime;
 		{
 			Ndef(\space).clear(fadeTime);
 			fadeTime.yield;
 			0.1.yield;
-			this.initSpace(ndefArr, system, chanNum, panArr, fadeTime);
+			this.initSpace(ndefArr, system, panArr, chanNum, fadeTime);
 			if(playNdef, {Ndef(\space).play});
 		}.fork;
 	}

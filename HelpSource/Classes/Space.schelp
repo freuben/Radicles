@@ -50,9 +50,9 @@ Ndef(\y, {SinOsc.ar(880,0,0.1)}).ar(1);
 n = Space(~arr, \pan2, [-1,1]);
 n.ndef.play;
 
-Stethoscope.new
+s.scope(2);
 
-n.chanNum; //number of channels
+n.numChannels; //number of channels
 
 n.set(~arr, Array.panDis(~arr.size, ~arr.size).scramble.postln); //evaluate several times
 
@@ -62,7 +62,7 @@ Ndef(\z, {Impulse.ar(5)}).ar(1);
 
 ~arr = ~arr.add(Ndef(\z));
 
-~arr.do{|item| item.numChannels.postln};
+~arr.do{|item| item.numChannels.postln}; //check input Ndefs are mono
 
 n.set(~arr, Array.panDis(~arr.size, rrand(~arr.size, ~arr.size*3)).scramble.postln);
 
@@ -91,10 +91,9 @@ n = Space(system: \panB);
 
 n.ndef.play;
 
-n.ndef.numChannels;
+n.numChannels;
 
-Stethoscope.new(s, 4);
-
+s.scope(4)
 
 Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
 Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
@@ -121,31 +120,31 @@ n = Space(system: \split, chanNum: 6);
 
 n.ndef.play;
 
-n.ndef.numChannels;
+n.numChannels;
 
 Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
 Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
 
 ~arr = [Ndef(\x), Ndef(\y)];
 
-Stethoscope.new(s, 6);
+s.scope(6);
 
-n.set(~arr, [0,2]);
+n.set(panArr: [0,2]);
 
-n.set(~arr, [1,3]);
+n.set(panArr: [1,3]);
 
 n.set(Array.fill(6, {~arr.choose.postln}));
 
 n.clear;
 
-n = Space(system: \split, chanNum: 8);
+n = Space(system: \split); //default 8 channels
 n.ndef.play;
 
 n.set(Array.fill(8, {~arr.choose.postln}));
 
+s.scope(8);
+
 Ndef.clear;
-
-
 
 
 ::
