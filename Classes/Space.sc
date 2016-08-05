@@ -38,12 +38,14 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 	}
 
 	set {arg arrayOut, arrPan;
-
+		var a,b;
 
 		arrayOut ?? {arrayOut = ndefArr};
 
 		ndefArr = arrayOut;
+		panArr = arrPan;
 
+		{
 		case
 		{system == \pan2} {
 			Ndef(\space, {arg vol=1;
@@ -59,7 +61,7 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 		}
 		{system == \panB} {
 			Ndef(\space, {arg vol=1;
-				var a, b, signal, sigArr;
+				var signal, sigArr;
 				arrPan ?? {
 					a = Array.interpolation(arrayOut.size,-0.5,0.5).clump(arrayOut.size/2);
 					a.do({|item| b = b.add(item.reverse) });
@@ -74,23 +76,25 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 				signal = (sigArr.sum * vol);});
 		}
 		{system == \split} {
+
+			arrPan ?? {arrPan = (0,1..chanNum); panArr = arrPan;};
+
 			Ndef(\space, {arg vol=1;
 				var signal, sigArr, sig;
-				arrPan ?? {arrPan = (0,1..chanNum); panArr = arrPan;};
 				arrayOut.do({|item, index|
 					sig = (\in++index).asSymbol.ar([0]);
 					sigArr = sigArr.add(Out.ar(arrPan[index], sig));
 				});
 				signal = (sigArr.sum * vol);
 			});
+
 		};
 
-		{
 		0.1.yield;
 			arrayOut.do{|item, index|
 				("Ndef('space') <<>.in" ++ index.asString ++ " " ++ item.cs).interpret;
 			};
-		}.fork;
+			}.fork;
 
 	}
 
