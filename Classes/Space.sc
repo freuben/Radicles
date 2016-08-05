@@ -38,6 +38,7 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 	}
 
 	set {arg arrayOut, arrPan;
+<<<<<<< HEAD
 		var object, testArr;
 
 		testArr = [
@@ -76,11 +77,14 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 				signal = (sigArr.sum * vol);
 			}],
 ];
+=======
+>>>>>>> spaceexperiment2
 
 		arrayOut ?? {arrayOut = ndefArr};
 
 		ndefArr = arrayOut;
 
+<<<<<<< HEAD
 		object = testArr.flop[1][testArr.flop[0].indexOf(system)];
 
 		object.value(arrayOut, arrPan, chanNum);
@@ -94,6 +98,55 @@ Space {var <ndefArr, <system, <chanNum, <panArr, <ndef, <>fadeTime;
 
 		object.cs.postln;
 		// panArr = arrPan;
+=======
+		case
+		{system == \pan2} {
+			Ndef(\space, {arg vol=1;
+				var signal, sigArr;
+				arrPan ?? {arrPan = Array.panDis(arrayOut.size);
+					panArr = arrPan;};
+				arrayOut.do({|item, index|
+					var sig;
+					sig = (\in++index).asSymbol.ar([0]);
+					sigArr = sigArr.add(Pan2.ar(sig, arrPan[index]);)
+				});
+				signal = (sigArr.sum.flat * vol);});
+		}
+		{system == \panB} {
+			Ndef(\space, {arg vol=1;
+				var a, b, signal, sigArr;
+				arrPan ?? {
+					a = Array.interpolation(arrayOut.size,-0.5,0.5).clump(arrayOut.size/2);
+					a.do({|item| b = b.add(item.reverse) });
+					arrPan = [Array.panDis(arrayOut.size, arrayOut.size)*pi, b.flat * pi];
+					panArr = arrPan;};
+				arrayOut.do({|item, index|
+					var  w, x, y, z, sig;
+					sig = (\in++index).asSymbol.ar([0]);
+					#w, x, y, z = PanB.ar(sig, arrPan[0][index], arrPan[1][index]);
+					sigArr = sigArr.add(DecodeB2.ar(chanNum, w, x, y);)
+				});
+				signal = (sigArr.sum * vol);});
+		}
+		{system == \split} {
+			Ndef(\space, {arg vol=1;
+				var signal, sigArr, sig;
+				arrPan ?? {arrPan = (0,1..chanNum); panArr = arrPan;};
+				arrayOut.do({|item, index|
+					sig = (\in++index).asSymbol.ar([0]);
+					sigArr = sigArr.add(Out.ar(arrPan[index], sig));
+				});
+				signal = (sigArr.sum * vol);
+			});
+		};
+
+		{
+		0.1.yield;
+			arrayOut.do{|item, index|
+				("Ndef('space') <<>.in" ++ index.asString ++ " " ++ item.cs).interpret;
+			};
+		}.fork;
+>>>>>>> spaceexperiment2
 
 	}
 
