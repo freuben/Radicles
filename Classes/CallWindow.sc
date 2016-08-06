@@ -1,4 +1,4 @@
-CallWindow {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
+CallWindow : MainImprov {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 	var <>recordHistory, startTime, historyPath, <keyFunc;
 
 	*new {arg window, bounds, font, qpalette, settings,
@@ -66,8 +66,8 @@ CallWindow {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 			});
 
 			//add from file
-			rootDir = ("~/Library/Application Support/SuperCollider/" ++
-				"Extensions/ModImprov/Settings/CallWindow/");
+			rootDir = (mainPath ++ "Settings/CallWindow/");
+
 			if(settings.notNil, {
 				this.addSettings(settings.asString);
 			});
@@ -242,7 +242,7 @@ CallWindow {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 			file.write(storeArr.asCompileString);
 			file.close;
 		};
-		path = (settingsDir ++ fileName ++ ".scd").standardizePath;
+		path = (settingsDir ++ fileName ++ ".scd");
 		if(File.existsCaseSensitive(path), {
 			if(replace.not, {
 				Window.warnQuestion(("These settings already exist: " ++
@@ -269,7 +269,7 @@ CallWindow {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 	startHistory {arg fileName, replace=false;
 		var file, date, writeHistoryFunc;
 		fileName ?? {fileName = Date.getDate.asString};
-		historyPath = (rootDir ++ "History/" ++ fileName ++ ".scd").standardizePath;
+		historyPath = (rootDir ++ "History/" ++ fileName ++ ".scd");
 
 		writeHistoryFunc = {
 			file = File(historyPath, "a+");
@@ -306,7 +306,7 @@ CallWindow {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 
 	readHistory {arg fileName;
 		var file, path, array, newArray;
-		path = (rootDir ++ "History/" ++ fileName ++ ".scd").standardizePath;
+		path = (rootDir ++ "History/" ++ fileName ++ ".scd");
 		file = File(path, "r");
 		array = ("[ " ++ file.readAllString ++ " ]").interpret;
 		file.close;
@@ -351,7 +351,7 @@ CallWindow {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 
 	arrHistoryFiles {
 		var arr;
-		arr = (rootDir ++ "History/").standardizePath.fileNameWithoutExtension;
+		arr = (rootDir ++ "History/").fileNameWithoutExtension;
 		^arr;
 	}
 

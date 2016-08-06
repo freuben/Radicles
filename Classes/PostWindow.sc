@@ -1,4 +1,4 @@
-PostWindow {var text, <>megaString, <>time=0.1, <>deviation=0.01, win;
+PostWindow : MainImprov {var text, <>megaString, <>time=0.1, <>deviation=0.01, win;
 
 	*new {arg window, bounds, font, qpalette;
 		^super.new.initBasicClass(window, bounds, font, qpalette);

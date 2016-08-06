@@ -1,4 +1,4 @@
-Space {var <ndef, <>objectFile, <numChannels, <inputArr, <arrPan, thisIndex, object;
+Space : MainImprov {var <ndef, <>objectFile, <numChannels, <inputArr, <arrPan, thisIndex, object;
 
 	*new {arg ndefArr, system=\pan2, panArr, chanNum, fadeTime;
 		^super.new.initSpace(ndefArr, system, panArr, chanNum, fadeTime);

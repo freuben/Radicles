@@ -1,5 +1,5 @@
-GlobalHistory {
-	var startTime, path, rootDir, <>recordHistory;
+GlobalHistory : MainImprov {
+	var startTime, path, <>recordHistory;
 
 	*start {arg fileName, replace;
 		^super.new.initCallWindow(fileName, replace);
@@ -7,12 +7,10 @@ GlobalHistory {
 
 	initCallWindow {arg fileName, replace=false;
 		var file, date, writeHistoryFunc;
+
 		fileName ?? {fileName = Date.getDate.asString};
 
-		rootDir = ("~/Library/Application Support/SuperCollider/" ++
-			"Extensions/ModImprov/Settings/");
-
-		path = (rootDir ++ "GlobalHistory/" ++ fileName ++ ".scd").standardizePath;
+		path = (mainPath ++ "Settings/GlobalHistory/" ++ fileName ++ ".scd");
 
 		writeHistoryFunc = {
 			file = File(path, "a+");
