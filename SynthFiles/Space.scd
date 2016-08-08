@@ -1,6 +1,4 @@
-[
-	[\pan2, [{arg numChan; numChan ?? {numChan = 2}},
-		{arg inputArr, panArr, chanNum, vol=1;
+[ [ 'pan2', [ {arg numChan; numChan ?? {numChan = 2}}, {arg inputArr, panArr, chanNum, vol=1;
 			panArr ?? {panArr = Array.panDis(inputArr.size);};
 			{var signal, sigArr;
 				inputArr.do({|item, index|
@@ -9,10 +7,7 @@
 					sigArr = sigArr.add(Pan2.ar(sig, panArr[index]);)
 				});
 				signal = (sigArr.sum.flat * vol);};
-	};]
-	],
-	[\panB, [{arg numChan; numChan ?? {numChan = 4}},
-		{arg inputArr, panArr, chanNum, vol=1;
+} ] ], [ 'panB', [ {arg numChan; numChan ?? {numChan = 4}}, {arg inputArr, panArr, chanNum, vol=1;
 			var a, b;
 			panArr ?? {
 				a = Array.interpolation(inputArr.size,-0.5,0.5).clump(inputArr.size/2);
@@ -27,10 +22,7 @@
 					sigArr = sigArr.add(DecodeB2.ar(chanNum, w, x, y);)
 				});
 				signal = (sigArr.sum * vol);};
-	};]
-	],
-	[\split, [{arg numChan; numChan ?? {numChan = 8}},
-		{arg inputArr, panArr, chanNum, vol=1;
+} ] ], [ 'split', [ {arg numChan; numChan ?? {numChan = 8}}, {arg inputArr, panArr, chanNum, vol=1;
 			panArr ?? {panArr = (0,1..(chanNum-1)); };
 			{arg vol=1;
 				var signal, sigArr, sig;
@@ -40,6 +32,4 @@
 				});
 				signal = (sigArr.sum * vol);
 			};
-	}]
-	],
-];
+} ] ] ]

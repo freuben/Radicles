@@ -15,11 +15,12 @@ SynthFile : MainImprov {var filePath;
 		classString = class.asString.capitalize;
 
 		if(existFiles.includes(classString.asSymbol), {
-		fileName = (class.asString.capitalize ++ ".scd");
-		filePath = (dir ++ fileName);
-		^filePath;
+			fileName = (class.asString.capitalize ++ ".scd");
+			filePath = (dir ++ fileName);
+			^filePath;
 		}, {
 			"Class not found".warn;
+			^filePath;
 		});
 	}
 
@@ -30,7 +31,9 @@ SynthFile : MainImprov {var filePath;
 	*keys {arg class;
 		var arr;
 		arr = this.array(class);
-		^arr.flop[0];
+		if(arr.notNil, {
+			^arr.flop[0];
+		}, {^arr});
 	}
 
 	*read {arg class, key;
@@ -39,8 +42,10 @@ SynthFile : MainImprov {var filePath;
 			result = this.keys(class);
 		}, {
 			arr = this.array(class);
-		index = arr.flop[0].indexOf(key);
-		result = arr[index][1];
+			if(arr.notNil, {
+				index = arr.flop[0].indexOf(key);
+				result = arr[index][1];
+			}, {result = nil});
 		});
 		^result;
 	}
@@ -54,7 +59,29 @@ SynthFile : MainImprov {var filePath;
 	}
 
 	*write {arg class, key, dataArr;
-
+		var arrayFromFile, writeFunc, keyIndex, file;
+		arrayFromFile = this.array(class);
+		writeFunc = {arg arr;
+			var path;
+			path = this.new(class);
+			file = File(path, "w+");
+			file.write(arr.cs);
+			file.close;
+			"Written into file".postln;
+		};
+		if(arrayFromFile.notNil, {
+			keyIndex = arrayFromFile.flop[0].indexOf(key);
+			if(keyIndex.notNil, {
+				Window.warnQuestion(("This key already exists: " ++
+					"Are you sure you want to replace it?"), {
+					arrayFromFile[keyIndex] = [key, dataArr];
+					writeFunc.value(arrayFromFile);
+				});
+			}, {
+				arrayFromFile = arrayFromFile.add([key, dataArr]);
+				writeFunc.value(arrayFromFile);
+			});
+		}, {^arrayFromFile});
 	}
 
 }
