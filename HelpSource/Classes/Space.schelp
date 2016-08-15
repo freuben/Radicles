@@ -129,9 +129,9 @@ Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
 
 s.scope(6);
 
-n.set(panArr: [0,2]);
+n.set(~arr, panArr: [0,2]);
 
-n.set(panArr: [1,3]);
+n.set(~arr, panArr: [1,3]);
 
 n.set(Array.fill(6, {~arr.choose.postln}));
 

@@ -36,10 +36,10 @@ Space : MainImprov {var <ndef, <>objectFile, <numChannels, <inputArr, <arrPan, t
 
 		{
 			Ndef(\space, object.value(inputArr, panArr, numChannels));
-			0.1.yield;
+			nodeTime.yield;
 			inputArr.do{|item, index|
 				("Ndef('space') <<>.in" ++ index.asString ++ " " ++ item.cs).interpret;
-				0.1.yield;
+			nodeTime.yield;
 			};
 		}.fork;
 
@@ -51,7 +51,7 @@ Space : MainImprov {var <ndef, <>objectFile, <numChannels, <inputArr, <arrPan, t
 		{
 			Ndef(\space).clear(fadeTime);
 			fadeTime.yield;
-			0.1.yield;
+			nodeTime.yield;
 			this.initSpace(ndefArr, system, panArr, chanNum, fadeTime);
 			if(playNdef, {Ndef(\space).play});
 		}.fork;
