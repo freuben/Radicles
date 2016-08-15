@@ -50,7 +50,7 @@ Ndef(\y, {SinOsc.ar(880,0,0.1)}).ar(1);
 n = Space(~arr, \pan2, [-1,1]);
 n.ndef.play;
 
-s.scope(2);
+s.meter;
 
 n.numChannels; //number of channels
 
@@ -93,7 +93,7 @@ n.ndef.play;
 
 n.numChannels;
 
-s.scope(4)
+s.meter;
 
 Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
 Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
@@ -127,7 +127,7 @@ Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
 
 ~arr = [Ndef(\x), Ndef(\y)];
 
-s.scope(6);
+s.meter;
 
 n.set(~arr, panArr: [0,2]);
 
@@ -142,7 +142,7 @@ n.ndef.play;
 
 n.set(Array.fill(8, {~arr.choose.postln}));
 
-s.scope(8);
+s.meter;
 
 Ndef.clear;
 
