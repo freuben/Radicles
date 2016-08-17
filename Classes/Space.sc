@@ -1,14 +1,12 @@
-Space : MainImprov {var <ndef, <>objectFile, <numChannels, <inputArr, <arrPan, thisIndex, object;
+Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, thisIndex, object;
 
-	*new {arg ndefArr, system=\pan2, panArr, chanNum, fadeTime;
-		^super.new.initSpace(ndefArr, system, panArr, chanNum, fadeTime);
+	*new {arg ndefArr, system=\pan2, panArr, chanNum=2, play=true, fadeTime;
+		^super.new.initSpace(ndefArr, system, panArr, chanNum, play, fadeTime);
 	}
 
-	initSpace {arg ndefArr, system, panArr, chanNum, fadeTime;
-		var autoStart;
+	initSpace {arg ndefArr, system, panArr, chanNum, play, fadeTime;
 
 		panArr ?? {panArr = Array.panDis(ndefArr.size)};
-		chanNum ?? {chanNum = 2};
 
 		objectFile = (mainPath ++ "SynthFiles/Space.scd").loadPath;
 
@@ -19,33 +17,40 @@ Space : MainImprov {var <ndef, <>objectFile, <numChannels, <inputArr, <arrPan, t
 		inputArr = ndefArr;
 		arrPan = panArr;
 
-		if(inputArr.isNil, {autoStart = false;}, {autoStart = true;});
+		if(inputArr.isNil, {
+			"No ndef array specified".warn;
+		}, {
 
-		ndef = Ndef(\space);
-		ndef.ar(numChannels.postln);
-
-		fadeTime ?? {fadeTime = Ndef(\space).fadeTime};
-		Ndef(\space).fadeTime = fadeTime;
-
-		if(autoStart, {this.set(inputArr, arrPan)});
-
+			this.define(inputArr, arrPan, play, fadeTime);
+		});
 	}
 
-	set {arg ndefArr, panArr;
+	play {
+		ndefs.do{|item| item.play};
+	}
+
+	define {arg ndefArr, panArr, play=true, fadeTime;
+		var key;
 
 		ndefArr ?? {ndefArr = inputArr};
 		inputArr = ndefArr;
 		arrPan = panArr;
 
 		{
-			Ndef(\space, object.value(inputArr.postln, panArr.postln, numChannels.postln));
-			nodeTime.yield;
-			inputArr.do{|item, index|
-				("Ndef('space') <<>.in" ++ index.asString ++ " " ++ item.cs).interpret;
-			nodeTime.yield;
+			ndefArr.do{|item, index|
+				key = ((\space++index).asSymbol);
+				Ndef(key).ar(numChannels);
+				fadeTime ?? {fadeTime =Ndef(key).fadeTime};
+				Ndef(key).fadeTime = fadeTime;
+				ndefs = ndefs.add(Ndef(key));
+				Ndef(key, object);
+				nodeTime.yield;
+				Ndef(key) <<>.in item;
+				nodeTime.yield;
+				Ndef(key).xset(\pan, arrPan[index], \chanNum, numChannels);
 			};
+			if(play, {this.play});
 		}.fork;
-
 	}
 
 	reset {arg ndefArr, system=\pan2, panArr, chanNum, playNdef=true;
