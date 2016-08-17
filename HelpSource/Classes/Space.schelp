@@ -47,14 +47,13 @@ Ndef(\y, {SinOsc.ar(880,0,0.1)}).ar(1);
 ~arr = [Ndef(\x), Ndef(\y)];
 )
 
-n = Space(~arr, \pan2, [-1,1]);
-n.ndef.play;
+n = Space(~arr, \pan2, [-1,1], fadeTime: 1);
 
 s.meter;
 
 n.numChannels; //number of channels
 
-n.set(~arr, Array.panDis(~arr.size, ~arr.size).scramble.postln); //evaluate several times
+n.define(~arr, Array.panDis(~arr.size, ~arr.size).scramble.postln); //evaluate several times
 
 Ndef.all.do(_.fadeTime = 6); //set fadeTimes for all Ndefs
 
@@ -62,9 +61,7 @@ Ndef(\z, {Impulse.ar(5)}).ar(1);
 
 ~arr = ~arr.add(Ndef(\z));
 
-~arr.do{|item| item.numChannels.postln}; //check input Ndefs are mono
-
-n.set(~arr, Array.panDis(~arr.size, rrand(~arr.size, ~arr.size*3)).scramble.postln);
+n.define(~arr, Array.panDis(~arr.size, rrand(~arr.size, ~arr.size*3)).scramble.postln);
 
 Ndef(\x, {Impulse.ar(3)});
 Ndef(\y, {Impulse.ar(7)});
@@ -74,7 +71,14 @@ Ndef(\y, {Impulse.ar(7)});
 [\z,\x,\y].do{|it,ind| Ndef(it, {SinOsc.ar(220*(ind+1),0,0.1)});}
 
 
-n.reset(~arr, \panB); //start a new system
+a = Array.interpolation(~arr.size,-0.5,0.5).clump(~arr.size/2);
+a.do({|item| b = b.add(item.reverse) });
+~panArr = [Array.panDis(~arr.size, ~arr.size)*pi, b.flat * pi];
+
+~panArr[0][0];
+~panArr[0][1];
+
+n.redefine(~arr, \panB, ~panArr, 4); //start a new system
 
 n.reset(~arr, \pan2);
 
@@ -87,18 +91,22 @@ Ndef.clear(6);
 
 s.boot;
 
-n = Space(system: \panB);
+Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
+Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
 
-n.ndef.play;
+~arr = [Ndef(\x), Ndef(\y)];
+
+a = Array.interpolation(~arr.size,-0.5,0.5).clump(~arr.size/2);
+a.do({|item| b = b.add(item.reverse) });
+~panArr = [Array.panDis(~arr.size, ~arr.size)*pi, b.flat * pi];
+
+n = Space(~arr, \panB, ~panArr, 4, fadeTime: 2);
 
 n.numChannels;
 
 s.meter;
 
-Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
-Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
-
-~arr = [Ndef(\x), Ndef(\y)];
+n.ndefs[0].set(\pan, -0.3)
 
 n.ndef.fadeTime = 2;
 

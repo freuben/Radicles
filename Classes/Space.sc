@@ -36,6 +36,8 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 		inputArr = ndefArr;
 		arrPan = panArr;
 
+		ndefs = [];
+
 		{
 			ndefArr.do{|item, index|
 				key = ((\space++index).asSymbol);
@@ -43,25 +45,34 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 				fadeTime ?? {fadeTime =Ndef(key).fadeTime};
 				Ndef(key).fadeTime = fadeTime;
 				ndefs = ndefs.add(Ndef(key));
-				Ndef(key, object);
+				if(arrPan.rank == 1, {
+				Ndef(key).put(0, object, extraArgs: [\pan, arrPan[index], \chanNum, numChannels]);
+				}, {
+				Ndef(key).put(0, object, extraArgs: [\pan1, arrPan[index][0],
+						\pan2, arrPan[index][1], \chanNum, numChannels]);
+				});
 				nodeTime.yield;
 				Ndef(key) <<>.in item;
 				nodeTime.yield;
+				if(arrPan.rank == 1, {
 				Ndef(key).xset(\pan, arrPan[index], \chanNum, numChannels);
+					}, {
+				Ndef(key).xset(\pan1, arrPan[index][0], \pan2, arrPan[index][1],
+						\chanNum, numChannels);
+				});
 			};
 			if(play, {this.play});
 		}.fork;
 	}
 
-	reset {arg ndefArr, system=\pan2, panArr, chanNum, playNdef=true;
+	redefine {arg ndefArr, system=\pan2, panArr, chanNum, play=true;
 		var fadeTime;
-		fadeTime = Ndef(\space).fadeTime;
+		fadeTime = ndefs[0].fadeTime;
 		{
-			Ndef(\space).clear(fadeTime);
+			ndefs.do{|item| item.clear(fadeTime)};
 			fadeTime.yield;
 			nodeTime.yield;
-			this.initSpace(ndefArr, system, panArr, chanNum, fadeTime);
-			if(playNdef, {Ndef(\space).play});
+			this.initSpace(ndefArr, system, panArr, chanNum, play, fadeTime);
 		}.fork;
 	}
 
