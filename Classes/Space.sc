@@ -67,6 +67,7 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 
 	redefine {arg ndefArr, system=\pan2, panArr, chanNum, play=true;
 		var fadeTime;
+		//not working for the moment
 		fadeTime = ndefs[0].fadeTime;
 		{
 			ndefs.do{|item| item.clear(fadeTime)};
@@ -77,7 +78,24 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 	}
 
 	clear {
-		Ndef(\space).clear
+		ndefs.do{|item| item.clear};
+	}
+
+	fadeTime {arg index, time;
+		if(index == \all, {
+			ndefs.do{|item| item.fadeTime = time};
+		}, {
+			ndefs[index].fadeTime = time
+		});
+	}
+
+	set {arg index, args;
+		//needs work
+		if(index == \all, {
+			ndefs.do{|item| item.set(args)};
+		}, {
+			ndefs[index].set(args);
+		});
 	}
 
 }

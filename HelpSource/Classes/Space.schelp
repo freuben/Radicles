@@ -75,9 +75,6 @@ a = Array.interpolation(~arr.size,-0.5,0.5).clump(~arr.size/2);
 a.do({|item| b = b.add(item.reverse) });
 ~panArr = [Array.panDis(~arr.size, ~arr.size)*pi, b.flat * pi];
 
-~panArr[0][0];
-~panArr[0][1];
-
 n.redefine(~arr, \panB, ~panArr, 4); //start a new system
 
 n.reset(~arr, \pan2);
@@ -124,33 +121,35 @@ Ndef.clear(1);
 
 s.boot;
 
-n = Space(system: \split, chanNum: 6);
-
-n.ndef.play;
-
-n.numChannels;
-
 Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
 Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
 
 ~arr = [Ndef(\x), Ndef(\y)];
 
-s.meter;
+~chanNum = 6;
+n = Space(~arr, \split, [1,3], ~chanNum);
 
-n.set(~arr, panArr: [0,2]);
+n.numChannels;
 
-n.set(~arr, panArr: [1,3]);
 
-n.set(Array.fill(6, {~arr.choose.postln}));
-
-n.clear;
-
-n = Space(system: \split); //default 8 channels
-n.ndef.play;
-
-n.set(Array.fill(8, {~arr.choose.postln}));
 
 s.meter;
+
+n.define(~arr, panArr: [0,2]);
+
+n.define(~arr, panArr: [1,3]);
+
+n.define(Array.fill(~chanNum, {~arr.choose.postln}), (0..(~chanNum-1)));
+
+Ndef.clear;
+
+~chanNum = 8;
+n = Space(Array.fill(8, {~arr.choose.postln}), \split, (0..(~chanNum-1)), ~chanNum);
+
+s.meter;
+
+n.define(Array.fill(8, {~arr.choose.postln}), (0..(~chanNum-1)));
+
 
 Ndef.clear;
 
