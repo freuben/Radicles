@@ -53,7 +53,7 @@ s.meter;
 
 n.numChannels; //number of channels
 
-n.define(~arr, Array.panDis(~arr.size, ~arr.size).scramble.postln); //evaluate several times
+n.xsetn(\pan, Array.panDis(~arr.size, ~arr.size).scramble.postln); //evaluate several times
 
 Ndef.all.do(_.fadeTime = 6); //set fadeTimes for all Ndefs
 
@@ -103,17 +103,29 @@ n.numChannels;
 
 s.meter;
 
-n.ndefs[0].set(\pan, -0.3)
+n.xset(0, \pan0, -0.3);
 
-n.ndef.fadeTime = 2;
+n.ndefs.do{|item| item.fadeTime = 2;}
 
-n.set(~arr, [[-0.5pi,0.5pi],[-0.25pi,0.25pi]]); //azimuth, elevation
+(
+n.xsetn(\pan0, [-0.5pi,0.5pi]); //azimuth
+n.xsetn(\pan1, [-0.25pi,0.25pi]); //elevation
+)
 
-n.set(~arr, [[0.75pi, -0.75pi],[0,0]]); //azimuth, elevation
+(
+n.xsetn(\pan0, [0.75pi, -0.75pi]); //azimuth
+n.xsetn(\pan1, [0,0]); //elevation
+)
 
-n.set(~arr, [[-pi,pi],[-0.5pi,0.5pi]]); //azimuth, elevation
+(
+n.xsetn(\pan0, [-pi,pi]); //azimuth
+n.xsetn(\pan1, [-0.5pi,0.5pi]); //elevation
+)
 
-n.set(~arr, [[0.5pi,-0.5pi],[0.25pi, -0.25pi]]); //azimuth, elevation
+(
+n.xsetn(\pan0, [0.5pi,-0.5pi]); //azimuth
+n.xsetn(\pan1, [0.25pi, -0.25pi]); //elevation
+)
 
 Ndef.clear(1);
 
@@ -132,12 +144,11 @@ n = Space(~arr, \split, [1,3], ~chanNum);
 n.numChannels;
 
 
-
 s.meter;
 
-n.define(~arr, panArr: [0,2]);
+n.xsetn(\pan, [0,2]);
 
-n.define(~arr, panArr: [1,3]);
+n.xsetn(\pan, [1,3]);
 
 n.define(Array.fill(~chanNum, {~arr.choose.postln}), (0..(~chanNum-1)));
 
@@ -148,7 +159,9 @@ n = Space(Array.fill(8, {~arr.choose.postln}), \split, (0..(~chanNum-1)), ~chanN
 
 s.meter;
 
-n.define(Array.fill(8, {~arr.choose.postln}), (0..(~chanNum-1)));
+Ndef.all.do(_.fadeTime = 0);
+
+n.setn(\pan, (0..(~chanNum-1)).scramble);
 
 
 Ndef.clear;

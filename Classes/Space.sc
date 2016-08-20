@@ -93,7 +93,7 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 		if(args[0].isInteger.not, {
 			ndefs.do{|item| item.set(*args)};
 		}, {
-			ndefs[args[0]].postln.set(*args.copyRange(1, args.size));
+			ndefs[args[0]].set(*args.copyRange(1, args.size));
 		});
 	}
 
@@ -101,8 +101,20 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 		if(args[0].isInteger.not, {
 			ndefs.do{|item| item.xset(*args)};
 		}, {
-			ndefs[args[0]].postln.xset(*args.copyRange(1, args.size));
+			ndefs[args[0]].xset(*args.copyRange(1, args.size));
 		});
+	}
+
+	setn {arg key, array;
+		array.do{|item, index|
+			this.set(index, key, *item);
+		}
+	}
+
+	xsetn {arg key, array;
+		array.do{|item, index|
+			this.xset(index, key, *item);
+		}
 	}
 
 }
