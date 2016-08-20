@@ -46,18 +46,18 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 				Ndef(key).fadeTime = fadeTime;
 				ndefs = ndefs.add(Ndef(key));
 				if(arrPan.rank == 1, {
-				Ndef(key).put(0, object, extraArgs: [\pan, arrPan[index], \chanNum, numChannels]);
+					Ndef(key).put(0, object, extraArgs: [\pan, arrPan[index], \chanNum, numChannels]);
 				}, {
-				Ndef(key).put(0, object, extraArgs: [\pan1, arrPan[index][0],
+					Ndef(key).put(0, object, extraArgs: [\pan1, arrPan[index][0],
 						\pan2, arrPan[index][1], \chanNum, numChannels]);
 				});
 				nodeTime.yield;
 				Ndef(key) <<>.in item;
 				nodeTime.yield;
 				if(arrPan.rank == 1, {
-				Ndef(key).xset(\pan, arrPan[index], \chanNum, numChannels);
-					}, {
-				Ndef(key).xset(\pan1, arrPan[index][0], \pan2, arrPan[index][1],
+					Ndef(key).xset(\pan, arrPan[index], \chanNum, numChannels);
+				}, {
+					Ndef(key).xset(\pan1, arrPan[index][0], \pan2, arrPan[index][1],
 						\chanNum, numChannels);
 				});
 			};
@@ -89,12 +89,19 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 		});
 	}
 
-	set {arg index, args;
-		//needs work
-		if(index == \all, {
-			ndefs.do{|item| item.set(args)};
+	set {| ... args|
+		if(args[0].isInteger.not, {
+			ndefs.do{|item| item.set(*args)};
 		}, {
-			ndefs[index].set(args);
+			ndefs[args[0]].postln.set(*args.copyRange(1, args.size));
+		});
+	}
+
+	xset {| ... args|
+		if(args[0].isInteger.not, {
+			ndefs.do{|item| item.xset(*args)};
+		}, {
+			ndefs[args[0]].postln.xset(*args.copyRange(1, args.size));
 		});
 	}
 
