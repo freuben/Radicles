@@ -82,16 +82,20 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 	}
 
 	fadeTime {arg index, time;
+		if(index.notNil, {
 		if(index == \all, {
 			ndefs.do{|item| item.fadeTime = time};
 		}, {
 			ndefs[index].fadeTime = time
 		});
+		}, {
+			ndefs.do{|item| item.fadeTime.postln};
+		});
 	}
 
 	set {| ... args|
 		if(args[0].isInteger.not, {
-			ndefs.do{|item| item.set(*args)};
+			ndefs.do{|item, index| item.set(args[0], args[1][index])};
 		}, {
 			ndefs[args[0]].set(*args.copyRange(1, args.size));
 		});
@@ -99,21 +103,27 @@ Space : MainImprov {var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, 
 
 	xset {| ... args|
 		if(args[0].isInteger.not, {
-			ndefs.do{|item| item.xset(*args)};
+			ndefs.do{|item, index| item.xset(args[0], args[1][index])};
 		}, {
 			ndefs[args[0]].xset(*args.copyRange(1, args.size));
 		});
 	}
 
-	setn {arg key, array;
-		array.do{|item, index|
-			this.set(index, key, *item);
+	setn {| ... args|
+		args.do{|item, index|
+			if(index.even, {
+				[item, args[index+1]].postln;
+				this.set(item, args[index+1]);
+			});
 		}
 	}
 
-	xsetn {arg key, array;
-		array.do{|item, index|
-			this.xset(index, key, *item);
+	xsetn {| ... args|
+		args.do{|item, index|
+			if(index.even, {
+				[item, args[index+1]].postln;
+				this.xset(item, args[index+1]);
+			});
 		}
 	}
 
