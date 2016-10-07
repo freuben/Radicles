@@ -101,7 +101,9 @@ CallWindow : MainImprov {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 
 			inputArr.do({|item|
 				if((item.isStringNumber).or(item.contains("-")).or((item.contains("["))
-					.and(item.contains("]"))).or((item.contains("{")).and(item.contains("}"))), {
+					.and(item.contains("]")))
+					.or((item.contains("{"))
+						.and(item.contains("}"))), {
 					case
 					{item.isStringNumber} {
 						typeArr = typeArr.add(\num);
