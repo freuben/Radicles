@@ -42,14 +42,12 @@ code::
 s.boot;
 
 (
-Ndef(\x, {SinOsc.ar(440,0,0.1)}).ar(1);
-Ndef(\y, {SinOsc.ar(880,0,0.1)}).ar(1);
+Ndef(\x, {SinOsc.ar(440,0,0.1)});
+Ndef(\y, {SinOsc.ar(880,0,0.1)});
 ~arr = [Ndef(\x), Ndef(\y)];
 )
 
 n = Space(~arr, \pan2, [-1,1], fadeTime: 1);
-
-s.meter;
 
 n.numChannels; //number of channels
 
@@ -66,20 +64,22 @@ n.define(~arr, Array.panDis(~arr.size, rrand(~arr.size, ~arr.size*3)).scramble.p
 Ndef(\x, {Impulse.ar(3)});
 Ndef(\y, {Impulse.ar(7)});
 
-[\z,\x,\y].do{|i| Ndef(i, {0});};
+[\z,\x,\y].do{|i| Ndef(i, {});};
 
 [\z,\x,\y].do{|it,ind| Ndef(it, {SinOsc.ar(220*(ind+1),0,0.1)});}
 
 
 a = Array.interpolation(~arr.size,-0.5,0.5).clump(~arr.size/2);
 a.do({|item| b = b.add(item.reverse) });
-~panArr = [Array.panDis(~arr.size, ~arr.size)*pi, b.flat * pi];
+~panArr = [Array.panDis(~arr.size, ~arr.size)*pi, b.flat * pi].flop;
 
 n.redefine(~arr, \panB, ~panArr, 4); //start a new system
 
+n.redefine(~arr, \panB, ~panArr, 8); //start a new system
+
 n.redefine(~arr, \pan2);
 
-n.ndef.numChannels;
+n.numChannels;
 
 
 Ndef.clear(6);
@@ -88,20 +88,18 @@ Ndef.clear(6);
 
 s.boot;
 
-Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
-Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
+Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2});
+Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2});
 
 ~arr = [Ndef(\x), Ndef(\y)];
 
 a = Array.interpolation(~arr.size,-0.5,0.5).clump(~arr.size/2);
 a.do({|item| b = b.add(item.reverse) });
-~panArr = [Array.panDis(~arr.size, ~arr.size)*pi, b.flat * pi];
+~panArr = [Array.panDis(~arr.size, ~arr.size)*pi, b.flat * pi].flop;
 
 n = Space(~arr, \panB, ~panArr, 4, fadeTime: 2);
 
 n.numChannels;
-
-s.meter;
 
 n.xset(0, \pan0, -0.3);
 
@@ -123,8 +121,8 @@ Ndef.clear(1);
 
 s.boot;
 
-Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2}).ar(1);
-Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2}).ar(1);
+Ndef(\x, {SinOsc.ar(440,0,0.2)*0.2});
+Ndef(\y, {SinOsc.ar(880,0,0.2)*0.2});
 
 ~arr = [Ndef(\x), Ndef(\y)];
 
@@ -133,9 +131,7 @@ n = Space(~arr, \split, [1,3], ~chanNum);
 
 n.numChannels;
 
-n.TimeTime(\all, 2);
-
-s.meter;
+n.fadeTime(\all, 2);
 
 n.xset(\pan, [0,2]);
 
@@ -143,12 +139,10 @@ n.xset(\pan, [1,3]);
 
 n.define(Array.fill(~chanNum, {~arr.choose.postln}), (0..(~chanNum-1)));
 
-Ndef.clear;
+n.ndefs.do{|item| item.clear };
 
 ~chanNum = 8;
 n = Space(Array.fill(8, {~arr.choose.postln}), \split, (0..(~chanNum-1)), ~chanNum);
-
-s.meter;
 
 Ndef.all.do(_.fadeTime = 0);
 

@@ -12,10 +12,12 @@ SynthFile : MainImprov {var filePath;
 			existFiles = existFiles.add(item.fileNameWithoutDoubleExtension.asSymbol);
 		};
 
-		classString = class.asString.capitalize;
+		classString = class.asString.firstToUpper;
+
+		classString.postln;
 
 		if(existFiles.includes(classString.asSymbol), {
-			fileName = (class.asString.capitalize ++ ".scd");
+			fileName = (class.asString.firstToUpper ++ ".scd");
 			filePath = (dir ++ fileName);
 			^filePath;
 		}, {

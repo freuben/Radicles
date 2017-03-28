@@ -44,17 +44,9 @@ SynthFile.post(\space, \split);
 
 SynthFile.dopost(\space, \panB);
 
-SynthFile.write(\space, \linpan2, [{arg numChan; numChan ?? {numChan = 2}}, {
-	arg inputArr, panArr, chanNum, vol=1;
-					panArr ?? {panArr = Array.panDis(inputArr.size);};
-					{var signal, sigArr;
-						inputArr.do({|item, index|
-							var sig;
-							sig = (\in++index).asSymbol.ar([0]);
-							sigArr = sigArr.add(LinPan2.ar(sig, panArr[index]);)
-						});
-						signal = (sigArr.sum.flat * vol);};
-}]);
+SynthFile.write(\space, \linpan2, {arg pan;
+	LinPan2.ar(\in, pan);
+});
 
 
 SynthFile.write(\play, \blabla, Array.rand(15, 0, 127));
