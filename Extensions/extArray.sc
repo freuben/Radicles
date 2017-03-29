@@ -16,4 +16,22 @@
 		^final;
 	}
 
+
+		funcSpec {var func, spec, specFunc;
+		if( this.collect({|item| item.isFunction }).includes(true), {
+			func = this.select({|item| item.isFunction })[0];
+			spec = this.reject({|item| item.isFunction }).asSpec;
+		}, {
+			spec = this.asSpec;
+		}
+		);
+		if(func.isNil, {
+			specFunc = {arg val=0; spec.map(val) };
+		}, {
+			specFunc = {arg val=0; func.value(spec.map(val) )  };
+		});
+		^specFunc;
+	}
+
 }
+

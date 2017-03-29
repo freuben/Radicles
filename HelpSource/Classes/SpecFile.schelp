@@ -37,15 +37,15 @@ SpecFile.path(\filter);
 
 SpecFile.read(\filter);
 
-a = SpecFile.read(\filter, \pch);
-a.do{|item| item.cs.postln};
-
 SpecFile.post(\filter, \pch);
 
-SpecFile.post(\midicc, \knob2);
+a = SpecFile.specs(\filter, \pch);
+a.map(0, 0.25); //map spec at index 0 with value 0.25
+a.map(3, 0); //map spec at index 3 with value 0
+a.map(3, 1); //map spec at index 3 with value 1
 
 SpecFile.remove(\filter, \pch2);
 
-SpecFile.write(\filter, \pch2, [{|val| val.linexp(0.0,1,4000,10)}, {|val| val.linlin(0,1,1,8).round(1)}, {|val| val.linexp(0.0,1,0.01,2.01)-0.01}, {|val| val.linexp(0.0,1,0.01,2.01)-0.01}, {|val| val.linlin(0.0,1,0.01,15)}, {|val| val.linlin(0.0,1,0.01,3)}]  );
+SpecFile.write(\filter, \pch2, [ [4000,10, \exp],  [1,8,\lin, 1], [0.01, 2.01, \exp, {|val| val-0.01}], [0.01, 2.01, \exp, {|val| val-0.01}], [0.01,15], [0.01,3]]);
 
 ::

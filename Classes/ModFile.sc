@@ -141,7 +141,7 @@ SynthFile : ModFile {
 
 }
 
-SpecFile : ModFile {
+SpecFile : ModFile {classvar specArr;
 
 	*path {arg class=\filter;
 		var synthFile;
@@ -171,6 +171,15 @@ SpecFile : ModFile {
 		var synthFile;
 		synthFile = this.new(\spec, class);
 		^synthFile.remove(key);
+	}
+
+	*specs {arg class=\filter, key;
+		specArr = this.read(class, key).collect{ |item| item.funcSpec };
+		^super.new(\spec, class);
+	}
+
+	map {arg index, value;
+	^specArr[index].value(value);
 	}
 
 }
