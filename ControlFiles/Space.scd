@@ -1,5 +1,7 @@
 [ [ 'pan2', {arg pan;
 	Pan2.ar(\in, pan);
+} ], [ 'linpan2', {arg pan;
+	LinPan2.ar(\in, pan);
 } ], [ 'panB', {arg pan1, pan2;
 	var  w, x, y, z, sig;
 	sig = \in;
@@ -9,6 +11,4 @@
 	var sig;
 	sig = \in;
 	sig = Out.ar(pan, sig);
-} ], [ 'linpan2', {arg pan;
-    LinPan2.ar(\in, pan);
 } ] ]

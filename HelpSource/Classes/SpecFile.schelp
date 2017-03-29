@@ -1,0 +1,51 @@
+class:: SpecFile
+summary:: Write specs into File
+related:: Classes/ModFile, Classes/Space, Classes/Filter
+categories:: LiveCoding
+
+Description::
+
+A tool for reading and writing spec files.
+
+
+classmethods::
+
+method::read
+
+Read file with classes and synth objects.
+
+argument::
+Specify ModImprov Class.
+argument::
+Key to identify synth object.
+
+method::write
+
+Write synth object for spcecific class into file.
+
+argument::
+Specify ModImprov Class.
+argument::
+Key to identify synth object.
+argument::
+Object to write into file.
+
+Examples::
+
+code::
+SpecFile.path(\filter);
+
+SpecFile.read(\filter);
+
+a = SpecFile.read(\filter, \pch);
+a.do{|item| item.cs.postln};
+
+SpecFile.post(\filter, \pch);
+
+SpecFile.post(\midicc, \knob2);
+
+SpecFile.remove(\filter, \pch2);
+
+SpecFile.write(\filter, \pch2, [{|val| val.linexp(0.0,1,4000,10)}, {|val| val.linlin(0,1,1,8).round(1)}, {|val| val.linexp(0.0,1,0.01,2.01)-0.01}, {|val| val.linexp(0.0,1,0.01,2.01)-0.01}, {|val| val.linlin(0.0,1,0.01,15)}, {|val| val.linlin(0.0,1,0.01,3)}]  );
+
+::

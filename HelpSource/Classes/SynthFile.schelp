@@ -33,8 +33,7 @@ Object to write into file.
 Examples::
 
 code::
-
-a = SynthFile(\space);
+SynthFile.path(\space);
 
 SynthFile.read(\space);
 
@@ -42,14 +41,12 @@ SynthFile.read(\space, \pan2);
 
 SynthFile.post(\space, \split);
 
-SynthFile.dopost(\space, \panB);
+SynthFile.post(\space, \panB);
+
+SynthFile.remove(\space, \linpan2);
 
 SynthFile.write(\space, \linpan2, {arg pan;
-	LinPan2.ar(\in, pan);
+    LinPan2.ar(\in, pan);
 });
-
-
-SynthFile.write(\play, \blabla, Array.rand(15, 0, 127));
-
 
 ::
