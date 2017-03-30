@@ -11,14 +11,15 @@ ModMap : MainImprov {
 		modIndex = 0;
 	}
 
-	fromFile {arg type=\sin, spec=[0,1], extraArgs, post=\ide;
+	fromFile {arg type=\sin, spec=[-1,1], extraArgs, post=\ide;
 		var ndefString, compile, ndef;
 		modIndex = modIndex + 1;
 		ndefString = ControlFile.read(\map, type).cs.replace(".map", spec.mapSpec);
 		if(extraArgs.isNil, {
 			compile = "Ndef('mod" ++ modIndex.cs ++ "', " ++ ndefString ++ ");";
 		}, {
-			compile = "Ndef('mod" ++ modIndex.cs ++ "').put(0, " ++ ndefString ++ ", extraArgs: " ++ extraArgs.cs ++ ");";
+			compile = "Ndef('mod" ++ modIndex.cs ++ "').put(0, " ++ ndefString
+			++ ", extraArgs: " ++ extraArgs.cs ++ ");";
 		});
 		compile.postin(post, \ln);
 		ndef = compile.interpret;
@@ -26,7 +27,7 @@ ModMap : MainImprov {
 		^ndef;
 	}
 
-	map {arg ndef, key=\freq, type=\sin, spec=[0,1], extraArgs, lagTime, post=\ide;
+	map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, lagTime, post=\ide;
 		var modMap;
 		ndef.lag(key, lagTime);
 		modMap = this.fromFile(type, spec, extraArgs, post);
