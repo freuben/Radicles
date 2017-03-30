@@ -2,11 +2,10 @@
 	Pan2.ar(\in, pan);
 } ], [ 'linpan2', {arg pan;
 	LinPan2.ar(\in, pan);
-} ], [ 'panB', {arg pan1, pan2;
-	var  w, x, y, z, sig;
-	sig = \in;
-	#w, x, y, z = PanB.ar(sig, pan1, pan2);
-	sig = DecodeB2.ar(\num, w, x, y);
+} ], [ 'panB', {arg arr; var a,b;
+a = Array.interpolation(arr.size,-0.5,0.5).clump(arr.size/2);
+a.do({|item| b = b.add(item.reverse) });
+[Array.panDis(arr.size, arr.size)*pi, b.flat * pi].flop;
 } ], [ 'split', {arg pan;
 	var sig;
 	sig = \in;

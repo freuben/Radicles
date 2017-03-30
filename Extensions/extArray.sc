@@ -17,7 +17,7 @@
 	}
 
 
-		funcSpec {var func, spec, specFunc;
+	funcSpec {var func, spec, specFunc;
 		if( this.collect({|item| item.isFunction }).includes(true), {
 			func = this.select({|item| item.isFunction })[0];
 			spec = this.reject({|item| item.isFunction }).asSpec;
@@ -31,6 +31,36 @@
 			specFunc = {arg val=0; func.value(spec.map(val) )  };
 		});
 		^specFunc;
+	}
+
+	mapSpec {var func, spec, stringSpec, funcString, newString, stripFunc;
+		if( this.collect({|item| item.isFunction }).includes(true), {
+			func = this.select({|item| item.isFunction })[0];
+			spec = this.reject({|item| item.isFunction });
+		}, {
+			spec = this;
+		}
+		);
+		if(spec[2].isNil, {
+			stringSpec = 	".range(" ++ spec[0] ++ ", " ++ spec[1] ++ ")";
+		}, {
+			case
+			{spec[2] == \exp} {
+				stringSpec =	".exprange(" ++ spec[0] ++ ", " ++ spec[1] ++ ")";
+			}
+			{spec[2].isNumber} {
+				stringSpec =	".curverange(" ++ spec[0] ++ ", " ++ spec[1] ++ ", " ++ spec[2] ++ ")";
+			};
+		});
+		if(func.notNil, {
+			funcString = func.cs;
+			stripFunc = funcString.replace(func.argNames[0].asString, "").replace("{","")
+			.replace("}","").replace("|","").replace("arg","").replace(";","").replace(" ", "");
+			newString = stringSpec ++ stripFunc;
+		}, {
+			newString = stringSpec;
+		});
+		^newString
 	}
 
 }

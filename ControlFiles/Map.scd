@@ -1,0 +1,1 @@
+[ [ 'sin', {arg freq=0.1, phase=0, add=0, mul=1; SinOsc.ar(freq, phase).map * mul + add } ], [ 'saw', {arg freq=0.1, add=0, mul=1; Saw.ar(freq).map * mul + add } ] ]

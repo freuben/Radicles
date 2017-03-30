@@ -1,0 +1,95 @@
+class:: ModMap
+summary:: A tool for modulating Ndefs
+related:: Classes/Ndef
+categories:: Libraries>JITLib>NodeProxy, LiveCoding
+
+Description::
+
+A tool for modulating Ndefs with predetermined ControlFiles and Specs.
+
+classmethods::
+
+method::new
+
+Create a new ModMap to modulate Ndefs.
+
+argument::
+Fade time for ModMap.
+
+instancemethods::
+
+method::map
+
+argument::
+Input Ndef
+argument::
+key for argument to be modulated
+argument::
+key for type of modulation from ControlFiles
+argument::
+spec array
+argument::
+extraArguments for modulating signal (for example to control modulation frequency)
+argument::
+lag time
+argument::
+where to post?
+
+Examples::
+
+code::
+
+a = SpecFile.read(\filter, \pch2);
+b = a[0]; //get your specs from file...
+
+
+Ndef(\play1, {arg freq=300; SinOsc.ar(freq, 0, 0.2) }).play;
+
+Ndef(\play1).fadeTime = 1;
+
+n = ModMap(0.5); //fadeTime
+
+~spec1 = [400,320,\exp, {|val| val*1}];
+
+//args: inputNdef, argToModulate, modType, spec, extraArgs (freq of modSignal), lagTime),
+~node1 = n.map(Ndef(\play1), \freq, \sin, ~spec1, [\freq, 1], n.fadeTime);
+
+//change mod frequency
+~node1.set(\freq, 0.1);
+~node1.set(\freq, 5);
+~node1.set(\freq, 0.5);
+
+Ndef(\play2, {arg freq=300; Saw.ar(freq, 0.05) }).play;
+
+Ndef(\play2).fadeTime = 1;
+
+~spec2 = [400,320,\exp, {|val| val*1}];
+
+~node2 = n.map(Ndef(\play2), \freq, \sin, ~spec2, [\freq, 0.1], n.fadeTime);
+
+//change mod frequency
+~node2.set(\freq, rrand(0.5,20));
+~node2.set(\freq, 5);
+~node2.set(\freq, 0.5);
+
+n.unmap(~node1);
+n.unmap(~node2);
+
+Ndef.clear;
+
+~index = 0;
+Ndef(\play2).controlKeys;
+~ndef.setn(~ndef.controlKeys[0], rrand(0.1,10).postln); //evaluate several times
+
+~ndef.controlKeysValues
+Ndef(\play).controlKeysValues
+
+~ndef = n.put(0, \sin, ~spec, [\freq, 0.1]);
+
+
+efSet 1 1 -> sin(0.2)
+prt -> lfo(0.2)
+
+sSet 1
+
+::

@@ -1,0 +1,52 @@
+class:: ControlFile
+summary:: Write specs into File
+related:: Classes/ModFile, Classes/Space, Classes/Filter
+categories:: LiveCoding
+
+Description::
+
+A tool for reading and writing spec files.
+
+
+classmethods::
+
+method::read
+
+Read file with classes and synth objects.
+
+argument::
+Specify ModImprov Class.
+argument::
+Key to identify synth object.
+
+method::write
+
+Write synth object for spcecific class into file.
+
+argument::
+Specify ModImprov Class.
+argument::
+Key to identify synth object.
+argument::
+Object to write into file.
+
+Examples::
+
+code::
+ControlFile.path(\space);
+
+ControlFile.read(\space);
+
+ControlFile.post(\space, \panB);
+
+ControlFile.read(\space, \panB);
+
+ControlFile.remove(\space, \panB);
+
+ControlFile.write(\space, \panB, {arg arr; var a,b;
+a = Array.interpolation(arr.size,-0.5,0.5).clump(arr.size/2);
+a.do({|item| b = b.add(item.reverse) });
+[Array.panDis(arr.size, arr.size)*pi, b.flat * pi].flop;
+});
+
+::
