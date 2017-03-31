@@ -10,7 +10,9 @@ ModFile : MainImprov {var <filePath;
 		case
 		{file == \synth} { modPath = "SynthFiles/"}
 		{file == \spec} { modPath = "SpecFiles/"}
-		{file == \control} { modPath = "ControlFiles/"};
+		{file == \control} { modPath = "ControlFiles/"}
+		{file == \description} { modPath = "DescriptionFiles/"}
+		;
 
 		dir = (mainPath ++ modPath);
 		PathName(dir).files.do{|item|
@@ -19,7 +21,7 @@ ModFile : MainImprov {var <filePath;
 
 		classString = class.asString.firstToUpper;
 
-		classString.postln;
+		/*classString.postln;*/
 
 		if(existFiles.includes(classString.asSymbol), {
 			fileName = (class.asString.firstToUpper ++ ".scd");
@@ -121,6 +123,10 @@ SynthFile : ModFile {
 		^synthFile.read(key);
 	}
 
+	* postAll {arg class=\filter;
+		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	}
+
 	* post {arg class=\filter, key;
 		var synthFile;
 		synthFile = this.new(\synth, class);
@@ -159,6 +165,10 @@ SpecFile : ModFile {classvar specArr;
 		var synthFile;
 		synthFile = this.new(\spec, class);
 		^synthFile.post(key);
+	}
+
+	* postAll {arg class=\filter;
+		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
 	* write {arg class=\filter, key, dataArr;
@@ -204,6 +214,10 @@ ControlFile : ModFile {
 		^synthFile.post(key);
 	}
 
+	* postAll {arg class=\filter;
+		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	}
+
 	* write {arg class=\filter, key, dataArr;
 		var synthFile;
 		synthFile = this.new(\control, class);
@@ -213,6 +227,44 @@ ControlFile : ModFile {
 	* remove {arg class=\filter, key;
 		var synthFile;
 		synthFile = this.new(\control, class);
+		^synthFile.remove(key);
+	}
+
+}
+
+DescriptionFile : ModFile {
+
+	*path {arg class=\filter;
+		var synthFile;
+		synthFile = this.new(\description, class);
+		^synthFile.filePath;
+	}
+
+	* read {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\description, class);
+		^synthFile.read(key);
+	}
+
+	* post {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\description, class);
+		^synthFile.post(key);
+	}
+
+	* postAll {arg class=\filter;
+		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	}
+
+	* write {arg class=\filter, key, dataArr;
+		var synthFile;
+		synthFile = this.new(\description, class);
+		^synthFile.write(key, dataArr);
+	}
+
+	* remove {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\description, class);
 		^synthFile.remove(key);
 	}
 
