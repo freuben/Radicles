@@ -189,7 +189,7 @@ SpecFile : ModFile {classvar specArr;
 	}
 
 	map {arg index, value;
-	^specArr[index].value(value);
+	^specArr[index].(value);
 	}
 
 }

@@ -26,10 +26,10 @@ GlobalHistory : MainImprov {
 		if(File.existsCaseSensitive(path), {
 			if(replace.not, {
 				Window.warnQuestion(("This global history already exist: " ++
-					"Are you sure you want to replace it?"), {writeHistoryFunc.value;});
+					"Are you sure you want to replace it?"), {writeHistoryFunc.();});
 			});
 		}, {
-			writeHistoryFunc.value;
+			writeHistoryFunc.();
 		});
 	}
 

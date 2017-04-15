@@ -55,7 +55,7 @@ CallWindow : MainImprov {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 			};
 
 			text.keyDownAction_({arg text, key, modifiers, keycode;
-				keyFunc.value(keycode);
+				keyFunc.(keycode);
 				if(recordHistory, {
 					SystemClock.sched(0.0, {arg time;
 						this.writeHistory(\keyDownAction, time, key);
@@ -248,10 +248,10 @@ CallWindow : MainImprov {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 		if(File.existsCaseSensitive(path), {
 			if(replace.not, {
 				Window.warnQuestion(("These settings already exist: " ++
-					"Are you sure you want to replace them?"), {writeFunc.value;});
+					"Are you sure you want to replace them?"), {writeFunc.();});
 			});
 		}, {
-			writeFunc.value;
+			writeFunc.();
 		});
 	}
 
@@ -286,10 +286,10 @@ CallWindow : MainImprov {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 		if(File.existsCaseSensitive(historyPath), {
 			if(replace.not, {
 				Window.warnQuestion(("This history already exist: " ++
-					"Are you sure you want to replace it?"), {writeHistoryFunc.value;});
+					"Are you sure you want to replace it?"), {writeHistoryFunc.();});
 			});
 		}, {
-			writeHistoryFunc.value;
+			writeHistoryFunc.();
 		});
 	}
 
@@ -345,7 +345,7 @@ CallWindow : MainImprov {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 					text.backspace;
 				}, {
 				text.addString(item[1]);
-				keyFunc.value(item[1].ascii, \file);
+				keyFunc.(item[1].ascii, \file);
 				});
 			};
 		}.fork(AppClock);

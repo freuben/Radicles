@@ -43,7 +43,7 @@ ModMap : MainImprov {
 		var indexNodes, thisArr;
 		modNodes.flop[0].do{|item, index| if(item.key == ndef.key, {indexNodes = index}) };
 		thisArr = modNodes[indexNodes];
-		thisArr[1].set(thisArr[2], thisArr[3].funcSpec.value(0.5) );
+		thisArr[1].set(thisArr[2], thisArr[3].funcSpec.(0.5) );
 		thisArr[0].free;
 		modNodes.removeAt(indexNodes);
 	}
