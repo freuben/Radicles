@@ -41,7 +41,7 @@
 			spec = this;
 		}
 		);
-		if(spec[2].isNil, {
+		if((spec[2].isNil).or(spec[2] == \lin), {
 			stringSpec = 	".range(" ++ spec[0] ++ ", " ++ spec[1] ++ ")";
 		}, {
 			case
@@ -61,6 +61,17 @@
 			newString = stringSpec;
 		});
 		^newString
+	}
+
+	specAdj {arg mul=1, add=0, minval, maxval, warp;
+		var specArr, newArr;
+		specArr = this.copyRange(0,1);
+		if(minval.notNil, {specArr[0] = minval});
+		if(maxval.notNil, {specArr[1] = maxval});
+		specArr = specArr * mul + add;
+		newArr = specArr ++ this.copyRange(2, this.size-1);
+		if(warp.notNil, {newArr[2] = warp});
+		^newArr;
 	}
 
 }

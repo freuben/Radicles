@@ -1,1 +1,1 @@
-[ [ 'sin', {arg freq=0.1, phase=0, add=0, mul=1; SinOsc.ar(freq, phase).map * mul + add } ], [ 'saw', {arg freq=0.1, add=0, mul=1; Saw.ar(freq).map * mul + add } ] ]
+[ [ 'sin', {arg freq=0.1, phase=0, add=0, mul=1; SinOsc.ar(freq, phase).map * mul + add } ], [ 'saw', {arg freq=0.1, add=0, mul=1; Saw.ar(freq).map * mul + add } ], [ 'lfn2', {arg freq=0.1, add=0, mul=1; LFNoise2.ar(freq).map * mul + add } ], [ 'lfn1', {arg freq=0.1, add=0, mul=1; LFNoise1.ar(freq).map * mul + add } ], [ 'lfn0', {arg freq=0.1, add=0, mul=1; LFNoise0.ar(freq).map * mul + add } ] ]

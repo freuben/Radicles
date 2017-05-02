@@ -52,7 +52,11 @@ ModFile : MainImprov {var <filePath;
 			arr = this.array;
 			if(arr.notNil, {
 				index = arr.flop[0].indexOf(key);
-				result = arr[index][1];
+				if(index.notNil, {
+					result = arr[index][1];
+				}, {
+					"Key not found".warn;
+				});
 			}, {result = nil});
 		});
 		^result;

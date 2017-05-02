@@ -12,9 +12,11 @@ ModMap : MainImprov {
 	}
 
 	fromFile {arg type=\sin, spec=[-1,1], extraArgs, post=\ide;
-		var ndefString, compile, ndef;
+		var ndefString, compile, ndef, fileData;
+		fileData = ControlFile.read(\map, type);
+		if(fileData.notNil, {
 		modIndex = modIndex + 1;
-		ndefString = ControlFile.read(\map, type).cs.replace(".map", spec.mapSpec);
+		ndefString = fileData.cs.replace(".map", spec.mapSpec);
 		if(extraArgs.isNil, {
 			compile = "Ndef('mod" ++ modIndex.cs ++ "', " ++ ndefString ++ ");";
 		}, {
@@ -24,6 +26,9 @@ ModMap : MainImprov {
 		compile.postin(post, \ln);
 		ndef = compile.interpret;
 		ndef.fadeTime = fadeTime;
+		}, {
+			"Control File not Found".warn;
+		});
 		^ndef;
 	}
 
@@ -46,6 +51,13 @@ ModMap : MainImprov {
 		thisArr[1].set(thisArr[2], thisArr[3].funcSpec.(0.5) );
 		thisArr[0].free;
 		modNodes.removeAt(indexNodes);
+	}
+
+	adjMap {arg ndef, key=\freq, type=\sin, spec=[-1,1], mul, add, extraArgs,
+		lagTime, post=\ide;
+		var newSpec;
+		newSpec = spec;
+
 	}
 
 }
