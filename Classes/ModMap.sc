@@ -1,7 +1,7 @@
 ModMap : MainImprov {
 	var <modNodes, <>fadeTime, modIndex;
 
-	*new {arg fadeTime=3;
+	*new {arg fadeTime=0.1;
 		^super.new.initModMap(fadeTime);
 	}
 
@@ -34,12 +34,14 @@ ModMap : MainImprov {
 
 	map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, lagTime, post=\ide;
 		var modMap;
+		lagTime ?? {lagTime = fadeTime;};
 		ndef.lag(key, lagTime);
 		modMap = this.fromFile(type, spec, extraArgs, post);
 		modNodes = modNodes.add([modMap, ndef, key, spec]);
 		{
 			fadeTime.yield;
 			ndef.map(key, modMap);
+			(ndef.cs ++ ".map(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").postin(post, \ln);
 		}.fork;
 		^modMap;
 	}
@@ -53,11 +55,8 @@ ModMap : MainImprov {
 		modNodes.removeAt(indexNodes);
 	}
 
-	adjMap {arg ndef, key=\freq, type=\sin, spec=[-1,1], mul, add, extraArgs,
-		lagTime, post=\ide;
-		var newSpec;
-		newSpec = spec;
-
+	ndefs {
+		^this.modNodes.flop[0];
 	}
 
 }
