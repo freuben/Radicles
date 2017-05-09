@@ -13,10 +13,6 @@ Plane : MainImprov {classvar <planeIDs, <planes;
 		planeIDs.removeAt(index);
 	}
 
-	*info {
-		planeIDs.postin(\ide, \doln);
-	}
-
 	*indexArr {var result;
 		if(planeIDs.notNil, {
 			result = ([Array.series(planeIDs.size)] ++ [planeIDs]).flop;
@@ -24,4 +20,26 @@ Plane : MainImprov {classvar <planeIDs, <planes;
 		^result;
 	}
 
+	*info {
+		this.indexArr.postin(\ide, \doln);
+	}
+
+	*getPlanes {arg type=\aplane;
+		var arr, select;
+		select = this.planeIDs.flop[0].indicesOfEqual(type);
+		select.do{|item| arr = arr.add(planes[item])};
+		^arr;
+	}
+
+	*getAPlanes {
+		^this.getPlanes(\aplane);
+	}
+
+	*getGPlanes {
+		^this.getPlanes(\gplane);
+	}
+
+	*getDPlanes {
+		^this.getPlanes(\dplane);
+	}
 }

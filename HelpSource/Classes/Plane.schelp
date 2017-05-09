@@ -1,0 +1,42 @@
+class:: Plane
+summary:: Keeps track of Planes
+related:: Classes/Ndef
+categories:: Libraries>JITLib>NodeProxy, LiveCoding
+
+Description::
+
+Main Plane class. Keeps track of Planes
+
+classmethods::
+
+method::info
+
+List all Planes with index number.
+
+classmethods::
+
+method::removeAt
+
+Removes Plane at specified index.
+
+
+Examples::
+
+code::
+
+APlane.add(\fft, \poly);
+
+GPlane.add(\chain, \mono);
+
+APlane.add(\fft, \mono);
+
+DPlane.add(\midiFile, \poly);
+
+Plane.info;
+
+a = Plane.planes; //returns array of plane classes
+
+a[0];
+a[3];
+
+::

@@ -84,4 +84,8 @@ PitchPlane : APlane {
 		settings.postln;
 	}
 
+		*remove {
+		"remove Pitch plane".postln;
+	}
+
 }

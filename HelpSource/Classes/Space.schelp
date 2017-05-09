@@ -38,7 +38,6 @@ Array of panning values
 Examples::
 
 code::
-
 s.boot;
 
 (
@@ -53,7 +52,18 @@ n.numChannels; //number of channels
 
 n.xset(\pan, Array.panDis(~arr.size, ~arr.size).scramble.postln); //evaluate several times
 
-Ndef.all.do(_.fadeTime = 6); //set fadeTimes for all Ndefs
+
+
+a = SpecFile.read(\space, \pan);
+
+m = ModMap(0.5); //fadeTime
+
+~node1 = m.map(n.ndefs[0], \pan, \sin, a, [\freq, 0.2]);
+
+~node2 = m.map(n.ndefs[1], \pan, \sin, a, [\freq, 0.1]);
+
+n.ndefs
+m.ndefs
 
 Ndef(\z, {Impulse.ar(5)}).ar(1);
 
@@ -150,6 +160,5 @@ n.set(\pan, (0..(~chanNum-1)).scramble.postln);
 
 
 Ndef.clear;
-
 
 ::
