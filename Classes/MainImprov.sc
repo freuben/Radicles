@@ -1,4 +1,4 @@
-MainImprov {var <>mainPath, <>nodeTime;
+MainImprov {var <>mainPath, <>nodeTime, <server;
 
 *new {
 		^super.new.initMainImprov;
@@ -7,6 +7,7 @@ MainImprov {var <>mainPath, <>nodeTime;
 	initMainImprov {
 		mainPath = ("~/Library/Application Support/SuperCollider/" ++
 			"Extensions/ModImprov/").standardizePath;
+		server = Server.default;
 		nodeTime = 0.08;
 	}
 
