@@ -1,7 +1,7 @@
 class:: SpecFile
 summary:: Write specs into File
 related:: Classes/ModFile, Classes/Space, Classes/Filter
-categories:: LiveCoding
+categories:: Libraries>ModImprov
 
 Description::
 

@@ -50,11 +50,11 @@ BStore : Store {classvar <playPath, <samplePath, <>playFolder=0, <>playFormat=\a
 				"BStore already exists".warn;
 			});
 		});
-		^this;
+
 	}
 
 	*bstores {var resultArr, storeArr;
-		storeArr = super.indexArr;
+		storeArr = this.indexArr;
 		storeArr.do{|item, index|
 			if((item[1][0] == \bstore), {
 				resultArr = resultArr.add(item);

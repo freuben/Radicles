@@ -1,0 +1,97 @@
+class:: BufferSystem
+summary:: A System for Buffer Allocation
+related:: Classes/Buffer
+categories:: Libraries>ModImprov
+
+Description::
+
+A System for Buffer Allocation and Bookkeeping.
+
+classmethods::
+
+
+Examples::
+
+code::
+~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/ModImprov/SoundFiles/Play/0/marilyn1.wav";
+
+BufferSystem.read(~path, {|item| item.play});
+
+BufferSystem.alloc(function: {|item| item.numChannels.postln});
+
+BufferSystem.defaultPath
+
+BufferSystem.bufferArray;
+
+BufferSystem.bufferInfo;
+
+BufferSystem.alloc(44100*8, 2, {|item| item.numChannels.postln});
+
+BufferSystem.allocAll([[1234,2], [2342, 1], [35424,1]], {|item| item.do{|buf| buf.numFrames.postln } });
+
+BufferSystem.bufferInfo.dopostln;
+
+BufferSystem.bufferInfo.flop[0].dopostln
+
+BufferSystem.add(44100*3, 2, {|item| item.numFrames.postln});
+
+BufferSystem.add(44100*3, 2, {|item| item.numChannels.postln});
+
+BufferSystem.bufferInfo.dopostln;
+
+~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/ModImprov/SoundFiles/Play/0/";
+
+BufferSystem.bufferPaths.flop[0].indexOfEqual(
+BufferSystem.getPath('marilyn1', ~path);
+)
+
+BufferSystem.add('marilyn1', ~path, function: {|item| item.play});
+BufferSystem.add('SinedPink', ~path, function: {|item| item.play});
+
+
+BufferSystem.addAll([[1234,2], [2342, 1], [35424,1]], function: {|item| item.do{|buf| buf.numFrames.postln } });
+BufferSystem.addAll(['marilyn1', 'SinedPink'], ~path, {|item| item.do{|buf| buf.play } });
+
+BufferSystem.addPairs(['marilyn1',~path, 'SinedPink',~path], function: {"done".postln});
+BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], function: {"done".postln});
+
+
+BufferSystem.defaultPath
+BufferSystem.defaultPath = ~path;
+
+BufferSystem.add(\test1, function: {|a,b,c,d| [a,b,c,d].postln});
+
+
+BufferSystem.read(~path, {|a,b,c,d| [a,b,c,d].postln});
+
+BufferSystem.get(\marilyn1);
+BufferSystem.get(\alloc0);
+BufferSystem.get(\alloc3);
+
+BufferSystem.getFile("marilyn1.wav");
+
+~path = [
+"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/tr8_glidetom.wav",
+"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/tr8_hihat.wav",
+"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/tr8_kick.wav",
+"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/tr8_tom.wav",
+"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/try1.wav",
+"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/try2.wav",
+"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/try3.wav"
+]
+
+BufferSystem.readAll(~path, {|item| item.do{|buf| buf.play} });
+
+BufferSystem.bufferArray;
+BufferSystem.bufferInfo.dopostln;
+
+BufferSystem.bufferInfo.flop[0].includesEqual(\alloc0)
+
+~path = "/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/"
+
+
+~dirPath = "/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/"
+
+BufferSystem.read(BufferBank.getPath(\try3, ~dirPath), {|a,b,c,d| [a,b,c,d].postln});
+
+::

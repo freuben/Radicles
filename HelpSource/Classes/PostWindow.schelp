@@ -1,7 +1,7 @@
 class:: PostWindow
 summary:: A call window
 related:: Classes/CallWindow, Classes/Window
-categories:: GUI>Views
+categories:: Libraries>ModImprov
 
 Description::
 

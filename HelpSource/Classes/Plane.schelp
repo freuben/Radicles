@@ -1,7 +1,7 @@
 class:: Plane
 summary:: Keeps track of Planes
 related:: Classes/Ndef
-categories:: Libraries>JITLib>NodeProxy, LiveCoding
+categories:: Libraries>ModImprov
 
 Description::
 
