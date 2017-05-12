@@ -211,15 +211,15 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 	}
 
 	*addAll {arg arr, path, function;
-		if(path.notNil, {
-			if(arr.flat[0].isNumber, {
-				//allocate arr: [frames, channels]
-				this.addAllPaths(arr, function)
-			}, {
-				this.addAllPaths(arr, path!arr.size, function);
-			});
+		if(arr.flat[0].isNumber, {
+			//allocate arr: [frames, channels]
+			this.addAllPaths(arr, function: function)
 		}, {
-			"No path specified".warn;
+			if(path.notNil, {
+				this.addAllPaths(arr, path!arr.size, function);
+			}, {
+				"No path specified".warn;
+			});
 		});
 	}
 
@@ -228,7 +228,7 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		if(arr.indexOf(nil).notNil.not, {
 			if(arr.flat[0].isNumber, {
 				//allocate arr: [frames, channels]
-				this.addAllPaths(arr.clump(2), function)
+				this.addAllPaths(arr.clump(2), function: function)
 			}, {
 				newArr = arr.clump(2).flop;
 				this.addAllPaths(newArr[0], newArr[1], function);

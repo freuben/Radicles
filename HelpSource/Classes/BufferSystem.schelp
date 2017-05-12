@@ -53,7 +53,7 @@ BufferSystem.addAll([[1234,2], [2342, 1], [35424,1]], function: {|item| item.do{
 BufferSystem.addAll(['marilyn1', 'SinedPink'], ~path, {|item| item.do{|buf| buf.play } });
 
 BufferSystem.addPairs(['marilyn1',~path, 'SinedPink',~path], {|item| item.do{|buf| buf.play } });
-BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], {|item| item.do{|buf| buf.play } });
+BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], {|item| item.do{|buf| buf.numFrames.postln } });
 
 
 BufferSystem.defaultPath
