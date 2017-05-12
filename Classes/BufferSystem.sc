@@ -55,31 +55,31 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 	*bufferPaths {var arr;
 		bufferArray.do{|item|
 			if(item.path.notNil, {
-			arr = arr.add([item.path, item]);
-		});
+				arr = arr.add([item.path, item]);
+			});
 		};
 		^arr;
 	}
 
-		*getPath {arg fileName=\test, pathDir;
+	*getPath {arg fileName=\test, pathDir;
 		var folderPath, fileIndex, selectedPath;
-				var myPath, newArray, newerArr;
+		var myPath, newArray, newerArr;
 		myPath = PathName.new(pathDir);
 		myPath.files.do{|item| newArray = newArray.add(item.fileNameWithoutExtension)};
 
-			newArray.do{|item, index|
-				if(item.asSymbol == fileName, {
-					fileIndex = index;
-				});
-			};
+		newArray.do{|item, index|
+			if(item.asSymbol == fileName, {
+				fileIndex = index;
+			});
+		};
 
-			if(fileIndex.notNil, {
+		if(fileIndex.notNil, {
 			myPath = PathName.new(pathDir);
 			myPath.files.do{|item| newerArr = newerArr.add(item.fullPath)};
-				selectedPath = newerArr[fileIndex]
-			}, {
-				"Incorrect fileName, soundfile does not exist".warn;
-			});
+			selectedPath = newerArr[fileIndex]
+		}, {
+			"Incorrect fileName, soundfile does not exist".warn;
+		});
 
 		^selectedPath;
 	}
@@ -109,23 +109,23 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		main = this.new;
 
 		server.makeBundle(nil, {
-					{
-					bufAlloc = true;
+			{
+				bufAlloc = true;
 
-					argArr.do{|item|
-			item[0] ?? {item[0] = 44100};
-			item[1] ?? {item[1] = 1};
+				argArr.do{|item|
+					item[0] ?? {item[0] = 44100};
+					item[1] ?? {item[1] = 1};
 
-				buffer = Buffer.alloc(server, item[0], item[1]).postin(\ide, \ln);
-				bufferArray = bufferArray.add(buffer);
-				returnArr = returnArr.add(buffer);
-				server.sync(condition);
+					buffer = Buffer.alloc(server, item[0], item[1]).postin(\ide, \ln);
+					bufferArray = bufferArray.add(buffer);
+					returnArr = returnArr.add(buffer);
+					server.sync(condition);
 
 				};
 				bufAlloc = false;
 				function.value(returnArr);
 
-				}.fork;
+			}.fork;
 		});
 	}
 
@@ -134,28 +134,28 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		if(arg1.isNumber, {
 			//allocate buffer: arg1: frames, arg2: channels
 			this.alloc(arg1, arg2, function)
-			}, {
-				//read buffer: arg1: fileName, arg2: pathDir
+		}, {
+			//read buffer: arg1: fileName, arg2: pathDir
 			arg2 ?? {arg2 = defaultPath};
 
 			if(arg2.notNil, {
-			getPath = this.getPath(arg1, arg2);
-			if(getPath.notNil, {
+				getPath = this.getPath(arg1, arg2);
+				if(getPath.notNil, {
 
 					getBufferPaths = this.bufferPaths;
 
 					if(getBufferPaths.notNil, {
-					getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
-					if(getIndex.isNil, {
-			this.read(getPath, function);
-					}, {
+						getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
+						if(getIndex.isNil, {
+							this.read(getPath, function);
+						}, {
 							"File already allocated as: ".postin(\ide, \ln);
 							function.value(getBufferPaths.flop[1][getIndex].postin(\ide, \ln););
-					});
+						});
 					}, {
-				this.read(getPath, function);
+						this.read(getPath, function);
 					});
-			});
+				});
 			}, {
 				"No Path Selected".warn;
 			});
@@ -163,48 +163,167 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 
 	}
 
-/*		*addAll {arg arr, path, function;
-		var getPath;
-		if(arr.flat[0].isNumber, {
-			//allocate buffer: arg1: frames, arg2: channels
-			this.allocAll(arr, function)
-			}, {
-				//read buffer: arg1: fileName, arg2: pathDir
-			path ?? {path = defaultPath};
+			*addAll {arg arr, path, function;
+		var getPath, getIndex, getBufferPaths, pathArr, stringArr, existingBuffArr, finalArr;
+	if(arr.flat[0].isNumber, {
+			//allocate arr: [frames, channels]
+	this.allocAll(arr, function)
+	}, {
+			//read buffer: arr: [fileName]
+	path ?? {path = defaultPath};
 
-			if(path.notNil, {
-				arr.do{|item|
-					getPath = getPath.add(this.getPath(item, path) );
+	if(path.notNil, {
+				arr.do{|item, index|
+				getPath = this.getPath(item, path);
+				if(getPath.notNil, {
+
+					getBufferPaths = this.bufferPaths;
+
+					if(getBufferPaths.notNil, {
+						getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
+						if(getIndex.isNil, {
+								pathArr = pathArr.add(getPath);
+						}, {
+							 pathArr = pathArr.add(getBufferPaths.flop[1][getIndex];);
+							});
+					}, {
+							pathArr = pathArr.add(getPath);
+					});
+					})
 				};
-			if(getPath.notNil, {
-			this.readAll(getPath, function);
-			});
+				pathArr.do{|item|
+					if(item.isString, {
+						stringArr = stringArr.add(item);
+				}, {
+					existingBuffArr = existingBuffArr.add(item);
+						"File already allocated as: ".postin(\ide, \ln);
+						item.postin(\ide, \ln);
+					});
+				};
+				if(stringArr.notNil, {
+					this.readAll(stringArr, {|buffs|
+						finalArr = arr.collect{|tag|	this.get(tag)};
+						function.value(finalArr);
+					});
+				}, {
+					function.value(existingBuffArr);
+				});
+
 			}, {
-				"No Path Indicated".warn;
-			});
-		});
+	"No Path Indicated".warn;
+	});
+	});
+	}
+
+		*addAllPaths {arg arr, path, function;
+		var getPath, getIndex, getBufferPaths, pathArr, stringArr, existingBuffArr, finalArr;
+	if(arr.flat[0].isNumber, {
+			//allocate arr: [frames, channels]
+	this.allocAll(arr, function)
+	}, {
+			//read buffer: arr: [fileName]
+	/*path ?? {path = defaultPath};*/
+
+	if(path.notNil, {
+				arr.do{|item, index|
+					getPath = this.getPath(item, path[index]);
+				if(getPath.notNil, {
+
+					getBufferPaths = this.bufferPaths;
+
+					if(getBufferPaths.notNil, {
+						getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
+						if(getIndex.isNil, {
+								pathArr = pathArr.add(getPath);
+						}, {
+							 pathArr = pathArr.add(getBufferPaths.flop[1][getIndex];);
+							});
+					}, {
+							pathArr = pathArr.add(getPath);
+					});
+					})
+				};
+				pathArr.do{|item|
+					if(item.isString, {
+						stringArr = stringArr.add(item);
+				}, {
+					existingBuffArr = existingBuffArr.add(item);
+						"File already allocated as: ".postin(\ide, \ln);
+						item.postin(\ide, \ln);
+					});
+				};
+				if(stringArr.notNil, {
+					this.readAll(stringArr, {|buffs|
+						finalArr = arr.collect{|tag|	this.get(tag)};
+						function.value(finalArr);
+					});
+				}, {
+					function.value(existingBuffArr);
+				});
+
+			}, {
+	"No Path Indicated".warn;
+	});
+	});
 	}
 
 	*addPairs {arg arr, function;
-		var getPath;
-		if(arr.flat[0].isNumber, {
-			//allocate buffer: [frames,channels]
-			this.allocAll(arr.clump(2), function)
-			}, {
-			//read buffer: [fileName, pathDir]
+		var getPath, getIndex, getBufferPaths, pathArr, stringArr, existingBuffArr, finalArr;
+	if(arr.flat[0].isNumber, {
+	//allocate buffer: [frames,channels]
+	this.allocAll(arr.clump(2), function)
+	}, {
+	//read buffer: [fileName, pathDir]
 
-			if(arr.notNil, {
-				arr.pairsDo{|a,b|
+/*	if(arr.notNil, {
+	arr.pairsDo{|a,b|
+	getPath = getPath.add(	this.getPath(a, b));
+	};*/
+
+		if(arr.notNil, {
+					arr.pairsDo{|a,b|
 						getPath = getPath.add(	this.getPath(a, b));
-				};
-					if(getPath.notNil, {
-					this.readAll(getPath, function);
+				if(getPath.notNil, {
+
+					getBufferPaths = this.bufferPaths;
+
+					if(getBufferPaths.notNil, {
+						getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
+						if(getIndex.isNil, {
+								pathArr = pathArr.add(getPath);
+						}, {
+							 pathArr = pathArr.add(getBufferPaths.flop[1][getIndex];);
+							});
+					}, {
+							pathArr = pathArr.add(getPath);
 					});
+					})
+				};
+				pathArr.postln;
+				pathArr.do{|item|
+					if(item.isString, {
+						stringArr = stringArr.add(item);
+				}, {
+					existingBuffArr = existingBuffArr.add(item);
+						"File already allocated as: ".postin(\ide, \ln);
+						/*item.postin(\ide, \ln);*/
+					});
+				};
+				if(stringArr.notNil, {
+					this.readAll(stringArr, {|buffs|
+						finalArr = arr.clump(2).flop[0].collect{|tag|	this.get(tag)};
+						finalArr.postln;
+						function.value(finalArr);
+					});
+				}, {
+					function.value(existingBuffArr);
+				});
+
 			}, {
-				"No Array Indicated".warn;
-			});
-		});
-	}*/
+	"No Array Indicated".warn;
+	});
+	});
+	}
 
 	*get {arg tag;
 		var resultBuf, bufInfo, bufIndex, symbols;
@@ -213,7 +332,7 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 			symbols = bufInfo.flop[0].collect{|item| item.split($.)[0].asSymbol };
 			bufIndex = symbols.indexOfEqual(tag);
 			if(bufIndex.notNil, {
-		resultBuf = bufferArray[bufIndex];
+				resultBuf = bufferArray[bufIndex];
 			}, {
 				"Tag Not Found".warn;
 			});
@@ -229,7 +348,7 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		if(bufInfo.notNil, {
 			bufIndex = bufInfo.flop[0].indexOfEqual(string.asString);
 			if(bufIndex.notNil, {
-		resultBuf = bufferArray[bufIndex];
+				resultBuf = bufferArray[bufIndex];
 			}, {
 				"File Not Found".warn;
 			});

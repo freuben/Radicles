@@ -41,7 +41,7 @@ BStore : Store {classvar <playPath, <samplePath, <>playFolder=0, <>playFormat=\a
 
 				bufferArray.do{|item|
 					if(path == item.path, {
-						bufInfo = [item.numChannels, item.bufnum,	item.numFrames, item.sampleRate];
+						bufInfo = [item.numChannels, item.bufnum, item.numFrames, item.sampleRate];
 					});
 				};
 
@@ -152,7 +152,7 @@ PlayStore : BStore {
 				bufferArray = bufferArray.add(buffer);
 				s.sync(condition);
 				bufAlloc = false;
-				function.value(buffer.numChannels, buffer.bufnum,	buffer.numFrames, buffer.sampleRate);
+				function.value(buffer.numChannels, buffer.bufnum, buffer.numFrames, buffer.sampleRate);
 			}.fork;
 		});
 
