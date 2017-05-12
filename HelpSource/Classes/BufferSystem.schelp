@@ -52,8 +52,8 @@ BufferSystem.add('SinedPink', ~path, function: {|item| item.play});
 BufferSystem.addAll([[1234,2], [2342, 1], [35424,1]], function: {|item| item.do{|buf| buf.numFrames.postln } });
 BufferSystem.addAll(['marilyn1', 'SinedPink'], ~path, {|item| item.do{|buf| buf.play } });
 
-BufferSystem.addPairs(['marilyn1',~path, 'SinedPink',~path], function: {"done".postln});
-BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], function: {"done".postln});
+BufferSystem.addPairs(['marilyn1',~path, 'SinedPink',~path], {|item| item.do{|buf| buf.play } });
+BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], {|item| item.do{|buf| buf.play } });
 
 
 BufferSystem.defaultPath
