@@ -1,4 +1,4 @@
-BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath;
+BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath, <>postWhere=\ide, <>postWin;
 
 	*new {
 		condition = Condition.new;
@@ -8,33 +8,48 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 	*read {arg pathName, function;
 		var main, buffer;
 		main = this.new;
-		server.makeBundle(nil, {
-			{
-				bufAlloc = true;
-				buffer = Buffer.read(server, pathName).postin(\ide, \ln);
-				bufferArray = bufferArray.add(buffer);
-				server.sync(condition);
-				bufAlloc = false;
-				function.value(buffer);
-			}.fork;
-		});
+		if(server.serverRunning, {
+			server.makeBundle(nil, {
+				{
+					bufAlloc = true;
+					buffer = Buffer.read(server, pathName).postin(postWhere, \ln, postWin);
+					bufferArray = bufferArray.add(buffer);
+					server.sync(condition);
+					bufAlloc = false;
+					function.value(buffer);
+				}.fork;
+			});
+		}, {"Server not running".warn});
 	}
 
 	*readAll {arg pathArr, function;
 		var main, buffer, returnArray;
 		main = this.new;
-		server.makeBundle(nil, {
-			{
-				bufAlloc = true;
-				pathArr.do{|item|
-					buffer = Buffer.read(server, item).postin(\ide, \ln);
-					bufferArray = bufferArray.add(buffer);
-					returnArray = returnArray.add(buffer);
-					server.sync(condition);
-				};
-				function.value(returnArray);
-				bufAlloc = false;
-			}.fork;
+		if(server.serverRunning, {
+			server.makeBundle(nil, {
+				{
+					bufAlloc = true;
+					pathArr.do{|item|
+						buffer = Buffer.read(server, item).postin(postWhere, \ln, postWin);
+						bufferArray = bufferArray.add(buffer);
+						returnArray = returnArray.add(buffer);
+						server.sync(condition);
+					};
+					function.value(returnArray);
+					bufAlloc = false;
+				}.fork;
+			});
+		}, {"Server not running".warn});
+	}
+
+	*readDir {arg path, function;
+		var myPath, newArr;
+		if(path.notNil, {
+			myPath = PathName.new(path);
+			myPath.files.do{|item| newArr = newArr.add(item.fullPath)};
+			this.readAll(newArr, function);
+		}, {
+			"Not path specified".warn;
 		});
 	}
 
@@ -58,6 +73,16 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 				arr = arr.add([item.path, item]);
 			});
 		};
+		^arr;
+	}
+
+	*tags {var arr, buffInfo;
+		buffInfo = this.bufferInfo;
+		if(buffInfo.notNil, {
+			buffInfo.flop[0].do{|item| arr = arr.add(item.split($.)[0].asSymbol); };
+		}, {
+			"No tags, add Buffers first".warn;
+		});
 		^arr;
 	}
 
@@ -91,15 +116,19 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		numFrames ?? {numFrames = 44100};
 		numChannels ?? {numChannels = 1};
 
-		server.makeBundle(nil, {
-			{
-				bufAlloc = true;
-				buffer = Buffer.alloc(server, numFrames, numChannels).postin(\ide, \ln);
-				bufferArray = bufferArray.add(buffer);
-				server.sync(condition);
-				bufAlloc = false;
-				function.value(buffer);
-			}.fork;
+		if(server.serverRunning, {
+			server.makeBundle(nil, {
+				{
+					bufAlloc = true;
+					buffer = Buffer.alloc(server, numFrames, numChannels).postin(postWhere, \ln, postWin);
+					bufferArray = bufferArray.add(buffer);
+					server.sync(condition);
+					bufAlloc = false;
+					function.value(buffer);
+				}.fork;
+			});
+		}, {
+			"Server is not running".warn;
 		});
 
 	}
@@ -107,25 +136,28 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 	*allocAll {arg argArr, function;
 		var main, buffer, returnArr;
 		main = this.new;
+		if(server.serverRunning, {
+			server.makeBundle(nil, {
+				{
+					bufAlloc = true;
 
-		server.makeBundle(nil, {
-			{
-				bufAlloc = true;
+					argArr.do{|item|
+						item[0] ?? {item[0] = 44100};
+						item[1] ?? {item[1] = 1};
 
-				argArr.do{|item|
-					item[0] ?? {item[0] = 44100};
-					item[1] ?? {item[1] = 1};
+						buffer = Buffer.alloc(server, item[0], item[1]).postin(postWhere, \ln, postWin);
+						bufferArray = bufferArray.add(buffer);
+						returnArr = returnArr.add(buffer);
+						server.sync(condition);
 
-					buffer = Buffer.alloc(server, item[0], item[1]).postin(\ide, \ln);
-					bufferArray = bufferArray.add(buffer);
-					returnArr = returnArr.add(buffer);
-					server.sync(condition);
+					};
+					bufAlloc = false;
+					function.value(returnArr);
 
-				};
-				bufAlloc = false;
-				function.value(returnArr);
-
-			}.fork;
+				}.fork;
+			});
+		}, {
+			"Server is not running".warn;
 		});
 	}
 
@@ -149,8 +181,8 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 						if(getIndex.isNil, {
 							this.read(getPath, function);
 						}, {
-							"File already allocated as: ".postin(\ide, \ln);
-							function.value(getBufferPaths.flop[1][getIndex].postin(\ide, \ln););
+							"File already allocated as: ".postin(postWhere, \ln, postWin);
+							function.value(getBufferPaths.flop[1][getIndex].postin(postWhere, \ln, postWin) );
 						});
 					}, {
 						this.read(getPath, function);
@@ -191,8 +223,8 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 						stringArr = stringArr.add(item);
 					}, {
 						existingBuffArr = existingBuffArr.add(item);
-						"File already allocated as: ".postin(\ide, \ln);
-						item.postin(\ide, \ln);
+						"File already allocated as: ".postin(postWhere, \ln, postWin);
+						item.postin(postWhere, \ln, postWin);
 					});
 				};
 				if(stringArr.notNil, {
@@ -235,6 +267,19 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 			});
 		}, {
 			"Not all infomation is specified".warn;
+		});
+	}
+
+	*addDir {arg path, function;
+		var myPath, newArr;
+		if(path.notNil, {
+			myPath = PathName.new(path);
+			myPath.files.do{|item|
+				newArr = newArr.add(item.fullPath.basename.split($.)[0].asSymbol;
+			)};
+			this.addAll(newArr, path, function);
+		}, {
+			"Not path specified".warn;
 		});
 	}
 

@@ -1,4 +1,4 @@
-MainImprov {var <>mainPath, <>nodeTime, <server;
+MainImprov {var <>mainPath, <>nodeTime, <server, <>postWin, <>postWhere;
 
 *new {
 		^super.new.initMainImprov;
@@ -9,6 +9,8 @@ MainImprov {var <>mainPath, <>nodeTime, <server;
 			"Extensions/ModImprov/").standardizePath;
 		server = Server.default;
 		nodeTime = 0.08;
+		postWhere = \ide;
+		postWin = nil;
 	}
 
 }
