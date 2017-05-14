@@ -76,16 +76,6 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		^arr;
 	}
 
-	*tags {var arr, buffInfo;
-		buffInfo = this.bufferInfo;
-		if(buffInfo.notNil, {
-			buffInfo.flop[0].do{|item| arr = arr.add(item.split($.)[0].asSymbol); };
-		}, {
-			"No tags, add Buffers first".warn;
-		});
-		^arr;
-	}
-
 	*getPath {arg fileName=\test, pathDir;
 		var folderPath, fileIndex, selectedPath;
 		var myPath, newArray, newerArr;
@@ -275,7 +265,7 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		if(path.notNil, {
 			myPath = PathName.new(path);
 			myPath.files.do{|item|
-				newArr = newArr.add(item.fullPath.basename.split($.)[0].asSymbol;
+				newArr = newArr.add(item.fileNameWithoutExtension.asSymbol;
 			)};
 			this.addAll(newArr, path, function);
 		}, {
@@ -283,11 +273,22 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		});
 	}
 
+	*tags {var tagArr;
+		if(bufferArray.notNil, {
+		tagArr = bufferArray.collect{ |item|
+			PathName(item.path).fileNameWithoutExtension.asSymbol
+		};
+		^tagArr;
+		}, {
+			"No buffers allocated".warn;
+		});
+	}
+
 	*get {arg tag;
 		var resultBuf, bufInfo, bufIndex, symbols;
 		bufInfo = this.bufferInfo;
 		if(bufInfo.notNil, {
-			symbols = bufInfo.flop[0].collect{|item| item.split($.)[0].asSymbol };
+			symbols = this.tags;
 			bufIndex = symbols.indexOfEqual(tag);
 			if(bufIndex.notNil, {
 				resultBuf = bufferArray[bufIndex];
@@ -314,6 +315,46 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 			"No buffers allocated".warn;
 		});
 		^resultBuf;
+	}
+
+	*arrDir {
+		^bufferArray.collect{|item| item.path.dirname }.rejectSame;
+	}
+
+	*bufferByDir {var indexArr, indexShape;
+		this.arrDir.do{|subdir, index|
+			bufferArray.do{|buf|
+				if(buf.path.dirname == subdir, {indexArr = indexArr.add(index)});
+			}
+		};
+		(indexArr.last+1).do{|item|	indexShape = indexShape.add(indexArr.indicesOfEqual(item) ); };
+		^bufferArray.reshapeLike(indexShape);
+	}
+
+	*readSubDirs {arg path, function;
+		var fullPaths;
+		PathName(path).entries.do{|subfolder|
+			subfolder.entries.do{|file| fullPaths = fullPaths.add(file.fullPath) };
+		};
+				if(fullPaths.notNil, {
+		this.readAll(fullPaths, { function.value(this.bufferByDir); });
+				}, {
+			"No subdirectories in this directory".warn;
+		});
+	}
+
+	*addSubDirs {arg path, function;
+		var arr;
+		PathName(path).entries.do{|subfolder|
+	subfolder.entries.do{|file|
+		arr = arr.add([file.fileNameWithoutExtension.asSymbol, file.fullPath.dirname]) };
+};
+		if(arr.notNil, {
+this.addAllPaths(arr.flop[0], arr.flop[1], { function.value(this.bufferByDir); });
+		}, {
+			"No subdirectories in this directory".warn;
+		});
+
 	}
 
 }
