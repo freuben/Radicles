@@ -53,19 +53,19 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		});
 	}
 
-	*bufferInfo {var array, tag, count=0;
-		bufferArray.do{|item|
-			if(item.path.notNil, {
-				tag = item.path.basename;
-			}, {
-				tag = ("alloc" ++ count).asString;
-				count = count + 1;
-			});
-			array = array.add([tag, item.numChannels, item.bufnum,
-				item.numFrames, item.sampleRate]);
-		};
-		^array;
-	}
+	/*	*bufferInfo {var array, tag, count=0;
+	bufferArray.do{|item|
+	if(item.path.notNil, {
+	tag = item.path.basename;
+	}, {
+	tag = ("alloc" ++ count).asString;
+	count = count + 1;
+	});
+	array = array.add([tag, item.numChannels, item.bufnum,
+	item.numFrames, item.sampleRate]);
+	};
+	^array;
+	}*/
 
 	*bufferPaths {var arr;
 		bufferArray.do{|item|
@@ -273,21 +273,80 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		});
 	}
 
-	*tags {var tagArr;
-		if(bufferArray.notNil, {
-		tagArr = bufferArray.collect{ |item|
-			PathName(item.path).fileNameWithoutExtension.asSymbol
+	*addAllTypes {arg arr, path, function;
+		var bufs, files, funcFiles, finalArr, indexArr, sortFunc;
+
+		bufs=[];
+		files=[];
+		arr.do{|bufInfo|
+			if(bufInfo.isArray, {
+				bufs = bufs.add(bufInfo);
+			}, {
+				files = files.add(bufInfo);
+			});
 		};
-		^tagArr;
+
+		arr.do{|item, index| if(item.isArray, {indexArr = indexArr.add(index) }); };
+		arr.do{|item, index| if(item.isArray.not, {indexArr = indexArr.add(index) }); };
+
+		funcFiles = {|files, path, func|
+			if(files.isEmpty.not, {
+				BufferSystem.addAll(files, path, func);
+			});
+		};
+
+		sortFunc = {arg sortArr;
+			var arr1, arr2;
+			arr1 = [indexArr] ++ [sortArr.flat];
+			arr2 = arr1.flop.sort({ arg a, b; a[0] <= b[0] });
+			arr2.flop[1];
+		};
+
+		if(bufs.isEmpty.not, {
+			BufferSystem.addAll(bufs, function: {|it| finalArr = finalArr.add(it);
+				funcFiles.value(files,path, {|item| finalArr = finalArr.add(item);
+					function.(sortFunc.(finalArr));
+			} )  });
+		}, {
+			funcFiles.value(files,path, {|item|
+				finalArr = finalArr.add(item);
+				function.(sortFunc.(finalArr));
+			});
+		});
+
+	}
+
+	*getBufferInfo {arg function;
+		var tagArr, count=0;
+		if(bufferArray.notNil, {
+			tagArr = bufferArray.collect{ |item|
+				var filePath, allocTag;
+				filePath = item.path;
+				if(filePath.notNil, {
+					function.(filePath).asSymbol;
+				}, {
+					allocTag = "alloc" ++ count;
+					count = count + 1;
+					allocTag.asSymbol;
+				});
+			};
+			^tagArr
 		}, {
 			"No buffers allocated".warn;
 		});
 	}
 
+	*tags {
+		^this.getBufferInfo({|filePath| PathName(filePath).fileNameWithoutExtension});
+	}
+
+	*fileNames {
+		^this.getBufferInfo({|filePath| PathName(filePath).fileName});
+	}
+
 	*get {arg tag;
-		var resultBuf, bufInfo, bufIndex, symbols;
-		bufInfo = this.bufferInfo;
-		if(bufInfo.notNil, {
+		var resultBuf, bufIndex, symbols;
+		if(bufferArray.notNil, {
 			symbols = this.tags;
 			bufIndex = symbols.indexOfEqual(tag);
 			if(bufIndex.notNil, {
@@ -302,10 +361,9 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 	}
 
 	*getFile {arg string;
-		var resultBuf, bufInfo, bufIndex;
-		bufInfo = this.bufferInfo;
-		if(bufInfo.notNil, {
-			bufIndex = bufInfo.flop[0].indexOfEqual(string.asString);
+		var resultBuf, bufIndex;
+		if(bufferArray.notNil, {
+			bufIndex = this.fileNames.indexOfEqual(string.asSymbol);
 			if(bufIndex.notNil, {
 				resultBuf = bufferArray[bufIndex];
 			}, {
@@ -336,9 +394,9 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		PathName(path).entries.do{|subfolder|
 			subfolder.entries.do{|file| fullPaths = fullPaths.add(file.fullPath) };
 		};
-				if(fullPaths.notNil, {
-		this.readAll(fullPaths, { function.value(this.bufferByDir); });
-				}, {
+		if(fullPaths.notNil, {
+			this.readAll(fullPaths, { function.value(this.bufferByDir); });
+		}, {
 			"No subdirectories in this directory".warn;
 		});
 	}
@@ -346,11 +404,11 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 	*addSubDirs {arg path, function;
 		var arr;
 		PathName(path).entries.do{|subfolder|
-	subfolder.entries.do{|file|
-		arr = arr.add([file.fileNameWithoutExtension.asSymbol, file.fullPath.dirname]) };
-};
+			subfolder.entries.do{|file|
+				arr = arr.add([file.fileNameWithoutExtension.asSymbol, file.fullPath.dirname]) };
+		};
 		if(arr.notNil, {
-this.addAllPaths(arr.flop[0], arr.flop[1], { function.value(this.bufferByDir); });
+			this.addAllPaths(arr.flop[0], arr.flop[1], { function.value(this.bufferByDir); });
 		}, {
 			"No subdirectories in this directory".warn;
 		});
