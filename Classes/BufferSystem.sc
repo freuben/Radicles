@@ -1,4 +1,5 @@
-BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath, <>postWhere=\ide, <>postWin;
+BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
+	classvar <bufAlloc, <>defaultPath, <>postWhere=\ide, <>postWin;
 
 	*new {
 		condition = Condition.new;
@@ -14,6 +15,7 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 					bufAlloc = true;
 					buffer = Buffer.read(server, pathName).postin(postWhere, \ln, postWin);
 					bufferArray = bufferArray.add(buffer);
+					tags = tags.add(this.pathToTag(pathName));
 					server.sync(condition);
 					bufAlloc = false;
 					function.value(buffer);
@@ -32,6 +34,7 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 					pathArr.do{|item|
 						buffer = Buffer.read(server, item).postin(postWhere, \ln, postWin);
 						bufferArray = bufferArray.add(buffer);
+						tags = tags.add(this.pathToTag(item));
 						returnArray = returnArray.add(buffer);
 						server.sync(condition);
 					};
@@ -53,19 +56,21 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 		});
 	}
 
-	/*	*bufferInfo {var array, tag, count=0;
-	bufferArray.do{|item|
-	if(item.path.notNil, {
-	tag = item.path.basename;
-	}, {
-	tag = ("alloc" ++ count).asString;
-	count = count + 1;
-	});
-	array = array.add([tag, item.numChannels, item.bufnum,
-	item.numFrames, item.sampleRate]);
-	};
-	^array;
-	}*/
+	*bufferInfo {var array, tag, count=0;
+		bufferArray.do{|item|
+			if(item.path.notNil, {
+				/*myPath = PathName.new(item.path);
+				tag = myPath.fileNameWithoutExtension.asSymbol;*/
+				tag = this.pathToTag(item.path);
+			}, {
+				tag = ("alloc" ++ count).asSymbol;
+				count = count + 1;
+			});
+			array = array.add([tag, item.numChannels, item.bufnum,
+				item.numFrames, item.sampleRate, item.path]);
+		};
+		^array;
+	}
 
 	*bufferPaths {var arr;
 		bufferArray.do{|item|
@@ -112,6 +117,8 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 					bufAlloc = true;
 					buffer = Buffer.alloc(server, numFrames, numChannels).postin(postWhere, \ln, postWin);
 					bufferArray = bufferArray.add(buffer);
+					tags = tags.add( ("alloc" ++ countTag).asSymbol );
+					countTag = countTag + 1;
 					server.sync(condition);
 					bufAlloc = false;
 					function.value(buffer);
@@ -137,6 +144,8 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 
 						buffer = Buffer.alloc(server, item[0], item[1]).postin(postWhere, \ln, postWin);
 						bufferArray = bufferArray.add(buffer);
+						tags = tags.add( ("alloc" ++ countTag).asSymbol );
+						countTag = countTag + 1;
 						returnArr = returnArr.add(buffer);
 						server.sync(condition);
 
@@ -316,32 +325,24 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 
 	}
 
-	*getBufferInfo {arg function;
-		var tagArr, count=0;
+	*fileNames {var tagArr;
 		if(bufferArray.notNil, {
-			tagArr = bufferArray.collect{ |item|
+			bufferArray.do{ |item|
 				var filePath, allocTag;
 				filePath = item.path;
 				if(filePath.notNil, {
-					function.(filePath).asSymbol;
-				}, {
-					allocTag = "alloc" ++ count;
-					count = count + 1;
-					allocTag.asSymbol;
+					tagArr = tagArr.add(PathName(filePath).fileName.asSymbol);
+					/*function.(filePath).asSymbol;*/
 				});
 			};
-			^tagArr
+			if(tagArr.notNil, {
+				^tagArr;
+			}, {
+				"No files allocated".warn;
+			});
 		}, {
 			"No buffers allocated".warn;
 		});
-	}
-
-	*tags {
-		^this.getBufferInfo({|filePath| PathName(filePath).fileNameWithoutExtension});
-	}
-
-	*fileNames {
-		^this.getBufferInfo({|filePath| PathName(filePath).fileName});
 	}
 
 	*get {arg tag;
@@ -361,14 +362,13 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 	}
 
 	*getFile {arg string;
-		var resultBuf, bufIndex;
+		var resultBuf;
 		if(bufferArray.notNil, {
-			bufIndex = this.fileNames.indexOfEqual(string.asSymbol);
-			if(bufIndex.notNil, {
-				resultBuf = bufferArray[bufIndex];
-			}, {
-				"File not found".warn;
-			});
+			bufferArray.do{|item|
+				if(item.path.notNil, {
+					if(string == item.path.basename, {resultBuf = item});
+				});
+			};
 		}, {
 			"No buffers allocated".warn;
 		});
@@ -413,6 +413,58 @@ BufferSystem {classvar condition, server, <bufferArray, <bufAlloc, <>defaultPath
 			"No subdirectories in this directory".warn;
 		});
 
+	}
+
+	*freeAt {arg index;
+		if(bufferArray.notNil, {
+			if(bufferArray.isEmpty.not, {
+				bufferArray[index].free;
+				bufferArray.removeAt(index);
+				tags.removeAt(index);
+			}, {
+				"Buffers system is empty".warn;
+			});
+		}, {
+			"No buffers found".warn;
+		});
+	}
+
+		*freeAtAll {arg indexArr;
+		var count=0;
+		indexArr.do{|index| this.freeAt(index - count); count = count + 1};
+	}
+
+		*free {arg tag;
+		var resultBuf, bufIndex, symbols;
+		if(bufferArray.notNil, {
+			symbols = this.tags;
+			bufIndex = symbols.indexOfEqual(tag);
+			if(bufIndex.notNil, {
+					bufferArray[bufIndex].free;
+				bufferArray.removeAt(bufIndex);
+				tags.removeAt(bufIndex);
+			}, {
+				"Tag not found".warn;
+			});
+		}, {
+			"No buffers allocated".warn;
+		});
+	}
+
+	*freeAll {arg tagArr;
+		if(tagArr.notNil, {
+		tagArr.do{|tag| this.free(tag);};
+		}, {
+			bufferArray.do{|item| item.free};
+			bufferArray = nil;
+			tags = nil;
+		});
+	}
+
+	*pathToTag {arg path;
+		var myPath;
+		myPath = PathName.new(path);
+		^myPath.fileNameWithoutExtension.asSymbol;
 	}
 
 }
