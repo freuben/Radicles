@@ -142,7 +142,8 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						item[0] ?? {item[0] = 44100};
 						item[1] ?? {item[1] = 1};
 
-						buffer = Buffer.alloc(server, item[0], item[1]).postin(postWhere, \ln, postWin);
+						buffer = Buffer.alloc(server, item[0], item[1])
+						.postin(postWhere, \ln, postWin);
 						bufferArray = bufferArray.add(buffer);
 						tags = tags.add( ("alloc" ++ countTag).asSymbol );
 						countTag = countTag + 1;
@@ -181,7 +182,8 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 							this.read(getPath, function);
 						}, {
 							"File already allocated as: ".postin(postWhere, \ln, postWin);
-							function.value(getBufferPaths.flop[1][getIndex].postin(postWhere, \ln, postWin) );
+							function.value(getBufferPaths.flop[1][getIndex]
+								.postin(postWhere, \ln, postWin) );
 						});
 					}, {
 						this.read(getPath, function);
@@ -412,15 +414,19 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 		}, {
 			"No subdirectories in this directory".warn;
 		});
-
 	}
 
 	*freeAt {arg index;
 		if(bufferArray.notNil, {
 			if(bufferArray.isEmpty.not, {
-				bufferArray[index].free;
+				if(bufferArray[index].notNil, {
+				"Free Buffer: ".postin(postWhere, \post, postWin);
+				bufferArray[index].postin(postWhere, \ln, postWin).free;
 				bufferArray.removeAt(index);
 				tags.removeAt(index);
+				}, {
+					"Index not found".warn;
+				});
 			}, {
 				"Buffers system is empty".warn;
 			});
@@ -429,18 +435,19 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 		});
 	}
 
-		*freeAtAll {arg indexArr;
+	*freeAtAll {arg indexArr;
 		var count=0;
 		indexArr.do{|index| this.freeAt(index - count); count = count + 1};
 	}
 
-		*free {arg tag;
+	*free {arg tag;
 		var resultBuf, bufIndex, symbols;
 		if(bufferArray.notNil, {
 			symbols = this.tags;
 			bufIndex = symbols.indexOfEqual(tag);
 			if(bufIndex.notNil, {
-					bufferArray[bufIndex].free;
+				"Free Buffer: ".postin(postWhere, \post, postWin);
+				bufferArray[bufIndex].postin(postWhere, \ln, postWin).free;
 				bufferArray.removeAt(bufIndex);
 				tags.removeAt(bufIndex);
 			}, {
@@ -453,9 +460,12 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 	*freeAll {arg tagArr;
 		if(tagArr.notNil, {
-		tagArr.do{|tag| this.free(tag);};
+			tagArr.do{|tag| this.free(tag);};
 		}, {
-			bufferArray.do{|item| item.free};
+			bufferArray.do{|item|
+				"Free Buffer: ".postin(postWhere, \post, postWin);
+				item.postin(postWhere, \ln, postWin).free;
+			};
 			bufferArray = nil;
 			tags = nil;
 		});
