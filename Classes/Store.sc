@@ -1,11 +1,25 @@
 Store : MainImprov {classvar <storeIDs, <stores;
 
-	*new {arg type, subtype, format, settings;
-		^super.new.initNewPlane(type, subtype, format, settings);
+	*new {
+		^super.new;
 	}
 
-	initNewPlane {arg type, subtype, format, settings;
+	*store {arg type, subtype, format, settings;
+		var return;
+		if(storeIDs.notNil, {
+		storeIDs.includesEqual([type, subtype, format, settings]).postln;
+		if(storeIDs.includesEqual([type, subtype, format, settings]).not, {
 		storeIDs = storeIDs.add([type, subtype, format, settings]);
+				return = true;
+		}, {
+				"This store already exists".warn;
+				return = false;
+		});
+		}, {
+		storeIDs = storeIDs.add([type, subtype, format, settings]);
+			return = true;
+		});
+		^return;
 	}
 
 	*removeAt {arg index;
@@ -31,12 +45,30 @@ Store : MainImprov {classvar <storeIDs, <stores;
 		^arr;
 	}
 
-	*getBStores {
-		^this.getStores(\bstore);
+	 *getBStores {
+	 	^this.getStores(\bstore);
+	 }
+
+	 *getDStores {
+	 	^this.getStores(\dstore);
+	 }
+
+	*bstoreIDs {var result;
+		storeIDs.do{|item|
+			if(item[0] == \bstore, {
+				result = result.add([item[1], item[2], item[3]]);
+			});
+			};
+			^result;
 	}
 
-	*getDStores {
-		^this.getStores(\dstore);
+		*bstores {var result;
+		storeIDs.do{|item, index|
+			if(item[0] == \bstore, {
+				result = result.add(stores[index]);
+			});
+			};
+			^result;
 	}
 
 }

@@ -65,18 +65,18 @@
 		^bol;
 	}
 
-	fileNameWithoutExtension {
-		var myPath, newArray;
-		myPath = PathName.new(this);
-		myPath.files.do{|item| newArray = newArray.add(item.fileNameWithoutExtension)};
-		^newArray
-	}
-
-	fileName {
-		var myPath, newArray;
-		myPath = PathName.new(this);
-		myPath.files.do{|item| newArray = newArray.add(item.fileName)};
-		^newArray
-	}
+	// fileNameWithoutExtension {
+	// 	var myPath, newArray;
+	// 	myPath = PathName.new(this);
+	// 	myPath.files.do{|item| newArray = newArray.add(item.fileNameWithoutExtension)};
+	// 	^newArray
+	// }
+	//
+	// fileName {
+	// 	var myPath, newArray;
+	// 	myPath = PathName.new(this);
+	// 	myPath.files.do{|item| newArray = newArray.add(item.fileName)};
+	// 	^newArray
+	// }
 
 }

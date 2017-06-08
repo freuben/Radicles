@@ -18,7 +18,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					tags = tags.add(this.pathToTag(pathName));
 					server.sync(condition);
 					bufAlloc = false;
-					function.value(buffer);
+					function.(buffer);
 				}.fork;
 			});
 		}, {"Server not running".warn});
@@ -38,7 +38,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						returnArray = returnArray.add(buffer);
 						server.sync(condition);
 					};
-					function.value(returnArray);
+					function.(returnArray);
 					bufAlloc = false;
 				}.fork;
 			});
@@ -121,7 +121,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					countTag = countTag + 1;
 					server.sync(condition);
 					bufAlloc = false;
-					function.value(buffer);
+					function.(buffer);
 				}.fork;
 			});
 		}, {
@@ -152,7 +152,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 					};
 					bufAlloc = false;
-					function.value(returnArr);
+					function.(returnArr);
 
 				}.fork;
 			});
@@ -182,7 +182,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 							this.read(getPath, function);
 						}, {
 							"File already allocated as: ".postin(postWhere, \ln, postWin);
-							function.value(getBufferPaths.flop[1][getIndex]
+							function.(getBufferPaths.flop[1][getIndex]
 								.postin(postWhere, \ln, postWin) );
 						});
 					}, {
@@ -231,10 +231,10 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 				if(stringArr.notNil, {
 					this.readAll(stringArr, {|buffs|
 						finalArr = arr.collect{|tag|	this.get(tag)};
-						function.value(finalArr);
+						function.(finalArr);
 					});
 				}, {
-					function.value(existingBuffArr);
+					function.(existingBuffArr);
 				});
 
 			}, {
@@ -248,6 +248,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 			//allocate arr: [frames, channels]
 			this.addAllPaths(arr, function: function)
 		}, {
+			path ?? {path = defaultPath};
 			if(path.notNil, {
 				this.addAllPaths(arr, path!arr.size, function);
 			}, {
@@ -273,6 +274,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 	*addDir {arg path, function;
 		var myPath, newArr;
+		path ?? {path = defaultPath};
 		if(path.notNil, {
 			myPath = PathName.new(path);
 			myPath.files.do{|item|
@@ -315,11 +317,13 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 		if(bufs.isEmpty.not, {
 			BufferSystem.addAll(bufs, function: {|it| finalArr = finalArr.add(it);
-				funcFiles.value(files,path, {|item| finalArr = finalArr.add(item);
+				path ?? {path = defaultPath};
+				funcFiles.(files,path, {|item| finalArr = finalArr.add(item);
 					function.(sortFunc.(finalArr));
 			} )  });
 		}, {
-			funcFiles.value(files,path, {|item|
+			path ?? {path = defaultPath};
+			funcFiles.(files,path, {|item|
 				finalArr = finalArr.add(item);
 				function.(sortFunc.(finalArr));
 			});
@@ -377,6 +381,20 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 		^resultBuf;
 	}
 
+	*getFromPath {arg string;
+		var resultBuf;
+		if(bufferArray.notNil, {
+			bufferArray.do{|item|
+				if(item.path.notNil, {
+					if(string == item.path, {resultBuf = item});
+				});
+			};
+		}, {
+			"No buffers allocated".warn;
+		});
+		^resultBuf;
+	}
+
 	*arrDir {
 		^bufferArray.collect{|item| item.path.dirname }.rejectSame;
 	}
@@ -393,11 +411,12 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 	*readSubDirs {arg path, function;
 		var fullPaths;
+		path ?? {path = defaultPath};
 		PathName(path).entries.do{|subfolder|
 			subfolder.entries.do{|file| fullPaths = fullPaths.add(file.fullPath) };
 		};
 		if(fullPaths.notNil, {
-			this.readAll(fullPaths, { function.value(this.bufferByDir); });
+			this.readAll(fullPaths, { function.(this.bufferByDir); });
 		}, {
 			"No subdirectories in this directory".warn;
 		});
@@ -405,12 +424,13 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 	*addSubDirs {arg path, function;
 		var arr;
+		path ?? {path = defaultPath};
 		PathName(path).entries.do{|subfolder|
 			subfolder.entries.do{|file|
 				arr = arr.add([file.fileNameWithoutExtension.asSymbol, file.fullPath.dirname]) };
 		};
 		if(arr.notNil, {
-			this.addAllPaths(arr.flop[0], arr.flop[1], { function.value(this.bufferByDir); });
+			this.addAllPaths(arr.flop[0], arr.flop[1], { function.(this.bufferByDir); });
 		}, {
 			"No subdirectories in this directory".warn;
 		});

@@ -1,9 +1,10 @@
-BStore : Store {classvar <playPath, <samplePath, <>playFolder=0, <>playFormat=\audio,
-	<>sampleFormat=\audio, condition, <bufferArray, <bufAlloc;
+BStore : Store {classvar <playPath, <samplePath, <>playFolder=0, <>playFormat=\audio;
+	classvar <>sampleFormat=\audio, <bufAlloc;
 
 	*add {arg type, settings, function;
-		var bstore, format, path, currentArr, boolean, bufInfo;
+		var format, path, boolean;
 
+		//get paths for Bufferst that require on
 		case
 		{type == \play} {
 			format = playFormat;
@@ -14,94 +15,74 @@ BStore : Store {classvar <playPath, <samplePath, <>playFolder=0, <>playFormat=\a
 			path = this.getSamplePath(format, settings);
 		};
 
-		condition = Condition.new;
-		currentArr = this.indexArr;
-
-		if(currentArr.isNil, {
-			boolean = true;
-		}, {
-			boolean = currentArr.flop[1].includesEqual([\bstore, type, format, settings]).not;
-		});
-
-		if(boolean, {
-			case
-			{type == \play} {
-				bstore = PlayStore.read(path, function);
-			}
-			{type == \sample} {
-				/*bstore = SampleStore.read(settings, format) */
-			};
-
-			this.new(\bstore, type, format, settings);
-
-			stores = stores.add(bstore);
-
-		}, {
-			if(function.notNil, {
-
-				bufferArray.do{|item|
-					if(path == item.path, {
-						bufInfo = [item.numChannels, item.bufnum, item.numFrames, item.sampleRate];
-					});
-				};
-
-				function.value(bufInfo[0], bufInfo[1], bufInfo[2], bufInfo[3]);
-			}, {
-				"BStore already exists".warn;
-			});
-		});
-
-	}
-
-	*bstores {var resultArr, storeArr;
-		storeArr = this.indexArr;
-		storeArr.do{|item, index|
-			if((item[1][0] == \bstore), {
-				resultArr = resultArr.add(item);
+		case
+		{type == \play} {
+			PlayStore.add(settings, path, {|buf|
+				if(boolean, {
+					stores = stores.add(buf);
+				});
+				function.(buf);
 			});
 		}
-		^resultArr;
+		{type == \sample} {
+			SampleStore.read(settings, format)
+		}
+		{type == \alloc} {
+			"alloc function".postln;
+		};
+
+		boolean = this.store(\bstore, type, format, settings);
 	}
 
-	*indexArr {var arr, result, bstoreArr;
-		arr = this.bstores;
-		if(arr.notNil, {
-			bstoreArr = this.bstores.flop[1];
-			result = ([Array.series(bstoreArr.size)] ++ [bstoreArr]).flop;
-		});
-		^result;
+	/*	*bstores {var resultArr, storeArr;
+	storeArr = this.indexArr;
+	storeArr.do{|item, index|
+	if((item[1][0] == \bstore), {
+	resultArr = resultArr.add(item);
+	});
 	}
+	^resultArr;
+	}*/
 
-	*info {var arr;
-		arr = this.indexArr;
-		if(arr.notNil, {
-			arr.postin(\ide, \doln);
-		}, {
-			"No active bstores".warn;
-		});
-	}
+	/*	*indexArr {var arr, result, bstoreArr;
+	arr = this.bstores;
+	if(arr.notNil, {
+	bstoreArr = this.bstores.flop[1];
+	result = ([Array.series(bstoreArr.size)] ++ [bstoreArr]).flop;
+	});
+	^result;
+	}*/
 
-	*storeIndeces {var arr, resultArr;
-		arr = this.bstores;
-		if(arr.notNil, {
-			resultArr = arr.flop[0];
-		});
-		^resultArr;
+	/*	*info {var arr;
+	arr = this.indexArr;
+	if(arr.notNil, {
+	arr.postin(\ide, \doln);
+	}, {
+	"No active bstores".warn;
+	});
+	}*/
+
+	/*	*storeIndeces {var arr, resultArr;
+	arr = this.bstores;
+	if(arr.notNil, {
+	resultArr = arr.flop[0];
+	});
+	^resultArr;
 	}
 
 	*removeAt {arg index;
-		var arr;
-		arr = this.storeIndeces;
-		if(arr.notNil, {
-			if((index > (arr.size-1)).or(index.isNegative), {
-				"Index out of bounds".warn;
-			}, {
-				super.removeAt(arr[index]);
-			});
-		}, {
-			"No active bstores".warn;
-		});
-	}
+	var arr;
+	arr = this.storeIndeces;
+	if(arr.notNil, {
+	if((index > (arr.size-1)).or(index.isNegative), {
+	"Index out of bounds".warn;
+	}, {
+	super.removeAt(arr[index]);
+	});
+	}, {
+	"No active bstores".warn;
+	});
+	}*/
 
 	*getPlayPath {arg format=\audio, fileName=\test;
 		var folderPath, mainClass, fileIndex, selectedPath;
@@ -115,48 +96,18 @@ BStore : Store {classvar <playPath, <samplePath, <>playFolder=0, <>playFormat=\a
 				folderPath = (playPath ++ "scpv/" ++ playFolder.asString);
 			});
 
-			folderPath.fileNameWithoutExtension.do{|item, index|
-				if(item.asSymbol == fileName, {
-					fileIndex = index;
-				});
-			};
-
-			if(fileIndex.notNil, {
-				selectedPath = folderPath.folderContents[fileIndex]
-			}, {
-				"Incorrect fileName, soundfile does not exist".warn;
-			});
 		}, {
 			"not a recognized audio format".warn;
 		});
 
-		^selectedPath.asString;
+		^folderPath.asString;
 	}
-
-	*contents {
-		^bufferArray;
-	}
-
 }
 
 PlayStore : BStore {
 
-	*read {arg pathName, function;
-		var main, s, buffer;
-		main = this.new;
-		s = main.server;
-		s.makeBundle(nil, {
-			{
-				bufAlloc = true;
-				buffer = Buffer.read(s, pathName).postln;
-				bufferArray = bufferArray.add(buffer);
-				s.sync(condition);
-				bufAlloc = false;
-				function.value(buffer.numChannels, buffer.bufnum, buffer.numFrames, buffer.sampleRate);
-			}.fork;
-		});
-
-		^pathName;
+	*add {arg settings, path, function;
+		BufferSystem.add(settings, path, function);
 	}
 
 	*remove {
@@ -167,7 +118,7 @@ PlayStore : BStore {
 
 SampleStore : BStore {
 
-	*read {arg settings;
+	*add {arg settings;
 
 		settings.postln;
 	}

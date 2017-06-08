@@ -5,7 +5,7 @@ categories:: Libraries>ModImprov
 
 Description::
 
-A System for Buffer Allocation and Bookkeeping.
+A System for Buffer allocation and bookkeeping.
 
 classmethods::
 
@@ -17,11 +17,9 @@ code::
 
 BufferSystem.read(~path, {|item| item.play});
 
-BufferSystem.tagArray;
+BufferSystem.tags;
 
 BufferSystem.alloc(function: {|item| item.numChannels.postln});
-
-BufferSystem.defaultPath
 
 BufferSystem.bufferArray;
 
@@ -43,9 +41,13 @@ BufferSystem.bufferInfo.dopostln;
 
 ~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/ModImprov/SoundFiles/Play/0/";
 
-BufferSystem.add('marilyn1', ~path, function: {|item| item.play});
-BufferSystem.add('SinedPink', ~path, function: {|item| item.play});
+BufferSystem.add('marilyn1', ~path, {|item| item.play});
+BufferSystem.add('SinedPink', ~path, {|item| item.play});
 
+BufferSystem.defaultPath;
+BufferSystem.defaultPath = ~path; //assign this path to defaultPath
+
+BufferSystem.add('marilyn1', function: {|item| item.play});
 
 BufferSystem.addAll([[1234,2], [2342, 1], [35424,1]], function: {|item| item.do{|buf| buf.numFrames.postln } });
 BufferSystem.addAll(['marilyn1', 'SinedPink'], ~path, {|item| item.do{|buf| buf.play } });
@@ -53,7 +55,7 @@ BufferSystem.addAll(['marilyn1', 'SinedPink'], ~path, {|item| item.do{|buf| buf.
 BufferSystem.addPairs(['marilyn1',~path, 'SinedPink',~path], {|item| item.do{|buf| buf.play } });
 BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], {|item| item.do{|buf| buf.numFrames.postln } });
 
-BufferSystem.addAllTypes(['marilyn1', [1234,2], 'SinedPink'], ~path, {|item| a = item; });
+BufferSystem.addAllTypes(['marilyn1', [1234,2], 'SinedPink'], function: {|item| a = item; });
 a.postin(\ide, \doln);
 
 (
