@@ -1,13 +1,12 @@
 Store : MainImprov {classvar <storeIDs, <stores;
 
-	*new {
+/*	*newStore {
 		^super.new;
-	}
+	}*/
 
 	*store {arg type, subtype, format, settings;
 		var return;
 		if(storeIDs.notNil, {
-		storeIDs.includesEqual([type, subtype, format, settings]).postln;
 		if(storeIDs.includesEqual([type, subtype, format, settings]).not, {
 		storeIDs = storeIDs.add([type, subtype, format, settings]);
 				return = true;
@@ -38,21 +37,6 @@ Store : MainImprov {classvar <storeIDs, <stores;
 		this.indexArr.postin(\ide, \doln);
 	}
 
-	*getStores {arg type=\bstore;
-		var arr, select;
-		select = this.storeIDs.flop[0].indicesOfEqual(type);
-		select.do{|item| arr = arr.add(stores[item])};
-		^arr;
-	}
-
-	 *getBStores {
-	 	^this.getStores(\bstore);
-	 }
-
-	 *getDStores {
-	 	^this.getStores(\dstore);
-	 }
-
 	*bstoreIDs {var result;
 		storeIDs.do{|item|
 			if(item[0] == \bstore, {
@@ -63,6 +47,24 @@ Store : MainImprov {classvar <storeIDs, <stores;
 	}
 
 		*bstores {var result;
+		storeIDs.do{|item, index|
+			if(item[0] == \bstore, {
+				result = result.add(stores[index]);
+			});
+			};
+			^result;
+	}
+
+		*dstoreIDs {var result;
+		storeIDs.do{|item|
+			if(item[0] == \bstore, {
+				result = result.add([item[1], item[2], item[3]]);
+			});
+			};
+			^result;
+	}
+
+		*dstores {var result;
 		storeIDs.do{|item, index|
 			if(item[0] == \bstore, {
 				result = result.add(stores[index]);

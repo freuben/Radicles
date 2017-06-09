@@ -11,6 +11,7 @@ ModFile : MainImprov {var <filePath;
 		{file == \synth} { modPath = "SynthFiles/"}
 		{file == \spec} { modPath = "SpecFiles/"}
 		{file == \control} { modPath = "ControlFiles/"}
+		{file == \data} { modPath = "DataFiles/"}
 		{file == \description} { modPath = "DescriptionFiles/"}
 		;
 
@@ -21,15 +22,11 @@ ModFile : MainImprov {var <filePath;
 
 		classString = class.asString.firstToUpper;
 
-		/*classString.postln;*/
-
 		if(existFiles.includes(classString.asSymbol), {
 			fileName = (class.asString.firstToUpper ++ ".scd");
 			filePath = (dir ++ fileName);
-			/*^filePath;*/
 		}, {
 			"Class not found".warn;
-			/*^filePath;*/
 		});
 	}
 
@@ -231,6 +228,44 @@ ControlFile : ModFile {
 	* remove {arg class=\filter, key;
 		var synthFile;
 		synthFile = this.new(\control, class);
+		^synthFile.remove(key);
+	}
+
+}
+
+DataFile : ModFile {
+
+	*path {arg class=\sampler;
+		var synthFile;
+		synthFile = this.new(\data, class);
+		^synthFile.filePath;
+	}
+
+	* read {arg class=\sampler, key;
+		var synthFile;
+		synthFile = this.new(\data, class);
+		^synthFile.read(key);
+	}
+
+	* post {arg class=\sampler, key;
+		var synthFile;
+		synthFile = this.new(\data, class);
+		^synthFile.post(key);
+	}
+
+	* postAll {arg class=\sampler;
+		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	}
+
+	* write {arg class=\sampler, key, dataArr;
+		var synthFile;
+		synthFile = this.new(\data, class);
+		^synthFile.write(key, dataArr);
+	}
+
+	* remove {arg class=\sampler, key;
+		var synthFile;
+		synthFile = this.new(\data, class);
 		^synthFile.remove(key);
 	}
 

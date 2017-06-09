@@ -1,0 +1,50 @@
+class:: DataFile
+summary:: Write specs into File
+related:: Classes/ModFile, Classes/Space, Classes/Filter
+categories:: Libraries>ModImprov
+
+Description::
+
+A tool for reading and writing data files.
+
+
+classmethods::
+
+method::read
+
+Read file with classes and sampler objects.
+
+argument::
+Specify ModImprov Class.
+argument::
+Key to identify synth object.
+
+method::write
+
+Write sampler object for spcecific class into file.
+
+argument::
+Specify ModImprov Class.
+argument::
+Key to identify sampler object.
+argument::
+Object to write into file.
+
+Examples::
+
+code::
+DataFile.path(\sampler);
+
+DataFile.read(\sampler).postin(\ide, \doln); //list of samplers
+
+DataFile.post(\sampler, \mbx);
+
+a = DataFile.read(\sampler, \mbx);
+a[0];
+
+DataFile.remove(\sampler, \str);
+
+DataFile.write(\sampler, \str, [\violinlong, \violinpizz, \violinshort, \violinother]);
+
+DataFile.read(\sampler).postin(\ide, \doln); //list of samplers
+::
