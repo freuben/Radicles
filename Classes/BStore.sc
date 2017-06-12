@@ -12,36 +12,42 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		}
 		{type == \sampler} {
 			format = samplerFormat;
-			path = this.getsamplerPath(format, settings);
+			path = this.getSamplerPath(format, settings);
 		}
 		{type == \alloc} {
 			format = settings[0];
 			newSettings = settings.copyRange(1,2);
 		};
 
-/*		boolean = this.store(\bstore, type, format, settings);*/
-
 		case
 		{type == \play} {
 			typeStore = PlayStore.add(settings, path, {|buf|
 				if(typeStore.notNil, {
 					boolean = this.store(\bstore, type, format, settings);
-				if(boolean, {
-					stores = stores.add(buf);
+					if(boolean, {
+						stores = stores.add(buf);
 					});
 				});
 				function.(buf);
 			});
 		}
 		{type == \sampler} {
-			SamplerStore.add(settings, format)
+			typeStore = SamplerStore.add(settings, path, {|buf|
+				if(typeStore.notNil, {
+					boolean = this.store(\bstore, type, format, settings);
+					if(boolean, {
+						stores = stores.add(buf);
+					});
+				});
+				function.(buf);
+			});
 		}
 		{type == \alloc} {
 			typeStore = AllocStore.add(newSettings, function: {|buf|
 				if(typeStore.notNil, {
 					boolean = this.store(\bstore, type, format, newSettings);
-				if(boolean, {
-					stores = stores.add(buf);
+					if(boolean, {
+						stores = stores.add(buf);
 					});
 				});
 				function.(buf);
@@ -49,21 +55,58 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		};
 	}
 
-/*	*removeAt {arg index;
-	var arr;
-	arr = this.storeIndeces;
-	if(arr.notNil, {
-	if((index > (arr.size-1)).or(index.isNegative), {
-	"Index out of bounds".warn;
-	}, {
-	super.removeAt(arr[index]);
-	});
-	}, {
-	"No active bstores".warn;
-	});
-	}*/
+	*remove {arg type, format, settings;
+		var bstoreIDs, bstoreIndex, bstores, thisBStore, freeBufArr;
+		bstoreIDs = this.bstoreIDs;
+		bstores = this.bstores;
+		if(type == \alloc, {
+			bstoreIndex = bstoreIDs.flop[1].indexOfEqual(format);
+			/*bstoreIndex = bstoreIDs.indexOfEqual([type, format, settings]);*/
+		}, {
+			bstoreIndex = bstoreIDs.indexOfEqual([type, format, settings]);
+		});
+		if(bstoreIndex.notNil, {
+			thisBStore = bstores[bstoreIndex];
 
-		*getDirPath {arg format=\audio, directory, subDir;
+			case
+			{type == \play} {
+				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
+				this.removeAt(bstoreIndex);
+
+			}
+			{type == \sampler} {
+				thisBStore.do{|item| item.postln;
+					if(bstores.flat.indicesOfEqual( item).size > 1, {
+						"dont' free".postln;
+					}, {
+						freeBufArr = freeBufArr.add(BufferSystem.bufferArray.indexOf(item));
+						"free".postln;
+					});
+				};
+				BufferSystem.freeAtAll(freeBufArr);
+				this.removeAt(bstoreIndex);
+			}
+			{type == \alloc} {
+				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
+				this.removeAt(bstoreIndex);
+			};
+
+		}, {
+			"BStore not found".warn;
+		});
+	}
+
+	*removeByIndex {arg index;
+		var ids;
+		ids = this.bstoreIDs[index];
+		if(ids.notNil, {
+			this.remove(ids[0], ids[1], ids[2]);
+		}, {
+			"BStore not found".warn;
+		});
+	}
+
+	*getDirPath {arg format=\audio, directory, subDir;
 		var folderPath, mainClass, fileIndex, selectedPath;
 		mainClass = this.new;
 		playPath = mainClass.mainPath ++ directory;
@@ -82,7 +125,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^folderPath.asString;
 	}
 
-		*getPlayPath {arg format=\audio, fileName=\test;
+	*getPlayPath {arg format=\audio, fileName=\test;
 		^this.getDirPath(format, "SoundFiles/Play/", playFolder);
 	}
 
@@ -106,9 +149,14 @@ PlayStore : BStore {
 
 SamplerStore : BStore {
 
-	*add {arg settings;
-		DataFile.read(\sampler, \mbx);
-		settings.postln;
+	*add {arg settings, path, function;
+		var samplerArr;
+		if(DataFile.read(\sampler).includes(settings), {
+			samplerArr = DataFile.read(\sampler, settings);
+			^BufferSystem.addAll(samplerArr, path, function);
+		}, {
+			"Sampler not found".warn;
+		});
 	}
 
 	*remove {
