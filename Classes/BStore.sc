@@ -4,7 +4,6 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	*add {arg type, settings, function;
 		var format, path, boolean, typeStore, newSettings;
 
-		//get paths for Bufferst that require on
 		case
 		{type == \play} {
 			format = playFormat;
@@ -21,7 +20,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 
 		case
 		{type == \play} {
-			typeStore = PlayStore.add(settings, path, {|buf|
+			typeStore = this.addPlay(settings, path, {|buf|
 				if(typeStore.notNil, {
 					boolean = this.store(\bstore, type, format, settings);
 					if(boolean, {
@@ -32,7 +31,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 			});
 		}
 		{type == \sampler} {
-			typeStore = SamplerStore.add(settings, path, {|buf|
+			typeStore = this.addSampler(settings, path, {|buf|
 				if(typeStore.notNil, {
 					boolean = this.store(\bstore, type, format, settings);
 					if(boolean, {
@@ -43,7 +42,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 			});
 		}
 		{type == \alloc} {
-			typeStore = AllocStore.add(newSettings, function: {|buf|
+			typeStore = this.addAlloc(newSettings, function: {|buf|
 				if(typeStore.notNil, {
 					boolean = this.store(\bstore, type, format, newSettings);
 					if(boolean, {
@@ -61,7 +60,6 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		bstores = this.bstores;
 		if(type == \alloc, {
 			bstoreIndex = bstoreIDs.flop[1].indexOfEqual(format);
-			/*bstoreIndex = bstoreIDs.indexOfEqual([type, format, settings]);*/
 		}, {
 			bstoreIndex = bstoreIDs.indexOfEqual([type, format, settings]);
 		});
@@ -75,22 +73,18 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 
 			}
 			{type == \sampler} {
-				thisBStore.do{|item| item.postln;
-					if(bstores.flat.indicesOfEqual( item).size > 1, {
-						"dont' free".postln;
-					}, {
+				thisBStore.do{|item|
+					if((bstores.flat.indicesOfEqual( item).size > 1).not, {
 						freeBufArr = freeBufArr.add(BufferSystem.bufferArray.indexOf(item));
-						"free".postln;
 					});
 				};
-				BufferSystem.freeAtAll(freeBufArr);
+				BufferSystem.freeAtAll(freeBufArr.sort);
 				this.removeAt(bstoreIndex);
 			}
 			{type == \alloc} {
 				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
 				this.removeAt(bstoreIndex);
 			};
-
 		}, {
 			"BStore not found".warn;
 		});
@@ -104,6 +98,31 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		}, {
 			"BStore not found".warn;
 		});
+	}
+
+	*removeByArg {arg argument, index;
+		var indices, count=0;
+		indices = this.bstoreIDs.flop[index].indicesOfEqual(argument);
+		if(indices.notNil, {
+			indices.do{|item|
+				this.removeByIndex(item-count);
+				count = count+1;
+			}
+		}, {
+			"BStore not found".warn;
+		});
+	}
+
+	*removeByType {arg type;
+		this.removeByArg(type, 0);
+	}
+
+	*removeByFormat {arg format;
+		this.removeByArg(format, 1);
+	}
+
+	*removeBySetting {arg setting;
+		this.removeByArg(setting, 2);
 	}
 
 	*getDirPath {arg format=\audio, directory, subDir;
@@ -133,23 +152,11 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^this.getDirPath(format, "SoundFiles/Sampler/", "");
 	}
 
-}
-
-PlayStore : BStore {
-
-	*add {arg settings, path, function;
+	*addPlay {arg settings, path, function;
 		^BufferSystem.add(settings, path, function);
 	}
 
-	*remove {
-		"remove play store".postln;
-	}
-
-}
-
-SamplerStore : BStore {
-
-	*add {arg settings, path, function;
+	*addSampler {arg settings, path, function;
 		var samplerArr;
 		if(DataFile.read(\sampler).includes(settings), {
 			samplerArr = DataFile.read(\sampler, settings);
@@ -159,19 +166,8 @@ SamplerStore : BStore {
 		});
 	}
 
-	*remove {
-		"remove sampler store".postln;
-	}
-}
-
-AllocStore : BStore {
-
-	*add {arg settings, function;
+	*addAlloc {arg settings, function;
 		^BufferSystem.add(settings[0], settings[1], function);
-	}
-
-	*remove {
-		"remove alloc store".postln;
 	}
 
 }
