@@ -1,21 +1,18 @@
 BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\audio;
 	classvar <>samplerFormat=\audio, <bufAlloc;
 
-	*add {arg type, settings, function;
-		var format, path, boolean, typeStore, newSettings;
+	*addRaw {arg type, format, settings, function;
+		var path, boolean, typeStore;
 
 		case
 		{type == \play} {
-			format = playFormat;
 			path = this.getPlayPath(format);
 		}
 		{type == \sampler} {
-			format = samplerFormat;
 			path = this.getSamplerPath(format, settings);
 		}
 		{type == \alloc} {
-			format = settings[0];
-			newSettings = settings.copyRange(1,2);
+			path = settings.copyRange(1,2);
 		};
 
 		case
@@ -42,9 +39,9 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 			});
 		}
 		{type == \alloc} {
-			typeStore = this.addAlloc(newSettings, function: {|buf|
+			typeStore = this.addAlloc(path, function: {|buf|
 				if(typeStore.notNil, {
-					boolean = this.store(\bstore, type, format, newSettings);
+					boolean = this.store(\bstore, type, format, path);
 					if(boolean, {
 						stores = stores.add(buf);
 					});
@@ -52,6 +49,23 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				function.(buf);
 			});
 		};
+	}
+
+	*add {arg type, settings, function;
+		var format, path, boolean, typeStore;
+
+		case
+		{type == \play} {
+			format = playFormat;
+		}
+		{type == \sampler} {
+			format = samplerFormat;
+		}
+		{type == \alloc} {
+			format = settings[0];
+		};
+
+		this.addRaw(type, format, settings, function);
 	}
 
 	*remove {arg type, format, settings;
