@@ -1,0 +1,1 @@
+[ [ 'testing1', [ [ 'bstore', 'play', 'audio', 'marilyn1' ], [ 'bstore', 'play', 'audio', 'SinedPink' ], [ 'bstore', 'alloc', 'alloc0', [ 44100, 2 ] ], [ 'bstore', 'alloc', 'alloc1', [ 44100, 2 ] ] ] ] ]

@@ -13,7 +13,6 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		}
 		{type == \alloc} {
 			path = settings;
-			/*path = settings.copyRange(1,2);*/
 		};
 
 		case
