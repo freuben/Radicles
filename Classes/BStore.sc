@@ -12,7 +12,8 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 			path = this.getSamplerPath(format, settings);
 		}
 		{type == \alloc} {
-			path = settings.copyRange(1,2);
+			path = settings;
+			/*path = settings.copyRange(1,2);*/
 		};
 
 		case
@@ -52,20 +53,40 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	}
 
 	*add {arg type, settings, function;
-		var format, path, boolean, typeStore;
+		var format, path, newSettings;
 
 		case
 		{type == \play} {
 			format = playFormat;
+			newSettings = settings;
 		}
 		{type == \sampler} {
 			format = samplerFormat;
+			newSettings = settings;
 		}
 		{type == \alloc} {
 			format = settings[0];
+			newSettings = settings.copyRange(1,2);
 		};
 
-		this.addRaw(type, format, settings, function);
+		this.addRaw(type, format, newSettings, function);
+	}
+
+	*addAll {arg array, function;
+		var arr, cond;
+		cond = Condition(false);
+		{
+			array.do{|item|
+				cond.test = false;
+				BStore.addRaw(item[0], item[1], item[2], {|buf|
+					arr = arr.add(buf);
+					cond.test = true;
+					cond.signal;
+				});
+				cond.wait;
+			};
+			function.(arr);
+		}.fork;
 	}
 
 	*remove {arg type, format, settings;

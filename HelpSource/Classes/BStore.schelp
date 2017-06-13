@@ -1,0 +1,107 @@
+class:: BStore
+summary:: ModImprov Buffer Store
+related:: Classes/Store
+categories:: Libraries>ModImprov
+
+Description::
+
+Manage Buffers for ModImprov
+
+classmethods::
+
+method::add
+
+Add a new BStore object.
+
+argument::
+type setting.
+argument::
+settings.
+argument::
+format
+
+method::remove
+
+Removes BStore object.
+
+argument::
+type setting.
+argument::
+settings.
+argument::
+format.
+
+Examples::
+
+code::
+BStore.playFormat = \scpv;
+BStore.playFormat = \audio;
+
+BStore.add(\play, \marilyn1);
+BStore.add(\play, \marilyn1, {|buf| buf.play});
+
+BStore.add(\play, \SinedPink);
+
+BStore.add(\alloc, [\alloc0, 44100,2]);
+BStore.add(\alloc, [\alloc1, 44100,2]);
+
+BStore.bstoreIDs
+BStore.bstores
+
+BStore.bstoreIDs
+BStore.bstores
+
+BStore.bstores.flat.do{|item| item.postln};
+
+
+BStore.samplerFormat = \audio;
+
+BStore.add(\sampler, \str, {|buf| buf.postln});
+
+BStore.removeByIndex(0)
+
+BStore.bstoreIDs
+
+BStore.removeByType(\play);
+BStore.removeByType(\alloc);
+BStore.removeByType(\sampler);
+BStore.bstoreIDs
+BStore.bstores.do{|item| item.do{|it| it.postln}};
+
+BufferSystem.bufferArray.dopostln;
+
+DataFile.read(\sampler).postin(\ide, \doln);
+
+BStore.add(\sampler, \hhk, {|buf| buf.do{|item| item.play } });
+BStore.add(\sampler, \tom, {|buf| buf.do{|item| item.play } });
+
+BStore.removeBySetting(\hhk);
+BStore.removeBySetting(\tom);
+
+BStore.bstoreIDs.dopostln
+BStore.stores.flat.dopostln
+
+BStore.loadBPreset(\test, {|buf| buf.postln});
+
+BStore.bstoreIDs.dopostln;
+BStore.remove(\sampler, \audio, \hhk);
+BStore.remove(\sampler, \audio, \tom);
+
+BStore.add(\sampler, \gt1, {|buf| buf.postln});
+
+BStore.bstoreIDs;
+
+a = BStore.bstoreIDs;
+
+BStore.removeBStores;
+BStore.addAll(a, {|buf| buf.postln});
+
+BStore.saveBPreset(\test2);
+BStore.removeBStores;
+
+BStore.loadBPreset(\test2, {|buf| buf.postln});
+
+BufferSystem.bufferArray.dopostln;
+
+BufferSystem.bufferArray[0]
+::

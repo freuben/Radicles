@@ -13,6 +13,7 @@ ModFile : MainImprov {var <filePath;
 		{file == \control} { modPath = "ControlFiles/"}
 		{file == \data} { modPath = "DataFiles/"}
 		{file == \description} { modPath = "DescriptionFiles/"}
+		{file == \preset} { modPath = "Settings/Presets/"}
 		;
 
 		dir = (mainPath ++ modPath);
@@ -304,6 +305,44 @@ DescriptionFile : ModFile {
 	* remove {arg class=\filter, key;
 		var synthFile;
 		synthFile = this.new(\description, class);
+		^synthFile.remove(key);
+	}
+
+}
+
+PresetFile : ModFile {
+
+	*path {arg class=\bstore;
+		var synthFile;
+		synthFile = this.new(\preset, class);
+		^synthFile.filePath;
+	}
+
+	* read {arg class=\bstore, key;
+		var synthFile;
+		synthFile = this.new(\preset, class);
+		^synthFile.read(key);
+	}
+
+	* post {arg class=\bstore, key;
+		var synthFile;
+		synthFile = this.new(\preset, class);
+		^synthFile.post(key);
+	}
+
+	* postAll {arg class=\bstore;
+		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	}
+
+	* write {arg class=\bstore, key, dataArr;
+		var synthFile;
+		synthFile = this.new(\preset, class);
+		^synthFile.write(key, dataArr);
+	}
+
+	* remove {arg class=\bstore, key;
+		var synthFile;
+		synthFile = this.new(\preset, class);
 		^synthFile.remove(key);
 	}
 

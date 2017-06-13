@@ -1,9 +1,5 @@
 Store : MainImprov {classvar <storeIDs, <stores;
 
-/*	*newStore {
-		^super.new;
-	}*/
-
 	*store {arg type, subtype, format, settings;
 		var return;
 		if(storeIDs.notNil, {
@@ -55,6 +51,41 @@ Store : MainImprov {classvar <storeIDs, <stores;
 			^result;
 	}
 
+	*removeStores {
+		storeIDs = nil;
+		stores = nil;
+		BufferSystem.freeAll;
+	}
+
+	*removeBStores {
+		var arr, count=0;
+		storeIDs.do{|item, index|
+	if(item[0] == \bstore, {
+		arr= arr.add(index);
+		});
+};
+		arr.do{|item|
+				storeIDs.removeAt(item-count);
+				stores.removeAt(item-count);
+				count = count+1;
+		};
+		BufferSystem.freeAll;
+	}
+
+		*removeDStores {
+		var arr, count=0;
+		storeIDs.do{|item, index|
+	if(item[0] == \dstore, {
+		arr= arr.add(index);
+		});
+};
+		arr.do{|item|
+				storeIDs.removeAt(item-count);
+				stores.removeAt(item-count);
+				count = count+1;
+		};
+	}
+
 		*dstoreIDs {var result;
 		storeIDs.do{|item|
 			if(item[0] == \bstore, {
@@ -71,6 +102,33 @@ Store : MainImprov {classvar <storeIDs, <stores;
 			});
 			};
 			^result;
+	}
+
+		*savePreset {arg name;
+		PresetFile.write(\store, name, storeIDs);
+	}
+
+	*loadPreset {arg name;
+		PresetFile.read(\store, name).postln;
+	}
+
+		*saveBPreset {arg name;
+		PresetFile.write(\bstore, name, this.bstoreIDs);
+	}
+
+	*loadBPreset {arg name, function;
+		var main;
+		main = this.new;
+		this.removeBStores;
+		BStore.addAll(PresetFile.read(\bstore, name), function);
+	}
+
+	*saveDPreset {arg name;
+		PresetFile.write(\dstore, name, this.dstoreIDs);
+	}
+
+	*loadDPreset {arg name;
+		PresetFile.read(\dstore, name).postln;
 	}
 
 }
