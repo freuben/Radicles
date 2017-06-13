@@ -3,15 +3,15 @@ Store : MainImprov {classvar <storeIDs, <stores;
 	*store {arg type, subtype, format, settings;
 		var return;
 		if(storeIDs.notNil, {
-		if(storeIDs.includesEqual([type, subtype, format, settings]).not, {
-		storeIDs = storeIDs.add([type, subtype, format, settings]);
+			if(storeIDs.includesEqual([type, subtype, format, settings]).not, {
+				storeIDs = storeIDs.add([type, subtype, format, settings]);
 				return = true;
-		}, {
+			}, {
 				"This store already exists".warn;
 				return = false;
-		});
+			});
 		}, {
-		storeIDs = storeIDs.add([type, subtype, format, settings]);
+			storeIDs = storeIDs.add([type, subtype, format, settings]);
 			return = true;
 		});
 		^return;
@@ -38,17 +38,17 @@ Store : MainImprov {classvar <storeIDs, <stores;
 			if(item[0] == \bstore, {
 				result = result.add([item[1], item[2], item[3]]);
 			});
-			};
-			^result;
+		};
+		^result;
 	}
 
-		*bstores {var result;
+	*bstores {var result;
 		storeIDs.do{|item, index|
 			if(item[0] == \bstore, {
 				result = result.add(stores[index]);
 			});
-			};
-			^result;
+		};
+		^result;
 	}
 
 	*removeStores {
@@ -60,65 +60,83 @@ Store : MainImprov {classvar <storeIDs, <stores;
 	*removeBStores {
 		var arr, count=0;
 		storeIDs.do{|item, index|
-	if(item[0] == \bstore, {
-		arr= arr.add(index);
-		});
-};
+			if(item[0] == \bstore, {
+				arr= arr.add(index);
+			});
+		};
 		arr.do{|item|
-				storeIDs.removeAt(item-count);
-				stores.removeAt(item-count);
-				count = count+1;
+			storeIDs.removeAt(item-count);
+			stores.removeAt(item-count);
+			count = count+1;
 		};
 		BufferSystem.freeAll;
 	}
 
-		*removeDStores {
+	*removeDStores {
 		var arr, count=0;
 		storeIDs.do{|item, index|
-	if(item[0] == \dstore, {
-		arr= arr.add(index);
-		});
-};
+			if(item[0] == \dstore, {
+				arr= arr.add(index);
+			});
+		};
 		arr.do{|item|
-				storeIDs.removeAt(item-count);
-				stores.removeAt(item-count);
-				count = count+1;
+			storeIDs.removeAt(item-count);
+			stores.removeAt(item-count);
+			count = count+1;
 		};
 	}
 
-		*dstoreIDs {var result;
+	*dstoreIDs {var result;
 		storeIDs.do{|item|
-			if(item[0] == \bstore, {
+			if(item[0] == \dstore, {
 				result = result.add([item[1], item[2], item[3]]);
 			});
-			};
-			^result;
+		};
+		^result;
 	}
 
-		*dstores {var result;
+	*dstores {var result;
 		storeIDs.do{|item, index|
-			if(item[0] == \bstore, {
+			if(item[0] == \dstore, {
 				result = result.add(stores[index]);
 			});
-			};
-			^result;
+		};
+		^result;
 	}
 
-		*savePreset {arg name;
+	*savePreset {arg name;
 		PresetFile.write(\store, name, storeIDs);
 	}
 
-	*loadPreset {arg name;
-		PresetFile.read(\store, name).postln;
+	*loadPreset {arg name, function;
+		var storeArr, bstoreArr, dstoreArr;
+		this.removeStores;
+
+		storeArr = PresetFile.read(\store, name);
+		storeArr.do{|item|
+			case
+			{item[0] == \bstore} {
+				bstoreArr = bstoreArr.add([item[1], item[2], item[3]]);
+			}
+			{item[0] == \dstore} {
+				dstoreArr = dstoreArr.add([item[1], item[2], item[3]]);
+			};
+		};
+
+		if(bstoreArr.notNil, {
+			BStore.addAll(bstoreArr.postln, function);
+		});
+		if(dstoreArr.notNil, {
+			"this is a DStrore preset".postln;
+			DStore.addAll(dstoreArr);
+		});
 	}
 
-		*saveBPreset {arg name;
+	*saveBPreset {arg name;
 		PresetFile.write(\bstore, name, this.bstoreIDs);
 	}
 
 	*loadBPreset {arg name, function;
-		var main;
-		main = this.new;
 		this.removeBStores;
 		BStore.addAll(PresetFile.read(\bstore, name), function);
 	}
