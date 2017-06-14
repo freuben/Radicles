@@ -122,5 +122,25 @@ BufferSystem.addSubDirs(~path, {|item| a =item});
 a[0].postin(\ide, \doln);
 a[1].postin(\ide, \doln);
 
+//cueSoundFile buffers for DiskIn
+~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/ModImprov/SoundFiles/Play/0/";
 
+BufferSystem.add(['marilyn1',[0,2]], ~path, {|item| item });
+BufferSystem.get('marilyn1');
+BufferSystem.free(\marilyn1);
+
+BufferSystem.addAll([['marilyn1',[0,2]], ['SinedPink',[0,2]]], ~path, {|item| item.postln });
+
+BufferSystem.tags;
+
+BufferSystem.freeAll;
+
+BufferSystem.addAllTypes([[1234*2,4], 'marilyn1', [1234,2], [1234,1], ['SinedPink', [0,1]] ], ~path, function: {|item| a = item; });
+a.postin(\ide, \doln);
+
+BufferSystem.freeAll;
+
+~dirPath = "/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/"
+
+BufferSystem.cueDir(~dirPath, 0, 1, {|item| item.postln });
 ::
