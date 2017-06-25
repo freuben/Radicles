@@ -239,7 +239,6 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						}, {
 							if(tags.includes(tagName), {
 								"File already allocated as: ".postin(postWhere, \ln, postWin);
-								this.get(tagName).postln;
 								function.(this.get(tagName).postin(postWhere, \ln, postWin) );
 							}, {
 								frames = this.fileNumFrames(getPath);
@@ -271,7 +270,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 	*addAllPaths {arg arr, path, function;
 		var getPath, getIndex, getBufferPaths, pathArr, stringArr, existingBuffArr, finalArr;
-		var cueBool, cueArgs;
+		var cueBool, cueArgs, tagName;
 		if(arr.flat[0].isNumber, {
 			this.allocAll(arr, function)
 		}, {
@@ -282,8 +281,10 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 					if(cueBool, {
 						getPath = this.getPath(item, path[index]);
+						tagName = item;
 					}, {
 						getPath = this.getPath(item[0], path[index]);
+						tagName = ("d_" ++ item[0]).asSymbol;
 						cueArgs = cueArgs.add([getPath, item[1]]);
 					});
 
@@ -296,7 +297,11 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 							if(getIndex.isNil, {
 								pathArr = pathArr.add(getPath);
 							}, {
-								pathArr = pathArr.add(getBufferPaths.flop[1][getIndex];);
+								if(tags.includes(tagName), {
+									pathArr = pathArr.add(this.get(tagName) );
+								}, {
+									pathArr = pathArr.add(getPath);
+								});
 							});
 						}, {
 							pathArr = pathArr.add(getPath);
