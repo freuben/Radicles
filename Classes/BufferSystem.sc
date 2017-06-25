@@ -59,8 +59,6 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	*bufferInfo {var array, tag, count=0;
 		bufferArray.do{|item|
 			if(item.path.notNil, {
-				/*myPath = PathName.new(item.path);
-				tag = myPath.fileNameWithoutExtension.asSymbol;*/
 				tag = this.pathToTag(item.path);
 			}, {
 				tag = ("alloc" ++ count).asSymbol;
@@ -75,7 +73,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	*bufferPaths {var arr;
 		bufferArray.do{|item|
 			if(item.path.notNil, {
-				arr = arr.add([item.path, item]);
+				arr = arr.add([item.path, item, item.numFrames]);
 			});
 		};
 		^arr;
@@ -149,7 +147,6 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						countTag = countTag + 1;
 						returnArr = returnArr.add(buffer);
 						server.sync(condition);
-
 					};
 					bufAlloc = false;
 					function.(returnArr);
@@ -162,20 +159,17 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	}
 
 	*cue {arg pathName, startFrame=0, bufSize=1, function;
-		var main, buffer, file, chanNum;
+		var main, buffer, chanNum;
 		main = this.new;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
 					bufAlloc = true;
-					file = SoundFile.new;
-					file.openRead(pathName);
-					chanNum = file.numChannels;
-					file.close;
+					chanNum = this.fileNumChannels(pathName);
 					buffer = Buffer.cueSoundFile(server, pathName, startFrame, chanNum,
-						32768*bufSize, function).postin(postWhere, \ln, postWin);
+						32768*bufSize).postin(postWhere, \ln, postWin);
 					bufferArray = bufferArray.add(buffer);
-					tags = tags.add(this.pathToTag(pathName));
+					tags = tags.add(("d_" ++ this.pathToTag(pathName)).asSymbol);
 					server.sync(condition);
 					bufAlloc = false;
 					function.(buffer);
@@ -192,10 +186,8 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 				{
 					bufAlloc = true;
 					arr.do{|item|
-						file = SoundFile.new;
-						file.openRead(item[0]);
-						chanNum = file.numChannels;
-						file.close;
+						chanNum = this.fileNumChannels(item[0]);
+
 						if(item[1].notNil, {
 							newArr = item[1];
 						}, {
@@ -204,7 +196,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						buffer = Buffer.cueSoundFile(server, item[0], newArr[0], chanNum,
 							32768*newArr[1]).postin(postWhere, \ln, postWin);
 						bufferArray = bufferArray.add(buffer);
-						tags = tags.add(this.pathToTag(item[0]));
+						tags = tags.add(("d_" ++ this.pathToTag(item[0])).asSymbol);
 						returnArray = returnArray.add(buffer);
 						server.sync(condition);
 					};
@@ -216,7 +208,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	}
 
 	*add {arg arg1, arg2, function;
-		var getPath, getIndex, getBufferPaths, cueBool;
+		var getPath, getIndex, getBufferPaths, cueBool, frames, tagName;
 		if(arg1.isNumber, {
 			//allocate buffer: arg1: frames, arg2: channels
 			this.alloc(arg1, arg2, function)
@@ -228,14 +220,14 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 				cueBool = arg1.isArray.not;
 				if(cueBool, {
 					getPath = this.getPath(arg1, arg2);
+					tagName = arg1;
 				}, {
 					getPath = this.getPath(arg1[0], arg2);
+					tagName = ("d_" ++ arg1[0]).asSymbol;
 				});
 
 				if(getPath.notNil, {
-
 					getBufferPaths = this.bufferPaths;
-
 					if(getBufferPaths.notNil, {
 						getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
 						if(getIndex.isNil, {
@@ -245,18 +237,28 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 								this.cue(getPath, arg1[1][0], arg1[1][1], function);
 							});
 						}, {
-							"File already allocated as: ".postin(postWhere, \ln, postWin);
-							function.(getBufferPaths.flop[1][getIndex]
-								.postin(postWhere, \ln, postWin) );
+							if(tags.includes(tagName), {
+								"File already allocated as: ".postin(postWhere, \ln, postWin);
+								this.get(tagName).postln;
+								function.(this.get(tagName).postin(postWhere, \ln, postWin) );
+							}, {
+								frames = this.fileNumFrames(getPath);
+								if(frames == getBufferPaths.flop[2][getIndex], {
+									this.cue(getPath, arg1[1][0], arg1[1][1], function);
+								}, {
+									this.read(getPath, function);
+								});
+							});
+
 						});
 					}, {
 						if(cueBool, {
 							this.read(getPath, function);
 						}, {
 							if(arg1[1].notNil, {
-							this.cue(getPath, arg1[1][0], arg1[1][1], function);
+								this.cue(getPath, arg1[1][0], arg1[1][1], function);
 							}, {
-							this.cue(getPath, function: function);
+								this.cue(getPath, function: function);
 							});
 						});
 					});
@@ -278,12 +280,12 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 					cueBool = item.isArray.not;
 
-				if(cueBool, {
-					getPath = this.getPath(item, path[index]);
-				}, {
-					getPath = this.getPath(item[0], path[index]);
+					if(cueBool, {
+						getPath = this.getPath(item, path[index]);
+					}, {
+						getPath = this.getPath(item[0], path[index]);
 						cueArgs = cueArgs.add([getPath, item[1]]);
-				});
+					});
 
 					if(getPath.notNil, {
 
@@ -314,18 +316,18 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 				if(stringArr.notNil, {
 
 					if(cueArgs.isNil, {
-							this.readAll(stringArr, {
-						finalArr = arr.collect{|tag|	this.get(tag)};
-						function.(finalArr);
-					});
-						}, {
-							this.cueAll(cueArgs, {
-						finalArr = arr.flop[0].collect{|tag|
-								this.get(tag)
-							};
-						function.(finalArr);
-					});
+						this.readAll(stringArr, {
+							finalArr = arr.collect{|tag|	this.get(tag)};
+							function.(finalArr);
 						});
+					}, {
+						this.cueAll(cueArgs, {
+							finalArr = arr.flop[0].collect{|tag|
+								this.get(("d_" ++ tag).asSymbol)
+							};
+							function.(finalArr);
+						});
+					});
 
 				}, {
 					function.(existingBuffArr);
@@ -406,7 +408,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 		arr.do{|bufInfo|
 			if(bufInfo.isArray, {
 				if(bufInfo[0].isNumber, {
-				bufs = bufs.add(bufInfo);
+					bufs = bufs.add(bufInfo);
 				}, {
 					cues = cues.add(bufInfo);
 				});
@@ -415,56 +417,56 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 			});
 		};
 
-arr.do{|it|
-	if(it.isArray, {
-		if(it[0].isNumber, {
-			indexSort = indexSort.add(0);
-		}, {
-			indexSort = indexSort.add(2);
-		});
-	}, {
-		indexSort = indexSort.add(1);
-	});
-};
+		arr.do{|it|
+			if(it.isArray, {
+				if(it[0].isNumber, {
+					indexSort = indexSort.add(0);
+				}, {
+					indexSort = indexSort.add(2);
+				});
+			}, {
+				indexSort = indexSort.add(1);
+			});
+		};
 
-indexSort.do{|it,in| sortIndex = sortIndex.add([it,in]) };
-sortIndex.sort{ arg a, b; a[0] <= b[0] };
+		indexSort.do{|it,in| sortIndex = sortIndex.add([it,in]) };
+		sortIndex.sort{ arg a, b; a[0] <= b[0] };
 
 		{
 			condition = Condition(false);
-	if(bufs.notEmpty, {
-			BufferSystem.addAll(bufs, function: {|item|
+			if(bufs.notEmpty, {
+				BufferSystem.addAll(bufs, function: {|item|
 					finalArr = finalArr.add(item);
 					condition.test = true;
 					condition.signal;
 				});
-		});
-		condition.wait;
+			});
+			condition.wait;
 			condition.test = false;
-	if(files.notEmpty, {
-			BufferSystem.addAll(files, path, {|item|
+			if(files.notEmpty, {
+				BufferSystem.addAll(files, path, {|item|
 					finalArr = finalArr.add(item);
 					condition.test = true;
 					condition.signal;
 				});
-		});
-		condition.wait;
+			});
+			condition.wait;
 			condition.test = false;
-	if(cues.notEmpty, {
-			BufferSystem.addAll(cues, path, {|item|
+			if(cues.notEmpty, {
+				BufferSystem.addAll(cues, path, {|item|
 					finalArr = finalArr.add(item);
 					condition.test = true;
 					condition.signal;
 
 				});
-		});
+			});
 			condition.wait;
 			finalArr = finalArr.flat;
 			newIndexArr = Array.fill(sortIndex.size, nil);
 			sortIndex.flop[1].do{|item, index| newIndexArr[item] = finalArr[index] };
 			function.(newIndexArr.flat);
 
-	}.fork;
+		}.fork;
 
 	}
 
@@ -530,6 +532,24 @@ sortIndex.sort{ arg a, b; a[0] <= b[0] };
 			"No buffers allocated".warn;
 		});
 		^resultBuf;
+	}
+
+	*fileNumChannels {arg path;
+		var file, chanNum;
+		file = SoundFile.new;
+		file.openRead(path);
+		chanNum = file.numChannels;
+		file.close;
+		^chanNum;
+	}
+
+	*fileNumFrames {arg path;
+		var file, frames;
+		file = SoundFile.new;
+		file.openRead(path);
+		frames = file.numFrames;
+		file.close;
+		^frames;
 	}
 
 	*arrDir {
