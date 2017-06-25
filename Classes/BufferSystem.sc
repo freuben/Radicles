@@ -289,9 +289,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					});
 
 					if(getPath.notNil, {
-
 						getBufferPaths = this.bufferPaths;
-
 						if(getBufferPaths.notNil, {
 							getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
 							if(getIndex.isNil, {
@@ -445,6 +443,9 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					condition.test = true;
 					condition.signal;
 				});
+			}, {
+				condition.test = true;
+				condition.signal;
 			});
 			condition.wait;
 			condition.test = false;
@@ -454,6 +455,9 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					condition.test = true;
 					condition.signal;
 				});
+			}, {
+				condition.test = true;
+				condition.signal;
 			});
 			condition.wait;
 			condition.test = false;
@@ -462,15 +466,19 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					finalArr = finalArr.add(item);
 					condition.test = true;
 					condition.signal;
-
 				});
+			}, {
+				condition.test = true;
+				condition.signal;
 			});
 			condition.wait;
+			condition.test = false;
+
 			finalArr = finalArr.flat;
 			newIndexArr = Array.fill(sortIndex.size, nil);
 			sortIndex.flop[1].do{|item, index| newIndexArr[item] = finalArr[index] };
+			newIndexArr.flat.postln;
 			function.(newIndexArr.flat);
-
 		}.fork;
 
 	}
