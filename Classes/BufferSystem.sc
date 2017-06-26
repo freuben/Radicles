@@ -1,5 +1,5 @@
 BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
-	classvar <bufAlloc, <>defaultPath, <>postWhere=\ide, <>postWin;
+	classvar <bufAlloc, <>defaultPath, <>postWhere=\ide, <>postWin, countCue=0;
 
 	*new {
 		condition = Condition.new;
@@ -73,7 +73,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	*bufferPaths {var arr;
 		bufferArray.do{|item|
 			if(item.path.notNil, {
-				arr = arr.add([item.path, item, item.numFrames]);
+				arr = arr.add([item.path, item]);
 			});
 		};
 		^arr;
@@ -169,7 +169,9 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					buffer = Buffer.cueSoundFile(server, pathName, startFrame, chanNum,
 						32768*bufSize).postin(postWhere, \ln, postWin);
 					bufferArray = bufferArray.add(buffer);
-					tags = tags.add(("d_" ++ this.pathToTag(pathName)).asSymbol);
+					tags = tags.add(("disk" ++ countCue ++ "_" ++
+						this.pathToTag(pathName)).asSymbol);
+					countCue = countCue + 1;
 					server.sync(condition);
 					bufAlloc = false;
 					function.(buffer);
@@ -179,6 +181,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	}
 
 	*cueAll {arg arr, function;
+		//arr: [ [path1, [startFrame1, bufSize1], [path2, [startFrame2, bufSize2]...]
 		var main, buffer, returnArray, file, chanNum, newArr;
 		main = this.new;
 		if(server.serverRunning, {
@@ -187,7 +190,6 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					bufAlloc = true;
 					arr.do{|item|
 						chanNum = this.fileNumChannels(item[0]);
-
 						if(item[1].notNil, {
 							newArr = item[1];
 						}, {
@@ -196,7 +198,9 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						buffer = Buffer.cueSoundFile(server, item[0], newArr[0], chanNum,
 							32768*newArr[1]).postin(postWhere, \ln, postWin);
 						bufferArray = bufferArray.add(buffer);
-						tags = tags.add(("d_" ++ this.pathToTag(item[0])).asSymbol);
+						tags = tags.add(("disk" ++ countCue ++ "_" ++
+							this.pathToTag(item[0])).asSymbol);
+						countCue = countCue + 1;
 						returnArray = returnArray.add(buffer);
 						server.sync(condition);
 					};
@@ -208,7 +212,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	}
 
 	*add {arg arg1, arg2, function;
-		var getPath, getIndex, getBufferPaths, cueBool, tagName, buffunction;
+		var getPath, getIndex, getBufferPaths, cueBool, buffunction;
 		if(arg1.isNumber, {
 			//allocate buffer: arg1: frames, arg2: channels
 			this.alloc(arg1, arg2, function)
@@ -220,10 +224,8 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 				cueBool = arg1.isArray.not;
 				if(cueBool, {
 					getPath = this.getPath(arg1, arg2);
-					tagName = arg1;
 				}, {
 					getPath = this.getPath(arg1[0], arg2);
-					tagName = ("d_" ++ arg1[0]).asSymbol;
 				});
 
 				buffunction = {
@@ -241,9 +243,13 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						if(getIndex.isNil, {
 							buffunction.();
 						}, {
-							if(tags.includes(tagName), {
+							if(cueBool, {
+							if(tags.includes(arg1), {
 								"File already allocated as: ".postin(postWhere, \ln, postWin);
-								function.(this.get(tagName).postin(postWhere, \ln, postWin) );
+								function.(this.get(arg1).postin(postWhere, \ln, postWin) );
+										 }, {
+										 	buffunction.();
+										 });
 							}, {
 								buffunction.();
 							});
@@ -260,10 +266,11 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 	*addAllPaths {arg arr, path, function;
 		var getPath, getIndex, getBufferPaths, pathArr, stringArr, existingBuffArr, finalArr;
-		var cueBool, cueArgs, tagName;
+		var cueBool, cueArgs;
 		if(arr.flat[0].isNumber, {
 			this.allocAll(arr, function)
 		}, {
+			if(arr[0].isSymbol, {arr = arr.rejectSame});
 			if(path.notNil, {
 				arr.do{|item, index|
 
@@ -271,10 +278,8 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 
 					if(cueBool, {
 						getPath = this.getPath(item, path[index]);
-						tagName = item;
 					}, {
 						getPath = this.getPath(item[0], path[index]);
-						tagName = ("d_" ++ item[0]).asSymbol;
 						cueArgs = cueArgs.add([getPath, item[1]]);
 					});
 
@@ -285,8 +290,8 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 							if(getIndex.isNil, {
 								pathArr = pathArr.add(getPath);
 							}, {
-								if(tags.includes(tagName), {
-									pathArr = pathArr.add(this.get(tagName) );
+								if(tags.includes(item), {
+									pathArr = pathArr.add(this.get(item) );
 								}, {
 									pathArr = pathArr.add(getPath);
 								});
@@ -306,22 +311,18 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						item.postin(postWhere, \ln, postWin);
 					});
 				};
-				if(stringArr.notNil, {
 
+				if(stringArr.notNil, {
 					if(cueArgs.isNil, {
 						this.readAll(stringArr, {
 							finalArr = arr.collect{|tag|	this.get(tag)};
 							function.(finalArr);
 						});
 					}, {
-						this.cueAll(cueArgs, {
-							finalArr = arr.flop[0].collect{|tag|
-								this.get(("d_" ++ tag).asSymbol)
-							};
-							function.(finalArr);
+						this.cueAll(cueArgs, {|buf|
+							function.(buf);
 						});
 					});
-
 				}, {
 					function.(existingBuffArr);
 				});

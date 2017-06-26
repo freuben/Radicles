@@ -42,4 +42,9 @@
 		this.postin(\ide, \doln);
 	}
 
+	isSymbol {var bool;
+		bool = this.class.name == 'Symbol';
+		^bool;
+	}
+
 }
