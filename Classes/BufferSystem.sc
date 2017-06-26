@@ -244,12 +244,12 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 							buffunction.();
 						}, {
 							if(cueBool, {
-							if(tags.includes(arg1), {
-								"File already allocated as: ".postin(postWhere, \ln, postWin);
-								function.(this.get(arg1).postin(postWhere, \ln, postWin) );
-										 }, {
-										 	buffunction.();
-										 });
+								if(tags.includes(arg1), {
+									"File already allocated as: ".postin(postWhere, \ln, postWin);
+									function.(this.get(arg1).postin(postWhere, \ln, postWin) );
+								}, {
+									buffunction.();
+								});
 							}, {
 								buffunction.();
 							});
@@ -647,6 +647,34 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 		var myPath;
 		myPath = PathName.new(path);
 		^myPath.fileNameWithoutExtension.asSymbol;
+	}
+
+	*dirTags {arg path;
+		var myPath, finalArr;
+		path ?? {path = defaultPath};
+		myPath = PathName.new(path);
+		myPath.files.do{|item|
+			finalArr = finalArr.add(item.fileNameWithoutExtension.asSymbol);
+		};
+		^finalArr;
+	}
+
+	*dirDialog {
+		FileDialog({ |path|
+			this.dirTags(path[0]).postin(postWhere, \doln, postWin);
+			path[0].postin(postWhere, \post, postWin)
+		}, {
+			"cancelled".postln;
+		}, 2);
+	}
+
+	*setDefaultPath {
+		FileDialog({ |path|
+			defaultPath = path[0];
+			defaultPath.postin(postWhere, \post, postWin)
+		}, {
+			"cancelled".postln;
+		}, 2);
 	}
 
 }
