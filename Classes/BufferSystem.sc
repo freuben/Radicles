@@ -208,7 +208,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	}
 
 	*add {arg arg1, arg2, function;
-		var getPath, getIndex, getBufferPaths, cueBool, frames, tagName;
+		var getPath, getIndex, getBufferPaths, cueBool, tagName, buffunction;
 		if(arg1.isNumber, {
 			//allocate buffer: arg1: frames, arg2: channels
 			this.alloc(arg1, arg2, function)
@@ -226,40 +226,30 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 					tagName = ("d_" ++ arg1[0]).asSymbol;
 				});
 
+				buffunction = {
+					if(cueBool, {
+						this.read(getPath, function);
+					}, {
+						this.cue(getPath, arg1[1][0], arg1[1][1], function);
+					});
+				};
+
 				if(getPath.notNil, {
 					getBufferPaths = this.bufferPaths;
 					if(getBufferPaths.notNil, {
 						getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
 						if(getIndex.isNil, {
-							if(cueBool, {
-								this.read(getPath, function);
-							}, {
-								this.cue(getPath, arg1[1][0], arg1[1][1], function);
-							});
+							buffunction.();
 						}, {
 							if(tags.includes(tagName), {
 								"File already allocated as: ".postin(postWhere, \ln, postWin);
 								function.(this.get(tagName).postin(postWhere, \ln, postWin) );
 							}, {
-								frames = this.fileNumFrames(getPath);
-								if(frames == getBufferPaths.flop[2][getIndex], {
-									this.cue(getPath, arg1[1][0], arg1[1][1], function);
-								}, {
-									this.read(getPath, function);
-								});
+								buffunction.();
 							});
-
 						});
 					}, {
-						if(cueBool, {
-							this.read(getPath, function);
-						}, {
-							if(arg1[1].notNil, {
-								this.cue(getPath, arg1[1][0], arg1[1][1], function);
-							}, {
-								this.cue(getPath, function: function);
-							});
-						});
+						buffunction.();
 					});
 				});
 			}, {
@@ -554,15 +544,6 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 		chanNum = file.numChannels;
 		file.close;
 		^chanNum;
-	}
-
-	*fileNumFrames {arg path;
-		var file, frames;
-		file = SoundFile.new;
-		file.openRead(path);
-		frames = file.numFrames;
-		file.close;
-		^frames;
 	}
 
 	*arrDir {
