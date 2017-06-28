@@ -1,5 +1,5 @@
 BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\audio;
-	classvar <>samplerFormat=\audio, <bufAlloc;
+	classvar <>samplerFormat=\audio, <bufAlloc, <>diskStart=0, <>diskBufSize=1;
 
 	*addRaw {arg type, format, settings, function;
 		var path, boolean, typeStore;
@@ -13,6 +13,9 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		}
 		{type == \alloc} {
 			path = settings;
+		}
+		{type == \cue} {
+			path = this.getPlayPath(\audio);
 		};
 
 		case
@@ -48,14 +51,25 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				});
 				function.(buf);
 			});
+		}
+		{type == \cue} {
+			typeStore = this.addCue(settings, path, function: {|buf|
+				if(typeStore.notNil, {
+					boolean = this.store(\bstore, type, format, settings);
+					if(boolean, {
+						stores = stores.add(buf);
+					});
+				});
+				function.(buf);
+			});
 		};
 	}
 
 	*add {arg type, settings, function;
-		var format, path, newSettings;
+		var format, newSettings;
 
 		case
-		{type == \play} {
+		{(type == \play)} {
 			format = playFormat;
 			newSettings = settings;
 		}
@@ -66,6 +80,10 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		{type == \alloc} {
 			format = settings[0];
 			newSettings = settings.copyRange(1,2);
+		}
+		{type == \cue} {
+			format = settings[0];
+			newSettings = settings[1];
 		};
 
 		this.addRaw(type, format, newSettings, function);
@@ -101,7 +119,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 			thisBStore = bstores[bstoreIndex];
 
 			case
-			{type == \play} {
+			{(type == \play).or(type == \alloc).or(type == \cue)} {
 				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
 				this.removeAt(bstoreIndex);
 
@@ -115,10 +133,10 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				BufferSystem.freeAtAll(freeBufArr.sort);
 				this.removeAt(bstoreIndex);
 			}
-			{type == \alloc} {
-				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
-				this.removeAt(bstoreIndex);
-			};
+			// {type == \alloc} {
+			// 	BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
+			// 	this.removeAt(bstoreIndex);
+			// };
 		}, {
 			"BStore not found".warn;
 		});
@@ -202,6 +220,38 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 
 	*addAlloc {arg settings, function;
 		^BufferSystem.add(settings[0], settings[1], function);
+	}
+
+	*addCue {arg settings, path, function;
+		^BufferSystem.add([settings, [diskStart,diskBufSize]], path, function);
+	}
+
+	*buffByArg {arg argument, index;
+		var indices, buffs, result, count=0;
+		indices = this.bstoreIDs.flop[index].indicesOfEqual(argument);
+		if(indices.notNil, {
+			buffs = this.bstores.atAll(indices);
+			if(buffs.size == 1, {
+				result = buffs[0];
+			}, {
+				result = buffs;
+			});
+			^result;
+		}, {
+			"BStore not found".warn;
+		});
+	}
+
+	*buffByType {arg type;
+		^this.buffByArg(type, 0);
+	}
+
+	*buffByFormat {arg format;
+		^this.buffByArg(format, 1);
+	}
+
+	*buffBySetting {arg setting;
+		^this.buffByArg(setting, 2);
 	}
 
 }

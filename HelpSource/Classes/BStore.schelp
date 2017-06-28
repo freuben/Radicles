@@ -45,13 +45,31 @@ BStore.add(\play, \SinedPink);
 BStore.add(\alloc, [\alloc0, 44100,2]);
 BStore.add(\alloc, [\alloc1, 44100,2]);
 
+BStore.add(\cue, [\cue1, \marilyn1], {|buf| buf.postln });
+BStore.add(\cue, [\cue2, \marilyn1], {|buf| buf.postln });
+
 BStore.bstoreIDs
-BStore.bstores
+BStore.bstores.dopostln
 
 BStore.bstoreIDs
 BStore.bstores
 
 BStore.bstores.flat.do{|item| item.postln};
+
+BStore.removeBStores;
+
+BStore.add(\cue, [\cue1, \marilyn1], {|buf| {DiskIn.ar(buf.numChannels, buf.bufnum, 1)}.play } );
+BStore.add(\cue, [\cue2, \marilyn1], {|buf| {DiskIn.ar(buf.numChannels, buf.bufnum, 1)}.play } );
+BStore.add(\play, \marilyn1, {|buf| buf.play});
+BStore.add(\alloc, [\alloc0, 44100,2]);
+BStore.add(\alloc, [\alloc1, 44100,2]);
+
+BStore.buffByType(\cue); //get buffers by type
+BStore.buffByFormat(\cue1);  //get buffers by format
+BStore.buffByFormat(\cue2);
+BStore.buffByFormat(\alloc0);
+BStore.buffBySetting(\marilyn1).dopostln; //get buffers by setting
+BStore.buffBySetting([44100,2]).dopostln;
 
 
 BStore.samplerFormat = \audio;

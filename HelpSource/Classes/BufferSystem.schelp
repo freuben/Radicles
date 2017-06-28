@@ -149,7 +149,7 @@ BufferSystem.freeAll;
 BufferSystem.cueDir(~dirPath, 0, 1, {|item| item.postln });
 BufferSystem.freeAll;
 
-//access to more basic funtionality (not recommended in practice - this is just a demonstration)
+//access to more basic funtionality (not recommended in practice)
 
 ~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/ModImprov/SoundFiles/Play/0/marilyn1.wav";
 
