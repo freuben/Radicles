@@ -133,13 +133,21 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				BufferSystem.freeAtAll(freeBufArr.sort);
 				this.removeAt(bstoreIndex);
 			}
-			// {type == \alloc} {
-			// 	BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
-			// 	this.removeAt(bstoreIndex);
-			// };
 		}, {
 			"BStore not found".warn;
 		});
+	}
+
+	*removeID {arg ids;
+		if(this.bstoreIDs.indexOfEqual(ids).notNil, {
+		this.remove(ids[0], ids[1], ids[2]);
+		}, {
+			"BStore not found".warn;
+		});
+	}
+
+	*removeAll {
+		this.removeBStores;
 	}
 
 	*removeByIndex {arg index;

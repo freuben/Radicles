@@ -80,6 +80,8 @@ BStore.removeByIndex(0)
 
 BStore.bstoreIDs
 
+BStore.removeID([\cue, \cue2, \marilyn1]);
+
 BStore.removeByType(\play);
 BStore.removeByType(\alloc);
 BStore.removeByType(\sampler);
@@ -111,7 +113,10 @@ BStore.bstoreIDs;
 
 a = BStore.bstoreIDs;
 
+BStore.removeAll;
+//or
 BStore.removeBStores;
+
 BStore.addAll(a, {|buf| buf.postln});
 
 BStore.saveBPreset(\test2);
