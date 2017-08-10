@@ -41,7 +41,7 @@ Space : MainImprov {
 
 		{
 			ndefArr.do{|item, index|
-				key = ((\space++index).asSymbol);
+				key = ((\space++(index+1)).asSymbol);
 				Ndef.ar(key, numChannels);
 				fadeTime ?? {fadeTime =Ndef(key).fadeTime};
 				Ndef(key).fadeTime = fadeTime;

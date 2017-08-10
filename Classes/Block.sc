@@ -1,28 +1,26 @@
-Block : MainImprov {classvar <blockIDs, <blocks, <blockCount=0;
+Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1;
 
 	*add {arg type=\audio, channels=1, destination;
-var ndefTag;
+		var ndefTag;
 		if((type == \audio).or(type == \control), {
 
 			ndefTag = ("block" ++ blockCount).asSymbol;
 			blockCount = blockCount + 1;
 
-if(type == \audio, {
+			if(type == \audio, {
 				Ndef.ar(ndefTag, channels);
 			}, {
 				Ndef.kr(ndefTag, channels);
 			});
 
-			blocks = blocks.add(Ndef(ndefTag));
-			blockIDs = blockIDs.add( [ndefTag, type, channels, destination] );
-
+			ndefs = ndefs.add(Ndef(ndefTag));
+			blocks = blocks.add( [ndefTag, type, channels, destination] );
 		}, {
 			"Block Ndef rate not found".warn;
 		});
-
 	}
 
-		*addNum {arg number, type, channels, destinations;
+	*addNum {arg number, type, channels, destinations;
 		var thisType, thisChan, thisDest;
 		number.do{|index|
 			if(type.isArray, {thisType = type[index]}, {thisType = type});
