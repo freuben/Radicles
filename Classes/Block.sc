@@ -36,4 +36,28 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1;
 		}
 	}
 
+	*remove {arg blockNum=1;
+		var blockIndex;
+		blockIndex = blockNum - 1;
+		if((blockNum >= 1).and(blockNum <= blocks.size), {
+		ndefs.removeAt(blockIndex);
+		blocks.removeAt(blockIndex);
+		}, {
+			"Block Number not Found".warn;
+		});
+	}
+
+	*removeArr {arg blockNumArr;
+		var newArr;
+		blockNumArr.do{|item|
+		if((item >= 1).and(item <= blocks.size), {
+				newArr = newArr.add(item);
+			}, {
+				"Block Number not Found".warn;
+			});
+		};
+		ndefs.removeAtAll(newArr-1);
+		blocks.removeAtAll(newArr-1);
+}
+
 }

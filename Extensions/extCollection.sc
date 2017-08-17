@@ -8,4 +8,19 @@
 		});
 	}
 
+
 }
+
++ ArrayedCollection {
+
+	removeAtAll {arg indexArr;
+		var count = 0, removeItem;
+		indexArr.do{|item|
+			removeItem = item - count;
+			this.removeAt(removeItem);
+			count = count + 1;
+		};
+	}
+
+}
+
