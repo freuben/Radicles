@@ -1,4 +1,4 @@
-Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5;
+Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5, <>playFormat=\audio;
 
 	*add {arg type=\audio, channels=1, destination;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -43,6 +43,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5;
 		var blockIndex;
 		blockIndex = block - 1;
 		if((block >= 1).and(block <= blocks.size), {
+			/*ndefs[blockIndex].free;*/
+			ndefs[blockIndex].clear;
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
 		}, {
@@ -54,44 +56,88 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5;
 		var newArr;
 		blockArr.do{|item|
 			if((item >= 1).and(item <= blocks.size), {
-				newArr = newArr.add(item);
+				newArr = newArr.add(item-1);
+				/*ndefs[item-1].free;*/
+			ndefs[item-1].clear;
 			}, {
 				"Block Number not Found".warn;
 			});
 		};
-		ndefs.removeAtAll(newArr-1);
-		blocks.removeAtAll(newArr-1);
+		ndefs.removeAtAll(newArr);
+		blocks.removeAtAll(newArr);
 	}
 
-	*play {arg block=1, slot=1, bockName, buffer, isPattern=false, extraArgs, data;
-		var blockFunc, blockIndex, slotIndex, newArgs, ndefCS;
-		if((block >= 1).and(slot >= 1), {
+	*removeAll {
+		ndefs.do{|item| item.clear };
+		ndefs = [];
+		blocks = [];
+	}
+
+	*clear {
+		Ndef.clear;
+		ndefs = [];
+		blocks = [];
+	}
+
+	*play {arg block=1, bockName, buffer, isPattern=false, extraArgs, data;
+		var blockFunc, blockIndex, newArgs, ndefCS, cond, blockFuncCS;
+		if(block >= 1, {
 			blockIndex = block-1;
-			slotIndex = slot-1;
-			blockFunc = SynthFile.read(\block, bockName);
-			if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
-				newArgs = extraArgs;
+
+			if(ndefs[blockIndex].notNil, {
+				{
+					blockFunc = SynthFile.read(\block, bockName);
+					blockFuncCS = blockFunc;
+					if(blockFunc.cs.findAll("{").size == 2, {
+						"includes buffer".postln;
+						cond = Condition(false);
+						cond.test = false;
+						if(buffer.notNil.or(buffer == \nobuf), {
+							BStore.add(\play, buffer, {arg buf;
+								blockFunc = blockFunc.(buf);
+
+								cond.test = true;
+								cond.signal;
+							});
+							cond.wait;
+						}, {
+							"Buffer not provided".warn;
+						});
+					}, {
+						"no buffer".postln;
+					});
+
+					if(extraArgs.notNil, {
+						if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
+							newArgs = extraArgs;
+						}, {
+							newArgs = [blockFunc.argNames, extraArgs].flop.flat;
+						});
+					});
+
+					ndefCS = (ndefs[blockIndex].cs	++ ".put(0 , "
+						++ blockFuncCS.cs ++ ", extraArgs: " ++ newArgs.cs ++ ");");
+
+					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
+
+					ndefCS.postln;
+				}.fork;
 			}, {
-				newArgs = [blockFunc.argNames, extraArgs].flop.flat;
+				"This block does not exist".warn;
 			});
-			ndefCS = (ndefs[blockIndex].cs	++ ".put(" ++ slotIndex.cs ++ ", "
-				++ blockFunc.cs ++ ", extraArgs: " ++ newArgs.cs ++ ");");
-			ndefCS.interpret;
-			ndefCS.postln;
 		}, {
-			"Block or slot not found".warn;
+			"Block not found".warn;
 		});
 	}
 
-	*stop {arg block=1, slot=1, fadeOut;
+	*stop {arg block=1, fadeOut;
 		var blockIndex, slotIndex, ndefCS;
-		if((block >= 1).and(slot >= 1), {
+		if(block >= 1, {
 			blockIndex = block-1;
-			slotIndex = slot-1;
 			fadeOut ?? {fadeOut = ndefs[blockIndex].fadeTime};
 			ndefs[blockIndex].fadeTime = fadeOut;
 			{
-				ndefCS = (ndefs[blockIndex].cs	++ ".put(" ++ slotIndex.cs ++ ", "
+				ndefCS = (ndefs[blockIndex].cs	++ ".put(0, "
 					++ "nil);" );
 				ndefCS.interpret;
 				ndefCS.postln;
@@ -99,9 +145,49 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5;
 				ndefs[blockIndex].fadeTime = fadeTime;
 			}.fork;
 		}, {
-			"Block or slot not found".warn;
+			"Block not found".warn;
 		});
 
+	}
+
+	*set {arg block, argArr;
+		var blockIndex;
+if((block >= 1), {
+			blockIndex = block-1;
+			argArr.keysValuesDo{|key, val|
+				ndefs[blockIndex].set(key, val);
+			};
+			}, {
+			"Block not found".warn;
+		});
+	}
+
+		*xset {arg block, argArr;
+		var blockIndex;
+if((block >= 1), {
+			blockIndex = block-1;
+			argArr.keysValuesDo{|key, val|
+				ndefs[blockIndex].xset(key, val);
+			};
+			}, {
+			"Block not found".warn;
+		});
+	}
+
+		*lag {arg block, argArr;
+		var blockIndex;
+if((block >= 1), {
+			blockIndex = block-1;
+			argArr.keysValuesDo{|key, val|
+				ndefs[blockIndex].lag(key, val);
+			};
+			}, {
+			"Block not found".warn;
+		});
+	}
+
+	*playNdefs {
+		ndefs.do{|item| item.play};
 	}
 
 }
