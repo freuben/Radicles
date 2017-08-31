@@ -1,4 +1,4 @@
-Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5, <>playFormat=\audio;
+Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, <>playFormat=\audio;
 
 	*add {arg type=\audio, channels=1, destination;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -18,6 +18,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5, <>pla
 			ndefCS2.interpret;
 			ndefs = ndefs.add(Ndef(ndefTag));
 			blocks = blocks.add( [ndefTag, type, channels, destination] );
+			liveBlocks = liveBlocks.add(nil);
 		}, {
 			"Block Ndef rate not found".warn;
 		});
@@ -47,6 +48,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5, <>pla
 			ndefs[blockIndex].clear;
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
+			liveBlocks.removeAt(blockIndex);
 		}, {
 			"Block Number not Found".warn;
 		});
@@ -65,28 +67,31 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5, <>pla
 		};
 		ndefs.removeAtAll(newArr);
 		blocks.removeAtAll(newArr);
+		liveBlocks.removeAll(newArr);
 	}
 
 	*removeAll {
 		ndefs.do{|item| item.clear };
 		ndefs = [];
 		blocks = [];
+		liveBlocks = [];
 	}
 
 	*clear {
 		Ndef.clear;
 		ndefs = [];
 		blocks = [];
+		liveBlocks = [];
 	}
 
-	*play {arg block=1, bockName, buffer, isPattern=false, extraArgs, data;
+	*play {arg block=1, blockName, buffer, isPattern=false, extraArgs, data;
 		var blockFunc, blockIndex, newArgs, ndefCS, cond, blockFuncCS;
 		if(block >= 1, {
 			blockIndex = block-1;
 
 			if(ndefs[blockIndex].notNil, {
 				{
-					blockFunc = SynthFile.read(\block, bockName);
+					blockFunc = SynthFile.read(\block, blockName);
 					blockFuncCS = blockFunc;
 					if(blockFunc.cs.findAll("{").size == 2, {
 						"includes buffer".postln;
@@ -115,12 +120,16 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5, <>pla
 						});
 					});
 
-					ndefCS = (ndefs[blockIndex].cs	++ ".put(0 , "
-						++ blockFuncCS.cs ++ ", extraArgs: " ++ newArgs.cs ++ ");");
+					ndefCS = (ndefs[blockIndex].cs	++ ".source = "
+						++ blockFuncCS.cs ++ ");");
 
-					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
+					ndefs[blockIndex].source = blockFunc;
 
 					ndefCS.postln;
+					this.set(block, newArgs, true);
+
+					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, buffer, isPattern, data];
+
 				}.fork;
 			}, {
 				"This block does not exist".warn;
@@ -137,8 +146,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5, <>pla
 			fadeOut ?? {fadeOut = ndefs[blockIndex].fadeTime};
 			ndefs[blockIndex].fadeTime = fadeOut;
 			{
-				ndefCS = (ndefs[blockIndex].cs	++ ".put(0, "
-					++ "nil);" );
+				ndefCS = (ndefs[blockIndex].cs	++ ".source = "
+					++ "nil;" );
 				ndefCS.interpret;
 				ndefCS.postln;
 				fadeOut.wait;
@@ -150,10 +159,13 @@ Block : MainImprov {classvar <blocks, <ndefs, <blockCount=1, fadeTime=0.5, <>pla
 
 	}
 
-	*set {arg block, argArr;
+	*set {arg block, argArr, post=false;
 		var blockIndex;
 if((block >= 1), {
 			blockIndex = block-1;
+			if(post == true, {
+			(ndefs[blockIndex].cs	++ ".set(" ++ argArr.cs.replace("[", "").replace("]", "") ++  ");").postln;
+			});
 			argArr.keysValuesDo{|key, val|
 				ndefs[blockIndex].set(key, val);
 			};
