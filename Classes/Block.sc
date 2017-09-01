@@ -86,7 +86,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 
 	*play {arg block=1, blockName, buffer, isPattern=false, extraArgs, data;
 		var blockFunc, blockIndex, newArgs, ndefCS, cond, blockFuncCS, bufferID;
-		var storeType, blockFuncString;
+		var storeType, blockFuncString, fadeWait=0;
 		if(block >= 1, {
 			blockIndex = block-1;
 
@@ -95,30 +95,40 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 					blockFunc = SynthFile.read(\block, blockName);
 					blockFuncCS = blockFunc;
 					blockFuncString = blockFunc.cs;
+
+					case
+					{blockFuncString.find("PlayBuf.ar(").notNil} {
+						storeType = \play;
+						BStore.playFormat = \audio;
+						bufferID = [storeType, \audio, buffer];
+					}
+					{blockFuncString.find("PV_PlayBuf").notNil} {
+						storeType = \play;
+						BStore.playFormat = \scpv; "scpv".postln;
+						bufferID = [storeType, \scpv, buffer];
+					}
+					{blockFuncString.find("DiskIn.ar(").notNil} {
+						storeType = \cue;
+						"cue".postln;
+						buffer = [(\cue++cueCount).asSymbol, buffer].postln;
+						bufferID = [storeType, buffer].flat;
+						cueCount = cueCount + 1;
+					};
+
+					if(liveBlocks[blockIndex].notNil, {
+						fadeWait = ndefs[blockIndex].fadeTime * 2;
+
+						if((liveBlocks[blockIndex][2] == bufferID).not, {
+							"free buffer from play".postln;
+							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
+						});
+					});
+
 					if(blockFuncString.findAll("{").size == 2, {
 						"includes buffer".postln;
 						cond = Condition(false);
 						cond.test = false;
 						if(buffer.notNil.or(buffer == \nobuf), {
-
-							case
-							{blockFuncString.find("PlayBuf.ar(").notNil} {
-								storeType = \play;
-									BStore.playFormat = \audio;
-									bufferID = [storeType, \audio, buffer];
-							}
-							{blockFuncString.find("PV_PlayBuf").notNil} {
-								storeType = \play;
-									BStore.playFormat = \scpv; "scpv".postln;
-									bufferID = [storeType, \scpv, buffer];
-							}
-							{blockFuncString.find("DiskIn.ar(").notNil} {
-								storeType = \cue;
-								"cue".postln;
-								buffer = [(\cue++cueCount).asSymbol, buffer].postln;
-								bufferID = [storeType, buffer].flat;
-								cueCount = cueCount + 1;
-							};
 
 							BStore.add(storeType, buffer, {arg buf;
 								blockFunc = blockFunc.(buf);
@@ -134,7 +144,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 						"no buffer".postln;
 					});
 
-					ndefCS = (ndefs[blockIndex].cs	++ ".source = "
+					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
 						++ blockFuncCS.cs ++ ");");
 
 					ndefs[blockIndex].source = blockFunc;
@@ -147,6 +157,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 						}, {
 							newArgs = [blockFunc.argNames, extraArgs].flop.flat;
 						});
+						fadeWait.wait;
 						this.set(block, newArgs, true);
 					});
 
@@ -162,42 +173,47 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 	}
 
 	*stop {arg block=1, fadeOut;
-		var blockIndex, slotIndex, ndefCS, thisBuffer;
+		var blockIndex, slotIndex, ndefCS;
+
 		if(block >= 1, {
 			blockIndex = block-1;
+
 			fadeOut ?? {fadeOut = ndefs[blockIndex].fadeTime};
-			ndefs[blockIndex].fadeTime = fadeOut;
-			{
-				ndefCS = (ndefs[blockIndex].cs	++ ".source = "
-					++ "nil;" );
-				ndefCS.interpret;
-				ndefCS.postln;
-				fadeOut.wait;
 
-				thisBuffer = liveBlocks[blockIndex][2];
+			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
+				++ "nil;" );
+			ndefCS.interpret;
+			ndefCS.postln;
 
-				if(((thisBuffer.isNil).or(thisBuffer == \nobuf)).not, {
-					if(liveBlocks.flop[2].indicesOfEqual(liveBlocks[blockIndex][2]).size > 1, {
-						"more than one block with same sound file".postln;
-						if(liveBlocks.flop[1].indicesOfEqual(liveBlocks[blockIndex][1]).size > 1, {
-							"same block name: don't remove buffer".postln
-						}, {
-							"remove buffer".postln;
-							/*BStore.removeID();*/
-						});
-					}, {
-						"remove buffer".postln;
-					});
-				});
-
+			this.buffree(blockIndex, fadeOut, {
 				liveBlocks[blockIndex] = nil;
-
 				ndefs[blockIndex].fadeTime = fadeTime;
-			}.fork;
+			});
+
+			ndefs[blockIndex].fadeTime = fadeOut;
+
 		}, {
 			"Block not found".warn;
 		});
 
+	}
+
+	*buffree {arg blockIndex=0, fadeOut, func;
+		var thisBuffer;
+		{
+			thisBuffer = liveBlocks[blockIndex][2];
+
+			fadeOut.wait;
+
+			if(((thisBuffer.isNil).or(thisBuffer == \nobuf)).not, {
+				if((liveBlocks.flop[2].indicesOfEqual(liveBlocks[blockIndex][2]).size > 1).not, {
+					"remove buffer".postln;
+					this.new.nodeTime.wait;
+					BStore.removeID(thisBuffer);
+				});
+			});
+			func.();
+		}.fork;
 	}
 
 	*set {arg block, argArr, post=false;
