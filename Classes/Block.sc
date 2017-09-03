@@ -1,4 +1,4 @@
-Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1;
+Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1, allocCount=1;
 
 	*add {arg type=\audio, channels=1, destination;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -91,29 +91,38 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 			blockIndex = block-1;
 
 			if(ndefs[blockIndex].notNil, {
+
 				{
+
 					blockFunc = SynthFile.read(\block, blockName);
 					blockFuncCS = blockFunc;
 					blockFuncString = blockFunc.cs;
 
-					case
-					{blockFuncString.find("PlayBuf.ar(").notNil} {
-						storeType = \play;
-						BStore.playFormat = \audio;
-						bufferID = [storeType, \audio, buffer];
-					}
-					{blockFuncString.find("PV_PlayBuf").notNil} {
-						storeType = \play;
-						BStore.playFormat = \scpv; "scpv".postln;
-						bufferID = [storeType, \scpv, buffer];
-					}
-					{blockFuncString.find("DiskIn.ar(").notNil} {
-						storeType = \cue;
-						"cue".postln;
-						buffer = [(\cue++cueCount).asSymbol, buffer].postln;
-						bufferID = [storeType, buffer].flat;
-						cueCount = cueCount + 1;
-					};
+					if(buffer.isNumber, {
+						storeType = \alloc;
+						"alloc".postln;
+						buffer = [(\alloc++allocCount).asSymbol, buffer].postln;
+						bufferID = [storeType, buffer[0], [buffer[1]] ];
+						cueCount = allocCount + 1;
+					}, {
+						case
+						{blockFuncString.find("PlayBuf.ar(").notNil} {
+							storeType = \play;
+							BStore.playFormat = \audio;
+							bufferID = [storeType, \audio, buffer];
+						}
+						{blockFuncString.find("PV_PlayBuf").notNil} {
+							storeType = \play;
+							BStore.playFormat = \scpv;
+							bufferID = [storeType, \scpv, buffer];
+						}
+						{blockFuncString.find("DiskIn.ar(").notNil} {
+							storeType = \cue;
+							buffer = [(\cue++cueCount).asSymbol, buffer];
+							bufferID = [storeType, buffer].flat;
+							cueCount = cueCount + 1;
+						};
+					});
 
 					if(liveBlocks[blockIndex].notNil, {
 						fadeWait = ndefs[blockIndex].fadeTime * 2;
@@ -129,10 +138,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 						cond = Condition(false);
 						cond.test = false;
 						if(buffer.notNil.or(buffer == \nobuf), {
-
 							BStore.add(storeType, buffer, {arg buf;
 								blockFunc = blockFunc.(buf);
-
 								cond.test = true;
 								cond.signal;
 							});
@@ -199,14 +206,13 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 	}
 
 	*buffree {arg blockIndex=0, fadeOut, func;
-		var thisBuffer;
+		var thisBuffer, thisBlock;
+		thisBlock = liveBlocks;
+		thisBuffer = thisBlock[blockIndex][2];
 		{
-			thisBuffer = liveBlocks[blockIndex][2];
-
 			fadeOut.wait;
-
-			if(((thisBuffer.isNil).or(thisBuffer == \nobuf)).not, {
-				if((liveBlocks.flop[2].indicesOfEqual(liveBlocks[blockIndex][2]).size > 1).not, {
+			if(thisBuffer.notNil, {
+				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
 					"remove buffer".postln;
 					this.new.nodeTime.wait;
 					BStore.removeID(thisBuffer);
@@ -221,7 +227,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 		if((block >= 1), {
 			blockIndex = block-1;
 			if(post == true, {
-				(ndefs[blockIndex].cs	++ ".set(" ++ argArr.cs.replace("[", "").replace("]", "") ++  ");").postln;
+				(ndefs[blockIndex].cs	++ ".set(" ++
+					argArr.cs.replace("[", "").replace("]", "") ++  ");").postln;
 			});
 			argArr.keysValuesDo{|key, val|
 				ndefs[blockIndex].set(key, val);
