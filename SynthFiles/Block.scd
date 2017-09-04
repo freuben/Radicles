@@ -11,4 +11,7 @@
 	localbuf = LocalBuf.new(numFrames, 1);
 	chain = PV_PlayBuf(localbuf, buffer.bufnum, rate, offset, 1);
 	IFFT(chain, winType)*mul}; } ], [ 'playbuf', {arg buffer; {arg rate=1, trigger=1, startPos=0, mul=1, loop=1;
-	PlayBuf.ar(buffer.numChannels, buffer, rate, trigger, startPos, loop)*mul;} } ] ]
+	PlayBuf.ar(buffer.numChannels, buffer, rate, trigger, startPos, loop)*mul;} } ], [ 'rec', {arg buffer; {arg bus=1, run=1, loop=0, trigger=1, startPos=0, recLevel=1, preLevel=0, offset=0;
+	var sig;
+	sig = SoundIn.ar(bus-1);
+	RecordBuf.ar(sig, buffer, offset, recLevel, preLevel, run, loop, trigger); 0} } ] ]

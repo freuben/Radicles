@@ -262,4 +262,18 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^this.buffByArg(setting, 2);
 	}
 
+	*buffByID {arg bstoreID;
+		^this.bstores[this.bstoreIDs.indexOfEqual(bstoreID)];
+	}
+
+	*bstoreTags {
+		var newArr;
+		this.bstoreIDs.do{|item| newArr = newArr.add(item.flat)};
+		^newArr;
+	}
+
+	*buffByTag {arg bstoreID;
+		^this.bstores[this.bstoreTags.indexOfEqual(bstoreID)];
+	}
+
 }

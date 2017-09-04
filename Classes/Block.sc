@@ -1,4 +1,4 @@
-Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1, allocCount=1;
+Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1, allocCount=1, <recbuffers, <recNdefs, <recBlocks, <recBlockCount=1;
 
 	*add {arg type=\audio, channels=1, destination;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -85,7 +85,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 	}
 
 	*play {arg block=1, blockName, buffer, isPattern=false, extraArgs, data;
-		var blockFunc, blockIndex, newArgs, ndefCS, cond, blockFuncCS, bufferID;
+		var blockFunc, blockIndex, newArgs, ndefCS, cond, blockFuncCS, bufferID, bufTag;
 		var storeType, blockFuncString, fadeWait=0;
 		if(block >= 1, {
 			blockIndex = block-1;
@@ -93,23 +93,25 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 			if(ndefs[blockIndex].notNil, {
 
 				{
-
 					blockFunc = SynthFile.read(\block, blockName);
 					blockFuncCS = blockFunc;
 					blockFuncString = blockFunc.cs;
+					bufTag = buffer;
 
-					if(buffer.isNumber, {
+					case
+					{buffer.isNumber} {
 						storeType = \alloc;
 						"alloc".postln;
 						buffer = [(\alloc++allocCount).asSymbol, buffer].postln;
-						bufferID = [storeType, buffer[0], [buffer[1]] ];
-						cueCount = allocCount + 1;
-					}, {
+						bufferID = [storeType, buffer ].flat;
+						allocCount = allocCount + 1;
+					}
+					{buffer.isSymbol} {
 						case
-						{blockFuncString.find("PlayBuf.ar(").notNil} {
+						{(blockFuncString.find("PlayBuf.ar(")).notNil} {
 							storeType = \play;
 							BStore.playFormat = \audio;
-							bufferID = [storeType, \audio, buffer];
+							bufferID = [storeType, \audio, buffer].flat;
 						}
 						{blockFuncString.find("PV_PlayBuf").notNil} {
 							storeType = \play;
@@ -122,7 +124,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 							bufferID = [storeType, buffer].flat;
 							cueCount = cueCount + 1;
 						};
-					});
+					};
 
 					if(liveBlocks[blockIndex].notNil, {
 						fadeWait = ndefs[blockIndex].fadeTime * 2;
@@ -134,19 +136,28 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 					});
 
 					if(blockFuncString.findAll("{").size == 2, {
-						"includes buffer".postln;
-						cond = Condition(false);
-						cond.test = false;
-						if(buffer.notNil.or(buffer == \nobuf), {
-							BStore.add(storeType, buffer, {arg buf;
-								blockFunc = blockFunc.(buf);
-								cond.test = true;
-								cond.signal;
+
+						if(bufTag.isArray.not, {
+							"includes buffer".postln;
+							cond = Condition(false);
+							cond.test = false;
+							if(buffer.notNil.or(buffer == \nobuf), {
+								BStore.add(storeType, buffer, {arg buf;
+									blockFunc = blockFunc.(buf);
+									cond.test = true;
+									cond.signal;
+								});
+								cond.wait;
+							}, {
+								"Buffer not provided".warn;
 							});
-							cond.wait;
 						}, {
-							"Buffer not provided".warn;
+							//already allocated buffer
+							/*bufferID = bufTag;
+							bufTag.postln;*/
+							blockFunc = blockFunc.(BStore.buffByTag(bufTag).postln);
 						});
+
 					}, {
 						"no buffer".postln;
 					});
@@ -263,7 +274,105 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 	}
 
 	*playNdefs {
-		ndefs.do{|item| item.play};
+		Server.default.waitForBoot{
+			ndefs.do{|item| item.play};
+		};
+	}
+
+	//record
+	*addRecNdefs {arg channels=1;
+		var ndefTag, ndefCS1;
+		ndefTag = ("recblock" ++ recBlockCount).asSymbol;
+		recBlockCount = recBlockCount + 1;
+		ndefCS1 = ("Ndef.ar(" ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
+		ndefCS1.postln;
+		ndefCS1.interpret;
+		recNdefs = recNdefs.add(Ndef(ndefTag));
+		recBlocks = recBlocks.add( [ndefTag, channels] );
+	}
+
+	*getRecBStoreIDs {arg number=1, seconds=1, channels=1, format=\audio, frameSize=2048, hopSize=0.5;
+		var buffer, numFrames, resultArr;
+		number.do{
+			if(format==\audio, {numFrames=seconds*Server.default.sampleRate}, {
+				numFrames = seconds.calcPVRecSize(frameSize, hopSize);
+			});
+			buffer = [(\alloc++allocCount).asSymbol, [numFrames, channels]];
+			recbuffers = recbuffers.add([\alloc, buffer].flat);
+			resultArr = resultArr.add([\alloc, buffer[0], buffer[1]]);
+			allocCount = allocCount + 1;
+		};
+		^resultArr;
+	}
+
+	*addRec {arg seconds=1, channels=1, format=\audio, frameSize=2048, hopSize=0.5, func;
+		var buffer;
+		this.addRecNdefs(channels);
+		buffer = this.getRecBStoreIDs(1, seconds, channels, format, frameSize, hopSize).flat;
+		BStore.add(buffer[0], buffer.copyRange(1, buffer.size-1), {
+			"Record Buffer Allocated".postln;
+			func.();
+		});
+	}
+
+	*addRecNum {arg number=1, seconds=1, channels=1, format=\audio,
+		frameSize=2048, hopSize=0.5, func;
+		var bufferArr;
+		number.do{
+			this.addRecNdefs(channels);
+		};
+		bufferArr = this.getRecBStoreIDs(number, seconds, channels, format, frameSize, hopSize);
+		BStore.addAll(bufferArr, {
+			"Record Buffers Allocated".postln;
+			func.();
+		});
+	}
+
+	*addRecArr {arg argArr, func;
+		var bufferArr, seconds, channels, format, frameSize, hopSize;
+		argArr.do{|item|
+
+			if(item[0].notNil, {seconds =  item[0]}, {seconds= 1});
+			if(item[1].notNil, {channels =  item[1]}, {channels= 1});
+			if(item[2].notNil, {format =  item[2]}, {format= \audio});
+			if(item[3].notNil, {frameSize =  item[3]}, {frameSize = 2048});
+			if(item[4].notNil, {frameSize =  item[4]}, {hopSize = 0.5});
+
+			this.addRecNdefs(channels);
+			bufferArr = bufferArr.add(this.getRecBStoreIDs(1, seconds, channels, format,
+				frameSize,hopSize).flat);
+		};
+		BStore.addAll(bufferArr, {
+			"Record Buffers Allocated".postln;
+			func.();
+		});
+	}
+
+	*removeRec { }
+
+	*removeAllRec { }
+
+	*addRecBuf {arg seconds=1, chanNum=1;
+		var buffer;
+		buffer = [(\alloc++allocCount).asSymbol, seconds*44100, chanNum];
+		recbuffers = recbuffers.add([\alloc, buffer].flat);
+		allocCount = allocCount + 1;
+
+		BStore.add(\alloc, buffer, {arg buf;
+			"Buffer Allocated".postln;
+		});
+	}
+
+	*addAllRecBufs {
+
+	}
+
+	*recBuf {arg bufnum=1;
+		if(recbuffers.notNil, {
+			^recbuffers[bufnum-1];
+		}, {
+			"No record buffers".postln;
+		});
 	}
 
 }
