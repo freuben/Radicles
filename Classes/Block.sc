@@ -314,8 +314,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 		this.addRecNdefs(channels);
 		buffer = this.getRecBStoreIDs(1, seconds, channels, format, frameSize, hopSize).flat;
 		BStore.add(buffer[0], buffer.copyRange(1, buffer.size-1), {
-			"Record Buffer Allocated".postln;
-			func.();
+			("Record Buffer " ++ (recbuffers.indexOfEqual(buffer) + 1) ).postln;
+			func.(buffer);
 		});
 	}
 
@@ -367,55 +367,47 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 		});
 	}
 
-	*rec {arg recblock=1, input=1, loop=0, recLevel=1, preLevel=0;
-		var blockIndex, blockFunc, blockFuncCS, blockFuncString, argString, setRec, recBufData, inString, recType;
-
+	*rec {arg recblock=1, input=1, loop=0, recLevel, preLevel;
+		var blockIndex, blockFunc, blockFuncCS, blockFuncString, argString;
+		var setRec, recBufData, inString, recType;
 		if(recblock >= 1, {
 			blockIndex = recblock-1;
-
 			if((input.isNumber).or(input.isArray), {
 				inString = "SoundIn.ar(" ++ (input-1).cs ++ ")";
 			}, {
-			inString = input.cs;
+				inString = input.cs;
 			});
-
+			if(recNdefs.notNil, {
 			if(recNdefs[blockIndex].notNil, {
 				recBufData = recBufInfo[blockIndex];
 				if(recBufData[2] == \audio, {
+					if(loop == 0, {
 					recType = \rec;
+					}, {
+					recType = \recloop;
+					});
 				}, {
 					recType = \recpv;
 				});
-
 				blockFunc = SynthFile.string(\block, recType);
 				blockFunc = blockFunc.replace("'input'", inString);
-					blockFunc = blockFunc.interpret;
-					blockFuncCS = blockFunc;
-					blockFuncString = blockFunc.cs;
-
+				blockFunc = blockFunc.interpret;
+				blockFuncCS = blockFunc;
+				blockFuncString = blockFunc.cs;
 				if(recBufData[2] == \audio, {
 					blockFunc = blockFunc.(BStore.buffByTag(recbuffers[blockIndex]), recBufData[1]);
 				}, {
 					blockFunc = blockFunc.(BStore.buffByTag(recbuffers[blockIndex]), recBufData[1],
 						recBufData[3], recBufData[4]);
 				});
-
-/*				blockFunc.cs.postln;*/
-
-				if(loop == 1,  {
-					argString = argString.add(".set('loop', " ++ loop.cs ++ ");");
-				});
-				if(recLevel != 1, {
+				if(recLevel.notNil, {
 					argString = argString.add(".set('recLevel', " ++ recLevel.cs ++ ");");
 				});
-				if(preLevel != 0, {
+				if(preLevel.notNil, {
 					argString = argString.add(".set('preLevel', " ++ preLevel.cs ++ ");");
 				});
-
 				(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++ blockFuncString ++ ");").postln;
-
 				recNdefs[blockIndex].source = blockFunc;
-
 				if(argString.notNil,  {
 					argString.do{|item|
 						setRec = (recNdefs[blockIndex].cs ++ item);
@@ -426,10 +418,25 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 			}, {
 				"This recblock does not exist".warn;
 			});
+			}, {
+				"Recblock not found".warn;
+			});
 		}, {
 			"Recblock not found".warn;
 		});
-
-
 	}
+
+	*recNow {arg seconds=1, channels=1, format=\audio, input=1, loop=0, recLevel=1, preLevel=0, frameSize=2048, hopSize=0.5;
+		var recblock;
+		this.addRec(seconds, channels, format, frameSize, hopSize, {|item|
+			recblock = item[1].asString.last.asString.asInteger;
+			this.rec(recblock, input, loop, recLevel, preLevel);
+			("recording into recBlock: " ++ recblock).postln;
+		});
+	}
+
+	*getRecBuf {arg recblock=1;
+		^BStore.buffByTag(Block.recBuf(recblock));
+	}
+
 }
