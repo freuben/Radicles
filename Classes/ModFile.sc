@@ -147,6 +147,12 @@ SynthFile : ModFile {
 		^synthFile.remove(key);
 	}
 
+	* string {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\synth, class);
+		^synthFile.read(key).cs;
+	}
+
 }
 
 SpecFile : ModFile {classvar specArr;
@@ -194,6 +200,12 @@ SpecFile : ModFile {classvar specArr;
 	^specArr[index].(value);
 	}
 
+	* string {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\spec, class);
+		^synthFile.read(key).cs;
+	}
+
 }
 
 ControlFile : ModFile {
@@ -230,6 +242,12 @@ ControlFile : ModFile {
 		var synthFile;
 		synthFile = this.new(\control, class);
 		^synthFile.remove(key);
+	}
+
+	* string {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\control, class);
+		^synthFile.read(key).cs;
 	}
 
 }
@@ -270,6 +288,12 @@ DataFile : ModFile {
 		^synthFile.remove(key);
 	}
 
+		* string {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\data, class);
+		^synthFile.read(key).cs;
+	}
+
 }
 
 DescriptionFile : ModFile {
@@ -308,6 +332,12 @@ DescriptionFile : ModFile {
 		^synthFile.remove(key);
 	}
 
+		* string {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\description, class);
+		^synthFile.read(key).cs;
+	}
+
 }
 
 PresetFile : ModFile {
@@ -344,6 +374,12 @@ PresetFile : ModFile {
 		var synthFile;
 		synthFile = this.new(\preset, class);
 		^synthFile.remove(key);
+	}
+
+		* string {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\preset, class);
+		^synthFile.read(key).cs;
 	}
 
 }

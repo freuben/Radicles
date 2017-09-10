@@ -33,10 +33,15 @@ Store : MainImprov {classvar <storeIDs, <stores;
 		this.indexArr.postin(\ide, \doln);
 	}
 
-	*bstoreIDs {var result;
+	*bstoreIDs {var result, bufArgs;
 		storeIDs.do{|item|
 			if(item[0] == \bstore, {
-				result = result.add([item[1], item[2], item[3]]);
+				if(item[3].isNumber, {
+					bufArgs = [item[3], 1];
+				}, {
+					bufArgs = item[3];
+				});
+				result = result.add([item[1], item[2], bufArgs]);
 			});
 		};
 		^result;
