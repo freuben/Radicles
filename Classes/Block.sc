@@ -152,11 +152,9 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 								"Buffer not provided".warn;
 							});
 						}, {
-							//already allocated buffer
-							/*bufferID = bufTag;
-							bufTag.postln;*/
-							//THIS NEEDS WORK
-							blockFunc = blockFunc.(BStore.buffByTag(bufTag).postln);
+							blockFunc = blockFunc.(BStore.buffByID(bufTag));
+							bufTag.postln;
+							"Use this buffer".postln;
 						});
 
 					}, {
@@ -302,21 +300,11 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 				recBufInfo = recBufInfo.add([seconds, channels, format, frameSize, hopSize]);
 			});
 			buffer = [(\alloc++allocCount).asSymbol, [numFrames, channels]];
-			recbuffers = recbuffers.add([\alloc, buffer].flat);
+			recbuffers = recbuffers.add([\alloc, buffer[0], buffer[1]]);
 			resultArr = resultArr.add([\alloc, buffer[0], buffer[1]]);
 			allocCount = allocCount + 1;
 		};
 		^resultArr;
-	}
-
-	*addRec {arg seconds=1, channels=1, format=\audio, frameSize=2048, hopSize=0.5, func;
-		var buffer;
-		this.addRecNdefs(channels);
-		buffer = this.getRecBStoreIDs(1, seconds, channels, format, frameSize, hopSize).flat;
-		BStore.add(buffer[0], buffer.copyRange(1, buffer.size-1), {
-			("Record Buffer " ++ (recbuffers.indexOfEqual(buffer) + 1) ).postln;
-			func.(buffer);
-		});
 	}
 
 	*addRecNum {arg number=1, seconds=1, channels=1, format=\audio, frameSize=2048, hopSize=0.5, func;
@@ -325,10 +313,14 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 			this.addRecNdefs(channels);
 		};
 		bufferArr = this.getRecBStoreIDs(number, seconds, channels, format, frameSize, hopSize);
-		BStore.addAll(bufferArr, {
+		BStore.addAll(bufferArr, {|bufArr|
 			"Record Buffers Allocated".postln;
-			func.();
+			func.(bufArr);
 		});
+	}
+
+	*addRec {arg seconds=1, channels=1, format=\audio, frameSize=2048, hopSize=0.5, func;
+		this.addRecNum(1, seconds, channels, format, frameSize, hopSize, func);
 	}
 
 	*addRecArr {arg argArr, func;
@@ -345,19 +337,47 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 			bufferArr = bufferArr.add(this.getRecBStoreIDs(1, seconds, channels, format,
 				frameSize,hopSize).unbubble);
 		};
-		BStore.addAll(bufferArr.postln, {
+		BStore.addAll(bufferArr.postln, {|bufArr|
 			"Record Buffers Allocated".postln;
-			func.();
+			func.(bufArr);
 		});
 	}
 
-	*removeRec { }
+	*removeRec {arg recbuf=1;
+		var recindex, fadeTime;
+		recindex = recbuf - 1;
+		if((recbuf >= 1).and(recbuf <= recBlocks.size), {
+			{
+				fadeTime = recNdefs[recindex].fadeTime.postln;
+				recNdefs[recindex].clear;
+				recNdefs.removeAt(recindex);
+				recBlocks.removeAt(recindex);
+				fadeTime.yield;
+				BStore.removeID(recbuffers[recindex]);
+				recbuffers.removeAt(recindex);
+				recBufInfo.removeAt(recindex);
+			}.fork;
+		}, {
+			"Record Buffer not Found".warn;
+		});
+	}
 
-	*removeAllRec { }
-
-	*addRecBuf { }
-
-	*addAllRecBufs {	}
+	*removeAllRec {
+		var bstoreIndeces, fadeTime;
+		{
+			fadeTime = recNdefs[0].fadeTime;
+			recNdefs.do{|item| item.clear };
+			recNdefs = [];
+			recBlocks = [];
+			fadeTime.yield;
+			recbuffers.do{|item|
+				bstoreIndeces = bstoreIndeces.add(BStore.bstoreIDs.indexOfEqual(item));
+			};
+			BStore.removeIndices(bstoreIndeces);
+			recbuffers = [];
+			recBufInfo = [];
+		}.fork;
+	}
 
 	*recBuf {arg bufnum=1;
 		if(recbuffers.notNil, {
@@ -378,48 +398,48 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 				inString = input.cs;
 			});
 			if(recNdefs.notNil, {
-			if(recNdefs[blockIndex].notNil, {
-				recBufData = recBufInfo[blockIndex];
-				if(recBufData[2] == \audio, {
-					if(loop == 0, {
-					recType = \rec;
+				if(recNdefs[blockIndex].notNil, {
+					recBufData = recBufInfo[blockIndex];
+					if(recBufData[2] == \audio, {
+						if(loop == 0, {
+							recType = \rec;
+						}, {
+							recType = \recloop;
+						});
 					}, {
-					recType = \recloop;
+						recType = \recpv;
+					});
+					blockFunc = SynthFile.string(\block, recType);
+					blockFunc = blockFunc.replace("'input'", inString);
+					blockFunc = blockFunc.interpret;
+					blockFuncCS = blockFunc;
+					blockFuncString = blockFunc.cs;
+					if(recBufData[2] == \audio, {
+						blockFunc = blockFunc.(BStore.buffByID(recbuffers[blockIndex]), recBufData[1]);
+					}, {
+						blockFunc = blockFunc.(BStore.buffByID(recbuffers[blockIndex]), recBufData[1],
+							recBufData[3], recBufData[4]);
+					});
+					if(recLevel.notNil, {
+						argString = argString.add(".set('recLevel', " ++ recLevel.cs ++ ");");
+					});
+					if(preLevel.notNil, {
+						argString = argString.add(".set('preLevel', " ++ preLevel.cs ++ ");");
+					});
+					(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++ blockFuncString ++ ");").postln;
+					recNdefs[blockIndex].source = blockFunc;
+					if(argString.notNil,  {
+						argString.do{|item|
+							setRec = (recNdefs[blockIndex].cs ++ item);
+							setRec.interpret;
+							setRec.postln;
+						};
 					});
 				}, {
-					recType = \recpv;
-				});
-				blockFunc = SynthFile.string(\block, recType);
-				blockFunc = blockFunc.replace("'input'", inString);
-				blockFunc = blockFunc.interpret;
-				blockFuncCS = blockFunc;
-				blockFuncString = blockFunc.cs;
-				if(recBufData[2] == \audio, {
-					blockFunc = blockFunc.(BStore.buffByTag(recbuffers[blockIndex]), recBufData[1]);
-				}, {
-					blockFunc = blockFunc.(BStore.buffByTag(recbuffers[blockIndex]), recBufData[1],
-						recBufData[3], recBufData[4]);
-				});
-				if(recLevel.notNil, {
-					argString = argString.add(".set('recLevel', " ++ recLevel.cs ++ ");");
-				});
-				if(preLevel.notNil, {
-					argString = argString.add(".set('preLevel', " ++ preLevel.cs ++ ");");
-				});
-				(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++ blockFuncString ++ ");").postln;
-				recNdefs[blockIndex].source = blockFunc;
-				if(argString.notNil,  {
-					argString.do{|item|
-						setRec = (recNdefs[blockIndex].cs ++ item);
-						setRec.interpret;
-						setRec.postln;
-					};
+					"This recblock does not exist".warn;
 				});
 			}, {
-				"This recblock does not exist".warn;
-			});
-			}, {
-				"Recblock not found".warn;
+				"No Recblocks active".warn;
 			});
 		}, {
 			"Recblock not found".warn;
@@ -436,7 +456,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 	}
 
 	*getRecBuf {arg recblock=1;
-		^BStore.buffByTag(Block.recBuf(recblock));
+		^BStore.buffByID(Block.recBuf(recblock));
 	}
 
 }

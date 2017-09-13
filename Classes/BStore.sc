@@ -160,14 +160,19 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		});
 	}
 
+	*removeIndices {arg indices;
+		var count=0;
+		indices.do{|item|
+				this.removeByIndex(item-count);
+				count = count+1;
+			}
+	}
+
 	*removeByArg {arg argument, index;
 		var indices, count=0;
 		indices = this.bstoreIDs.flop[index].indicesOfEqual(argument);
 		if(indices.notNil, {
-			indices.do{|item|
-				this.removeByIndex(item-count);
-				count = count+1;
-			}
+			this.removeIndices(indices);
 		}, {
 			"BStore not found".warn;
 		});
