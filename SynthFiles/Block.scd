@@ -22,4 +22,5 @@
 	chain = PV_RecordBuf(chain, buffer.bufnum, offset, run, loop, hop, wintype)*mul}; } ], [ 'recloop', {arg buffer; {arg recLevel=1, preLevel=0;
 	var sig;
 	sig = 'input';
-	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 1); } } ] ]
+	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 1); } } ], [ 'looptr', {arg buffer; {arg rate=1, triggerRate=1, startPos=0, mul=1;
+	PlayBuf.ar(buffer.numChannels, buffer, rate, Impulse.kr(triggerRate), startPos, 1)*mul;} } ] ]

@@ -1,4 +1,5 @@
-Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1, allocCount=1, <recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo;
+Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1,
+	allocCount=1, <recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo;
 
 	*add {arg type=\audio, channels=1, destination;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -446,17 +447,39 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 		});
 	}
 
-	*recNow {arg seconds=1, channels=1, format=\audio, input=1, loop=0, recLevel=1, preLevel=0, frameSize=2048, hopSize=0.5;
-		var recblock;
-		this.addRec(seconds, channels, format, frameSize, hopSize, {|item|
-			recblock = item[1].asString.last.asString.asInteger;
-			this.rec(recblock, input, loop, recLevel, preLevel);
-			("recording into recBlock: " ++ recblock).postln;
+	*getRecBuf {arg recblock=1;
+		^BStore.buffByID(Block.recBuf(recblock));
+	}
+
+	*recTimer {arg recblock=1, input=1, loop=0, recLevel, preLevel;
+		timeInfo = [recblock, Main.elapsedTime];
+		this.rec(recblock, input, loop, recLevel, preLevel);
+	}
+
+	*loopTimer {arg block=1;
+		var elapsedTime, blockindex;
+		(recNdefs[timeInfo[0]-1].cs.replace(")", "") ++ ", 0)").postln.interpret;
+		if(recBufInfo[timeInfo[0]-1][2] == \audio, {
+			elapsedTime = (Main.elapsedTime - timeInfo[1]);
+			blockindex = block-1;
+			this.play(block, \looptr, Block.recBuf(timeInfo[0]), extraArgs: [\triggerRate, 1/elapsedTime]);
+		}, {
+			"loopTime only works with audio format".warn;
 		});
 	}
 
-	*getRecBuf {arg recblock=1;
-		^BStore.buffByID(Block.recBuf(recblock));
+	*recNow {arg seconds=1, channels=1, format=\audio, input=1, loop=0, recLevel=1,
+		preLevel=0, frameSize=2048, hopSize=0.5, timer=false;
+		var recblock;
+		this.addRec(seconds, channels, format, frameSize, hopSize, {|item|
+			recblock = item[1].asString.last.asString.asInteger;
+			if(timer, {
+				this.recTimer(recblock, input, loop, recLevel, preLevel);
+			}, {
+				this.rec(recblock, input, loop, recLevel, preLevel);
+			});
+			("recording into recBlock: " ++ recblock).postln;
+		});
 	}
 
 }
