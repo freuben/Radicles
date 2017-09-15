@@ -191,9 +191,9 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	}
 
 	*getDirPath {arg format=\audio, directory, subDir;
-		var folderPath, mainClass, fileIndex, selectedPath;
-		mainClass = this.new;
-		playPath = mainClass.mainPath ++ directory;
+		var folderPath, fileIndex, selectedPath;
+		this.new;
+		playPath = this.mainPath ++ directory;
 
 		if([\audio, \scpv].includes(format), {
 			if(format == \audio, {

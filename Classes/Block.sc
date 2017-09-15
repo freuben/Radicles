@@ -1,4 +1,4 @@
-Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1, allocCount=1,
+Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCount=1, allocCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo;
 
 	*add {arg type=\audio, channels=1, destination;
@@ -85,7 +85,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 		liveBlocks = [];
 	}
 
-	*play {arg block=1, blockName, buffer, isPattern=false, extraArgs, data;
+	*play {arg block=1, blockName, buffer, extraArgs, data;
 		var blockFunc, blockIndex, newArgs, ndefCS, cond, blockFuncCS, bufferID, bufTag;
 		var storeType, blockFuncString, dataString;
 		if(block >= 1, {
@@ -146,6 +146,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 									cond.signal;
 									//fill buffer with wavetable function
 									if(data.notNil, {
+										DataFile.read(\wavetables, data).cs.postln;
 										DataFile.read(\wavetables, data).(buf);
 									});
 
@@ -179,7 +180,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 
 					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
 
-					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, isPattern, data];
+					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
 
 				}.fork;
 			}, {
@@ -225,7 +226,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 			if(thisBuffer.notNil, {
 				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
 					"remove buffer".postln;
-					this.new.nodeTime.wait;
+					this.nodeTime.wait;
 					BStore.removeID(thisBuffer);
 				});
 			});
