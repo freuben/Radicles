@@ -1,5 +1,5 @@
-Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1,
-	allocCount=1, <recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo;
+Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTime=0.5, cueCount=1, allocCount=1,
+	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo;
 
 	*add {arg type=\audio, channels=1, destination;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -87,7 +87,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 
 	*play {arg block=1, blockName, buffer, isPattern=false, extraArgs, data;
 		var blockFunc, blockIndex, newArgs, ndefCS, cond, blockFuncCS, bufferID, bufTag;
-		var storeType, blockFuncString, fadeWait=0;
+		var storeType, blockFuncString, dataString;
 		if(block >= 1, {
 			blockIndex = block-1;
 
@@ -102,9 +102,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 					case
 					{buffer.isNumber} {
 						storeType = \alloc;
-						"alloc".postln;
-						buffer = [(\alloc++allocCount).asSymbol, buffer].postln;
-						bufferID = [storeType, buffer ].flat;
+						buffer = [(\alloc++allocCount).asSymbol, buffer];
+						bufferID = [storeType, buffer[0], [buffer[1]] ];
 						allocCount = allocCount + 1;
 					}
 					{buffer.isSymbol} {
@@ -128,8 +127,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 					};
 
 					if(liveBlocks[blockIndex].notNil, {
-						fadeWait = ndefs[blockIndex].fadeTime * 2;
-
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
 							"free buffer from play".postln;
 							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
@@ -147,6 +144,11 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 									blockFunc = blockFunc.(buf);
 									cond.test = true;
 									cond.signal;
+									//fill buffer with wavetable function
+									if(data.notNil, {
+										DataFile.read(\wavetables, data).(buf);
+									});
+
 								});
 								cond.wait;
 							}, {
@@ -154,7 +156,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 							});
 						}, {
 							blockFunc = blockFunc.(BStore.buffByID(bufTag));
-							bufTag.postln;
 							"Use this buffer".postln;
 						});
 
@@ -165,8 +166,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
 						++ blockFuncCS.cs ++ ");");
 
-					ndefs[blockIndex].source = blockFunc;
-
 					ndefCS.postln;
 
 					if(extraArgs.notNil, {
@@ -175,9 +174,10 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 						}, {
 							newArgs = [blockFunc.argNames, extraArgs].flop.flat;
 						});
-						fadeWait.wait;
-						this.set(block, newArgs, true);
+						this.xset(block, newArgs, true);
 					});
+
+					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
 
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, isPattern, data];
 
@@ -219,7 +219,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 	*buffree {arg blockIndex=0, fadeOut, func;
 		var thisBuffer, thisBlock;
 		thisBlock = liveBlocks;
-		thisBuffer = thisBlock[blockIndex][2];
+		thisBuffer = thisBlock[blockIndex][2].postln;
 		{
 			fadeOut.wait;
 			if(thisBuffer.notNil, {
@@ -249,10 +249,14 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, fadeTi
 		});
 	}
 
-	*xset {arg block, argArr;
+	*xset {arg block, argArr, post=false;
 		var blockIndex;
 		if((block >= 1), {
 			blockIndex = block-1;
+			if(post == true, {
+				(ndefs[blockIndex].cs	++ ".xset(" ++
+					argArr.cs.replace("[", "").replace("]", "") ++  ");").postln;
+			});
 			argArr.keysValuesDo{|key, val|
 				ndefs[blockIndex].xset(key, val);
 			};
