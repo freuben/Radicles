@@ -74,5 +74,21 @@
 		^newArr;
 	}
 
+	specFactor {arg mulFactor=1, addFactor=0, minval, maxval, warp;
+		var specArr, newArr, result, low, high, range, add, mid;
+		specArr = this.copyRange(0,1);
+		if(minval.notNil, {specArr[0] = minval});
+		if(maxval.notNil, {specArr[1] = maxval});
+		low = specArr[0];
+		high = specArr[1];
+		range = (high-low) * mulFactor / 2;
+		add = addFactor * range;
+		mid = (high-low) /2 +  low;
+		result = [mid-range, mid+range] + add;
+		newArr = result ++ this.copyRange(2, this.size-1);
+		if(warp.notNil, {newArr[2] = warp});
+		^newArr;
+	}
+
 }
 

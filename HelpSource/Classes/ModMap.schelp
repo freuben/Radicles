@@ -41,27 +41,50 @@ code::
 
 s.boot;
 
-b = SpecFile.read(\modulation, \freq1);
-
 Ndef(\play1, {arg freq=300; SinOsc.ar(freq, 0, 0.2) }).play;
-ModMap.map(Ndef(\play1), \freq, \sin, b, [\freq, rrand(1,10.0).postln]);
+ModMap.map(Ndef(\play1), \freq, \sin, \freq1, [\freq, 1]);
+ModMap.lag(1, \freq, 5);
+ModMap.set(1, \freq, 10);
+ModMap.set(1, \freq, 0.1);
+ModMap.unmap(Ndef(\play1), \freq);
 
+//same if you don't want to keep track
+a = ModMap.map(Ndef(\play1), \freq, \sin, \freq1, [\freq, 1]);
+
+a.lag(\freq, 10);
+a.set(\freq, rrand(1,10.0).postln)
+a.set(\freq, 0.1);
+a.set(\freq, 10);
 
 Ndef(\play2, {arg freq=300; Saw.ar(freq, 0.2) }).play;
-ModMap.map(Ndef(\play2), \freq, \sin, b, [\freq, rrand(1,10.0).postln]);
+ModMap.map(Ndef(\play2), \freq, \sin, \freq1, [\freq, 1]);
+ModMap.ndefs;
+ModMap.lag(1, \freq, 1);
+ModMap.set(1, \freq, rrand(1,10.0).postln);
 
 ModMap.unmap(Ndef(\play1), \freq);
 
-ModMap.map(Ndef(\play1), \freq, \sin, b, [\freq, rrand(1,10.0).postln]);
+ModMap.map(Ndef(\play1), \freq, \sin, \freq1, [\freq, rrand(1,10.0).postln]);
 
 ModMap.unmap(Ndef(\play2), \freq, 1000);
 
 ModMap.unmapAt(0);
 
+SpecFile.all
+SpecFile.postAll(\space)
+
+Ndef(\play3, {arg freq=300, pan=0; Pan2.ar(SinOsc.ar(freq, 0, 0.2), pan) }).play;
+ModMap.map(Ndef(\play3), \pan, \sin, [\space, \pan], [\freq, 1]);
+
+ModMap.map(Ndef(\play3), \freq, ControlFile.read(\map).choose.postln, \freq1, [\freq, 1]); //try different times for different mapings
+
+ModMap.map(Ndef(\play3), \freq, \sin, \freq1, [\freq, 1], mul: [0.25,0.5,1,2].choose.postln); //notice mul factors to change spec min and max values
+
+ModMap.map(Ndef(\play3), \freq, \sin, \freq1, [\freq, 1], mul: 0.1, add: -12); //change mul and add factors
 
 Ndef.clear(5);
 
-
+ControlSpec
 
 efSet 1 1 -> sin(0.2) //mul
 prt -> lfn1(0.2,100,\lin) //mul, add, warp

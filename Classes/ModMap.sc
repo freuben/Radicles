@@ -1,15 +1,20 @@
 ModMap : MainImprov {
 	classvar <modNodes, modIndex=0;
 
-	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, post=\ide;
+	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, mul=1, add=0, min, val, warp, post=\ide;
 		var modMap;
+		if(spec.isSymbol, {spec = SpecFile.read(\modulation, spec); });
+		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
+
+		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, post);
 		modNodes.do{|item| if( [item[1], item[2]] == [ndef, key], {item[0].clear;
 			modNodes.remove(item);
 		}); };
 		modNodes = modNodes.add([modMap, ndef, key, spec]);
-		ndef.set(key, modMap);
+		ndef.xset(key, modMap);
 		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").postin(post, \ln);
+		^modMap;
 	}
 
 	*unmap {arg ndef, key, value;
@@ -52,6 +57,22 @@ ModMap : MainImprov {
 			"Control File not Found".warn;
 		});
 		^ndef;
+	}
+
+	*lag {arg modNum=1, key, value;
+		var modNumIndex;
+		modNumIndex = modNum-1;
+		modNodes[modNumIndex][0].lag(key, value);
+	}
+
+	*set {arg modNum=1, key, value;
+		var modNumIndex;
+		modNumIndex = modNum-1;
+		modNodes[modNumIndex][0].set(key, value);
+	}
+
+	*ndefs {
+		^modNodes.flop[0];
 	}
 
 }

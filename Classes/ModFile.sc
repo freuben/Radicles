@@ -109,6 +109,13 @@ ModFile : MainImprov {var <filePath;
 		}, {^arrayFromFile});
 	}
 
+		*all {var file, arr;
+		file = this.path;
+		PathName.new(file.dirname).files.do{|item|
+			arr = arr.add(item.fileNameWithoutExtension.toLower.asSymbol)};
+		^arr
+	}
+
 }
 
 SynthFile : ModFile {
@@ -210,41 +217,41 @@ SpecFile : ModFile {classvar specArr;
 
 ControlFile : ModFile {
 
-	*path {arg class=\filter;
+	*path {arg class=\map;
 		var synthFile;
 		synthFile = this.new(\control, class);
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\filter, key;
+	* read {arg class=\map, key;
 		var synthFile;
 		synthFile = this.new(\control, class);
 		^synthFile.read(key);
 	}
 
-	* post {arg class=\filter, key;
+	* post {arg class=\map, key;
 		var synthFile;
 		synthFile = this.new(\control, class);
 		^synthFile.post(key);
 	}
 
-	* postAll {arg class=\filter;
+	* postAll {arg class=\map;
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\filter, key, dataArr;
+	* write {arg class=\map, key, dataArr;
 		var synthFile;
 		synthFile = this.new(\control, class);
 		^synthFile.write(key, dataArr);
 	}
 
-	* remove {arg class=\filter, key;
+	* remove {arg class=\map, key;
 		var synthFile;
 		synthFile = this.new(\control, class);
 		^synthFile.remove(key);
 	}
 
-	* string {arg class=\filter, key;
+	* string {arg class=\map, key;
 		var synthFile;
 		synthFile = this.new(\control, class);
 		^synthFile.read(key).cs;
