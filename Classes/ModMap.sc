@@ -13,7 +13,7 @@ ModMap : MainImprov {
 		}); };
 		modNodes = modNodes.add([modMap, ndef, key, spec]);
 		ndef.xset(key, modMap);
-		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").postin(post, \ln);
+		(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").postin(post, \ln);
 		^modMap;
 	}
 
@@ -69,6 +69,12 @@ ModMap : MainImprov {
 		var modNumIndex;
 		modNumIndex = modNum-1;
 		modNodes[modNumIndex][0].set(key, value);
+	}
+
+	*xset {arg modNum=1, key, value;
+		var modNumIndex;
+		modNumIndex = modNum-1;
+		modNodes[modNumIndex][0].xset(key, value);
 	}
 
 	*ndefs {

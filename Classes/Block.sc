@@ -85,9 +85,40 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		liveBlocks = [];
 	}
 
+	*setBufferID {arg buffer, blockFuncString;
+		var storeType, bufferID;
+		case
+		{buffer.isNumber} {
+			storeType = \alloc;
+			buffer = [(\alloc++allocCount).asSymbol, buffer];
+			bufferID = [storeType, buffer[0], [buffer[1]] ];
+			allocCount = allocCount + 1;
+		}
+		{buffer.isSymbol} {
+			case
+			{(blockFuncString.find("PlayBuf.ar(")).notNil} {
+				storeType = \play;
+				BStore.playFormat = \audio;
+				bufferID = [storeType, \audio, buffer].flat;
+			}
+			{blockFuncString.find("PV_PlayBuf").notNil} {
+				storeType = \play;
+				BStore.playFormat = \scpv;
+				bufferID = [storeType, \scpv, buffer];
+			}
+			{blockFuncString.find("DiskIn.ar(").notNil} {
+				storeType = \cue;
+				buffer = [(\cue++cueCount).asSymbol, buffer].flat;
+				bufferID = [storeType, buffer].flat;
+				cueCount = cueCount + 1;
+			};
+		};
+		^[storeType, buffer, bufferID];
+	}
+
 	*play {arg block=1, blockName, buffer, extraArgs, data;
-		var blockFunc, blockIndex, newArgs, ndefCS, cond, blockFuncCS, bufferID, bufTag;
-		var storeType, blockFuncString, dataString;
+		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncCS, blockFuncString;
+		var storeType, dataString, cond, bufferArr, bufferID, bufInfo;
 		if(block >= 1, {
 			blockIndex = block-1;
 
@@ -97,50 +128,19 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 					blockFunc = SynthFile.read(\block, blockName);
 					blockFuncCS = blockFunc;
 					blockFuncString = blockFunc.cs;
-					bufTag = buffer;
-
-					case
-					{buffer.isNumber} {
-						storeType = \alloc;
-						buffer = [(\alloc++allocCount).asSymbol, buffer];
-						bufferID = [storeType, buffer[0], [buffer[1]] ];
-						allocCount = allocCount + 1;
-					}
-					{buffer.isSymbol} {
-						case
-						{(blockFuncString.find("PlayBuf.ar(")).notNil} {
-							storeType = \play;
-							BStore.playFormat = \audio;
-							bufferID = [storeType, \audio, buffer].flat;
-						}
-						{blockFuncString.find("PV_PlayBuf").notNil} {
-							storeType = \play;
-							BStore.playFormat = \scpv;
-							bufferID = [storeType, \scpv, buffer];
-						}
-						{blockFuncString.find("DiskIn.ar(").notNil} {
-							storeType = \cue;
-							buffer = [(\cue++cueCount).asSymbol, buffer].flat;
-							bufferID = [storeType, buffer].flat;
-							cueCount = cueCount + 1;
-						};
-					};
-
-					if(liveBlocks[blockIndex].notNil, {
-						if((liveBlocks[blockIndex][2] == bufferID).not, {
-							"free buffer from play".postln;
-							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
-						});
-					});
 
 					if(blockFuncString.findAll("{").size == 2, {
+						if(buffer.isArray.not, {
+							bufferArr = this.setBufferID(buffer, blockFuncString);
+							storeType = bufferArr[0];
+							bufInfo = bufferArr[1];
+							bufferID = bufferArr[2];
 
-						if(bufTag.isArray.not, {
 							"includes buffer".postln;
 							cond = Condition(false);
 							cond.test = false;
-							if(buffer.notNil.or(buffer == \nobuf), {
-								BStore.add(storeType, buffer, {arg buf;
+							if(bufInfo.notNil.or(bufInfo == \nobuf), {
+								BStore.add(storeType, bufInfo.postln, {arg buf;
 									blockFunc = blockFunc.(buf);
 									cond.test = true;
 									cond.signal;
@@ -155,13 +155,65 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							}, {
 								"Buffer not provided".warn;
 							});
-						}, {
-							blockFunc = blockFunc.(BStore.buffByID(bufTag));
-							"Use this buffer".postln;
-						});
 
+						}, {
+
+							if([\alloc, \play, \cue].includes(buffer[0]), {
+								blockFunc = blockFunc.(BStore.buffByID(buffer));
+								"this buffer is an existing buffer with ID".postln;
+							}, {
+
+								buffer.do{|item|
+									bufferArr = bufferArr.add(this.setBufferID(item, blockFuncString));
+								};
+
+								bufferArr.postln;
+								storeType = bufferArr.flop[0];
+								bufInfo = bufferArr.flop[1];
+								bufferID = bufferArr.flop[2];
+
+								"includes buffer array".postln;
+								cond = Condition(false);
+								cond.test = false;
+
+								BStore.addAll(bufferID, {arg buf;
+
+									blockFunc = blockFunc.(buf);
+									cond.test = true;
+									cond.signal;
+									//fill buffer with wavetable function
+									if(data.notNil, {
+										if(data.isArray, {
+											"this data is an array".postln;
+										data.do{|item, index|
+											DataFile.read(\wavetables, item).cs.postln;
+											DataFile.read(\wavetables, item).(buf[index]);
+										};
+										}, {
+												"this data is a symbol".postln;
+											DataFile.read(\wavetables, data).cs.postln;
+											buf.do{|item, index|
+												[item, buf.size+1, index].postln;
+											DataFile.read(\wavetables, data).(item, buf.size+1, index);
+											};
+										});
+									});
+
+								});
+								cond.wait;
+
+								"this buffer array that need to be allocated".postln;
+							});
+						});
 					}, {
 						"no buffer".postln;
+					});
+
+					if(liveBlocks[blockIndex].notNil, {
+						if((liveBlocks[blockIndex][2] == bufferID).not, {
+							"free buffer from play".postln;
+							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
+						});
 					});
 
 					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
@@ -178,7 +230,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 						this.xset(block, newArgs, true);
 					});
 
-					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
+										ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
 
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
 
