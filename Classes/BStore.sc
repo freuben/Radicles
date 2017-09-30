@@ -79,7 +79,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		}
 		{type == \alloc} {
 			format = settings[0];
-			newSettings = settings.copyRange(1,2);
+			newSettings = settings.copyRange(1,3);
 		}
 		{type == \cue} {
 			format = settings[0];
@@ -232,7 +232,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	}
 
 	*addAlloc {arg settings, function;
-		^BufferSystem.add(settings[0], settings[1], function);
+		^BufferSystem.add(settings[0], settings[1], function, settings[2]);
 	}
 
 	*addCue {arg settings, path, function;

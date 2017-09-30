@@ -24,7 +24,7 @@
 	sig = 'input';
 	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 1); } } ], [ 'looptr', {arg buffer; {arg rate=1, triggerRate=1, startPos=0, mul=1;
 	PlayBuf.ar(buffer.numChannels, buffer, rate, Impulse.kr(triggerRate), startPos, 1)*mul;} } ], [ 'osc1', {arg buffer; {arg freq=400, phase=0, mul=0.5; Osc.ar(buffer, freq, phase, mul)} } ], [ 'shaperSine', {arg buffer; {arg freq=440, phase=0, mul=0.5; 
-	Shaper.ar(buffer, SinOsc.ar(freq, phase, mul), 0.5)} } ], [ 'vosc', {arg buffer; {arg num=8,bufoffset=0, freq=440, phase=0, mul=0.5;
+	Shaper.ar(buffer, SinOsc.ar(freq, phase, mul), 0.5)} } ], [ 'vosc', {arg buffer; {arg bufoffset=0, freq=440, phase=0, mul=0.5;
 		var bufnum;
 		bufnum = buffer[0].bufnum;
-		VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+num-1), freq, phase, mul)} } ] ]
+	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+buffer.size-1), freq, phase, mul)} } ] ]

@@ -118,7 +118,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 
 	*play {arg block=1, blockName, buffer, extraArgs, data;
 		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncCS, blockFuncString;
-		var storeType, dataString, cond, bufferArr, bufferID, bufInfo;
+		var storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize;
 		if(block >= 1, {
 			blockIndex = block-1;
 
@@ -170,9 +170,24 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 								bufInfo = bufferArr.flop[1];
 								bufferID = bufferArr.flop[2];
 
+
 								"includes buffer array".postln;
 								cond = Condition(false);
 								cond.test = false;
+
+								//for multiple wavetables with consecutive buffer allocation:
+								if(data.notNil, {
+									"if this is a wavetable then alloc consecutive buffers".postln;
+									if(data.isArray.not, {
+										if(BStore.bstores.notNil, {
+										bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
+										}, {
+										bstoreSize = 0;
+										});
+										bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
+											++ [1, bstoreSize+index] ] });
+									});
+								});
 
 								BStore.addAll(bufferID, {arg buf;
 
@@ -228,7 +243,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 						this.xset(block, newArgs, true);
 					});
 
-										ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
+					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
 
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
 

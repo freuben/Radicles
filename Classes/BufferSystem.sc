@@ -102,7 +102,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 		^selectedPath;
 	}
 
-	*alloc {arg numFrames, numChannels, function;
+	*alloc {arg numFrames, numChannels, function, bufnum;
 		var main, buffer;
 		main = this.new;
 
@@ -113,7 +113,8 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 			server.makeBundle(nil, {
 				{
 					bufAlloc = true;
-					buffer = Buffer.alloc(server, numFrames, numChannels).postin(postWhere, \ln, postWin);
+					buffer = Buffer.alloc(server, numFrames, numChannels, bufnum: bufnum)
+					.postin(postWhere, \ln, postWin);
 					bufferArray = bufferArray.add(buffer);
 					tags = tags.add( ("alloc" ++ countTag).asSymbol );
 					countTag = countTag + 1;
@@ -140,7 +141,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 						item[0] ?? {item[0] = 44100};
 						item[1] ?? {item[1] = 1};
 
-						buffer = Buffer.alloc(server, item[0], item[1])
+						buffer = Buffer.alloc(server, item[0], item[1], bufnum: item[2])
 						.postin(postWhere, \ln, postWin);
 						bufferArray = bufferArray.add(buffer);
 						tags = tags.add( ("alloc" ++ countTag).asSymbol );
@@ -211,11 +212,11 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 		}, {"Server not running".warn});
 	}
 
-	*add {arg arg1, arg2, function;
+	*add {arg arg1, arg2, function, arg3;
 		var getPath, getIndex, getBufferPaths, cueBool, buffunction;
 		if(arg1.isNumber, {
 			//allocate buffer: arg1: frames, arg2: channels
-			this.alloc(arg1, arg2, function)
+			this.alloc(arg1, arg2, function, arg3)
 		}, {
 			//read buffer: arg1: fileName, arg2: pathDir
 			arg2 ?? {arg2 = defaultPath};
