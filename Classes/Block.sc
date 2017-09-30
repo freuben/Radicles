@@ -140,7 +140,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							cond = Condition(false);
 							cond.test = false;
 							if(bufInfo.notNil.or(bufInfo == \nobuf), {
-								BStore.add(storeType, bufInfo.postln, {arg buf;
+								BStore.add(storeType, bufInfo, {arg buf;
 									blockFunc = blockFunc.(buf);
 									cond.test = true;
 									cond.signal;
@@ -162,12 +162,10 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 								blockFunc = blockFunc.(BStore.buffByID(buffer));
 								"this buffer is an existing buffer with ID".postln;
 							}, {
-
 								buffer.do{|item|
 									bufferArr = bufferArr.add(this.setBufferID(item, blockFuncString));
 								};
-
-								bufferArr.postln;
+								/*bufferArr.postln;*/
 								storeType = bufferArr.flop[0];
 								bufInfo = bufferArr.flop[1];
 								bufferID = bufferArr.flop[2];
@@ -193,7 +191,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 												"this data is a symbol".postln;
 											DataFile.read(\wavetables, data).cs.postln;
 											buf.do{|item, index|
-												[item, buf.size+1, index].postln;
+												/*[item, buf.size+1, index].postln;*/
 											DataFile.read(\wavetables, data).(item, buf.size+1, index);
 											};
 										});
@@ -272,14 +270,18 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 	*buffree {arg blockIndex=0, fadeOut, func;
 		var thisBuffer, thisBlock;
 		thisBlock = liveBlocks;
-		thisBuffer = thisBlock[blockIndex][2].postln;
+		thisBuffer = thisBlock[blockIndex][2];
 		{
 			fadeOut.wait;
 			if(thisBuffer.notNil, {
 				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
 					"remove buffer".postln;
 					this.nodeTime.wait;
+					if(thisBuffer.rank <= 1, {
 					BStore.removeID(thisBuffer);
+					}, {
+						thisBuffer.do{|item| BStore.removeID(item);};
+					});
 				});
 			});
 			func.();
