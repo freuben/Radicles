@@ -1,7 +1,7 @@
 ModMap : MainImprov {
 	classvar <modNodes, modIndex=0;
 
-	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, mul=1, add=0, min, val, warp, post=\ide;
+	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, mul=1, add=0, min, val, warp, lag, post=\ide;
 		var modMap;
 		if(spec.isSymbol, {spec = SpecFile.read(\modulation, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
@@ -13,6 +13,11 @@ ModMap : MainImprov {
 		}); };
 		modNodes = modNodes.add([modMap, ndef, key, spec]);
 		ndef.xset(key, modMap);
+		if(lag.notNil, {
+			lag.keysValuesDo{|key, val|
+				ndef.lag(key, val);
+			}
+		});
 		(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").postin(post, \ln);
 		^modMap;
 	}

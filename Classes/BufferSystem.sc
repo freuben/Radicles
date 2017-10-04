@@ -215,7 +215,7 @@ BufferSystem {classvar condition, server, <bufferArray, <tags, countTag=0;
 	*add {arg arg1, arg2, function, arg3;
 		var getPath, getIndex, getBufferPaths, cueBool, buffunction;
 		if(arg1.isNumber, {
-			//allocate buffer: arg1: frames, arg2: channels
+			//allocate buffer: arg1: frames, arg2: channels, arg3: bufnum
 			this.alloc(arg1, arg2, function, arg3)
 		}, {
 			//read buffer: arg1: fileName, arg2: pathDir

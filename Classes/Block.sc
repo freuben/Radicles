@@ -165,11 +165,9 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 								buffer.do{|item|
 									bufferArr = bufferArr.add(this.setBufferID(item, blockFuncString));
 								};
-								/*bufferArr.postln;*/
 								storeType = bufferArr.flop[0];
 								bufInfo = bufferArr.flop[1];
 								bufferID = bufferArr.flop[2];
-
 
 								"includes buffer array".postln;
 								cond = Condition(false);
@@ -178,7 +176,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 								//for multiple wavetables with consecutive buffer allocation:
 								if(data.notNil, {
 									"if this is a wavetable then alloc consecutive buffers".postln;
-									if(data.isArray.not, {
 										if(BStore.bstores.notNil, {
 										bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
 										}, {
@@ -186,7 +183,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 										});
 										bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
 											++ [1, bstoreSize+index] ] });
-									});
 								});
 
 								BStore.addAll(bufferID, {arg buf;
@@ -206,7 +202,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 												"this data is a symbol".postln;
 											DataFile.read(\wavetables, data).cs.postln;
 											buf.do{|item, index|
-												/*[item, buf.size+1, index].postln;*/
 											DataFile.read(\wavetables, data).(item, buf.size+1, index);
 											};
 										});
@@ -214,6 +209,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 
 								});
 								cond.wait;
+								this.nodeTime.wait;
 
 								"this buffer array that need to be allocated".postln;
 							});
