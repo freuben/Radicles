@@ -90,5 +90,48 @@
 		^newArr;
 	}
 
+	toPattern {arg patNum=1, quant=0;
+		var finalString;
+		finalString = "Pdef('patt" ++ patNum ++ "').quant = " ++ quant ++ ";" ++ 10.asAscii;
+		finalString = finalString ++ "Pdef('patt" ++ patNum ++ "', Pbind(";
+		this.do{|item| var string, arr;
+			string = (item[0].cs ++ ", Pdefn('" ++ item[0] ++ patNum);
+			if(item.size <= 2, {
+				string = string ++ "', " ++ item[1].cs ++ ")";
+			}, {
+				if(item[2].isArray, {arr = item[2]}, {arr = [item[2]]});
+				string = (string ++ "', P" ++ item[1] ++ "(" ++ arr.cs);
+				if(item[3].isNil, {
+					string = (string ++ ", inf) )");
+				}, {
+					string = (string ++ ", " ++ item[3] ++ ") )");
+				});
+			});
+			string = string ++ ", ";
+			finalString = finalString ++ string;
+		};
+		finalString = finalString.copyRange(0, finalString.size-3);
+		finalString = finalString ++ " ) );";
+		finalString.postln;
+		^finalString.interpret;
+	}
+
+	patternInst {arg inst=\default, patt, repeat;
+		var newArr, arr;
+		newArr = [\instrument, inst, patt, repeat];
+		newArr = newArr.reject({|item| item.isNil });
+		arr = this;
+		if(arr.flop[0].includes(\instrument), {
+			arr[arr.flop[0].indexOf(\instrument)] = newArr;
+		}, {
+			arr = [newArr] ++ arr;
+		});
+		^arr;
+	}
+
+	ppar {arg repeats=inf;
+		^Ppar(this, repeats);
+	}
+
 }
 

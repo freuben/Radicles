@@ -17,4 +17,16 @@
 		^fcs.interpret;
 	}
 
+	toSynthDef {arg key=\bla, post=true;
+		var arr, arr2, string, string2, synthDef;
+		this.argNames.do{|item| arr = arr.add(item) };
+		string = arr.asString.replace("[", "").replace("]", "");
+		arr.do{|item, index| arr2 = arr2.add(item ++ "=" ++ this.defaultArgs[index].cs) };
+		string2 = arr2.asString.replace("[", "").replace("]", "");
+		synthDef = "SynthDef(" ++ key.cs ++ ", {arg out=0," ++ string2 ++ "; var output;" ++
+		10.asAscii ++ "output = Out.ar(out, " ++ this.cs ++ ".(" ++ string ++ "))});";
+		if(post, {synthDef.postln});
+		^synthDef.interpret;
+	}
+
 }
