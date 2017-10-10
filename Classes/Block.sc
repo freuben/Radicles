@@ -1,5 +1,5 @@
 Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCount=1, allocCount=1,
-	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo;
+	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo, <pattCount=1;
 
 	*add {arg type=\audio, channels=1, destination;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -119,12 +119,14 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 	*play {arg block=1, blockName, buffer, extraArgs, data;
 		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncCS, blockFuncString;
 		var storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize;
+		var pattArr, quant, extraPattCount;
 		if(block >= 1, {
 			blockIndex = block-1;
 
 			if(ndefs[blockIndex].notNil, {
 
 				{
+					if((blockName == 'pattern').not, {
 					blockFunc = SynthFile.read(\block, blockName);
 					blockFuncCS = blockFunc;
 					blockFuncString = blockFunc.cs;
@@ -218,6 +220,40 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 						"no buffer".postln;
 					});
 
+					}, {
+						"this is a pattern hurray".postln;
+
+						if(data.notNil, {
+							if(data.includes(\quant).and(data.notNil), {
+							quant = data[data.indexOf(\quant) + 1];
+								ndefs[blockIndex].proxyspace.quant(quant.postln);
+							}, {
+								quant = 4;
+							});
+						});
+
+						if(extraArgs.isArray.not, {
+							blockFunc = DataFile.read(\pattern, extraArgs).toPattern(pattCount, quant);
+						}, {
+							if(extraArgs.collect({|item| item.isArray}).includes(true), {
+								blockFunc = extraArgs.toPattern(pattCount, quant);
+								"this is a pattern defined".postln;
+							}, {
+								extraPattCount = 1;
+								blockFunc = extraArgs.do{|item|
+									pattArr = pattArr.add(
+										DataFile.read(\pattern, item).toPattern(pattCount.cs ++ "_" ++ extraPattCount),
+										quant);
+									extraPattCount = extraPattCount + 1;
+								};
+								blockFunc = Pdef(("'patt" ++ block ++ "'").interpret, Ppar(pattArr, 1));
+							"this is a ppar".postln;
+							});
+						});
+						pattCount = pattCount + 1;
+						blockFuncCS = blockFunc;
+					});
+
 					if(liveBlocks[blockIndex].notNil, {
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
 							"free buffer from play".postln;
@@ -230,6 +266,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 
 					ndefCS.postln;
 
+					if((blockName == 'pattern').not, {
 					if(extraArgs.notNil, {
 						if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
 							newArgs = extraArgs;
@@ -237,6 +274,13 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							newArgs = [blockFunc.argNames, extraArgs].flop.flat;
 						});
 						this.xset(block, newArgs, true);
+					});
+					}, {
+						if(liveBlocks[blockIndex][1] != \pattern, {
+						ndefs[blockIndex].put(0, nil);
+						fadeTime.wait;
+						ndefs[blockIndex].resetNodeMap;
+						});
 					});
 
 					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
@@ -550,6 +594,12 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 			});
 			("recording into recBlock: " ++ recblock).postln;
 		});
+	}
+
+	*setFadeTime {arg newFadeTime;
+		newFadeTime ?? {newFadeTime = fadeTime};
+		fadeTime = newFadeTime;
+		ndefs.do{|item| item.fadeTime = fadeTime};
 	}
 
 }

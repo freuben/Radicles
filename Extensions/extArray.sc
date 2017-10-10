@@ -92,7 +92,7 @@
 
 	toPattern {arg patNum=1, quant=0;
 		var finalString;
-		finalString = "Pdef('patt" ++ patNum ++ "').quant = " ++ quant ++ ";" ++ 10.asAscii;
+/*		finalString = "Pdef('patt" ++ patNum ++ "').quant = " ++ quant ++ ";" ++ 10.asAscii;*/
 		finalString = finalString ++ "Pdef('patt" ++ patNum ++ "', Pbind(";
 		this.do{|item| var string, arr;
 			string = (item[0].cs ++ ", Pdefn('" ++ item[0] ++ patNum);
@@ -109,6 +109,7 @@
 			});
 			string = string ++ ", ";
 			finalString = finalString ++ string;
+
 		};
 		finalString = finalString.copyRange(0, finalString.size-3);
 		finalString = finalString ++ " ) );";
