@@ -154,8 +154,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 								}, {
 									"Buffer not provided".warn;
 								});
-							}, {
-								if([\alloc, \play, \cue].includes(buffer[0]), {
+							}, {if([\alloc, \play, \cue].includes(buffer[0]), {
 									blockFunc = blockFunc.(BStore.buffByID(buffer));
 									"this buffer is an existing buffer with ID".postln;
 								}, {
