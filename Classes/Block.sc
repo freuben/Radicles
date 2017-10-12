@@ -119,7 +119,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 	*play {arg block=1, blockName, buffer, extraArgs, data;
 		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncCS, blockFuncString;
 		var storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize;
-		var pattArr, quant, extraPattCount;
+		var pattArr, extraPattCount;
 		if(block >= 1, {
 			blockIndex = block-1;
 
@@ -127,127 +127,115 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 
 				{
 					if((blockName == 'pattern').not, {
-					blockFunc = SynthFile.read(\block, blockName);
-					blockFuncCS = blockFunc;
-					blockFuncString = blockFunc.cs;
+						blockFunc = SynthFile.read(\block, blockName);
+						blockFuncCS = blockFunc;
+						blockFuncString = blockFunc.cs;
 
-					if(blockFuncString.findAll("{").size == 2, {
-						if(buffer.isArray.not, {
-							bufferArr = this.setBufferID(buffer, blockFuncString);
-							storeType = bufferArr[0];
-							bufInfo = bufferArr[1];
-							bufferID = bufferArr[2];
+						if(blockFuncString.findAll("{").size == 2, {
+							if(buffer.isArray.not, {
+								bufferArr = this.setBufferID(buffer, blockFuncString);
+								storeType = bufferArr[0];
+								bufInfo = bufferArr[1];
+								bufferID = bufferArr[2];
 
-							"includes buffer".postln;
-							cond = Condition(false);
-							cond.test = false;
-							if(bufInfo.notNil.or(bufInfo == \nobuf), {
-								BStore.add(storeType, bufInfo, {arg buf;
-									blockFunc = blockFunc.(buf);
-									cond.test = true;
-									cond.signal;
-									//fill buffer with wavetable function
-									if(data.notNil, {
-										DataFile.read(\wavetables, data).cs.postln;
-										DataFile.read(\wavetables, data).(buf);
-									});
-
-								});
-								cond.wait;
-							}, {
-								"Buffer not provided".warn;
-							});
-
-						}, {
-
-							if([\alloc, \play, \cue].includes(buffer[0]), {
-								blockFunc = blockFunc.(BStore.buffByID(buffer));
-								"this buffer is an existing buffer with ID".postln;
-							}, {
-								buffer.do{|item|
-									bufferArr = bufferArr.add(this.setBufferID(item, blockFuncString));
-								};
-								storeType = bufferArr.flop[0];
-								bufInfo = bufferArr.flop[1];
-								bufferID = bufferArr.flop[2];
-
-								"includes buffer array".postln;
+								"includes buffer".postln;
 								cond = Condition(false);
 								cond.test = false;
+								if(bufInfo.notNil.or(bufInfo == \nobuf), {
+									BStore.add(storeType, bufInfo, {arg buf;
+										blockFunc = blockFunc.(buf);
+										cond.test = true;
+										cond.signal;
+										//fill buffer with wavetable function
+										if(data.notNil, {
+											DataFile.read(\wavetables, data).cs.postln;
+											DataFile.read(\wavetables, data).(buf);
+										});
 
-								//for multiple wavetables with consecutive buffer allocation:
-								if(data.notNil, {
-									"if this is a wavetable then alloc consecutive buffers".postln;
+									});
+									cond.wait;
+								}, {
+									"Buffer not provided".warn;
+								});
+							}, {
+								if([\alloc, \play, \cue].includes(buffer[0]), {
+									blockFunc = blockFunc.(BStore.buffByID(buffer));
+									"this buffer is an existing buffer with ID".postln;
+								}, {
+									buffer.do{|item|
+										bufferArr = bufferArr.add(this.setBufferID(item, blockFuncString));
+									};
+									storeType = bufferArr.flop[0];
+									bufInfo = bufferArr.flop[1];
+									bufferID = bufferArr.flop[2];
+									"includes buffer array".postln;
+									cond = Condition(false);
+									cond.test = false;
+									//for multiple wavetables with consecutive buffer allocation:
+									if(data.notNil, {
+										"if this is a wavetable then alloc consecutive buffers".postln;
 										if(BStore.bstores.notNil, {
-										bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
+											bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
 										}, {
-										bstoreSize = 0;
+											bstoreSize = 0;
 										});
 										bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
 											++ [1, bstoreSize+index] ] });
-								});
-
-								BStore.addAll(bufferID, {arg buf;
-
-									blockFunc = blockFunc.(buf);
-									cond.test = true;
-									cond.signal;
-									//fill buffer with wavetable function
-									if(data.notNil, {
-										if(data.isArray, {
-											"this data is an array".postln;
-										data.do{|item, index|
-											DataFile.read(\wavetables, item).cs.postln;
-											DataFile.read(\wavetables, item).(buf[index]);
-										};
-										}, {
-												"this data is a symbol".postln;
-											DataFile.read(\wavetables, data).cs.postln;
-											buf.do{|item, index|
-											DataFile.read(\wavetables, data).(item, buf.size+1, index);
-											};
-										});
 									});
 
-								});
-								cond.wait;
-								this.nodeTime.wait;
+									BStore.addAll(bufferID, {arg buf;
 
-								"this buffer array that need to be allocated".postln;
+										blockFunc = blockFunc.(buf);
+										cond.test = true;
+										cond.signal;
+										//fill buffer with wavetable function
+										if(data.notNil, {
+											if(data.isArray, {
+												"this data is an array".postln;
+												data.do{|item, index|
+													DataFile.read(\wavetables, item).cs.postln;
+													DataFile.read(\wavetables, item).(buf[index]);
+												};
+											}, {
+												"this data is a symbol".postln;
+												DataFile.read(\wavetables, data).cs.postln;
+												buf.do{|item, index|
+													DataFile.read(\wavetables, data).(item, buf.size+1, index);
+												};
+											});
+										});
+
+									});
+									cond.wait;
+									this.nodeTime.wait;
+
+									"this buffer array that need to be allocated".postln;
+								});
 							});
+						}, {
+							"no buffer".postln;
 						});
-					}, {
-						"no buffer".postln;
-					});
 
 					}, {
 						"this is a pattern hurray".postln;
-
-						if(data.notNil, {
-							if(data.includes(\quant).and(data.notNil), {
-							quant = data[data.indexOf(\quant) + 1];
-								ndefs[blockIndex].proxyspace.quant(quant.postln);
-							}, {
-								quant = 4;
-							});
-						});
-
 						if(extraArgs.isArray.not, {
-							blockFunc = DataFile.read(\pattern, extraArgs).toPattern(pattCount, quant);
+							blockFunc = this.pattData(DataFile.read(\pattern, extraArgs), data)
+							.toPattern(pattCount);
 						}, {
 							if(extraArgs.collect({|item| item.isArray}).includes(true), {
-								blockFunc = extraArgs.toPattern(pattCount, quant);
+								blockFunc = this.pattData(extraArgs, data)
+								.toPattern(pattCount);
 								"this is a pattern defined".postln;
 							}, {
 								extraPattCount = 1;
 								blockFunc = extraArgs.do{|item|
 									pattArr = pattArr.add(
-										DataFile.read(\pattern, item).toPattern(pattCount.cs ++ "_" ++ extraPattCount),
-										quant);
+										this.pattData(DataFile.read(\pattern, item), data)
+										.toPattern(pattCount.cs ++ "_" ++ extraPattCount));
 									extraPattCount = extraPattCount + 1;
 								};
 								blockFunc = Pdef(("'patt" ++ block ++ "'").interpret, Ppar(pattArr, 1));
-							"this is a ppar".postln;
+								"this is a ppar".postln;
 							});
 						});
 						pattCount = pattCount + 1;
@@ -267,19 +255,22 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 					ndefCS.postln;
 
 					if((blockName == 'pattern').not, {
-					if(extraArgs.notNil, {
-						if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
-							newArgs = extraArgs;
-						}, {
-							newArgs = [blockFunc.argNames, extraArgs].flop.flat;
+						if(extraArgs.notNil, {
+							if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
+								newArgs = extraArgs;
+							}, {
+								newArgs = [blockFunc.argNames, extraArgs].flop.flat;
+							});
+							this.xset(block, newArgs, true);
 						});
-						this.xset(block, newArgs, true);
-					});
 					}, {
-						if(liveBlocks[blockIndex][1] != \pattern, {
-						ndefs[blockIndex].put(0, nil);
-						fadeTime.wait;
-						ndefs[blockIndex].resetNodeMap;
+						"no pattern before".postln;
+						if(liveBlocks[blockIndex].notNil, {
+							if((liveBlocks[blockIndex][1] != \pattern), {
+								ndefs[blockIndex].put(0, nil);
+								fadeTime.wait;
+								ndefs[blockIndex].resetNodeMap;
+							});
 						});
 					});
 
@@ -333,7 +324,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 					"remove buffer".postln;
 					this.nodeTime.wait;
 					if(thisBuffer.rank <= 1, {
-					BStore.removeID(thisBuffer);
+						BStore.removeID(thisBuffer);
 					}, {
 						thisBuffer.do{|item| BStore.removeID(item);};
 					});
@@ -600,6 +591,30 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		newFadeTime ?? {newFadeTime = fadeTime};
 		fadeTime = newFadeTime;
 		ndefs.do{|item| item.fadeTime = fadeTime};
+	}
+
+	*pattData {arg pattern, data;
+		var result, indexArr, inst, newData, patt;
+		patt = pattern;
+		if(data.notNil, {
+			data.do({|item, index| if(item.isArray, {newData = newData.add(item);
+			}, {
+				if(index.even, {
+					newData = newData.add([item, data[index+1]]);
+				});
+			});
+			});
+			newData.do{|item, index|
+				if(item[0] == \instrument, {
+					patt = patt.reject({|item| item[0] == \instrument});
+				});
+			};
+			if(indexArr.notNil, {
+				newData.removeAtAll(indexArr.flat);
+			});
+		});
+		result = patt ++ newData;
+		^result;
 	}
 
 }

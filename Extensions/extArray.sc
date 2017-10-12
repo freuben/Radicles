@@ -90,9 +90,8 @@
 		^newArr;
 	}
 
-	toPattern {arg patNum=1, quant=0;
+	toPattern {arg patNum=1;
 		var finalString;
-/*		finalString = "Pdef('patt" ++ patNum ++ "').quant = " ++ quant ++ ";" ++ 10.asAscii;*/
 		finalString = finalString ++ "Pdef('patt" ++ patNum ++ "', Pbind(";
 		this.do{|item| var string, arr;
 			string = (item[0].cs ++ ", Pdefn('" ++ item[0] ++ patNum);
