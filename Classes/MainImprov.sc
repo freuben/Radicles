@@ -4,10 +4,13 @@ MainImprov {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil, <>post
 		^super.new.initMainImprov;
 	}
 
-	initMainImprov {var clock, tclock;
+	initMainImprov {
 		mainPath = ("~/Library/Application Support/SuperCollider/" ++
 			"Extensions/ModImprov/").standardizePath;
 		server = Server.default;
+	}
+
+	*clock {var clock, tclock;
 		clock = "Ndef('metronome').proxyspace.makeTempoClock(1.0)";
 		clock.postln;
 		clock.interpret;

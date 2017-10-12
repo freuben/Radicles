@@ -146,12 +146,9 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 										blockFunc = blockFunc.(buf);
 										cond.test = true;
 										cond.signal;
-										//fill buffer with wavetable function
 										if(data.notNil, {
-											DataFile.read(\wavetables, data).cs.postln;
-											DataFile.read(\wavetables, data).(buf);
+											this.readWavetable(data, buf);
 										});
-
 									});
 									cond.wait;
 								}, {
@@ -163,7 +160,9 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 									"this buffer is an existing buffer with ID".postln;
 								}, {
 									buffer.do{|item|
-										bufferArr = bufferArr.add(this.setBufferID(item, blockFuncString));
+										bufferArr = bufferArr.add(
+											this.setBufferID(item, blockFuncString)
+										);
 									};
 									storeType = bufferArr.flop[0];
 									bufInfo = bufferArr.flop[1];
@@ -218,6 +217,10 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 
 					}, {
 						"this is a pattern hurray".postln;
+						/*blockFunc = this.blockPattern(block, extraArgs, data);*/
+
+						//
+						"this is a pattern hurray".postln;
 						if(extraArgs.isArray.not, {
 							blockFunc = this.pattData(DataFile.read(\pattern, extraArgs), data)
 							.toPattern(pattCount);
@@ -239,6 +242,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							});
 						});
 						pattCount = pattCount + 1;
+						//
+
 						blockFuncCS = blockFunc;
 					});
 
@@ -591,6 +596,37 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		newFadeTime ?? {newFadeTime = fadeTime};
 		fadeTime = newFadeTime;
 		ndefs.do{|item| item.fadeTime = fadeTime};
+	}
+
+	*readWavetable {arg data, buf;
+		DataFile.read(\wavetables, data).cs.postln;
+		DataFile.read(\wavetables, data).(buf);
+	}
+
+	*blockPattern {arg block, extraArgs, data;
+		var extraPattCount, blockFunc, pattArr;
+		if(extraArgs.isArray.not, {
+			blockFunc = this.pattData(DataFile.read(\pattern, extraArgs), data)
+			.toPattern(pattCount);
+		}, {
+			if(extraArgs.collect({|item| item.isArray}).includes(true), {
+				blockFunc = this.pattData(extraArgs, data)
+				.toPattern(pattCount);
+				"this is a pattern defined".postln;
+			}, {
+				extraPattCount = 1;
+				blockFunc = extraArgs.do{|item|
+					pattArr = pattArr.add(
+						this.pattData(DataFile.read(\pattern, item), data)
+						.toPattern(pattCount.cs ++ "_" ++ extraPattCount));
+					extraPattCount = extraPattCount + 1;
+				};
+				blockFunc = Pdef(("'patt" ++ block ++ "'").interpret, Ppar(pattArr, 1));
+				"this is a ppar".postln;
+			});
+		});
+		pattCount = pattCount + 1;
+		^blockFunc;
 	}
 
 	*pattData {arg pattern, data;
