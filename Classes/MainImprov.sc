@@ -1,4 +1,4 @@
-MainImprov {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil, <>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1;
+MainImprov {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil, <>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1, <bpm;
 
 	*new {
 		^super.new.initMainImprov;
@@ -18,8 +18,9 @@ MainImprov {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil, <>post
 		tclock.schedAbs(tclock.beats.ceil, { arg beat, sec; schedFunc.(beat, sec); schedDiv });
 	}
 
-	*tempo {arg bpm;
+	*tempo {arg newBPM;
 		var metroCS;
+		bpm = newBPM;
 		if(bpm.notNil, {
 			metroCS = "Ndef('metronome').clock.tempo = " ++ (bpm/60).cs;
 			metroCS.postln;
