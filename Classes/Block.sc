@@ -294,26 +294,20 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 
 	*stop {arg block=1, fadeOut;
 		var blockIndex, slotIndex, ndefCS;
-
 		if(block >= 1, {
 			blockIndex = block-1;
-
 			fadeOut ?? {fadeOut = ndefs[blockIndex].fadeTime};
-
 			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
 				++ "nil;" );
 			ndefCS.interpret;
 			ndefCS.postln;
-
 			if(liveBlocks[blockIndex].notNil, {
 				this.buffree(blockIndex, fadeOut, {
 					liveBlocks[blockIndex] = nil;
 					ndefs[blockIndex].fadeTime = fadeTime;
 				});
 			});
-
 			ndefs[blockIndex].fadeTime = fadeOut;
-
 		}, {
 			"Block not found".warn;
 		});

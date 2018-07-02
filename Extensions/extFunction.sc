@@ -29,4 +29,36 @@
 		^synthDef.interpret;
 	}
 
+	spec {
+	var string, stringFunc, indecesFind, indecesBrack, argNames, arrArgs, indArgs;
+	var indecesClose, cuts, stringSpecs, specArr, newString, indecesArgs;
+	argNames = this.argNames;
+	string = this.cs;
+	stringFunc = string.replace("-> [", "->[");
+	indecesFind = stringFunc.findAll("->[");
+	indecesArgs = argNames.collect{|item| stringFunc.find(item.asString); };
+	indArgs = indecesFind.collect{|item|
+		indecesArgs.indexOf(indecesArgs.reject{|it| item < it}.last);
+	};
+	arrArgs = argNames.atAll(indArgs);
+	if(indecesFind.notNil, {
+		indecesBrack = stringFunc.findAll("]");
+		indecesClose = indecesFind.collect{|it|
+			indecesBrack.select{|item| item > it }.first;
+		};
+		cuts = ([indecesFind] ++ [indecesClose]).flop;
+		stringSpecs = cuts.collect{|item| stringFunc.copyRange(item[0], item[1]) };
+		specArr = stringSpecs.collect{ |item| item.replace("->", "").interpret };
+		specArr = [arrArgs] ++ [specArr];
+		specArr = specArr.flop;
+		newString = stringFunc;
+		stringSpecs.do{|item|
+			newString = 	newString.replace(item);};
+	}, {
+		newString = 	stringFunc;
+		specArr = [];
+	});
+	^[newString.interpret, specArr]
+}
+
 }

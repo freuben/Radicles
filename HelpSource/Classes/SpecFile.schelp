@@ -33,6 +33,14 @@ Object to write into file.
 Examples::
 
 code::
+//REPLACE SPEC FILE WITH AN INTEGREATED SYSTEM WHERE THE SPEC IS ALREADY DEFINED IN THE SYNTH DEF
+/*e.g.:  a = {arg freq= 400 -> [200,2000,\exp], amp= 1 -> [0,1], pan= 0 -> [-1,1];
+	Pan2.ar(pan, SinOsc.ar(freq,0,amp));
+};
+a.argNames
+*/
+
+
 SpecFile.path(\filter);
 
 SpecFile.read(\filter);
