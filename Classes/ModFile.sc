@@ -95,6 +95,7 @@ ModFile : MainImprov {var <filePath;
 			}, {
 				arrayFromFile = arrayFromFile.add([key, dataArr]);
 				this.writeFunc(arrayFromFile);
+				func.();
 			});
 		}, {^arrayFromFile});
 	}
@@ -430,22 +431,14 @@ SynthDefFile : ModFile {
 
 	* write {arg class=\filter, key, dataArr, desc;
 		var synthFile;
-		Window.warnQuestion(("This key already exists: " ++
-			"Are you sure you want to replace it?"), {
-
+		synthFile = this.new(\synthdef, class);
+		^synthFile.write(key, dataArr, true, {
 			SynthFile.write(class, key, dataArr.specFunc, false);
 			SpecFile.write(class, key, dataArr.specArr, false);
 			if(desc.notNil, {
 				DescriptionFile.write(class, key, desc, false);
 			});
-			this.prewrite(class, key, dataArr, false);
 		});
-	}
-
-	* prewrite {arg class=\filter, key, dataArr, win=true;
-		var synthFile;
-		synthFile = this.new(\synthdef, class);
-		^synthFile.write(key, dataArr, win);
 	}
 
 	* remove {arg class=\filter, key;
@@ -456,12 +449,6 @@ SynthDefFile : ModFile {
 			SpecFile.remove(class, key, false);
 			DescriptionFile.remove(class, key, false);
 		});
-	}
-
-	* preremove {arg class=\filter, key, win=true;
-		var synthFile;
-		synthFile = this.new(\synthdef, class);
-		^synthFile.remove(key, win);
 	}
 
 	* string {arg class=\filter, key;

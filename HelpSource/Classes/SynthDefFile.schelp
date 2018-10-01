@@ -29,6 +29,8 @@ argument::
 Key to identify synth object.
 argument::
 Object to write into file.
+argument::
+Description of synth
 
 Examples::
 
@@ -50,6 +52,8 @@ SynthDefFile.write(\block, \test1, {arg freq = 400 -> [200.0,1000, \exp, {|val| 
 SinOsc.ar(freq, 0, amp);
 }, "a test synth");
 
-SynthDefFile.preremove(\block, \test1, false);
-
+SynthDefFile.post(\block, \test1);
+SynthFile.post(\block, \test1);
+SpecFile.post(\block, \test1);
+DescriptionFile.post(\block, \test1);
 ::
