@@ -1,0 +1,55 @@
+class:: SynthDefFile
+summary:: Write define synth, spec and description objects into File
+related:: Classes/Space, Classes/Filter
+categories:: Libraries>ModImprov
+
+Description::
+
+A tool for defining synth, spec and description objects into Files.
+
+
+classmethods::
+
+method::read
+
+Read file with classes and synth objects.
+
+argument::
+Specify ModImprov Class.
+argument::
+Key to identify synth object.
+
+method::write
+
+Write synth object for spcecific class into file.
+
+argument::
+Specify ModImprov Class.
+argument::
+Key to identify synth object.
+argument::
+Object to write into file.
+
+Examples::
+
+code::
+SynthDefFile.path(\block);
+
+SynthDefFile.read(\block);
+
+SynthDefFile.read(\block, \test1);
+
+SynthDefFile.post(\block, \test1);
+SynthFile.post(\block, \test1);
+
+SynthDefFile.post(\block, \test2);
+
+SynthDefFile.remove(\block, \test1);
+
+SynthDefFile.write(\block, \test1, {arg freq = 400 -> [200.0,1000, \exp, {|val| val.round}], amp = 0.4 -> [0,1], mul = 0.4 -> [0,0.5], harm = 3-> [1,10, {|val| val.round;}];
+SinOsc.ar(freq, 0, amp);
+}, "a test synth");
+
+SynthDefFile.preremove(\block, \test1, false);
+
+::

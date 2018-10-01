@@ -9,7 +9,8 @@
 		patType = Pseq;
 		argNames.do{|item|
 			var string;
-			string = ("Pdefn('" ++ argNames[0] ++ "_" ++ item ++ "', " ++ patType.asString ++ "(" ++ item ++ ", inf))").asString;
+			string = ("Pdefn('" ++ argNames[0] ++ "_" ++ item ++ "', " ++ patType.asString ++ "(" ++
+				item ++ ", inf))").asString;
 			part2 = part2.replace(item.asString, string);
 		};
 		fcs = part1 ++ "Pdef(key).quant = quant;" ++ 10.asAscii ++ "Pdef(key, " ++ part2;
@@ -60,5 +61,13 @@
 	});
 	^[newString.interpret, specArr]
 }
+
+	specFunc {
+		^this.spec[0];
+	}
+
+	specArr {
+		^this.spec[1];
+	}
 
 }

@@ -8,12 +8,14 @@ ModFile : MainImprov {var <filePath;
 		var dir, existFiles, fileName, classString, modPath;
 
 		case
-		{file == \synth} { modPath = "SynthFiles/"}
-		{file == \spec} { modPath = "SpecFiles/"}
-		{file == \control} { modPath = "ControlFiles/"}
-		{file == \data} { modPath = "DataFiles/"}
-		{file == \description} { modPath = "DescriptionFiles/"}
+		{file == \synth} { modPath = "Files/SynthFiles/"}
+		{file == \spec} { modPath = "Files/SpecFiles/"}
+		{file == \control} { modPath = "Files/ControlFiles/"}
+		{file == \data} { modPath = "Files/DataFiles/"}
+		{file == \description} { modPath = "Files/DescriptionFiles/"}
+		{file == \synthdef} { modPath = "Files/SynthDefFiles/"}
 		{file == \preset} { modPath = "Settings/Presets/"}
+
 		;
 
 		dir = (mainPath ++ modPath);
@@ -73,14 +75,20 @@ ModFile : MainImprov {var <filePath;
 		"Updated file".postln;
 	}
 
-	write {arg key, dataArr;
+	write {arg key, dataArr, window=true, func;
 		var arrayFromFile, writeFunc, keyIndex;
 		arrayFromFile = this.array;
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
 			if(keyIndex.notNil, {
-				Window.warnQuestion(("This key already exists: " ++
-					"Are you sure you want to replace it?"), {
+				if(window, {
+					Window.warnQuestion(("This key already exists: " ++
+						"Are you sure you want to replace it?"), {
+						arrayFromFile[keyIndex] = [key, dataArr];
+						this.writeFunc(arrayFromFile);
+						func.();
+					});
+				}, {
 					arrayFromFile[keyIndex] = [key, dataArr];
 					this.writeFunc(arrayFromFile);
 				});
@@ -91,15 +99,20 @@ ModFile : MainImprov {var <filePath;
 		}, {^arrayFromFile});
 	}
 
-	remove {arg key;
+	remove {arg key, window=true, func;
 		var arrayFromFile, writeFunc, keyIndex, file;
 		arrayFromFile = this.array;
 
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
 			if(keyIndex.notNil, {
-				Window.warnQuestion(("This key already exists: " ++
-					"Are you sure you want to remove it?"), {
+				if(window, {
+					Window.warnQuestion(("Are you sure you want to remove this key?"), {
+						arrayFromFile.removeAt(keyIndex);
+						this.writeFunc(arrayFromFile);
+						func.();
+					});
+				}, {
 					arrayFromFile.removeAt(keyIndex);
 					this.writeFunc(arrayFromFile);
 				});
@@ -109,7 +122,7 @@ ModFile : MainImprov {var <filePath;
 		}, {^arrayFromFile});
 	}
 
-		*all {var file, arr;
+	*all {var file, arr;
 		file = this.path;
 		PathName.new(file.dirname).files.do{|item|
 			arr = arr.add(item.fileNameWithoutExtension.toLower.asSymbol)};
@@ -142,16 +155,16 @@ SynthFile : ModFile {
 		^synthFile.post(key);
 	}
 
-	* write {arg class=\filter, key, dataArr;
+	* write {arg class=\filter, key, dataArr, win=true;
 		var synthFile;
 		synthFile = this.new(\synth, class);
-		^synthFile.write(key, dataArr);
+		^synthFile.write(key, dataArr, win);
 	}
 
-	* remove {arg class=\filter, key;
+	* remove {arg class=\filter, key, win=true;
 		var synthFile;
 		synthFile = this.new(\synth, class);
-		^synthFile.remove(key);
+		^synthFile.remove(key, win);
 	}
 
 	* string {arg class=\filter, key;
@@ -186,16 +199,16 @@ SpecFile : ModFile {classvar specArr;
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\filter, key, dataArr;
+	* write {arg class=\filter, key, dataArr, win=true;
 		var synthFile;
 		synthFile = this.new(\spec, class);
-		^synthFile.write(key, dataArr);
+		^synthFile.write(key, dataArr, win);
 	}
 
-	* remove {arg class=\filter, key;
+	* remove {arg class=\filter, key, win=true;
 		var synthFile;
 		synthFile = this.new(\spec, class);
-		^synthFile.remove(key);
+		^synthFile.remove(key, win);
 	}
 
 	*specs {arg class=\filter, key;
@@ -204,7 +217,7 @@ SpecFile : ModFile {classvar specArr;
 	}
 
 	map {arg index, value;
-	^specArr[index].(value);
+		^specArr[index].(value);
 	}
 
 	* string {arg class=\filter, key;
@@ -239,16 +252,16 @@ ControlFile : ModFile {
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\map, key, dataArr;
+	* write {arg class=\map, key, dataArr, win=true;
 		var synthFile;
 		synthFile = this.new(\control, class);
-		^synthFile.write(key, dataArr);
+		^synthFile.write(key, dataArr, win);
 	}
 
-	* remove {arg class=\map, key;
+	* remove {arg class=\map, key, win=true;
 		var synthFile;
 		synthFile = this.new(\control, class);
-		^synthFile.remove(key);
+		^synthFile.remove(key, win);
 	}
 
 	* string {arg class=\map, key;
@@ -283,19 +296,19 @@ DataFile : ModFile {
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\sampler, key, dataArr;
+	* write {arg class=\sampler, key, dataArr, win=true;
 		var synthFile;
-		synthFile = this.new(\data, class);
+		synthFile = this.new(\data, class, win);
 		^synthFile.write(key, dataArr);
 	}
 
-	* remove {arg class=\sampler, key;
+	* remove {arg class=\sampler, key, win=true;
 		var synthFile;
 		synthFile = this.new(\data, class);
-		^synthFile.remove(key);
+		^synthFile.remove(key, win);
 	}
 
-		* string {arg class=\filter, key;
+	* string {arg class=\filter, key;
 		var synthFile;
 		synthFile = this.new(\data, class);
 		^synthFile.read(key).cs;
@@ -327,19 +340,19 @@ DescriptionFile : ModFile {
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\filter, key, dataArr;
+	* write {arg class=\filter, key, dataArr, win=true;
 		var synthFile;
 		synthFile = this.new(\description, class);
-		^synthFile.write(key, dataArr);
+		^synthFile.write(key, dataArr, win);
 	}
 
-	* remove {arg class=\filter, key;
+	* remove {arg class=\filter, key, win=true;
 		var synthFile;
 		synthFile = this.new(\description, class);
-		^synthFile.remove(key);
+		^synthFile.remove(key, win);
 	}
 
-		* string {arg class=\filter, key;
+	* string {arg class=\filter, key;
 		var synthFile;
 		synthFile = this.new(\description, class);
 		^synthFile.read(key).cs;
@@ -371,21 +384,89 @@ PresetFile : ModFile {
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\bstore, key, dataArr;
+	* write {arg class=\bstore, key, dataArr, win=true;
 		var synthFile;
 		synthFile = this.new(\preset, class);
-		^synthFile.write(key, dataArr);
+		^synthFile.write(key, dataArr, win);
 	}
 
-	* remove {arg class=\bstore, key;
+	* remove {arg class=\bstore, key, win=true;
 		var synthFile;
 		synthFile = this.new(\preset, class);
-		^synthFile.remove(key);
+		^synthFile.remove(key, win);
 	}
 
-		* string {arg class=\filter, key;
+	* string {arg class=\filter, key;
 		var synthFile;
 		synthFile = this.new(\preset, class);
+		^synthFile.read(key).cs;
+	}
+
+}
+
+SynthDefFile : ModFile {
+
+	*path {arg class=\filter;
+		var synthFile;
+		synthFile = this.new(\synthdef, class);
+		^synthFile.filePath;
+	}
+
+	* read {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\synthdef, class);
+		^synthFile.read(key);
+	}
+
+	* postAll {arg class=\filter;
+		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	}
+
+	* post {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\synthdef, class);
+		^synthFile.post(key);
+	}
+
+	* write {arg class=\filter, key, dataArr, desc;
+		var synthFile;
+		Window.warnQuestion(("This key already exists: " ++
+			"Are you sure you want to replace it?"), {
+
+			SynthFile.write(class, key, dataArr.specFunc, false);
+			SpecFile.write(class, key, dataArr.specArr, false);
+			if(desc.notNil, {
+				DescriptionFile.write(class, key, desc, false);
+			});
+			this.prewrite(class, key, dataArr, false);
+		});
+	}
+
+	* prewrite {arg class=\filter, key, dataArr, win=true;
+		var synthFile;
+		synthFile = this.new(\synthdef, class);
+		^synthFile.write(key, dataArr, win);
+	}
+
+	* remove {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\synthdef, class);
+		^synthFile.remove(key, true, {
+			SynthFile.remove(class, key, false);
+			SpecFile.remove(class, key, false);
+			DescriptionFile.remove(class, key, false);
+		});
+	}
+
+	* preremove {arg class=\filter, key, win=true;
+		var synthFile;
+		synthFile = this.new(\synthdef, class);
+		^synthFile.remove(key, win);
+	}
+
+	* string {arg class=\filter, key;
+		var synthFile;
+		synthFile = this.new(\synthdef, class);
 		^synthFile.read(key).cs;
 	}
 
