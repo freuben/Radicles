@@ -70,7 +70,7 @@ ModFile : MainImprov {var <filePath;
 		var path, file;
 		path = filePath;
 		file = File(path, "w+");
-		file.write(arr.cs);
+		file.write(arr.cs.lineFormat);
 		file.close;
 		"Updated file".postln;
 	}
