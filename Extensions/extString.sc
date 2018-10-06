@@ -67,7 +67,7 @@
 
 	lineFormat {arg chars=82;
 		var newString, return, spaces, largeInd, snapShot, returnIndex;
-		var ind=0, string = "", end = true;
+		var size=2, ind=0, string = "", end = true;
 		newString = this.replace([32,10].asAscii, 10.asAscii);
 		while ({ end }, {
 			if(ind == 0, {return=""; ind=1}, {return=10.asAscii});
@@ -87,11 +87,14 @@
 					newString = newString.copyRange(largeInd, newString.size-1);
 				}, {
 					returnIndex = snapShot.find(10.asAscii)+1;
-					snapShot = snapShot.copyRange(0, returnIndex);
+					snapShot = snapShot.copyRange(0, returnIndex-1);
 					string = string ++ return ++ snapShot.replace(10.asAscii, "");
 					newString = newString.copyRange(returnIndex, newString.size-1);
 				});
 			}, {
+				if(size <= 1, {
+					string = string ++ return ++ newString.replace(10.asAscii, "");
+				});
 				end = false;
 			});
 		});

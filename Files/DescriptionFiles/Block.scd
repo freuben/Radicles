@@ -1,1 +1,1 @@
-[ [ 'test2', "a test synth 2" ], [ 'test1', "a test synth" ] ]
+[ [ 'test2', "a test synth 2" ], [ 'test1', "a test synth"  ] ]
