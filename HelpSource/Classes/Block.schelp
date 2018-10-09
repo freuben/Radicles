@@ -1,0 +1,769 @@
+class:: Block
+summary:: A Block
+related:: Classes/Ndef, Classes/BufferSystem,  Classes/Pattern
+categories:: Libraries>ModImprov
+
+Description::
+
+A class that automises Ndef, Pattern and Buffer functionality.
+
+
+classmethods::
+
+method::add
+
+Create new Blocks.
+
+argument::
+Number of channels
+
+method::addNum
+
+argument::
+Number of blocks
+argument::
+Number of channels
+
+Examples::
+
+code::
+
+//ideas for commands for blocks
+pl 1 marylin1 //play soundfile marylin1
+pl 1 2 marylin2 //play, bus 1, slot 2, file
+lp 2 ant
+
+pn 1 rave //pattern in block 1 called rave
+sn 1 textures //synth in block 1 called textures
+
+sn 1 {SinOsc.ar(440)} //create temp synth def
+pn 1 Pbind(\note, [1,3,4]) //create temp pattern
+
+routing
+blk 1 -> pln 1
+
+blk 4 //creates 4 blocks (ndefs) to put synths/patterns in
+blk 1 -> pln 1 //plug block 1 to plane 1
+blk 2-4 -> blkbus 1-3 //plug blocs 2 to 4 into block buses 1 to 3
+
+
+
+Pdef(\x, Pbind(\note, [1,3,4]) ).play
+
+sn 1 audioin /2 2 //synth def called audio in in block 1, with default args (2,2)
+
+a = "(2 2 )".replace("(", "").replace(")", "").split($ )
+a = a.asString.interpret;
+a[1];
+
+sn 1 audioin /input 3 mul 2 //with name of argumnets
+
+////////////////////////////////////
+
+SynthFile.post(\block);
+
+SynthFile.post(\block, \play)
+
+SynthFile.post(\filter, \pch)
+
+SynthFile.post(\block, \sine)
+SynthFile.postAll(\block)
+
+
+SynthFile.postAll(\block);
+
+DataFile.write(\pattern, \test3, [ [ \note, \seq, [ 7, 7, 7, 6 ] ], [ \dur, \seq, [ 0.5, 0.5, 0.25, 0.5 ] ] ]);
+///////
+b = DataFile.read(\pattern, \test1);
+
+b.toPattern(1,0).play; //pattern number, quant
+
+SynthFile.read(\point).do{|item| SynthFile.read(\point, item).toSynthDef(\perkysine).add;};
+
+b.patternInst(\perkysine).toPattern(1).play;
+
+
+
+c = DataFile.read(\pattern, \test2).patternInst(\seq, [\perkysine, \default]);
+
+c.toPattern(2).play
+
+[b.toPattern(1), c.toPattern(2)].ppar.play
+
+d = DataFile.read(\pattern, \test3).patternInst(\perkysine);
+
+d.toPattern(1,0).play
+
+[d.toPattern(1), d.toPattern(2)].ppar(2).play
+
+Pdefn(\note1, Pseq([9,1,6,\rest], 1));
+Pdefn(\note2, Pseq([\rest,2,1,0, 2], 1));
+
+
+SynthFile.postAll(\point);
+SynthFile.read(\point).do{|item| SynthFile.read(\point, item).toSynthDef.add;};
+
+Pdefn(\patt1).quant = 4;
+Pdefn(\instrument1, \perkysine);
+
+Pdefn(\note1, Pseq([\rest,1,3,-3], inf));
+
+Pdefn(\instrument2, \perkysine);
+Pdefn(\instrument2).quant = 4;
+Pdefn(\instrument2, \default);
+
+SynthFile.post(\block, \loop);
+
+SynthFile.postAll(\pattern);
+
+TempoClock.default.tempo = 2.0; //a way to change global tempo
+
+TempoClock.default.tempo = 1.0;
+
+SynthFile.read(\point, \perkysine).toSynthDef(\synth1);
+
+SynthFile.write(\point, \perkysine, {arg freq=400, amp=1;
+    var osc;
+    osc = SinOsc.ar( [freq,freq+0.05.rand] ) * EnvGen.ar(
+    Env.perc, doneAction: 2) * 0.2;
+    osc*amp;
+    }
+);
+
+SynthFile.postAll(\block);
+
+//////////
+//BLOCKS!!!!
+//patterns
+(
+Block.clock; //start metronome
+Block.tempo(80); //set tempo
+Block.addNum(4, 1, 1 );
+Block.playNdefs;
+)
+
+Block.bpm;
+
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata); //block, block name, buffer, extraArgs, data
+
+Block.liveBlocks
+
+Block.play(1, \pattern, \nobuf, \test1); //block, block name, buffer, extraArgs, data
+
+
+Block.setFadeTime(5);
+
+Block.play(1, \pattern, \nobuf, [[\note, \seq, [10,10,10,10]], [\dur, 0.5] ], [\instrument, \perkysine]);
+
+Block.play(1, \pattern, \nobuf, [[\note, \seq, [10,6,2,2]], [\dur, 0.5] ], [\instrument, \perkysine]);
+
+Block.bpm;
+Block.tempo(60);
+
+~thisPatt = {arg key=\note; (key.asString ++ (Block.pattCount-1) ).asSymbol};
+Pdefn(~thisPatt.(\note)).quant = 4;
+Pdefn(~thisPatt.(\note), Pseq([ 0, 6, 2, 'rest', 11], inf) );
+
+Pdefn(~thisPatt.(\dur), 0.05);
+
+
+Pdefn(~thisPatt.(\note), Prand([ 0, 6, 2, 'rest', 11], inf) );
+
+Pdefn(~thisPatt.(\dur), 0.25);
+
+
+Block.play(1, \pattern, \nobuf, \test3);
+Block.play(1, \pattern, \nobuf, \test3, [[\instrument, \perkysine], [\ctranspose, \rand, [-6, 11, 0, -12]], [\amp, \seq, [0.1,0.4,0.8]]]);
+
+Block.play(1, \pattern, \nobuf, [\test2, \test1, \test3], [[\quant, 4], [\instrument, \default], [\legato, \rand, [0.1,1,0.05, 0.015, 0.02, 0.8, 0.5]]]); //parallel patterns
+
+Block.schedAction({"boom".postln});
+Block.schedDiv = 0.5;
+
+Block.schedAction({Block.play(1, \pattern, \nobuf, \test1);});
+Block.schedAction({Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \perkysine]);});
+Block.schedAction({Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \perkysine]);})
+Block.schedAction({Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);});
+
+
+Block.schedAction({Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);});
+
+(
+Block.schedCount({|count| if(count == 5, {
+	Block.play(1, \pattern, \nobuf, \test1);
+	Block.play(4, \pattern, \nobuf, \test1, [\ctranspose, -12]);}); count.postln; }, 1, 5);
+)
+
+//sync!
+(
+Block.add;
+Block.playNdefs;
+)
+Block.schedAction({Block.play(5, \pattern, \nobuf, [[\note, \seq, [15,15,15,15]], [\dur, 0.5], [\amp, 0.8] ], [\instrument, \perkysine]);});
+
+//stop gradually
+(
+Block.schedDiv = 4; //release every 6 bars
+Block.schedCount({|count| Block.stop(count); count.postln }, 1, 5);
+)
+
+//scheduling
+MainImprov.new;
+MainImprov.schedFunc = {|a,b| [a,b].postln};
+MainImprov.schedAction({"boom".postln});
+MainImprov.schedCount({|a| a.postln}, 1, 4);
+MainImprov.schedCount({|a| a.postln}, 10, 14, true); //loop
+
+
+
+Types of Blocks
+
+block amount of channels,
+requiring buffer(s) or not
+pattern or synth
+output of blocks (destination - input for planes, or for )
+blocks that requiere external data (arryas, patterns) and blocks that dont
+block for recording
+
+Block.add //add 1 block with one channel
+
+Block.ndefs;
+Block.blocks;
+
+//until here?
+
+Block.addNum(4, 2) //amount of blocks,channels
+Block.ndefs.dopostln;
+Block.blocks;
+
+Block.addAll([1,2,3,4]); //each block with different channels
+
+Block.blocks.dopostln;
+
+Block.remove(1); //remove block number 1
+Block.remove(5); //remove block number 1
+Block.removeArr([1,3, 5]); //remove array of blocks
+
+Block.removeAll;
+
+Block.ndefs.dopostln;
+Block.blocks;
+//////
+
+Block.addNum(4, 1);
+
+Block.playNdefs;
+
+SynthFile.postAll(\block);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata); //block, block name, buffer, extraArgs, data
+
+//blk 1 sine \ 200 0 0.4
+//blk 1 sine \ freq 220 amp 0.2
+//blk 2 sine \ 100
+//sin 1 \amp 0.1
+//sin 1 \100 299 399
+
+pl 1 1
+pl 1 2
+pl 1 3
+pl 1 4
+
+Block.lag(1, [\freq, 0.5]);
+Block.set(1, [\freq, rrand(50, 1800.0).postln]);
+
+
+
+ModMap.map(Block.ndefs[0], \freq, \sin, \freq1, [\freq, 1], lag: [\freq, 1]);
+
+ModMap.set(1, \freq, rrand(1,10.0).postln);
+
+ModMap.lag(1, \freq, 5); //lag mod when changed
+
+
+
+ModMap.set(1, \freq, rrand(1,10.0).postln);
+ModMap.set(1, \freq, 20);
+ModMap.set(1, \freq, 0.1);
+
+SpecFile.postAll(\modulation);
+ControlFile.postAll(\map);
+
+Block.play(2, \sine, \nobuf, [1220,0,0.4]);
+
+ModMap.map(Block.ndefs[1], \freq, \lfn1, \freq1, [\freq, 20], 3, 2); //notice spec with mul 3 and add 2
+
+
+Block.lag(2, [\freq, 2]);
+
+Block.set(2, [\freq, rrand(50, 1800.0).postln]);
+Block.set(1, [\freq, rrand(50, 1800.0).postln]);
+
+Block.lag(1, [\freq, nil]);
+
+Block.set(1, [\freq, rrand(50, 1800.0).postln]);
+
+Block.lag(2, [\freq, nil]);
+Block.set(2, [\freq, rrand(50, 1800.0).postln]);
+
+
+Block.stop(1,5); //block, slot, fadeOut
+Block.stop(2);
+
+
+Block.play(1, \sine, extraArgs: [220,0,0.4]);
+
+Block.clear;
+
+//wavetables
+
+
+Block.add;
+Block.ndefs;
+Block.playNdefs;
+DataFile.postAll(\wavetables)
+
+Block.play(1, \osc1, 512, [\freq, 200], \sine1harm6); //block, buffer, extraArgs, data
+Block.set(1, [\freq, 100]);
+Block.lag(1, [\freq, 5]);
+Block.set(1, [\freq, 800]);
+
+ModMap.map(Block.ndefs[0], \freq, \sin, \freq1, [\freq, 2], 0.25, -4.5); //notice spec with mul 3 and add 2
+ModMap.lag(1, \freq, 3);
+ModMap.set(1, \freq, 5);
+ModMap.set(1, \freq, 3);
+
+Block.play(1, \osc1, 512, [\freq, 800], \sine2harm2);
+
+Block.play(1, \shaperSine, 512, [\freq, 440], \chebyEx1);
+Stethoscope.new
+
+BStore.bstores[0].plot
+
+Block.clear;
+
+//add blocks with different channel numbers
+Block.addNum(4, [1,2,2,1]);
+Block.clear;
+
+
+//alloc 4 blocks with 1 channel each
+Block.addNum(4);
+Block.playNdefs;
+
+Block.play(1, \loop, \marilyn1, [\rate, 2, \mul, 0.8]); //block, slot, block name, buffer, extraArgs
+Block.play(2, \loop, \marilyn1, [\rate, 0.5]); //block, slot, block name, buffer, extraArgs
+Block.play(3, \loop, \marilyn1, [\rate, 1.2]);
+Block.play(4, \loop, \marilyn1, [\rate, 4.2]);
+
+Block.xset(1, [\rate, 2]);
+Block.xset(2, [\rate, 1]);
+Block.xset(3, [\rate, 1]);
+Block.xset(4, [\rate, 1]);
+
+Block.lag(1, [\rate, 2]);
+Block.lag(2, [\rate, 2]);
+Block.lag(3, [\rate, 2]);
+Block.lag(4, [\rate, 2]);
+
+Block.set(1, [\rate, rrand(0.5, 3)], true);
+Block.set(2, [\rate, rrand(0.5, 1)], true);
+Block.set(3, [\rate, rrand(0.5, 1)], true);
+Block.set(4, [\rate, rrand(0.5, 3)], true);
+
+Block.play(1, \loop, \SinedPink, [\rate, 2, \mul, 0.8]);
+
+Block.stop(1);
+Block.stop(2 ,2);
+
+Block.stop(3 ,1);
+Block.stop(4 ,1);
+
+Block.play(2, \sine);
+
+Block.play(1, \loop, \marilyn1, [\rate, 2, \mul, 0.8]);
+
+Block.stop(2);
+
+BStore.bstoreIDs;
+//alloc buffer
+Block.play(1, \loop, \marilyn1, [\mul, 0, \trigger, 0]);
+//play buf from start
+Block.set(1, [\trigger, 1, \startPos, 0, \mul, 1]);
+
+
+Block.blocks;
+
+BStore.bstoreIDs;
+
+Block.liveBlocks[0][2];
+BStore.bstoreIDs[0];
+
+Block.ndefs[0].controlKeysValues;
+
+Block.addNum(4);
+
+Ndef('pan1', {Pan2.ar(Mix(Block.ndefs[0].ar), 0) });
+Ndef('pan1').play;
+
+Block.play(1, \cue, \marilyn1, [\mul, 1]);
+
+Block.play(1, \looppv, \parsifal, [\rate, 1, \mul, 4]);
+Block.set(1, [\rate, 10, \mul, 4], true);
+Block.set(1, [\rate, 0.03], true);
+
+Block.play(1, \loop, \marilyn1, [2, 0.8]); //block, slot, block name, buffer
+
+BStore.bstoreIDs;
+
+SynthFile.postAll(\block);
+SynthFile.post(\block, \play);
+
+
+///////
+//record buffers
+
+Block.addRec(10, func: {|buf| buf.postln; }); //add a buffer of 10 seconds
+Block.addRecNum(4,1, func: {|bufs| bufs.postln}) //add 4 buffers of 1 second
+//get rid of rec nums;
+Block.removeRec(1)
+Block.removeAllRec;
+BStore.bstoreIDs;
+
+//let's record something!
+Block.addRecArr([ [1,2,\audio],[2,1,\audio], [3,1,\scpv] ], func: {|bufs| bufs.postln }); //add array of buffers of differnet types
+
+Block.recNdefs;
+Block.recBlocks;
+Block.recbuffers.dopostln;
+Block.recBufInfo.dopostln; //returns rec buffer info: seconds, channels, format, frameSize, hopSize
+
+Block.recBuf(1); //get rec buf 1
+Block.recbuffers;
+Block.recBuf(2); //get rec buf 2
+
+
+Block.addRecNum(2,1);
+
+Block.rec(2); //record into 2nd recbuffer
+Block.recBuf(2);
+Block.getRecBuf(2).plot;
+
+Block.add; //add a block
+Block.play(1, \loop, Block.recBuf(2));
+Block.playNdefs; //play blocks
+
+Block.removeAllRec;
+
+Block.addRecNum(1, channels: 2);
+~buffer = Block.getRecBuf(1)
+//record in recbuf 1, inputs 1 and 2, loop 0
+Block.rec(1, [1,2], 0); //record more than one channel as array
+
+~buffer.plot;
+
+Block.add(channels: 2);
+Block.play(1, \playbuf, Block.recBuf(1); );
+Block.playNdefs; //play blocks
+
+//overdub
+Block.rec(1,[1,2], 0, 0.75, 0.25); //recblock, inputs, loop, recLevel, preLevel
+
+Block.addRecNum(1);
+Block.rec(2, 1); //record into 2nd recbuffer , using input 1
+Block.getRecBuf(2).plot;
+
+Block.add;
+Block.play(1, \loop, Block.recBuf(2); );
+
+Block.getRecBuf(2).plot;
+
+
+//overdub with ndef as input
+Ndef('sine', {SinOsc.ar(CuspL.ar(40).range(200,400) ) * 0.1 });
+Block.rec(2, Ndef('sine'), 0, 0.5, 0.5);
+Block.getRecBuf(2).plot;
+//now with phase vocoder
+Block.addRec(1, format: \pv);
+Block.recBufInfo.dopostln; //make sure it's the right bufer
+Block.recBuf(3);
+
+//start recording
+Block.rec(3);
+Block.getRecBuf(3);
+Block.getRecBuf(3).plot;
+
+SynthFile.postAll(\block);
+
+Block.add;
+Block.playNdefs; //play blocks
+
+Block.play(3, \looppv, Block.recBuf(3); );
+Block.set(3, [\rate, 0.2, \mul, 3]);
+
+
+Ndef('noise', {LPF.ar(PinkNoise.ar(1), SinOsc.kr(1).range(1200,14000))*0.4});
+
+//input to record from any ndef
+Block.set(3, [\mul, 2])
+Block.rec(3, Ndef('noise'));
+
+Block.set(3, [\rate, 0.1]);
+Block.set(3, [\rate, 1.1]);
+Block.set(3, [\rate, 6]);
+
+Block.stop(1);
+Block.stop(2);
+Block.stop(3);
+
+Block.removeAllRec;
+
+//loop recording with timing
+(
+Block.addRecNum(3, 10);
+Block.addNum(4);
+Block.playNdefs
+)
+
+Block.recTimer(1);
+Block.loopTimer(1); //which block to play it in
+
+Block.recTimer(2, recLevel: 0.5, preLevel: 0.1);
+Block.loopTimer(2); //which block
+
+Block.recTimer(3);
+Block.loopTimer(3); //which block
+
+Block.set(1, [\rate, 1]);
+Block.set(2, [\rate, 2]);
+Block.set(3, [\rate, 0.35]);
+
+Block.set(1, [\mul, 4]);
+Block.set(2, [\mul, 4]);
+Block.set(3, [\mul, 2]);
+
+Block.removeAll;
+
+//
+
+"blk addrec 2" //hard coding
+"@ 2" //record buffer 2 seconds long
+Block.addRec(2);
+"pv" //change buffers to pv
+"@2 2 1 512 0.1" //add recbuffer 2 seconds in pv with frameSize and hop
+Block.addRec(2, frameSize: 512, hop: 0.1);
+
+"@" //list all record buffers
+Block.recbuffers.dopostln;
+
+"sr 1" //start record (loop: 0) in recbuffer 1
+Block.rec(1) //record into recbuffer number 1
+
+~buffer = Block.getRecBuf(1);
+~buffer.plot;
+{PlayBuf.ar(~buffer.numChannels, ~buffer, loop: 1)}.play;
+
+"lr 1 1" //loop record (loop: 1) in recbuffer 1, input 1
+Block.rec(1, 1, 1) //record into recbuffer number 1
+
+"or 1 0.5 0.5" //overdrive (loop: 0) in recbuffer 1, with 0.5 rec, 0.5 pre.
+Block.rec(1, 1, 0, 0.5, 0.5) //record into recbuffer number 1
+
+"ol 1" //overdub loop
+Block.rec(1, 1, 1)
+
+
+a = "lp 1 @1" //loop bus 1, at recbuf 1
+"lp 2 @2" //loop bus 2, at recbuf 2
+(
+~bufString = a.split($ )[2];
+if(~bufString.notNil, {
+	~recBufNum = ~bufString.copyRange(1, ~bufString.size-1).interpret
+});
+)
+Block.recBuf(~recBufNum);
+Block.getRecBuf(~recBufNum).plot;
+
+Block.removeAllRec;
+
+/////
+
+Block.addNum(4);
+Block.playNdefs;
+
+
+
+///////
+
+~arr = "lp 2 marilyn1 (2,3)".split($ );
+
+~args = ~arr[3].replace("(", "[").replace(")", "]").interpret;
+Block.play(~arr[1].interpret,\loop, ~arr[2].asSymbol, ~args);
+
+Block.ndefs
+Block.blocks.dopostln
+Block.liveBlocks.dopostln
+
+BStore.bstoreIDs
+BStore.removeID([\play, \audio, \marilyn1]);
+
+
+"first dimention"
+"hard coding" the blocks
+blk add 10
+blk ply 1 sine
+blk ply 1 play adam 3
+blk ply 1 loop adam
+blk set 1 freq 500
+blk set 2 0.4 10
+blk rec 1 10
+etc.
+
+
+"second dimention"
+block play cmds:
+lp //loop
+pl //play
+pn //pattern
+sd //synth def
+
+
+lp 1 2 adam /2 //loop in bock 1, slot 2, bufferName adam, at rate 2
+pn 2 groove //pattern in block 2, slot 1, pattern name groove
+sd 2 2 sine /300, 0.4 //synth in block 2, slot 2, sine synth with 300 and 0.4 as args
+mk 1 /1 //mic 1 1
+
+//rec buffers
+@ 5 1 512 0.5 //add recordbuf of 5 secs, 1 channels 512 frames, 0.5 hop
+4@ 5 //add 4 recordbufs of 5 seconds
+x@5 //free record buffer 5
+x@ //free all record buffers
+@ //list rec bufs
+
+//recoding
+r@1 2//record in buffer 1, from input 2
+r @1 //same as above
+r@3 //record in buffer 2
+r @3 /1 5 //buffer 3, inputs 1 and 5
+lr@1 //loop record in buffer 1
+lr @1
+o@1 //overdub in buffer 1
+o@3 1 0.2 0.8 //overdub in buffer 1 from input 1, 0.2rec, 0.8pre
+ol@1 //loop overdub
+rt@1 //record with timer
+lt //loop timer
+
+//playback
+pl@1 //play in block 1, slot 1, recbuf 1
+pl @1 //play in block 1, slot 1, recbuf 1
+pl 1 @1 //play in block 1, slot 1, recbuf 1
+lp 1 2 @2 //play in block 1, slot 2, recbuf 2
+lp 2 @3 //loop in block 2, slot 1, recbuf 3
+
+//synth def
+sd 1 textures /1 2 3
+sd 1 textures /1 2 freq 100
+
+sd 1 sine /440 0 1
+sd 2 saw /880 0.5 1 lpf 200
+st 1 //stop block 1
+
+//pattern
+pn 3 groove3 /rate 1 hpf 100
+bset 3 /rate 2 mul 1
+bset 3 /0.4 2 3
+blag 3 /freq 0.5
+blag 2 /0.5
+
+bset //block set
+fset //filter set
+pset //plane set
+
+mk 1 2 /1 //mic
+mk 2 /2 //mic
+
+sd //synth def
+pn //pattern
+
+lp 1 marylin1 /rate: 2
+lp 1 ant /1 2
+
+bset 1 1
+blag 3 /freq 2
+
+
+/////////////////////////////////
+//multiple buffers
+
+DataFile.postAll(\wavetables);
+
+
+
+Block.addNum(4);
+Block.playNdefs;
+
+Block.play(1, \vosc, 512!12, [\freq, 200], \varsquared);
+
+Block.play(1, \vosc, 512!8, [\freq, 100], \varsquared);
+
+Block.set(1, [\freq, rrand(100, 200.0).postln])
+
+Block.play(1, \vosc, 512!2, [\freq, 100], \varsquared);
+
+Block.play(1, \vosc, 512!2, [\freq, 150], [\sine1harm6, \sine2harm2]);
+
+
+
+Block.play(1, \loop, \marilyn1);
+Block.play(2, \loop, \marilyn1, [\rate, 0.5]); //block, slot, block name, buffer, extraArgs
+Block.play(3, \loop, \marilyn1, [\rate, 1.2]);
+Block.play(4, \loop, \marilyn1, [\rate, 4.2]);
+
+
+
+Block.liveBlocks
+
+BStore.bstores.do{|item| item.plot}
+
+~blockFunc = SynthFile.read(\block, \loop);
+~blockFuncString = ~blockFunc.cs;
+
+Block.setBufferID(\marylin, ~blockFuncString);
+
+SynthFile.postAll(\block);
+
+SynthFile.write(\block, \vosc, {arg buffer; {arg bufoffset=0, freq=440, phase=0, mul=0.5;
+		var bufnum;
+		bufnum = buffer[0].bufnum;
+	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+buffer.size-1), freq, phase, mul)} });
+
+DataFile.postAll(\wavetables)
+
+
+////////
+"coding ideas"
+
+"blk addrec 2" //hard coding
+"@ 2" //record buffer 2 seconds long
+
+"associations between dimentions"
+blk addrec # -> @#
+blk addrec # -> @ #
+
+blk ply # \ -> pl # \
+
+"for deepter dimentions"
+1 pl # adam -> adam //first state original dimention, then association
+
+
+
+pn
+sn
+pl
+lp
+
+sn 1 sine /290
+pn 2
+
+::

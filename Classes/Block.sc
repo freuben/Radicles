@@ -1,16 +1,11 @@
 Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCount=1, allocCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo, <pattCount=1;
 
-	*add {arg type=\audio, channels=1, destination;
+	*add {arg channels=1;
 		var ndefTag, ndefCS1, ndefCS2;
-		if((type == \audio).or(type == \control), {
 			ndefTag = ("block" ++ blockCount).asSymbol;
 			blockCount = blockCount + 1;
-			if(type == \audio, {
-				ndefCS1 = "Ndef.ar(";
-			}, {
-				ndefCS1 = "Ndef.kr(";
-			});
+			ndefCS1 = "Ndef.ar(";
 			ndefCS1 = (ndefCS1 ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
 			ndefCS1.postln;
 			ndefCS1.interpret;
@@ -18,26 +13,21 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 			ndefCS2.postln;
 			ndefCS2.interpret;
 			ndefs = ndefs.add(Ndef(ndefTag));
-			blocks = blocks.add( [ndefTag, type, channels, destination] );
+			blocks = blocks.add( [ndefTag, channels] );
 			liveBlocks = liveBlocks.add(nil);
-		}, {
-			"Block Ndef rate not found".warn;
-		});
 	}
 
-	*addNum {arg number, type, channels, destinations;
-		var thisType, thisChan, thisDest;
+	*addNum {arg number, channels=1;
+		var thisChan;
 		number.do{|index|
-			if(type.isArray, {thisType = type[index]}, {thisType = type});
-			if(type.isArray, {thisChan = channels[index]}, {thisChan = channels});
-			if(type.isArray, {thisDest = destinations[index]}, {thisDest = destinations});
-			this.add(thisType, thisChan, thisDest);
+						if(channels.isArray, {thisChan = channels[index]}, {thisChan = channels});
+			this.add(thisChan);
 		};
 	}
 
 	*addAll {arg arr;
 		arr.do{|item|
-			this.add(item[0], item[1], item[2]);
+			this.add(item);
 		}
 	}
 
@@ -76,6 +66,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		ndefs = [];
 		blocks = [];
 		liveBlocks = [];
+		blockCount = 1;
 	}
 
 	*clear {
@@ -83,6 +74,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		ndefs = [];
 		blocks = [];
 		liveBlocks = [];
+		blockCount = 1;
 	}
 
 	*setBufferID {arg buffer, blockFuncString;
@@ -138,7 +130,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 								bufInfo = bufferArr[1];
 								bufferID = bufferArr[2];
 
-								"includes buffer".postln;
+								/*"includes buffer".postln;*/
 								cond = Condition(false);
 								cond.test = false;
 								if(bufInfo.notNil.or(bufInfo == \nobuf), {
@@ -157,7 +149,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							}, {
 								if([\alloc, \play, \cue].includes(buffer[0]), {
 									blockFunc = blockFunc.(BStore.buffByID(buffer));
-									"this buffer is an existing buffer with ID".postln;
+									/*"this buffer is an existing buffer with ID".postln;*/
 								}, {
 									buffer.do{|item|
 										bufferArr = bufferArr.add(
@@ -167,12 +159,12 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 									storeType = bufferArr.flop[0];
 									bufInfo = bufferArr.flop[1];
 									bufferID = bufferArr.flop[2];
-									"includes buffer array".postln;
+									/*"includes buffer array".postln;*/
 									cond = Condition(false);
 									cond.test = false;
 									//for multiple wavetables with consecutive buffer allocation:
 									if(data.notNil, {
-										"if this is a wavetable then alloc consecutive buffers".postln;
+										/*"if this is a wavetable then alloc consecutive buffers".postln;*/
 										if(BStore.bstores.notNil, {
 											bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
 										}, {
@@ -190,13 +182,13 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 										//fill buffer with wavetable function
 										if(data.notNil, {
 											if(data.isArray, {
-												"this data is an array".postln;
+											/*	"this data is an array".postln;*/
 												data.do{|item, index|
 													DataFile.read(\wavetables, item).cs.postln;
 													DataFile.read(\wavetables, item).(buf[index]);
 												};
 											}, {
-												"this data is a symbol".postln;
+												/*"this data is a symbol".postln;*/
 												DataFile.read(\wavetables, data).cs.postln;
 												buf.do{|item, index|
 													DataFile.read(\wavetables, data).(item, buf.size+1, index);
@@ -208,19 +200,17 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 									cond.wait;
 									this.nodeTime.wait;
 
-									"this buffer array that need to be allocated".postln;
+									/*"this buffer array that need to be allocated".postln;*/
 								});
 							});
 						}, {
-							"no buffer".postln;
+							/*"no buffer".postln;*/
 						});
 
 					}, {
-						"this is a pattern hurray".postln;
+						/*"this is a pattern hurray".postln;*/
 						/*blockFunc = this.blockPattern(block, extraArgs, data);*/
 
-						//
-						"this is a pattern hurray".postln;
 						if(extraArgs.isArray.not, {
 							blockFunc = this.pattData(DataFile.read(\pattern, extraArgs), data)
 							.toPattern(pattCount);
@@ -228,7 +218,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							if(extraArgs.collect({|item| item.isArray}).includes(true), {
 								blockFunc = this.pattData(extraArgs, data)
 								.toPattern(pattCount);
-								"this is a pattern defined".postln;
+							/*	"this is a pattern defined".postln;*/
 							}, {
 								extraPattCount = 1;
 								blockFunc = extraArgs.do{|item|
@@ -238,7 +228,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 									extraPattCount = extraPattCount + 1;
 								};
 								blockFunc = Pdef(("'patt" ++ block ++ "'").interpret, Ppar(pattArr, 1));
-								"this is a ppar".postln;
+							/*	"this is a ppar".postln;*/
 							});
 						});
 						pattCount = pattCount + 1;
@@ -249,7 +239,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 
 					if(liveBlocks[blockIndex].notNil, {
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
-							"free buffer from play".postln;
+							/*"free buffer from play".postln;*/
 							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
 						});
 					});
@@ -269,7 +259,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							this.xset(block, newArgs, true);
 						});
 					}, {
-						"no pattern before".postln;
+						/*"no pattern before".postln;*/
 						if(liveBlocks[blockIndex].notNil, {
 							if((liveBlocks[blockIndex][1] != \pattern), {
 								ndefs[blockIndex].put(0, nil);
@@ -322,7 +312,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 			fadeOut.wait;
 			if(thisBuffer.notNil, {
 				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
-					"remove buffer".postln;
+					/*"remove buffer".postln;*/
 					this.nodeTime.wait;
 					if(thisBuffer.rank <= 1, {
 						BStore.removeID(thisBuffer);
@@ -483,6 +473,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 			BStore.removeIndices(bstoreIndeces);
 			recbuffers = [];
 			recBufInfo = [];
+			recBlockCount = 1;
 		}.fork;
 	}
 
@@ -608,7 +599,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 			if(extraArgs.collect({|item| item.isArray}).includes(true), {
 				blockFunc = this.pattData(extraArgs, data)
 				.toPattern(pattCount);
-				"this is a pattern defined".postln;
+				/*"this is a pattern defined".postln;*/
 			}, {
 				extraPattCount = 1;
 				blockFunc = extraArgs.do{|item|
@@ -618,7 +609,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 					extraPattCount = extraPattCount + 1;
 				};
 				blockFunc = Pdef(("'patt" ++ block ++ "'").interpret, Ppar(pattArr, 1));
-				"this is a ppar".postln;
+				/*"this is a ppar".postln;*/
 			});
 		});
 		pattCount = pattCount + 1;

@@ -1,6 +1,6 @@
 Stem : MainImprov {classvar <stems, <ndefs, <livestems, <stemCount=1;
 
-	*add {arg type=\audio, channels=1, destination;
+	*add {arg type=\audio, channels=1;
 		var ndefTag, ndefCS1, ndefCS2;
 		if((type == \audio).or(type == \control), {
 			ndefTag = ("stem" ++ stemCount).asSymbol;
@@ -17,20 +17,19 @@ Stem : MainImprov {classvar <stems, <ndefs, <livestems, <stemCount=1;
 			ndefCS2.postln;
 			ndefCS2.interpret;
 			ndefs = ndefs.add(Ndef(ndefTag));
-			stems = stems.add( [ndefTag, type, channels, destination] );
+			stems = stems.add( [ndefTag, type, channels] );
 			livestems = livestems.add(nil);
 		}, {
 			"stem Ndef rate not found".warn;
 		});
 	}
 
-	*addNum {arg number, type, channels, destinations;
-		var thisType, thisChan, thisDest;
+	*addNum {arg number, type, channels;
+		var thisType, thisChan;
 		number.do{|index|
 			if(type.isArray, {thisType = type[index]}, {thisType = type});
 			if(type.isArray, {thisChan = channels[index]}, {thisChan = channels});
-			if(type.isArray, {thisDest = destinations[index]}, {thisDest = destinations});
-			this.add(thisType, thisChan, thisDest);
+			this.add(thisType, thisChan);
 		};
 	}
 
@@ -75,6 +74,7 @@ Stem : MainImprov {classvar <stems, <ndefs, <livestems, <stemCount=1;
 		ndefs = [];
 		stems = [];
 		livestems = [];
+		stemCount=1;
 	}
 
 	*clear {
@@ -82,6 +82,7 @@ Stem : MainImprov {classvar <stems, <ndefs, <livestems, <stemCount=1;
 		ndefs = [];
 		stems = [];
 		livestems = [];
+		stemCount=1;
 	}
 
 	*playNdefs {

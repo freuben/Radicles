@@ -9,7 +9,7 @@ Space : MainImprov {
 
 		panArr ?? {panArr = Array.panDis(ndefArr.size)};
 
-		objectFile = (mainPath ++ "SynthFiles/Space.scd").loadPath;
+		objectFile = (mainPath ++ "Files/SynthFiles/Space.scd").loadPath;
 
 		numChannels = chanNum;
 		thisIndex = objectFile.flop[0].indexOf(system);

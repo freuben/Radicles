@@ -56,14 +56,11 @@ n.xset(\pan, Array.panDis(~arr.size, ~arr.size).scramble.postln); //evaluate sev
 
 a = SpecFile.read(\space, \pan);
 
-m = ModMap(0.5); //fadeTime
+~node1 = ModMap.map(n.ndefs[0], \pan, \sin, a, [\freq, 1]);
 
-~node1 = m.map(n.ndefs[0], \pan, \sin, a, [\freq, 0.2]);
-
-~node2 = m.map(n.ndefs[1], \pan, \sin, a, [\freq, 0.1]);
+~node2 = ModMap.map(n.ndefs[1], \pan, \sin, a, [\freq, 0.1]);
 
 n.ndefs
-m.ndefs
 
 Ndef(\z, {Impulse.ar(5)}).ar(1);
 
