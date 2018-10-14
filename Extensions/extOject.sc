@@ -47,4 +47,8 @@
 		^bool;
 	}
 
+	radpost {arg type=\ln;
+		this.asString.lineFormat.postin(\ide, type);
+	}
+
 }

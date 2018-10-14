@@ -70,4 +70,27 @@
 		^this.spec[1];
 	}
 
+	filterFunc {arg ndefin;
+		var out, string, funcCS;
+		string = 92.asAscii ++ "in";
+		funcCS = this.cs;
+				if(funcCS.find(string ++ "1").isNil, {
+			if(ndefin.isArray.not, {
+				out = funcCS.replace(string, ndefin.cs );
+				}, {
+					out = funcCS.replace(string, ndefin.cs ++ ".sum" );
+			});
+		}, {
+			if(ndefin.isArray, {
+				out = funcCS;
+				ndefin.do{|item, index|
+					out = out.replace(string ++ (index+1).cs, item.cs );
+				};
+			}, {
+				"incorrect input, should be an array of ndefs".warn;
+			});
+		});
+		^out.interpret;
+	}
+
 }

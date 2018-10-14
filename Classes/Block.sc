@@ -114,9 +114,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		var pattArr, extraPattCount;
 		if(block >= 1, {
 			blockIndex = block-1;
-
 			if(ndefs[blockIndex].notNil, {
-
 				{
 					if((blockName == 'pattern').not, {
 						blockFunc = SynthFile.read(\block, blockName);
@@ -129,7 +127,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 								storeType = bufferArr[0];
 								bufInfo = bufferArr[1];
 								bufferID = bufferArr[2];
-
 								/*"includes buffer".postln;*/
 								cond = Condition(false);
 								cond.test = false;
@@ -173,9 +170,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 										bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
 											++ [1, bstoreSize+index] ] });
 									});
-
 									BStore.addAll(bufferID, {arg buf;
-
 										blockFunc = blockFunc.(buf);
 										cond.test = true;
 										cond.signal;
@@ -195,11 +190,9 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 												};
 											});
 										});
-
 									});
 									cond.wait;
 									this.nodeTime.wait;
-
 									/*"this buffer array that need to be allocated".postln;*/
 								});
 							});
@@ -210,7 +203,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 					}, {
 						/*"this is a pattern hurray".postln;*/
 						/*blockFunc = this.blockPattern(block, extraArgs, data);*/
-
 						if(extraArgs.isArray.not, {
 							blockFunc = this.pattData(DataFile.read(\pattern, extraArgs), data)
 							.toPattern(pattCount);
@@ -232,23 +224,17 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							});
 						});
 						pattCount = pattCount + 1;
-						//
-
 						blockFuncCS = blockFunc;
 					});
-
 					if(liveBlocks[blockIndex].notNil, {
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
 							/*"free buffer from play".postln;*/
 							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
 						});
 					});
-
 					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
 						++ blockFuncCS.cs ++ ");");
-
 					ndefCS.postln;
-
 					if((blockName == 'pattern').not, {
 						if(extraArgs.notNil, {
 							if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
@@ -268,11 +254,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 							});
 						});
 					});
-
 					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
-
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
-
 				}.fork;
 			}, {
 				"This block does not exist".warn;
@@ -425,13 +408,11 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 	*addRecArr {arg argArr, func;
 		var bufferArr, seconds, channels, format, frameSize, hopSize;
 		argArr.do{|item|
-
 			if(item[0].notNil, {seconds =  item[0]}, {seconds= 1});
 			if(item[1].notNil, {channels =  item[1]}, {channels= 1});
 			if(item[2].notNil, {format =  item[2]}, {format= \audio});
 			if(item[3].notNil, {frameSize =  item[3]}, {frameSize = 2048});
 			if(item[4].notNil, {hopSize =  item[4]}, {hopSize = 0.5});
-
 			this.addRecNdefs(channels);
 			bufferArr = bufferArr.add(this.getRecBStoreIDs(1, seconds, channels, format,
 				frameSize,hopSize).unbubble);
