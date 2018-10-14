@@ -387,7 +387,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		recBlocks = recBlocks.add( [ndefTag, channels] );
 	}
 
-	*getRecBStoreIDs {arg number=1, seconds=1, channels=1, format=\audio, frameSize=2048, hopSize=0.5;
+	*getRecBStoreIDs {arg number=1, seconds=1, channels=1, format=\audio, frameSize=2048,
+		hopSize=0.5;
 		var buffer, numFrames, resultArr;
 		number.do{
 			if(format==\audio, {numFrames=seconds*Server.default.sampleRate;
@@ -404,7 +405,8 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		^resultArr;
 	}
 
-	*addRecNum {arg number=1, seconds=1, channels=1, format=\audio, frameSize=2048, hopSize=0.5, func;
+	*addRecNum {arg number=1, seconds=1, channels=1, format=\audio, frameSize=2048,
+		hopSize=0.5, func;
 		var bufferArr;
 		number.do{
 			this.addRecNdefs(channels);
