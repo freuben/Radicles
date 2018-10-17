@@ -39,7 +39,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 	}
 
 	autoRoute {arg trackInfo;
-		var newArr, ndefArr, ndefCS, synthArr, intArr;
+		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
 		newArr = trackInfo.reverse;
 		ndefArr = newArr.flop[0];
 		synthArr = newArr.flop[1];
@@ -47,7 +47,13 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 			var extraArgs, synthFunc, dest;
 			extraArgs = Ndef(ndefArr[index]).getKeysValues;
 			dest = Ndef(ndefArr[index+1]);
+			if(synthArr[index].isArray, {
+				thisSynthFunc = synthArr[index];
+				synthFunc = thisSynthFunc[0].filterFunc([dest] ++
+					thisSynthFunc.copyRange(1, thisSynthFunc.size-1); );
+			}, {
 			synthFunc = synthArr[index].filterFunc(dest);
+			});
 			if(extraArgs.isEmpty, {
 				ndefCS = ("Ndef(" ++ ndefArr[index].cs ++ ", " ++ synthFunc.cs ++ ");");
 			}, {
