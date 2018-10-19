@@ -1,0 +1,3 @@
+[ [ 'pan2', {arg pan = 0 -> [-1,1];
+	Pan2.ar(\in, pan);
+} ] ]

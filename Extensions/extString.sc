@@ -129,4 +129,13 @@
 		^string
 	}
 
+	capitalise {
+		var string, capital, ascii;
+		string = this;
+		capital = string[0].toUpper.ascii;
+		ascii = string.ascii;
+		ascii[0] = capital;
+		^ascii.asAscii;
+	}
+
 }

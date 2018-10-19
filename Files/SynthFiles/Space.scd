@@ -1,4 +1,4 @@
-[ [ 'pan2', {arg pan;
+[ [ 'pan2', {arg pan = 0 ;
 	Pan2.ar(\in, pan);
 } ], [ 'panB', {arg pan1, pan2;
 	var  w, x, y, z, sig;

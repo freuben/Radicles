@@ -1,0 +1,1 @@
+[ [ 'pan2', "Two channel panner" ] ]

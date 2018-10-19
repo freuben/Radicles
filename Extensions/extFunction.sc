@@ -70,13 +70,16 @@
 		^this.spec[1];
 	}
 
-	filterFunc {arg ndefin;
-		var out, string, funcCS;
+	filterFunc {arg ndefin, audio=true;
+		var out, string, funcCS, ndefout;
 		string = 92.asAscii ++ "in";
 		funcCS = this.cs;
 				if(funcCS.find(string ++ "1").isNil, {
 			if(ndefin.isArray.not, {
-				out = funcCS.replace(string, ndefin.cs );
+				if(audio, {
+					ndefout = "Ndef.ar(" ++ ndefin.key.cs ++ ", " ++ ndefin.numChannels ++ ")";
+				});
+				out = funcCS.replace(string, ndefout );
 				}, {
 					out = funcCS.replace(string, ndefin.cs ++ ".sum" );
 			});

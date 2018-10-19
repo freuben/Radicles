@@ -1,35 +1,43 @@
-Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCount=1, <ndefs, <master, <space, <>masterSynth;
+Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCount=1, <busCount=1, <ndefs, <space, <>masterSynth, <trackNames;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType=\pan2;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
 	}
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType=\pan2;
-		var ndefCS1, ndefCS2, masterTag, spaceTag, spaceSynth;
-		Server.default.waitForBoot{
-			masterSynth = {arg volume=0; (\in * volume.dbamp ).softclip};
-			spaceSynth = SynthFile.read(\space, spaceType);
-			masterTag = \master;
-			ndefCS1 = "Ndef.ar(" ++ masterTag.cs ++ ", ";
-			ndefCS1 = (ndefCS1 ++ chanNum.cs ++ ");");
-			ndefCS1.radpost;
-			ndefCS1.interpret;
-			ndefCS2 = ("Ndef(" ++ masterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS2.radpost;
-			ndefCS2.interpret;
-			spaceTag = \spaceMaster;
-			ndefCS1 = "Ndef.ar(" ++ spaceTag.cs ++ ", ";
-			ndefCS1 = (ndefCS1 ++ chanNum.cs ++ ");");
-			ndefCS1.radpost;
-			ndefCS1.interpret;
-			ndefCS2 = ("Ndef(" ++ spaceTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS2.radpost;
-			ndefCS2.interpret;
-			master = [ [spaceTag, spaceSynth], [masterTag, masterSynth] ];
-			space = [ [chanNum, spaceType ] ];
-			this.autoRoute(master);
-			this.play;
+		var ndefCS1, ndefCS2, masterTag, spaceTag, spaceSynth, main;
+		server.options.numAudioBusChannels = 1024;
+		server.options.numControlBusChannels = 16384;
+		server.waitForBoot{
+			{
+				masterSynth = {arg volume=0; (\in * volume.dbamp ).softclip};
+				this.addTrack(\master, chanNum, spaceType, masterSynth);
+				this.addTracks(trackNum, \track, chanNum, spaceType);
+				this.addTracks(busNum, \bus, chanNum, spaceType);
+				tracks.do{|item|
+					this.autoRoute(item);
+				};
+				server.sync;
+				this.play;
+			}.fork
 		}
+	}
+
+	get {arg trackType = \track;
+		^tracks.select{|item|
+			item.last[0].asString.find(trackType.asString).notNil; };
+	}
+
+	getMaster {
+		^this.get(\master);
+	}
+
+	getBuses {
+		^this.get(\bus);
+	}
+
+	getTracks {
+		^this.get(\track);
 	}
 
 	play {var ndefCS;
@@ -47,12 +55,13 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 			var extraArgs, synthFunc, dest;
 			extraArgs = Ndef(ndefArr[index]).getKeysValues;
 			dest = Ndef(ndefArr[index+1]);
+					if(synthArr[index].isFunction, {
 			if(synthArr[index].isArray, {
 				thisSynthFunc = synthArr[index];
 				synthFunc = thisSynthFunc[0].filterFunc([dest] ++
 					thisSynthFunc.copyRange(1, thisSynthFunc.size-1); );
 			}, {
-			synthFunc = synthArr[index].filterFunc(dest);
+				synthFunc = synthArr[index].filterFunc(dest);
 			});
 			if(extraArgs.isEmpty, {
 				ndefCS = ("Ndef(" ++ ndefArr[index].cs ++ ", " ++ synthFunc.cs ++ ");");
@@ -60,37 +69,80 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 				ndefCS = ("Ndef(" ++ ndefArr[index].cs ++ ").put(0, " ++ synthFunc.cs ++
 					", extraArgs: " ++ extraArgs.cs ++ ");");
 			});
+
+			}, {
+				synthArr[index].postln;
+			});
 			intArr = intArr.add(ndefCS);
 		};
-		intArr.reverse.do{|item| item.radpost; item.interpret };
+		{intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
 	}
 
-	addtrack {arg input, channels, spaceType=\pan2;
-		var trackTag, ndefCS1, ndefCS2;
-		channels ?? {channels = input.numChannels};
-		trackTag = ("track" ++ trackCount).asSymbol;
-		trackCount = trackCount + 1;
-		/*			ndefCS1 = "Ndef.ar(";
-		ndefCS1 = (ndefCS1 ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
-		ndefCS1.radpost;
-		ndefCS1.interpret;
-		ndefCS2 = ("Ndef(" ++ ndefTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-		ndefCS2.radpost;
-		ndefCS2.interpret;*/
-		/*			ndefs = ndefs.add(Ndef(ndefTag));*/
-		inputs = inputs.add(input);
-		outputs = outputs.add(input);
-		//tag, input, output, channels, spaceType:
-		tracks = tracks.add( [trackTag, input, input, channels, spaceType] );
-		livetracks = livetracks.add(nil);
+	input {arg ndefs, type=\track, num=1;
+		var trackArr, ndefCS;
+		trackArr = this.get(type)[num-1];
+
+		ndefCS = ("Ndef(" ++ trackArr[0][0].cs ++ ", "
+			++ trackArr[0][1].filterFunc(ndefs).cs ++ ");");
+
+		ndefCS.radpost;
+		ndefCS.interpret;
 	}
 
-	addtracks {arg number, inputs, channels=1, spaceTypes;
+	addTrack {arg type=\track, chanNum, spaceType, trackSynth;
+		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth;
+
+		if([\track, \bus, \master].includes(type), {
+
+			chanNum ?? {chanNum = space[0][0]};
+			spaceType ?? {spaceType = space[0][1]};
+
+			trackSynth ?? {trackSynth = {arg volume=0; (\in * volume.dbamp )}; };
+			spaceSynth = SynthFile.read(\space, spaceType);
+
+			case
+			{type == \track} {
+				trackTag = (type.asString ++ trackCount).asSymbol;
+				trackCount = trackCount + 1;
+			}
+			{type == \bus} {
+				trackTag = (type.asString ++ busCount).asSymbol;
+				busCount = busCount + 1;
+			}
+			{type == \master} {
+				trackTag = (type.asString).asSymbol;
+			};
+
+			ndefCS1 = "Ndef.ar(" ++ trackTag.cs ++ ", ";
+			ndefCS1 = (ndefCS1 ++ chanNum.cs ++ ");");
+			ndefCS1.radpost;
+			ndefCS1.interpret;
+			ndefCS2 = ("Ndef(" ++ trackTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
+			ndefCS2.radpost;
+			ndefCS2.interpret;
+			server.sync;
+			spaceTag = ("space" ++ trackTag.asString.capitalise).asSymbol;
+			ndefCS1 = "Ndef.ar(" ++ spaceTag.cs ++ ", ";
+			ndefCS1 = (ndefCS1 ++ chanNum.cs ++ ");");
+			ndefCS1.radpost;
+			ndefCS1.interpret;
+			ndefCS2 = ("Ndef(" ++ spaceTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
+			ndefCS2.radpost;
+			ndefCS2.interpret;
+			server.sync;
+			tracks = tracks.add([ [spaceTag, spaceSynth], [trackTag, trackSynth] ]);
+			trackNames = trackNames.add(trackTag);
+			space = space.add([chanNum, spaceType ]);
+
+		}, {
+			"track type not found".warn;
+		});
+	}
+
+	addTracks {arg number, type=\track, chanNum, spaceType, trackSynth;
 		var thisChan, thisDest;
-		number.do{|index|
-			if(channels.isArray, {thisChan = channels[index]}, {thisChan = channels});
-			if(spaceTypes.isArray, {thisDest = spaceTypes[index]}, {thisDest = spaceTypes});
-			this.add(inputs, thisChan, thisDest);
+		number.do{
+			this.addTrack(type, chanNum, spaceType, trackSynth);
 		};
 	}
 
