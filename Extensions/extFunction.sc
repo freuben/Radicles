@@ -31,36 +31,36 @@
 	}
 
 	spec {
-	var string, stringFunc, indecesFind, indecesBrack, argNames, arrArgs, indArgs;
-	var indecesClose, cuts, stringSpecs, specArr, newString, indecesArgs;
-	argNames = this.argNames;
-	string = this.cs;
-	stringFunc = string.replace("-> [", "->[");
-	indecesFind = stringFunc.findAll("->[");
-	indecesArgs = argNames.collect{|item| stringFunc.find(item.asString); };
-	indArgs = indecesFind.collect{|item|
-		indecesArgs.indexOf(indecesArgs.reject{|it| item < it}.last);
-	};
-	arrArgs = argNames.atAll(indArgs);
-	if(indecesFind.notNil, {
-		indecesBrack = stringFunc.findAll("]");
-		indecesClose = indecesFind.collect{|it|
-			indecesBrack.select{|item| item > it }.first;
+		var string, stringFunc, indecesFind, indecesBrack, argNames, arrArgs, indArgs;
+		var indecesClose, cuts, stringSpecs, specArr, newString, indecesArgs;
+		argNames = this.argNames;
+		string = this.cs;
+		stringFunc = string.replace("-> [", "->[");
+		indecesFind = stringFunc.findAll("->[");
+		indecesArgs = argNames.collect{|item| stringFunc.find(item.asString); };
+		indArgs = indecesFind.collect{|item|
+			indecesArgs.indexOf(indecesArgs.reject{|it| item < it}.last);
 		};
-		cuts = ([indecesFind] ++ [indecesClose]).flop;
-		stringSpecs = cuts.collect{|item| stringFunc.copyRange(item[0], item[1]) };
-		specArr = stringSpecs.collect{ |item| item.replace("->", "").interpret };
-		specArr = [arrArgs] ++ [specArr];
-		specArr = specArr.flop;
-		newString = stringFunc;
-		stringSpecs.do{|item|
-			newString = 	newString.replace(item);};
-	}, {
-		newString = 	stringFunc;
-		specArr = [];
-	});
-	^[newString.interpret, specArr]
-}
+		arrArgs = argNames.atAll(indArgs);
+		if(indecesFind.notNil, {
+			indecesBrack = stringFunc.findAll("]");
+			indecesClose = indecesFind.collect{|it|
+				indecesBrack.select{|item| item > it }.first;
+			};
+			cuts = ([indecesFind] ++ [indecesClose]).flop;
+			stringSpecs = cuts.collect{|item| stringFunc.copyRange(item[0], item[1]) };
+			specArr = stringSpecs.collect{ |item| item.replace("->", "").interpret };
+			specArr = [arrArgs] ++ [specArr];
+			specArr = specArr.flop;
+			newString = stringFunc;
+			stringSpecs.do{|item|
+				newString = 	newString.replace(item);};
+		}, {
+			newString = 	stringFunc;
+			specArr = [];
+		});
+		^[newString.interpret, specArr]
+	}
 
 	specFunc {
 		^this.spec[0];
@@ -74,20 +74,30 @@
 		var out, string, funcCS, ndefout;
 		string = 92.asAscii ++ "in";
 		funcCS = this.cs;
-				if(funcCS.find(string ++ "1").isNil, {
+		if(funcCS.find(string ++ "1").isNil, {
 			if(ndefin.isArray.not, {
 				if(audio, {
 					ndefout = "Ndef.ar(" ++ ndefin.key.cs ++ ", " ++ ndefin.numChannels ++ ")";
 				});
 				out = funcCS.replace(string, ndefout );
-				}, {
-					out = funcCS.replace(string, ndefin.cs ++ ".sum" );
+			}, {
+				if(audio, {
+					ndefout = ndefin.collect({|item|
+						"Ndef.ar(" ++ item.key.cs ++ ", " ++ item.numChannels ++ ")";
+					});
+				}, {ndefout = ndefin});
+				out = funcCS.replace(string, ndefout.asString ++ ".sum" );
 			});
 		}, {
 			if(ndefin.isArray, {
 				out = funcCS;
-				ndefin.do{|item, index|
-					out = out.replace(string ++ (index+1).cs, item.cs );
+				if(audio, {
+					ndefout = ndefin.collect({|item|
+						"Ndef.ar(" ++ item.key.cs ++ ", " ++ item.numChannels ++ ")";
+					});
+				}, {ndefout = ndefin});
+				ndefout.do{|item, index|
+					out = out.replace(string ++ (index+1).cs, item );
 				};
 			}, {
 				"incorrect input, should be an array of ndefs".warn;

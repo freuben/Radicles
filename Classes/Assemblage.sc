@@ -1,19 +1,40 @@
 Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCount=1, <busCount=1, <ndefs, <space, <>masterSynth, <trackNames;
 
-	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType=\pan2;
+	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType=\bal2;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
 	}
 
-	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType=\pan2;
+	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType=\bal2;
 		var ndefCS1, ndefCS2, masterTag, spaceTag, spaceSynth, main;
+		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus;
 		server.options.numAudioBusChannels = 1024;
 		server.options.numControlBusChannels = 16384;
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0; (\in * volume.dbamp ).softclip};
-				this.addTrack(\master, chanNum, spaceType, masterSynth);
-				this.addTracks(trackNum, \track, chanNum, spaceType);
-				this.addTracks(busNum, \bus, chanNum, spaceType);
+				if(chanNum.isArray.not, {
+					chanMaster = chanNum;
+					chanTrack = chanNum;
+					chanBus = chanNum;
+				}, {
+					chanMaster = chanNum[0];
+					chanTrack = chanNum[1];
+					chanBus = chanNum[2];
+				});
+				if(spaceType.isArray.not, {
+					spaceMaster = spaceType;
+					spaceTrack = spaceType;
+					spaceBus = spaceType;
+				}, {
+					spaceMaster = spaceType[0];
+					spaceTrack = spaceType[1];
+					spaceBus = spaceType[2];
+				});
+
+				this.addTrack(\master, chanMaster, spaceMaster, masterSynth);
+				this.addTracks(trackNum, \track, chanTrack, spaceTrack);
+				this.addTracks(busNum, \bus, chanBus, spaceBus);
+
 				tracks.do{|item|
 					this.autoRoute(item);
 				};
@@ -29,7 +50,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 	}
 
 	getMaster {
-		^this.get(\master);
+		^this.get(\master)[0];
 	}
 
 	getBuses {
