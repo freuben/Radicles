@@ -174,12 +174,10 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 	input {arg ndefsIn, type=\track, num=1, respace=true, spaceType;
 		var trackArr, ndefCS, connect, inTag;
 		trackArr = this.get(type)[num-1];
-
 		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
 		inputs = inputs.add([inTag, ndefsIn]);
 		inputs = ([ inputs[0] ] ++
 			inputs.copyRange(1, inputs.size-1).sort { arg a, b; a[0] <= b[0] };);
-
 		if(ndefsIn.numChannels.isNil, {ndefsIn.mold(1) });
 		if(ndefsIn.isArray, {
 			connect =
@@ -210,23 +208,65 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 		});
 	}
 
-	getInputs {
-		^inputs.reverse;
-	}
-
 	getTrackInput {arg type=\master, num=1;
 		var inTag, index;
 		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
 		if(trackNames.includes(inTag), {
-		index = inputs.flop[0].indexOfEqual(inTag);
-		if(index.notNil, {
-		^inputs.flop[1][index];
-		}, {
-			"no input assigned to this track".warn;
-		});
+			index = inputs.flop[0].indexOfEqual(inTag);
+			if(index.notNil, {
+				^inputs.flop[1][index];
+			}, {
+				"no input assigned to this track".warn;
+			});
 		}, {
 			"track doesn't exist".warn;
 		});
+	}
+
+	getInputs {arg type=\master;
+		var arr;
+		arr = [];
+		inputs.flop[0].do{|item, index|
+			if( (item.asString.find(type.asString)).notNil , {
+				arr = arr.add(inputs[index]);
+			});
+		};
+		^arr;
+	}
+
+	getAllInputs {arg master=true;
+		var arr, types;
+		arr=[];
+		types = [\bus, \track];
+		if(master, {types = [\master] ++ types });
+		types.do{|item|
+			arr = this.getInputs(item) ++arr;
+		};
+		^arr;
+	}
+
+	setInputs {arg ndefIns, type, num;
+		var typeArr, numArr;
+		{
+			if(type.isArray, {
+				typeArr = type;
+			}, {
+				typeArr = type!ndefIns.size;
+			});
+			if(num.isArray, {
+				numArr = num;
+			}, {
+				numArr = (num..ndefIns.size);
+			});
+
+			typeArr.postln;
+			numArr.postln;
+
+			ndefIns.do{|item, index|
+				this.input(item, typeArr[index], numArr[index]);
+				server.sync;
+			}
+		}.fork;
 	}
 
 	findTrackArr {arg key=\master;
