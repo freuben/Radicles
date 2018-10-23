@@ -1,4 +1,4 @@
-Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames;
+Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames, <>masterInput;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -37,7 +37,8 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 				};
 				server.sync;
 				inArr = ndefs.flop[0];
-				this.input(inArr.copyRange(1, inArr.size-1), \master);
+				masterInput = inArr.copyRange(1, inArr.size-1);
+				this.input(masterInput, \master);
 				server.sync;
 				this.play;
 			}.fork
@@ -267,6 +268,12 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 				server.sync;
 			}
 		}.fork;
+	}
+
+	getTrackOutput {arg type=\master, num=1;
+		var inTag;
+		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
+		^Ndef(inTag);
 	}
 
 	findTrackArr {arg key=\master;
