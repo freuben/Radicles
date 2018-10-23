@@ -1,12 +1,11 @@
-Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCount=1, <busCount=1, <ndefs, <space, <>masterSynth, <trackNames;
+Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
 	}
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType;
-		var ndefCS1, ndefCS2, masterTag, spaceTag, spaceSynth, main;
-		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus;
+		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
 		server.options.numAudioBusChannels = 1024;
 		server.options.numControlBusChannels = 16384;
 		server.waitForBoot{
@@ -36,6 +35,9 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 				tracks.do{|item|
 					this.autoRoute(item);
 				};
+				server.sync;
+				inArr = ndefs.flop[0];
+				this.input(inArr.copyRange(1, inArr.size-1), \master);
 				server.sync;
 				this.play;
 			}.fork
@@ -110,6 +112,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 			ndefCS2.interpret;
 			server.sync;
 			tracks = tracks.add([ [spaceTag, spaceSynth], [trackTag, trackSynth] ]);
+			ndefs = ndefs.add([Ndef(spaceTag), Ndef(trackTag)]);
 			trackNames = trackNames.add(trackTag);
 			space = space.add([spaceTag, chanNum, spaceType ]);
 		}, {
@@ -169,8 +172,14 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 	}
 
 	input {arg ndefsIn, type=\track, num=1, respace=true, spaceType;
-		var trackArr, ndefCS, connect;
+		var trackArr, ndefCS, connect, inTag;
 		trackArr = this.get(type)[num-1];
+
+		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
+		inputs = inputs.add([inTag, ndefsIn]);
+		inputs = ([ inputs[0] ] ++
+			inputs.copyRange(1, inputs.size-1).sort { arg a, b; a[0] <= b[0] };);
+
 		if(ndefsIn.numChannels.isNil, {ndefsIn.mold(1) });
 		if(ndefsIn.isArray, {
 			connect =
@@ -198,6 +207,25 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 			}, {
 				"channel number input doesn't match track".warn;
 			});
+		});
+	}
+
+	getInputs {
+		^inputs.reverse;
+	}
+
+	getTrackInput {arg type=\master, num=1;
+		var inTag, index;
+		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
+		if(trackNames.includes(inTag), {
+		index = inputs.flop[0].indexOfEqual(inTag);
+		if(index.notNil, {
+		^inputs.flop[1][index];
+		}, {
+			"no input assigned to this track".warn;
+		});
+		}, {
+			"track doesn't exist".warn;
 		});
 	}
 
