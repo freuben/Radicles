@@ -28,7 +28,7 @@
 				item.numChannels ++ ")*vol" ++  (index+1).asString ++ ", ";);
 		};
 		args = args.replaceAt(";", args.size-2);
-		args= args ++ brak2 ++ " };"
+		args= args ++ brak2 ++ "};"
 		^args.interpret;
 	}
 

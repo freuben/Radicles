@@ -1,4 +1,6 @@
-Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames, <>masterInput;
+Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
+	<trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames,
+	<>masterInput, <busArr, <busInArr;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -32,6 +34,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 				this.addTrack(\master, chanMaster, spaceMaster, masterSynth);
 				this.addTracks(trackNum, \track, chanTrack, spaceTrack);
 				this.addTracks(busNum, \bus, chanBus, spaceBus);
+				busArr = nil!2!busNum;
 				tracks.do{|item|
 					this.autoRoute(item);
 				};
@@ -152,7 +155,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 				});
 				ndefCS = this.ndefPrepare(Ndef(ndefArr[index]), synthFunc);
 			}, {
-				synthArr[index].postln;
+				synthArr[index].radpost;
 			});
 			intArr = intArr.add(ndefCS);
 		};
@@ -170,6 +173,40 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 				", extraArgs: " ++ extraArgs.cs ++ ");");
 		});
 		^result;
+	}
+
+	findTrackArr {arg key=\master;
+		var arr;
+		tracks.do{|it, in|
+			it.do{|item, index| if(item[0] == key, {arr = [in, index]}) }
+		};
+		^arr;
+	}
+
+	replaceFunc {arg name, function;
+		var array;
+		array = this.findTrackArr(name);
+		tracks[array[0]][array[1]][1] = function;
+	}
+
+	respace {arg trackName=\spaceMaster, trackInput, spaceType;
+		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth;
+		var array, func, chanNum;
+		array = this.findTrackArr(trackName);
+		if(array.notNil, {
+			if(trackInput.isArray, {
+				chanNum = trackInput.collect{|item| item.numChannels}.maxItem;
+			}, {
+				chanNum = trackInput.numChannels;
+			});
+			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
+			spaceSynth = SynthFile.read(\space, spaceType);
+			func = spaceSynth.filterFunc(trackInput);
+			this.replaceFunc(trackName, func);
+			space.do{|item| if(item[0] == trackName, {item[1] = chanNum; item[2] = spaceType }) };
+		}, {
+			"track name not found".warn;
+		});
 	}
 
 	input {arg ndefsIn, type=\track, num=1, respace=true, spaceType;
@@ -259,10 +296,8 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 			}, {
 				numArr = (num..ndefIns.size);
 			});
-
-			typeArr.postln;
-			numArr.postln;
-
+			typeArr.radpost;
+			numArr.radpost;
 			ndefIns.do{|item, index|
 				this.input(item, typeArr[index], numArr[index]);
 				server.sync;
@@ -276,38 +311,47 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks, <trackCoun
 		^Ndef(inTag);
 	}
 
-	findTrackArr {arg key=\master;
-		var arr;
-		tracks.do{|it, in|
-			it.do{|item, index| if(item[0] == key, {arr = [in, index]}) }
-		};
-		^arr;
-	}
-
-	replaceFunc {arg name, function;
-		var array;
-		array = this.findTrackArr(name);
-		tracks[array[0]][array[1]][1] = function;
-	}
-
-	respace {arg trackName=\spaceMaster, trackInput, spaceType;
-		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth;
-		var array, func, chanNum;
-		array = this.findTrackArr(trackName);
-		if(array.notNil, {
-			if(trackInput.isArray, {
-				chanNum = trackInput.collect{|item| item.numChannels}.maxItem;
-			}, {
-				chanNum = trackInput.numChannels;
+	bus {arg trackNum=1, busNum=1, mix=1, dirIn=true;
+		var numChan, busTag, ndefCS1, ndefCS2, ndefCS3, funcBus, thisBusArr,
+		busAdd, argIndex;
+		{
+			if(dirIn.not, {
+				masterInput = masterInput.copyRange(1, masterInput.size-1);
+				this.input(masterInput, \master);
+				server.sync;
 			});
-			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
-			spaceSynth = SynthFile.read(\space, spaceType);
-			func = spaceSynth.filterFunc(trackInput);
-			this.replaceFunc(trackName, func);
-			space.do{|item| if(item[0] == trackName, {item[1] = chanNum; item[2] = spaceType }) };
-		}, {
-			"track name not found".warn;
-		});
+			numChan = Ndef(this.getBuses.flop[0][busNum-1][0]).numChannels;
+			busTag = ("bus" ++ busNum ++ "In").asSymbol;
+			if(busArr[busNum-1][0].isNil, {
+				busArr[busNum-1][0] = busTag;
+				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
+				ndefCS1.radpost;
+				ndefCS1.interpret;
+				server.sync;
+				this.input(Ndef(busTag), \bus, busNum);
+			});
+			busAdd = {busArr[busNum-1][1] = busArr[busNum-1][1].add(
+				this.getTrackOutput(\track, trackNum));};
+			thisBusArr = busArr[busNum-1][1];
+			if(thisBusArr.notNil, {
+				if(thisBusArr.includes(this.getTrackOutput(\track, trackNum)).not, {
+					busAdd.()
+				});
+			}, {
+				busAdd.();
+			});
+			funcBus = busArr[busNum-1][1].busFunc;
+			ndefCS2 = this.ndefPrepare(Ndef(busTag), funcBus);
+			server.sync;
+			ndefCS2.radpost;
+			ndefCS2.interpret;
+			server.sync;
+			argIndex = busArr[busNum-1][1].indexOf(Ndef(("track" ++ trackNum).asSymbol));
+			ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set('vol" ++ (argIndex+1)
+			++ "', " ++ mix ++ ");";
+			ndefCS3.radpost;
+			ndefCS3.interpret;
+		}.fork;
 	}
 
 	remove {arg track=1;
