@@ -1,6 +1,6 @@
 Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames,
-	<>masterInput, <busArr, <busInArr;
+	<>masterInput, <busArr, <busInArr, <filters;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -143,7 +143,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		ndefArr = newArr.flop[0];
 		synthArr = newArr.flop[1];
 		(newArr.size-1).do{|index|
-			var extraArgs, synthFunc, dest;
+			var synthFunc, dest;
 			dest = Ndef(ndefArr[index+1]);
 			if(synthArr[index].isFunction, {
 				if(synthArr[index].isArray, {
@@ -179,6 +179,14 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		var arr;
 		tracks.do{|it, in|
 			it.do{|item, index| if(item[0] == key, {arr = [in, index]}) }
+		};
+		^arr;
+	}
+
+	collectTrackArr {arg find=\track;
+		var arr;
+		tracks.do{|it, in|
+			it.do{|item, index| if(item[0].asString.find(find.asString).notNil, {arr = arr.add(item)}); }
 		};
 		^arr;
 	}
@@ -327,6 +335,9 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
 				ndefCS1.radpost;
 				ndefCS1.interpret;
+				ndefCS1 = ("Ndef(" ++ busTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
+				ndefCS1.radpost;
+				ndefCS1.interpret;
 				server.sync;
 				this.input(Ndef(busTag), \bus, busNum);
 			});
@@ -377,28 +388,78 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		ndefCS.interpret;
 	}
 
-	filter {arg type=\track, num= 1, slot=1, filter=\pch;
-		var filterTag, ndefArr, ndefCS;
+	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs;
+		var filterTag, ndefArr, ndefCS, arr1, arr2, arrSize, filterInfo, setArr,
+		setTag, filterIndex, startNdefs;
 		if(type == \master, {
-			filterTag = ("filter" ++ type.asString.capitalise).asSymbol;
+			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ slot).asSymbol;
 		}, {
-			filterTag = ("filter" ++ type.asString.capitalise ++ num).asSymbol;
+			filterTag = ("filter" ++ type.asString.capitalise ++ num ++ "_" ++ slot).asSymbol;
 		});
-
 		case
 		{type == \track} { ndefArr = this.getTracks[num-1] }
 		{type == \bus} { ndefArr = this.getBuses[num-1] }
 		{type == \master} { ndefArr = this.getMaster };
+		startNdefs = {
+			ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefArr[0].numChannels ++ ");";
+			ndefCS.radpost;
+			ndefCS.interpret;
+			ndefCS = ("Ndef(" ++ filterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
+			ndefCS.radpost;
+			ndefCS.interpret;
+		};
+		if(filters.isNil, {
+			startNdefs.();
+		}, {
+			if(filters.flop[0].includes(filterTag).not, {
+				startNdefs.();
+			});
+		});
+		if(filters.notNil, {
+			if(filters.flop[0].includes(filterTag), {
+				filterIndex = filters.flop[0].indexOf(filterTag);
+				filters[filterIndex] = [filterTag, filter];
+			}, {
+				filters = filters.add([filterTag, filter]);
+			});
+		}, {
+			filters = filters.add([filterTag, filter]);
+		});
+		filterInfo = [filterTag, SynthFile.read(\filter, filter);];
+		if(ndefArr.size > 2, {
+			arr1 = [ ndefArr[0], ndefArr.last];
+			arr2 = ndefArr.copyRange(1, ndefArr.size-2);
+			if(arr2[slot-1].isNil, {
+				arr2.insert(slot-1, filterInfo);
+			}, {
+				arr2[slot-1] = filterInfo;
+			});
+			arr1.insert(1, arr2);
+			arrSize = (arr1.flat.size/2);
+			arr1 = arr1.reshape(arrSize.asInteger, 2)
+		}, {
+			arr1 = ndefArr;
+			arr2 = filterInfo;
+			arr1.insert(1, arr2);
+		});
+		if(extraArgs.notNil, {
+			extraArgs.pairsDo{|it1, it2|
+				Ndef(filterTag).set(it1, it2);
+			};
+		});
+		if(type == \master, {
+			setTag = type.asSymbol;
+		}, {
+			setTag = (type ++ num).asSymbol;
+		});
+		setArr = this.findTrackArr(setTag);
+		tracks[setArr[0]] = arr1;
+		ndefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
+		this.autoRoute(arr1);
+	}
 
-		ndefArr.postln;
-
-		ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefArr[0].numChannels ++ ");";
-		ndefCS.radpost;
-		ndefCS.interpret;
-
-		ndefArr.insert(slot, [filterTag, SynthFile.read(\filter, filter);]);
-
-		this.autoRoute(ndefArr);
+	removeFilter {
+		//work on this
 	}
 
 	remove {arg track=1;
