@@ -39,7 +39,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 					this.autoRoute(item);
 				};
 				server.sync;
-				inArr = ndefs.flop[0];
+				inArr = ndefs.flop[1];
 				masterInput = inArr.copyRange(1, inArr.size-1);
 				this.input(masterInput, \master);
 				server.sync;
@@ -352,6 +352,53 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 			ndefCS3.radpost;
 			ndefCS3.interpret;
 		}.fork;
+	}
+
+	busMix {arg bus=1, slot=1, mix=0, lag;
+		var tag, volTag, ndefCS;
+		tag = ("bus" ++ bus ++ "In").asSymbol;
+		volTag = ("vol" ++ slot).asSymbol;
+		if(lag.notNil, {
+			ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
+			ndefCS.radpost;
+			ndefCS.interpret;
+		});
+		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++volTag.cs ++ ", " ++ mix ++ ");";
+		ndefCS.radpost;
+		ndefCS.interpret;
+	}
+
+	busLag {arg bus=1, slot=1, lag=0;
+		var tag, volTag, ndefCS;
+		tag = ("bus" ++ bus ++ "In").asSymbol;
+		volTag = ("vol" ++ slot).asSymbol;
+		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
+		ndefCS.radpost;
+		ndefCS.interpret;
+	}
+
+	filter {arg type=\track, num= 1, slot=1, filter=\pch;
+		var filterTag, ndefArr, ndefCS;
+		if(type == \master, {
+			filterTag = ("filter" ++ type.asString.capitalise).asSymbol;
+		}, {
+			filterTag = ("filter" ++ type.asString.capitalise ++ num).asSymbol;
+		});
+
+		case
+		{type == \track} { ndefArr = this.getTracks[num-1] }
+		{type == \bus} { ndefArr = this.getBuses[num-1] }
+		{type == \master} { ndefArr = this.getMaster };
+
+		ndefArr.postln;
+
+		ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefArr[0].numChannels ++ ");";
+		ndefCS.radpost;
+		ndefCS.interpret;
+
+		ndefArr.insert(slot, [filterTag, SynthFile.read(\filter, filter);]);
+
+		this.autoRoute(ndefArr);
 	}
 
 	remove {arg track=1;
