@@ -170,7 +170,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 			result = ("Ndef(" ++ key.cs ++ ", " ++ func.cs ++ ");");
 		}, {
 			result = ("Ndef(" ++ key.cs ++ ").put(0, " ++ func.cs ++
-				", extraArgs: " ++ extraArgs.cs ++ ");");
+				", extraArgs: " ++ extraArgs.flat.cs ++ ");");
 		});
 		^result;
 	}
@@ -304,8 +304,6 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 			}, {
 				numArr = (num..ndefIns.size);
 			});
-			typeArr.radpost;
-			numArr.radpost;
 			ndefIns.do{|item, index|
 				this.input(item, typeArr[index], numArr[index]);
 				server.sync;
@@ -389,7 +387,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 	}
 
 	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs;
-		var filterTag, ndefArr, ndefCS, arr1, arr2, arrSize, filterInfo, setArr,
+		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
 		setTag, filterIndex, startNdefs;
 		if(type == \master, {
 			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ slot).asSymbol;
@@ -404,10 +402,11 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 			ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefArr[0].numChannels ++ ");";
 			ndefCS.radpost;
 			ndefCS.interpret;
-			ndefCS = ("Ndef(" ++ filterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
+			ndefCS = "Ndef(" ++ filterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";";
 			ndefCS.radpost;
 			ndefCS.interpret;
 		};
+
 		if(filters.isNil, {
 			startNdefs.();
 		}, {
@@ -415,33 +414,45 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 				startNdefs.();
 			});
 		});
-		if(filters.notNil, {
-			if(filters.flop[0].includes(filterTag), {
+
+		filterInfo = [filterTag, SynthFile.read(\filter, filter);];
+		//still some work to do with automatic control specs
+
+		//
+		if(ndefArr.size > 2, {
+			arr1 = [ndefArr[0], ndefArr.last];
+			arr2 = ndefArr.copyRange(1, ndefArr.size-2);
+			arr3 = arr2.flop[0].collect{|item| item.asString.last.asString.interpret };
+
+			if(arr3.includes(slot), {
+
+				arr2[arr3.indexOf(slot)] = filterInfo;
+
 				filterIndex = filters.flop[0].indexOf(filterTag);
 				filters[filterIndex] = [filterTag, filter];
 			}, {
+
+				arr2 = arr2.add(filterInfo);
+				arr2.sort({ arg a, b; a[0] <= b[0] });
+
 				filters = filters.add([filterTag, filter]);
+				filters.sort({ arg a, b; a[0] <= b[0] });
 			});
-		}, {
-			filters = filters.add([filterTag, filter]);
-		});
-		filterInfo = [filterTag, SynthFile.read(\filter, filter);];
-		if(ndefArr.size > 2, {
-			arr1 = [ ndefArr[0], ndefArr.last];
-			arr2 = ndefArr.copyRange(1, ndefArr.size-2);
-			if(arr2[slot-1].isNil, {
-				arr2.insert(slot-1, filterInfo);
-			}, {
-				arr2[slot-1] = filterInfo;
-			});
+
 			arr1.insert(1, arr2);
 			arrSize = (arr1.flat.size/2);
 			arr1 = arr1.reshape(arrSize.asInteger, 2)
+
 		}, {
+
+			filters = filters.add([filterTag, filter]);
+			filters.sort({ arg a, b; a[0] <= b[0] });
+
 			arr1 = ndefArr;
 			arr2 = filterInfo;
 			arr1.insert(1, arr2);
 		});
+
 		if(extraArgs.notNil, {
 			extraArgs.pairsDo{|it1, it2|
 				Ndef(filterTag).set(it1, it2);
@@ -458,7 +469,27 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		this.autoRoute(arr1);
 	}
 
-	removeFilter {
+	removeFilter {arg type=\track, num= 1, slot=1;
+		//work on this
+		var thisTrack, thisSlot, ndefCS;
+		case
+		{type == \track} {thisTrack = this.getTracks[num-1];}
+		{type == \bus} {thisTrack = this.getBuses[num-1];}
+		{type == \master} {thisTrack = this.getMaster[num-1];};
+
+		if(thisTrack.size > 2, {
+			thisSlot = thisTrack[slot];
+			ndefCS = "Ndef(" ++ thisSlot[0].cs ++ ").clear(" ++ fadeTime ++ ");";
+			ndefCS.radpost;
+			ndefCS.interpret;
+			//clear filter in track
+			thisTrack.removeAt(slot);
+			filters = filters.reject({|item| item[0] == thisSlot[0] });
+			this.autoRoute(thisTrack);
+		});
+	}
+
+	removeFilterAt {
 		//work on this
 	}
 
