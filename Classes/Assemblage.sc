@@ -511,12 +511,18 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		});
 	}
 
-	removeAllFilters {arg type=\track, post=true;
-		var thisTrack, num;
+	removeAllFilters {arg type=\all, post=true;
+		var thisTrack, num, maxSize;
 		if(type == \all, {
-			[\track, \bus, \master].do{|item| this.removeAllFilters(item) };
+			if(filters.isEmpty, {
+				"No filters to remove".warn;
+			}, {
+			[\track, \bus, \master].do{|item| this.removeAllFilters(item, false) };
+			});
 		}, {
 		thisTrack = this.get(type);
+			maxSize = thisTrack.collect{|item| item.size }.maxItem;
+			if(maxSize > 2, {
 		thisTrack.do{|item|
 			if(type == \master, {
 				num = 1;
@@ -525,6 +531,11 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 			});
 				this.removeTrackFilters(type, num, false);
 		};
+			}, {
+				if(post, {
+				"No filters to remove".warn;
+			});
+			});
 		});
 	}
 
