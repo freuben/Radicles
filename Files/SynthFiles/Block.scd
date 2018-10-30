@@ -1,4 +1,4 @@
-[ [ 'sine', {arg freq=440, phase=0, mul=0.4; SinOsc.ar(freq,phase,mul)} ], 
+[ [ 'sine', {arg freq=440, phase=0, mul=0.4; SinOsc.ar(freq,phase,mul)} ],
  [ 'play', {arg buffer; {arg rate=1, trigger=1,
  startPos=0, mul=1;
 	Mix(PlayBuf.ar(buffer.numChannels, buffer, rate, trigger, startPos, 0)*mul);}
@@ -22,11 +22,11 @@
 	IFFT(chain, winType)*mul}; } ], [ 'playbuf', {arg buffer; {arg 
  rate=1,
  trigger=1, startPos=0, mul=1, loop=1;
-	PlayBuf.ar(buffer.numChannels, buffer, rate, trigger, startPos, loop)*mul;} } 
- ], [ 'rec', {arg buffer; {arg recLevel=1, preLevel=0;
+	PlayBuf.ar(buffer.numChannels, buffer, rate, trigger, startPos, loop)*mul;}
+ } ], [ 'rec', {arg buffer; {arg recLevel=1, preLevel=0;
 	var sig;
 	sig = 'input';
-	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 0); } } ], [ 'recpv', 
+	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 0); } } ], [ 'recpv',
  {arg buffer, numChannels=1, numFrames=2048, hop=0.5, wintype=1; {arg
  offset=0, run=1, loop=0, mul=1;
 	var sig, localbuf, chain;
@@ -39,8 +39,8 @@
  preLevel=0;
 	var sig;
 	sig = 'input';
-	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 1); } } ], [ 
- 'looptr', {arg buffer; {arg rate=1, triggerRate=1,
+	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 1); } } ], [ 'looptr',
+ {arg buffer; {arg rate=1, triggerRate=1,
  startPos=0, mul=1;
 	PlayBuf.ar(buffer.numChannels, buffer, rate, Impulse.kr(triggerRate),
  startPos, 1)*mul;} } ], [ 'osc1', {arg buffer; {arg freq=400, phase=0,
@@ -53,10 +53,8 @@
 		bufnum =
  buffer[0].bufnum;
 	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+buffer.size-1), freq, phase, mul)}
- } ], [ 'test2', {arg freq = 400 , amp = 0.4 , mul = 0.4 , harm =
- 3;
-Saw.ar(freq, amp);
-} ], [ 'test1', {arg freq = 400 , amp = 0.4 , mul = 0.4 , harm 
- = 3;
+ } ], [ 'test2', {arg freq = 400 , amp = 0.4 , mul = 0.4 , harm = 3;
+	Saw.ar(freq, amp);} ], [ 'test1', {arg freq = 400 , amp = 0.4 , mul = 0.4
+ , harm = 3;
 SinOsc.ar(freq, 0, amp);
-}  ] ]
+} ] ]

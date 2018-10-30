@@ -1,5 +1,5 @@
-[ [ 'pch', {arg pitchRatio=1.0, pitchDispertion=0.0, timeDispersion=0.0001,
- lag=5.0, winSize=0.02;
+[ [ 'pch', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , lag=5.0 , winSize=0.02 ;
 		PitchShift.ar(\in, winSize, pitchRatio.lag(lag), pitchDispertion, timeDispersion);
  } ], [ 'pch2', {arg centerpitch=440,bus=0, pitchDispertion=0.0, timeDispersion=0.0,
  lag=0.1, winSize=0.1; 

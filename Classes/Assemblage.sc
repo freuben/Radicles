@@ -1,4 +1,4 @@
-Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
+Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames,
 	<>masterInput, <busArr, <busInArr, <filters;
 
@@ -81,11 +81,13 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 	}
 
 	addTrack {arg type=\track, chanNum=1, spaceType, trackSynth;
-		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth;
+		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth, spaceSpecs, trackSpecs;
 		if([\track, \bus, \master].includes(type), {
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
 			trackSynth ?? {trackSynth = {arg volume=0; (\in * volume.dbamp )}; };
+			trackSpecs ?? trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ] ];
 			spaceSynth = SynthFile.read(\space, spaceType);
+			spaceSpecs = SpecFile.read(\space, spaceType);
 			case
 			{type == \track} {
 				trackTag = (type.asString ++ trackCount).asSymbol;
@@ -116,6 +118,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 			ndefCS2.interpret;
 			server.sync;
 			tracks = tracks.add([ [spaceTag, spaceSynth], [trackTag, trackSynth] ]);
+			specs = specs.add([ [spaceTag, spaceSpecs], [trackTag, trackSpecs] ]);
 			ndefs = ndefs.add([Ndef(spaceTag), Ndef(trackTag)]);
 			trackNames = trackNames.add(trackTag);
 			space = space.add([spaceTag, chanNum, spaceType ]);
@@ -388,7 +391,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 
 	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs;
 		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
-		setTag, filterIndex, startNdefs;
+		setTag, filterIndex, startNdefs, filterSpecs;
 		if(type == \master, {
 			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ slot).asSymbol;
 		}, {
@@ -414,7 +417,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 
 		filterInfo = [filterTag, SynthFile.read(\filter, filter);];
 		//still some work to do with automatic control specs
-
+		filterSpecs = [filterTag, SpecFile.read(\filter, \pch)];
 		//
 		if(ndefArr.size > 2, {
 			arr1 = [ndefArr[0], ndefArr.last];
@@ -465,7 +468,6 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 	}
 
 	removeFilter {arg type=\track, num= 1, slot=1;
-		//work on this
 		var thisTrack, thisSlot, ndefCS, setArr;
 		thisTrack = this.get(type)[num-1];
 		if(thisTrack.size > 2, {
@@ -547,6 +549,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 			ndefs[trackIndex].clear;
 			ndefs.removeAt(trackIndex);
 			tracks.removeAt(trackIndex);
+			specs.removeAt(trackIndex);
 			livetracks.removeAt(trackIndex);
 		}, {
 			"track number not found".warn;
@@ -566,6 +569,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		};
 		ndefs.removeAtAll(newArr);
 		tracks.removeAtAll(newArr);
+		specs.removeAtAll(newArr);
 		livetracks.removeAll(newArr);
 	}
 
@@ -573,6 +577,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		ndefs.do{|item| item.clear };
 		ndefs = [];
 		tracks = [];
+		specs = [];
 		livetracks = [];
 		trackCount = 1;
 	}
@@ -581,6 +586,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		Ndef.clear;
 		ndefs = [];
 		tracks = [];
+		specs = [];
 		livetracks = [];
 		trackCount = 1;
 	}

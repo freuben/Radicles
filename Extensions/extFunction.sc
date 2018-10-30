@@ -52,6 +52,17 @@
 			specArr = stringSpecs.collect{ |item| item.replace("->", "").interpret };
 			specArr = [arrArgs] ++ [specArr];
 			specArr = specArr.flop;
+			specArr = specArr.collect{|item|
+				var func, specs, out;
+				func = item[1].select{|item| item.isFunction };
+				specs = item[1].reject{|item| item.isFunction };
+				if(func[0].isNil, {
+					out = [item[0], specs];
+				}, {
+					out = [item[0], specs, func[0]];
+				});
+				out;
+			};
 			newString = stringFunc;
 			stringSpecs.do{|item|
 				newString = 	newString.replace(item);};
