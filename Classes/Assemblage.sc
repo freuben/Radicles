@@ -394,10 +394,7 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		}, {
 			filterTag = ("filter" ++ type.asString.capitalise ++ num ++ "_" ++ slot).asSymbol;
 		});
-		case
-		{type == \track} { ndefArr = this.getTracks[num-1] }
-		{type == \bus} { ndefArr = this.getBuses[num-1] }
-		{type == \master} { ndefArr = this.getMaster };
+		ndefArr = this.get(type)[num-1];
 		startNdefs = {
 			ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefArr[0].numChannels ++ ");";
 			ndefCS.radpost;
@@ -470,23 +467,18 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 	removeFilter {arg type=\track, num= 1, slot=1;
 		//work on this
 		var thisTrack, thisSlot, ndefCS, setArr;
-		case
-		{type == \track} {thisTrack = this.getTracks[num-1];}
-		{type == \bus} {thisTrack = this.getBuses[num-1];}
-		{type == \master} {thisTrack = this.getMaster[num-1];};
-
+		thisTrack = this.get(type)[num-1];
 		if(thisTrack.size > 2, {
 			if(slot < (thisTrack.size-1), {
-			thisSlot = thisTrack[slot];
-			ndefCS = "Ndef(" ++ thisSlot[0].cs ++ ").clear(" ++ fadeTime ++ ");";
-			ndefCS.radpost;
-			ndefCS.interpret;
-			//clear filter in track
-			thisTrack.removeAt(slot);
-			setArr = this.findTrackArr((type ++ 1).asSymbol);
-			ndefs[setArr[0]].removeAt(slot);
-			filters = filters.reject({|item| item[0] == thisSlot[0] });
-			this.autoRoute(thisTrack);
+				thisSlot = thisTrack[slot];
+				ndefCS = "Ndef(" ++ thisSlot[0].cs ++ ").clear(" ++ fadeTime ++ ");";
+				ndefCS.radpost;
+				ndefCS.interpret;
+				thisTrack.removeAt(slot);
+				setArr = this.findTrackArr((type ++ 1).asSymbol);
+				ndefs[setArr[0]].removeAt(slot);
+				filters = filters.reject({|item| item[0] == thisSlot[0] });
+				this.autoRoute(thisTrack);
 			}, {
 				"Filter slot not found".warn;
 			});
@@ -496,33 +488,44 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 	}
 
 	removeTrackFilters {arg type=\track, num= 1, post=true;
-			var thisTrack, thisSlot, ndefCS, arr1, arr2, setArr;
-		case
-		{type == \track} {thisTrack = this.getTracks[num-1];}
-		{type == \bus} {thisTrack = this.getBuses[num-1];}
-		{type == \master} {thisTrack = this.getMaster[num-1];};
-				if(thisTrack.size > 2, {
+		var thisTrack, thisSlot, ndefCS, arr1, arr2, setArr;
+		thisTrack = this.get(type)[num-1];
+		if(thisTrack.size > 2, {
 			arr1 = [thisTrack[0], thisTrack.last];
 			arr2 = thisTrack.copyRange(1, thisTrack.size-2);
 			arr2.do{|item|
-			ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
-			ndefCS.radpost;
-			ndefCS.interpret;
-			thisTrack.remove(item);
-			setArr = this.findTrackArr((type ++ 1).asSymbol);
+				ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
+				ndefCS.radpost;
+				ndefCS.interpret;
+				thisTrack.remove(item);
+				if(type == \master, {num=""});
+				setArr = this.findTrackArr((type ++ num).asSymbol);
 				ndefs[setArr[0]].remove(Ndef(item[0]));
-			filters = filters.reject({|it| it[0] == item[0] });
+				filters = filters.reject({|it| it[0] == item[0] });
 			};
 			this.autoRoute(arr1);
 		}, {
 			if(post, {
-			"No filters to remove".warn;
+				"No filters to remove".warn;
 			});
 		});
 	}
 
 	removeAllFilters {arg type=\track, post=true;
-
+		var thisTrack, num;
+		if(type == \all, {
+			[\track, \bus, \master].do{|item| this.removeAllFilters(item) };
+		}, {
+		thisTrack = this.get(type);
+		thisTrack.do{|item|
+			if(type == \master, {
+				num = 1;
+			}, {
+			num = item.last[0].asString.last.asString.interpret;
+			});
+				this.removeTrackFilters(type, num, false);
+		};
+		});
 	}
 
 	remove {arg track=1;
