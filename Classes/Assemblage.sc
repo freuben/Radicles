@@ -391,7 +391,7 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 
 	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs;
 		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
-		setTag, filterIndex, startNdefs, filterSpecs;
+		setTag, filterIndex, startNdefs, filterSpecs, trackTags;
 		if(type == \master, {
 			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ slot).asSymbol;
 		}, {
@@ -464,6 +464,16 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		setArr = this.findTrackArr(setTag);
 		tracks[setArr[0]] = arr1;
 		ndefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
+
+		trackTags = specs[setArr[0]].flop[0];
+		specs[setArr[0]] = arr1.flop[0].collect{|item|
+			if(trackTags.includes(item), {
+				specs[setArr[0]][trackTags.indexOf(item)];
+			}, {
+				filterSpecs;
+			});
+		};
+
 		this.autoRoute(arr1);
 	}
 
@@ -477,8 +487,10 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				ndefCS.radpost;
 				ndefCS.interpret;
 				thisTrack.removeAt(slot);
-				setArr = this.findTrackArr((type ++ 1).asSymbol);
+				if(type == \master, {num=""});
+				setArr = this.findTrackArr((type ++ num).asSymbol);
 				ndefs[setArr[0]].removeAt(slot);
+				specs[setArr[0]].removeAt(slot);
 				filters = filters.reject({|item| item[0] == thisSlot[0] });
 				this.autoRoute(thisTrack);
 			}, {
@@ -503,6 +515,7 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				if(type == \master, {num=""});
 				setArr = this.findTrackArr((type ++ num).asSymbol);
 				ndefs[setArr[0]].remove(Ndef(item[0]));
+				specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
 				filters = filters.reject({|it| it[0] == item[0] });
 			};
 			this.autoRoute(arr1);
@@ -519,24 +532,24 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			if(filters.isEmpty, {
 				"No filters to remove".warn;
 			}, {
-			[\track, \bus, \master].do{|item| this.removeAllFilters(item, false) };
+				[\track, \bus, \master].do{|item| this.removeAllFilters(item, false) };
 			});
 		}, {
-		thisTrack = this.get(type);
+			thisTrack = this.get(type);
 			maxSize = thisTrack.collect{|item| item.size }.maxItem;
 			if(maxSize > 2, {
-		thisTrack.do{|item|
-			if(type == \master, {
-				num = 1;
-			}, {
-			num = item.last[0].asString.last.asString.interpret;
-			});
-				this.removeTrackFilters(type, num, false);
-		};
+				thisTrack.do{|item|
+					if(type == \master, {
+						num = 1;
+					}, {
+						num = item.last[0].asString.last.asString.interpret;
+					});
+					this.removeTrackFilters(type, num, false);
+				};
 			}, {
 				if(post, {
-				"No filters to remove".warn;
-			});
+					"No filters to remove".warn;
+				});
 			});
 		});
 	}
