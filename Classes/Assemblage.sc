@@ -422,12 +422,10 @@ Assemblage : MainImprov {var <tracks, <inputs, <outputs, <livetracks,
 		if(ndefArr.size > 2, {
 			arr1 = [ndefArr[0], ndefArr.last];
 			arr2 = ndefArr.copyRange(1, ndefArr.size-2);
-			arr3 = arr2.flop[0].collect{|item| item.asString.last.asString.interpret };
+			arr3 = arr2.flop[0];
 
-			if(arr3.includes(slot), {
-
-				arr2[arr3.indexOf(slot)] = filterInfo;
-
+			if(arr3.includes(filterTag.postln).postln, {
+				arr2[arr3.indexOf(filterTag)] = filterInfo;
 				filterIndex = filters.flop[0].indexOf(filterTag);
 				filters[filterIndex] = [filterTag, filter];
 			}, {
