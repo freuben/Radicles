@@ -446,10 +446,8 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			if(data.notNil, {
 				if(data[0] == \convrev, {
 					convString = filterInfo[1].cs;
-
 					this.convRevBuf(filterTag, data[1], data[2], data[3], {|string|
 						replaceString = string;
-
 						if(convString.find("\\convrev").notNil, {
 							convString = convString.replace("\\convrev", replaceString);
 							filterInfo[1] = convString.interpret;
@@ -457,9 +455,7 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 						cond.test = true;
 						cond.signal;
 					}, ndefNumChan);
-
 				});
-
 			}, {
 				cond.test = true;
 				cond.signal;
@@ -680,28 +676,18 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				bufsize= PartConv.calcBufSize(fftsize, irbuffer);
 				numtag = (\alloc++BStore.allocCount).asSymbol;
 				filterBuffArr = filterBuffArr.add([\alloc, numtag, [bufsize] ]);
-
-				/*BStore.add(\alloc, [numtag, bufsize], {|buf|
+				BStore.addRaw(\alloc, numtag, [bufsize], {|buf|
 					buf.preparePartConv(irbuffer, fftsize);
 					buffArr = buffArr.add(buf);
 					BStore.allocCount = BStore.allocCount + 1;
-				});*/
-
-				BStore.addRaw(\alloc, numtag, [bufsize], {|buf|
-					//bug around here:
-					"this buffer: ".post;
-					buf.preparePartConv(irbuffer, fftsize).postln;
-					buffArr = buffArr.add(buf);
-					BStore.allocCount = BStore.allocCount + 1;
 				});
-
+				nodeTime.yield;
 				server.sync;
 			};
 			irArr.do{|item| item.free; server.sync; };
 			filterBuff = filterBuff.add([filterTag, filterBuffArr]);
 			string = "[";
 			buffArr.do{|item, index|
-				chanIn.postln;
 				if(chanIn == 1, {
 					string = string ++ ("PartConv.ar(" ++ inVar ++ ", " ++ fftsize ++ ", "
 					++ item.bufnum ++ "),");
@@ -712,7 +698,6 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			};
 			string = string.copyRange(0, string.size-2);
 			string = string ++ "]/" ++ numChan ;
-
 			action.(string.cs.interpret);
 		}.fork;
 	}
