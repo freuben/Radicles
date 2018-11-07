@@ -1,5 +1,5 @@
 BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\audio;
-	classvar <>samplerFormat=\audio, <bufAlloc, <>diskStart=0, <>diskBufSize=1;
+	classvar <>samplerFormat=\audio, <>diskStart=0, <>diskBufSize=1, <>cueCount=1, <>allocCount=1;
 
 	*addRaw {arg type, format, settings, function;
 		var path, boolean, typeStore;
@@ -279,6 +279,37 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 
 	*buffByTag {arg bstoreID;
 		^this.bstores[this.bstoreTags.indexOfEqual(bstoreID)];
+	}
+
+		*setBufferID {arg buffer, blockFuncString;
+		var storeType, bufferID;
+		case
+		{buffer.isNumber} {
+			storeType = \alloc;
+			buffer = [(\alloc++allocCount).asSymbol, buffer];
+			bufferID = [storeType, buffer[0], [buffer[1]] ];
+			allocCount = allocCount + 1;
+		}
+		{buffer.isSymbol} {
+			case
+			{(blockFuncString.find("PlayBuf.ar(")).notNil} {
+				storeType = \play;
+				BStore.playFormat = \audio;
+				bufferID = [storeType, \audio, buffer].flat;
+			}
+			{blockFuncString.find("PV_PlayBuf").notNil} {
+				storeType = \play;
+				BStore.playFormat = \scpv;
+				bufferID = [storeType, \scpv, buffer];
+			}
+			{blockFuncString.find("DiskIn.ar(").notNil} {
+				storeType = \cue;
+				buffer = [(\cue++cueCount).asSymbol, buffer].flat;
+				bufferID = [storeType, buffer].flat;
+				cueCount = cueCount + 1;
+			};
+		};
+		^[storeType, buffer, bufferID];
 	}
 
 }

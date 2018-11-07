@@ -1,6 +1,6 @@
 Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames,
-	<>masterInput, <busArr, <busInArr, <filters;
+	<>masterInput, <busArr, <busInArr, <filters, <filterBuff;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -8,8 +8,8 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
-		server.options.numAudioBusChannels = 1024;
-		server.options.numControlBusChannels = 16384;
+		/*		server.options.numAudioBusChannels = 1024;
+		server.options.numControlBusChannels = 16384;*/
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0; (\in * volume.dbamp ).softclip};
@@ -389,92 +389,143 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		ndefCS.interpret;
 	}
 
-	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs;
+	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs, buffer, data;
 		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
-		setTag, filterIndex, startNdefs, filterSpecs, trackTags;
-		if(type == \master, {
-			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ slot).asSymbol;
-		}, {
-			filterTag = ("filter" ++ type.asString.capitalise ++ num ++ "_" ++ slot).asSymbol;
-		});
-		ndefArr = this.get(type)[num-1];
-		startNdefs = {
-			ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefArr[0].numChannels ++ ");";
-			ndefCS.radpost;
-			ndefCS.interpret;
-			ndefCS = "Ndef(" ++ filterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";";
-			ndefCS.radpost;
-			ndefCS.interpret;
-		};
+		setTag, filterIndex, startNdefs, filterSpecs, trackTags, convString,
+		replaceString, cond, bufIndex, bufFunc, ndefNumChan;
 
-		if(filters.isNil, {
-			startNdefs.();
-		}, {
-			if(filters.flop[0].includes(filterTag).not, {
-				startNdefs.();
-			});
-		});
-
-		filterInfo = [filterTag, SynthFile.read(\filter, filter);];
-		//still some work to do with automatic control specs
-		filterSpecs = [filterTag, SpecFile.read(\filter, \pch)];
-		//
-		if(ndefArr.size > 2, {
-			arr1 = [ndefArr[0], ndefArr.last];
-			arr2 = ndefArr.copyRange(1, ndefArr.size-2);
-			arr3 = arr2.flop[0];
-
-			if(arr3.includes(filterTag), {
-				arr2[arr3.indexOf(filterTag)] = filterInfo;
-				filterIndex = filters.flop[0].indexOf(filterTag);
-				filters[filterIndex] = [filterTag, filter];
+		//still some work to do with buffer alloc
+		{
+			if(type == \master, {
+				filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ slot).asSymbol;
 			}, {
+				filterTag = ("filter" ++ type.asString.capitalise ++ num ++ "_" ++ slot).asSymbol;
+			});
 
-				arr2 = arr2.add(filterInfo);
-				arr2.sort({ arg a, b; a[0] <= b[0] });
+			if(filterBuff.notNil, {
+				bufIndex = filterBuff.flop[0].indexOf(filterTag);
+				if(bufIndex.notNil, {
+						bufFunc = {
+						(nodeTime+fadeTime).yield;
+					filterBuff.flop[1][bufIndex].do{|item|
+						BStore.removeID(item);
+						server.sync;
+					};
+						filterBuff.removeAt(bufIndex);
+					};
+				});
+			}, {
+				bufFunc = {};
+			});
+
+			ndefArr = this.get(type)[num-1];
+			ndefNumChan = Ndef(ndefArr[0][0]).numChannels;
+			startNdefs = {
+				ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefNumChan ++ ");";
+				ndefCS.radpost;
+				ndefCS.interpret;
+				ndefCS = "Ndef(" ++ filterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";";
+				ndefCS.radpost;
+				ndefCS.interpret;
+			};
+
+			if(filters.isNil, {
+				startNdefs.();
+			}, {
+				if(filters.flop[0].includes(filterTag).not, {
+					startNdefs.();
+				});
+			});
+
+			filterInfo = [filterTag, SynthFile.read(\filter, filter);];
+			filterSpecs = [filterTag, SpecFile.read(\filter, \pch)];
+
+			cond = Condition(false);
+			cond.test = false;
+
+			if(data.notNil, {
+				if(data[0] == \convrev, {
+					convString = filterInfo[1].cs;
+
+					this.convRevBuf(filterTag, data[1], data[2], data[3], {|string|
+						replaceString = string;
+
+						if(convString.find("\\convrev").notNil, {
+							convString = convString.replace("\\convrev", replaceString);
+							filterInfo[1] = convString.interpret;
+						});
+						cond.test = true;
+						cond.signal;
+					}, ndefNumChan);
+
+				});
+
+			}, {
+				cond.test = true;
+				cond.signal;
+			});
+
+			cond.wait;
+
+			if(ndefArr.size > 2, {
+				arr1 = [ndefArr[0], ndefArr.last];
+				arr2 = ndefArr.copyRange(1, ndefArr.size-2);
+				arr3 = arr2.flop[0];
+
+				if(arr3.includes(filterTag), {
+					arr2[arr3.indexOf(filterTag)] = filterInfo;
+					filterIndex = filters.flop[0].indexOf(filterTag);
+					filters[filterIndex] = [filterTag, filter];
+				}, {
+
+					arr2 = arr2.add(filterInfo);
+					arr2.sort({ arg a, b; a[0] <= b[0] });
+
+					filters = filters.add([filterTag, filter]);
+					filters.sort({ arg a, b; a[0] <= b[0] });
+				});
+
+				arr1.insert(1, arr2);
+				arrSize = (arr1.flat.size/2);
+				arr1 = arr1.reshape(arrSize.asInteger, 2)
+
+			}, {
 
 				filters = filters.add([filterTag, filter]);
 				filters.sort({ arg a, b; a[0] <= b[0] });
+
+				arr1 = ndefArr;
+				arr2 = filterInfo;
+				arr1.insert(1, arr2);
 			});
 
-			arr1.insert(1, arr2);
-			arrSize = (arr1.flat.size/2);
-			arr1 = arr1.reshape(arrSize.asInteger, 2)
-
-		}, {
-
-			filters = filters.add([filterTag, filter]);
-			filters.sort({ arg a, b; a[0] <= b[0] });
-
-			arr1 = ndefArr;
-			arr2 = filterInfo;
-			arr1.insert(1, arr2);
-		});
-
-		if(extraArgs.notNil, {
-			extraArgs.pairsDo{|it1, it2|
-				Ndef(filterTag).set(it1, it2);
-			};
-		});
-		if(type == \master, {
-			setTag = type.asSymbol;
-		}, {
-			setTag = (type ++ num).asSymbol;
-		});
-		setArr = this.findTrackArr(setTag);
-		tracks[setArr[0]] = arr1;
-		ndefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
-
-		trackTags = specs[setArr[0]].flop[0];
-		specs[setArr[0]] = arr1.flop[0].collect{|item|
-			if(trackTags.includes(item), {
-				specs[setArr[0]][trackTags.indexOf(item)];
+			if(extraArgs.notNil, {
+				extraArgs.pairsDo{|it1, it2|
+					Ndef(filterTag).set(it1, it2);
+				};
+			});
+			if(type == \master, {
+				setTag = type.asSymbol;
 			}, {
-				filterSpecs;
+				setTag = (type ++ num).asSymbol;
 			});
-		};
+			setArr = this.findTrackArr(setTag);
+			tracks[setArr[0]] = arr1;
+			ndefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
 
-		this.autoRoute(arr1);
+			trackTags = specs[setArr[0]].flop[0];
+			specs[setArr[0]] = arr1.flop[0].collect{|item|
+				if(trackTags.includes(item), {
+					specs[setArr[0]][trackTags.indexOf(item)];
+				}, {
+					filterSpecs;
+				});
+			};
+
+			this.autoRoute(arr1);
+			server.sync;
+			bufFunc.();
+		}.fork;
 	}
 
 	removeFilter {arg type=\track, num= 1, slot=1;
@@ -608,6 +659,62 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		Server.default.waitForBoot{
 			outputs.do{|item| item.play};
 		};
+	}
+
+	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
+		action={|val| val.radpost}, chanIn;
+		var path, buffArr, file, numChan, irbuffer, irArr, bufsize, numtag,
+		string, filterBuffArr;
+		{
+			inVar ?? {inVar = "input"};
+			path = mainPath ++ "SoundFiles/IRs/" ++ impulse ++ ".wav";
+			file = SoundFile.new;
+			file.openRead(path);
+			numChan = file.numChannels;
+			file.close;
+			numChan.do{|index|
+				irbuffer = Buffer.readChannel(server, path, channels: [index]);
+				irbuffer.radpost;
+				irArr = irArr.add(irbuffer);
+				server.sync;
+				bufsize= PartConv.calcBufSize(fftsize, irbuffer);
+				numtag = (\alloc++BStore.allocCount).asSymbol;
+				filterBuffArr = filterBuffArr.add([\alloc, numtag, [bufsize] ]);
+
+				/*BStore.add(\alloc, [numtag, bufsize], {|buf|
+					buf.preparePartConv(irbuffer, fftsize);
+					buffArr = buffArr.add(buf);
+					BStore.allocCount = BStore.allocCount + 1;
+				});*/
+
+				BStore.addRaw(\alloc, numtag, [bufsize], {|buf|
+					//bug around here:
+					"this buffer: ".post;
+					buf.preparePartConv(irbuffer, fftsize).postln;
+					buffArr = buffArr.add(buf);
+					BStore.allocCount = BStore.allocCount + 1;
+				});
+
+				server.sync;
+			};
+			irArr.do{|item| item.free; server.sync; };
+			filterBuff = filterBuff.add([filterTag, filterBuffArr]);
+			string = "[";
+			buffArr.do{|item, index|
+				chanIn.postln;
+				if(chanIn == 1, {
+					string = string ++ ("PartConv.ar(" ++ inVar ++ ", " ++ fftsize ++ ", "
+					++ item.bufnum ++ "),");
+				}, {
+				string = string ++ ("PartConv.ar(" ++ inVar ++ "[" ++ index ++ "], " ++ fftsize ++ ", "
+					++ item.bufnum ++ "),");
+				});
+			};
+			string = string.copyRange(0, string.size-2);
+			string = string ++ "]/" ++ numChan ;
+
+			action.(string.cs.interpret);
+		}.fork;
 	}
 
 }

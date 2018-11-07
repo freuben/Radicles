@@ -1,4 +1,4 @@
-Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCount=1, allocCount=1,
+Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo, <pattCount=1;
 
 	*add {arg channels=1;
@@ -77,37 +77,6 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 		blockCount = 1;
 	}
 
-	*setBufferID {arg buffer, blockFuncString;
-		var storeType, bufferID;
-		case
-		{buffer.isNumber} {
-			storeType = \alloc;
-			buffer = [(\alloc++allocCount).asSymbol, buffer];
-			bufferID = [storeType, buffer[0], [buffer[1]] ];
-			allocCount = allocCount + 1;
-		}
-		{buffer.isSymbol} {
-			case
-			{(blockFuncString.find("PlayBuf.ar(")).notNil} {
-				storeType = \play;
-				BStore.playFormat = \audio;
-				bufferID = [storeType, \audio, buffer].flat;
-			}
-			{blockFuncString.find("PV_PlayBuf").notNil} {
-				storeType = \play;
-				BStore.playFormat = \scpv;
-				bufferID = [storeType, \scpv, buffer];
-			}
-			{blockFuncString.find("DiskIn.ar(").notNil} {
-				storeType = \cue;
-				buffer = [(\cue++cueCount).asSymbol, buffer].flat;
-				bufferID = [storeType, buffer].flat;
-				cueCount = cueCount + 1;
-			};
-		};
-		^[storeType, buffer, bufferID];
-	}
-
 	*play {arg block=1, blockName, buffer, extraArgs, data;
 		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncCS, blockFuncString;
 		var storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize;
@@ -123,7 +92,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 
 						if(blockFuncString.findAll("{").size == 2, {
 							if(buffer.isArray.not, {
-								bufferArr = this.setBufferID(buffer, blockFuncString);
+								bufferArr = BStore.setBufferID(buffer, blockFuncString);
 								storeType = bufferArr[0];
 								bufInfo = bufferArr[1];
 								bufferID = bufferArr[2];
@@ -150,7 +119,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 								}, {
 									buffer.do{|item|
 										bufferArr = bufferArr.add(
-											this.setBufferID(item, blockFuncString)
+											BStore.setBufferID(item, blockFuncString)
 										);
 									};
 									storeType = bufferArr.flop[0];
@@ -380,10 +349,10 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1, cueCou
 				numFrames=seconds.calcPVRecSize(frameSize, hopSize);
 				recBufInfo = recBufInfo.add([seconds, channels, format, frameSize, hopSize]);
 			});
-			buffer = [(\alloc++allocCount).asSymbol, [numFrames, channels]];
+			buffer = [(\alloc++BStore.allocCount).asSymbol, [numFrames, channels]];
 			recbuffers = recbuffers.add([\alloc, buffer[0], buffer[1]]);
 			resultArr = resultArr.add([\alloc, buffer[0], buffer[1]]);
-			allocCount = allocCount + 1;
+			BStore.allocCount = BStore.allocCount + 1;
 		};
 		^resultArr;
 	}
