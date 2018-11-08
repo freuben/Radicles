@@ -403,15 +403,18 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			});
 
 			if(filterBuff.notNil, {
-				bufIndex = filterBuff.flop[0].indexOf(filterTag);
+				bufIndex = filterBuff.flop[0].indicesOfEqual(filterTag);
+
 				if(bufIndex.notNil, {
 						bufFunc = {
 						(nodeTime+fadeTime).yield;
-					filterBuff.flop[1][bufIndex].do{|item|
+						bufIndex.do{|index|
+							filterBuff.flop[1][index].do{|item|
 						BStore.removeID(item);
 						server.sync;
 					};
-						filterBuff.removeAt(bufIndex);
+						filterBuff.removeAt(index);
+					};
 					};
 				});
 			}, {
