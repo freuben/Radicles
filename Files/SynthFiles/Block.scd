@@ -19,32 +19,32 @@
 	localbuf = LocalBuf.new(numFrames, 1);
 	chain = PV_PlayBuf(localbuf, buffer.bufnum, rate, offset,
  1);
-	IFFT(chain, winType)*mul}; } ], [ 'playbuf', {arg buffer; {arg 
+	IFFT(chain, winType)*mul}; } ], [ 'playbuf', {arg buffer; {arg
  rate=1,
  trigger=1, startPos=0, mul=1, loop=1;
 	PlayBuf.ar(buffer.numChannels, buffer, rate, trigger, startPos, loop)*mul;}
  } ], [ 'rec', {arg buffer; {arg recLevel=1, preLevel=0;
 	var sig;
-	sig = 'input';
+	sig = \in;
 	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 0); } } ], [ 'recpv',
  {arg buffer, numChannels=1, numFrames=2048, hop=0.5, wintype=1; {arg
  offset=0, run=1, loop=0, mul=1;
 	var sig, localbuf, chain;
-	sig = 'input';
+	sig = \in;
 	localbuf = LocalBuf(numFrames, numChannels);
 	chain = FFT(localbuf, sig, hop/2, wintype);
-	chain = PV_RecordBuf(chain, buffer.bufnum, offset, run, loop, 
+	chain = PV_RecordBuf(chain, buffer.bufnum, offset, run, loop,
  hop,
  wintype)*mul}; } ], [ 'recloop', {arg buffer; {arg recLevel=1,
  preLevel=0;
 	var sig;
-	sig = 'input';
+	sig = \in;
 	RecordBuf.ar(sig, buffer, 0, recLevel, preLevel, loop: 1); } } ], [ 'looptr',
  {arg buffer; {arg rate=1, triggerRate=1,
  startPos=0, mul=1;
 	PlayBuf.ar(buffer.numChannels, buffer, rate, Impulse.kr(triggerRate),
  startPos, 1)*mul;} } ], [ 'osc1', {arg buffer; {arg freq=400, phase=0,
- mul=0.5; Osc.ar(buffer, freq, phase, mul)} } ], [ 'shaperSine', {arg 
+ mul=0.5; Osc.ar(buffer, freq, phase, mul)} } ], [ 'shaperSine', {arg
  buffer;
  {arg freq=440, phase=0, mul=0.5;
 	Shaper.ar(buffer, SinOsc.ar(freq, phase, mul), 0.5)} } ], [ 'vosc', {arg

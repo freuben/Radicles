@@ -1,3 +1,20 @@
+//work on changing the notation of buffers within the block synthfile. get rid of the double function thing and use a symbol instead. Something like this:
+/*
+a = {arg rate=1, trigger=1,
+ startPos=0, mul=1;
+		Mix(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos, 0)*mul);};
+
+Ndef(\play).play;
+
+BStore.add(\play, \marilyn1, {|buf|
+	var index;
+index = BufferSystem.bufferArray.indexOf(buf);
+	("Ndef(\\play, " ++
+	a.cs.replace("\\buffer", BufferSystem.globVarArray[index]) ++ ")").radpost.interpret;
+});
+*/
+
+
 Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo, <pattCount=1;
 
@@ -386,7 +403,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			bufferArr = bufferArr.add(this.getRecBStoreIDs(1, seconds, channels, format,
 				frameSize,hopSize).unbubble);
 		};
-		BStore.addAll(bufferArr.postln, {|bufArr|
+		BStore.addAll(bufferArr, {|bufArr|
 			"Record Buffers Allocated".postln;
 			func.(bufArr);
 		});
@@ -460,7 +477,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						recType = \recpv;
 					});
 					blockFunc = SynthFile.string(\block, recType);
-					blockFunc = blockFunc.replace("'input'", inString);
+					blockFunc = blockFunc.replace("\\in", inString);
 					blockFunc = blockFunc.interpret;
 					blockFuncCS = blockFunc;
 					blockFuncString = blockFunc.cs;

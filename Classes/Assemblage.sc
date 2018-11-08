@@ -451,8 +451,8 @@ Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
 					convString = filterInfo[1].cs;
 					this.convRevBuf(filterTag, data[1], data[2], data[3], {|string|
 						replaceString = string;
-						if(convString.find("\\convrev").notNil, {
-							convString = convString.replace("\\convrev", replaceString);
+						if(convString.find("'convrev'").notNil, {
+							convString = convString.replace("'convrev'", replaceString);
 							filterInfo[1] = convString.interpret;
 						});
 						cond.test = true;
