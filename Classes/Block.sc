@@ -161,7 +161,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 										});
 									});
 									cond.wait;
-									this.nodeTime.wait;
+									nodeTime.wait;
 									/*"this buffer array that need to be allocated".postln;*/
 								});
 							});
