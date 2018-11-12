@@ -30,7 +30,7 @@ Store : MainImprov {classvar <storeIDs, <stores;
 	}
 
 	*info {
-		this.indexArr.postin(\ide, \doln);
+		this.indexArr.radpost(\doln);
 	}
 
 	*bstoreIDs {var result, bufArgs;
@@ -129,7 +129,7 @@ Store : MainImprov {classvar <storeIDs, <stores;
 		};
 
 		if(bstoreArr.notNil, {
-			BStore.addAll(bstoreArr.postln, function);
+			BStore.addAll(bstoreArr.radpost, function);
 		});
 		if(dstoreArr.notNil, {
 			"this is a DStrore preset".postln;
@@ -151,7 +151,7 @@ Store : MainImprov {classvar <storeIDs, <stores;
 	}
 
 	*loadDPreset {arg name;
-		PresetFile.read(\dstore, name).postln;
+		PresetFile.read(\dstore, name).radpost;
 	}
 
 }

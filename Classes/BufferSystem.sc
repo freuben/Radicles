@@ -1,5 +1,5 @@
 BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
-  <tags, countTag=0, <bufAlloc, <>defaultPath, <>postWhere=\ide,
+  <tags, countTag=0, <bufAlloc, <>defaultPath,
   <>postWin, countCue=0;
 
   *new {
@@ -275,7 +275,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
             }, {
               if(cueBool, {
                 if(tags.includes(arg1), {
-                  ("File already allocated as: ~buffer" ++
+                  ("//File already allocated as: ~buffer" ++
                     bufferArray.indexOf(this.get(arg1) ) ).radpost;
                   function.(this.get(arg1));
                 }, {
