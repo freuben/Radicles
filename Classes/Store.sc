@@ -116,7 +116,6 @@ Store : MainImprov {classvar <storeIDs, <stores;
 	*loadPreset {arg name, function;
 		var storeArr, bstoreArr, dstoreArr;
 		this.removeStores;
-
 		storeArr = PresetFile.read(\store, name);
 		storeArr.do{|item|
 			case

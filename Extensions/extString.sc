@@ -138,4 +138,9 @@
 		^ascii.asAscii;
 	}
 
+	includesString {arg string;
+		var out = this.findAll(string).size > 0;
+		^out;
+	}
+
 }

@@ -95,7 +95,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*play {arg block=1, blockName, buffer, extraArgs, data;
-		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncCS, blockFuncString;
+		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncString;
 		var storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize;
 		var pattArr, extraPattCount;
 		if(block >= 1, {
@@ -104,21 +104,23 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 				{
 					if((blockName == 'pattern').not, {
 						blockFunc = SynthFile.read(\block, blockName);
-						blockFuncCS = blockFunc;
 						blockFuncString = blockFunc.cs;
-
-						if(blockFuncString.findAll("{").size == 2, {
+						if(blockFuncString.includesString("\\buffer")
+							.or(blockFuncString.includesString("'buffer'")), {
 							if(buffer.isArray.not, {
 								bufferArr = BStore.setBufferID(buffer, blockFuncString);
 								storeType = bufferArr[0];
 								bufInfo = bufferArr[1];
 								bufferID = bufferArr[2];
-								/*"includes buffer".postln;*/
 								cond = Condition(false);
 								cond.test = false;
 								if(bufInfo.notNil.or(bufInfo == \nobuf), {
 									BStore.add(storeType, bufInfo, {arg buf;
-										blockFunc = blockFunc.(buf);
+											var index, bufString;
+											index = BufferSystem.bufferArray.indexOf(buf);
+											bufString = BufferSystem.globVarArray[index];
+											blockFunc = blockFuncString.replace("\\buffer",
+												bufString).replace("'buffer'", bufString).interpret;
 										cond.test = true;
 										cond.signal;
 										if(data.notNil, {
@@ -210,7 +212,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							});
 						});
 						pattCount = pattCount + 1;
-						blockFuncCS = blockFunc;
+						/*blockFuncCS = blockFunc;*/
 					});
 					if(liveBlocks[blockIndex].notNil, {
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
@@ -219,7 +221,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						});
 					});
 					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
-						++ blockFuncCS.cs ++ ");");
+						++ blockFunc.cs ++ ");");
 					ndefCS.postln;
 					if((blockName == 'pattern').not, {
 						if(extraArgs.notNil, {
