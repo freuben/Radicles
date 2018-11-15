@@ -95,9 +95,9 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*play {arg block=1, blockName, buffer, extraArgs, data;
-		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncString;
-		var storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize;
-		var pattArr, extraPattCount;
+		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncString,
+		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize,
+		pattArr, extraPattCount, bufIndex, bufString, bufIDs;
 		if(block >= 1, {
 			blockIndex = block-1;
 			if(ndefs[blockIndex].notNil, {
@@ -116,14 +116,14 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 								cond.test = false;
 								if(bufInfo.notNil.or(bufInfo == \nobuf), {
 									BStore.add(storeType, bufInfo, {arg buf;
-											var index, bufString;
-											index = BufferSystem.bufferArray.indexOf(buf);
-											bufString = BufferSystem.globVarArray[index];
+											bufIndex = BufferSystem.bufferArray.indexOf(buf);
+											bufString = BufferSystem.globVarArray[bufIndex];
 											blockFunc = blockFuncString.replace("\\buffer",
 												bufString).replace("'buffer'", bufString).interpret;
 										cond.test = true;
 										cond.signal;
 										if(data.notNil, {
+												//check this
 											this.readWavetable(data, buf);
 										});
 									});
@@ -133,7 +133,11 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 								});
 							}, {
 								if([\alloc, \play, \cue].includes(buffer[0]), {
-									blockFunc = blockFunc.(BStore.buffByID(buffer));
+										bufIDs = BStore.buffByID(buffer);
+										bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
+											bufString = BufferSystem.globVarArray[bufIndex];
+											blockFunc = blockFuncString.replace("\\buffer",
+												bufString).replace("'buffer'", bufString).interpret;
 									/*"this buffer is an existing buffer with ID".postln;*/
 								}, {
 									buffer.do{|item|
