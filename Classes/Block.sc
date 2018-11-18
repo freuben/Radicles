@@ -19,12 +19,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*addNum {arg number, channels=1;
 		var thisChan;
-		/*this.startbr;*/
 		number.do{|index|
 			if(channels.isArray, {thisChan = channels[index]}, {thisChan = channels});
 			this.add(thisChan);
 		};
-		/*this.endbr;*/
 	}
 
 	*addAll {arg arr;
@@ -87,7 +85,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			blockIndex = block-1;
 			if(ndefs[blockIndex].notNil, {
 				{
-					/*this.startbr;*/
 					if((blockName == 'pattern').not, {
 						blockFunc = SynthFile.read(\block, blockName);
 						blockFuncString = blockFunc.cs;
@@ -248,7 +245,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
-					/*this.endbr;*/
 				}.fork;
 			}, {
 				"This block does not exist".warn;
