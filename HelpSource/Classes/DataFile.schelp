@@ -1,7 +1,7 @@
 class:: DataFile
 summary:: Write specs into File
 related:: Classes/ModFile, Classes/Space, Classes/Filter
-categories:: Libraries>ModImprov
+categories:: Libraries>Radicles
 
 Description::
 
@@ -15,7 +15,7 @@ method::read
 Read file with classes and sampler objects.
 
 argument::
-Specify ModImprov Class.
+Specify Radicles Class.
 argument::
 Key to identify synth object.
 
@@ -24,7 +24,7 @@ method::write
 Write sampler object for spcecific class into file.
 
 argument::
-Specify ModImprov Class.
+Specify Radicles Class.
 argument::
 Key to identify sampler object.
 argument::

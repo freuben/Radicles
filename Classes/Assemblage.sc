@@ -1,4 +1,4 @@
-Assemblage : MainImprov {var <tracks, <specs, <inputs, <outputs, <livetracks,
+Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames,
 	<>masterInput, <busArr, <busInArr, <filters, <filterBuff;
 

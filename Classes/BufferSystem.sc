@@ -1,15 +1,15 @@
-BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
+BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	<tags, countTag=0, <bufAlloc, <>defaultPath,
 	<>postWin, countCue=0;
 
-	*new {
+	*cond {
 		condition = Condition.new;
-		server = Server.default;
+		/*server = Server.default;*/
 	}
 
 	*read {arg pathName, function;
 		var main, buffer, globVar;
-		main = this.new;
+		main = this.cond;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -33,7 +33,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
 
 	*readAll {arg pathArr, function;
 		var main, buffer, returnArray, globVar;
-		main = this.new;
+		main = this.cond;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -117,7 +117,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
 
 	*alloc {arg numFrames, numChannels, function, bufnum;
 		var main, buffer, globVar;
-		main = this.new;
+		main = this.cond;
 
 		numFrames ?? {numFrames = 44100};
 		numChannels ?? {numChannels = 1};
@@ -148,7 +148,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
 
 	*allocAll {arg argArr, function;
 		var main, buffer, returnArr, globVar;
-		main = this.new;
+		main = this.cond;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -180,7 +180,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
 
 	*cue {arg pathName, startFrame=0, bufSize=1, function;
 		var main, buffer, chanNum, cueSize, globVar;
-		main = this.new;
+		main = this.cond;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -209,7 +209,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
 	*cueAll {arg arr, function;
 		//arr: [ [path1, [startFrame1, bufSize1], [path2, [startFrame2, bufSize2]...]
 		var main, buffer, returnArray, file, chanNum, newArr, globVar, cueSize;
-		main = this.new;
+		main = this.cond;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -611,7 +611,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
 		if(bufferArray.notNil, {
 			if(bufferArray.isEmpty.not, {
 				if(bufferArray[index].notNil, {
-					(globVarArray[index] ++ ".free").radpost.interpret;
+					(globVarArray[index] ++ ".free;").radpost.interpret;
 					(globVarArray[index] ++ " = nil").interpret;
 					bufferArray.removeAt(index);
 					globVarArray.removeAt(index);
@@ -638,7 +638,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
 			symbols = this.tags;
 			bufIndex = symbols.indexOfEqual(tag);
 			if(bufIndex.notNil, {
-				(globVarArray[bufIndex] ++ ".free").radpost.interpret;
+				(globVarArray[bufIndex] ++ ".free;").radpost.interpret;
 				(globVarArray[bufIndex] ++ " = nil").interpret;
 				bufferArray.removeAt(bufIndex);
 				globVarArray.removeAt(bufIndex);
@@ -656,7 +656,7 @@ BufferSystem {classvar condition, server, <bufferArray, <globVarArray,
 			tagArr.do{|tag| this.free(tag);};
 		}, {
 			globVarArray.do{|item|
-				(item ++ ".free").radpost.interpret;
+				(item ++ ".free;").radpost.interpret;
 				(item ++ " = nil").interpret;
 			};
 			bufferArray = nil;

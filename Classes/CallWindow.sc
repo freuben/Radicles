@@ -1,4 +1,4 @@
-CallWindow : MainImprov {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
+CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 	var <>recordHistory, startTime, historyPath, <keyFunc;
 
 	*new {arg window, bounds, font, qpalette, settings,

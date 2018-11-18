@@ -106,13 +106,13 @@
 			case
 			{where == \ide} {brackets.postln}
 			{where == \gui} {extraPost.addLine(brackets);}
-			{where == \doc} { this.docpostbr(extraPost); };
+			{where == \doc} {this.docpostbr(extraPost);};
 		}
 		{type == \forkbr} {
 			case
 			{where == \ide} {this.postln}
 			{where == \gui} {extraPost.addLine(this);}
-			{where == \doc} { this.docforkbr(extraPost, time, dev); };
+			{where == \doc} {this.docforkbr(extraPost, time, dev);};
 		}
 	}
 
@@ -131,9 +131,10 @@
 		^bool;
 	}
 
-	radpost {arg type=\ln, doc;
-		var string;
+	radpost {arg type=\ln;
+		var string, doc;
 		string = this.asString.lineFormat;
+		doc = Radicles.postDoc;
 		if(doc.isNil, {
 		string.postin(\ide, type);
 		}, {

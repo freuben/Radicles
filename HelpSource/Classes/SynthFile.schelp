@@ -1,7 +1,7 @@
 class:: SynthFile
 summary:: Write synth objects into File
 related:: Classes/Space, Classes/Filter
-categories:: Libraries>ModImprov
+categories:: Libraries>Radicles
 
 Description::
 
@@ -15,7 +15,7 @@ method::read
 Read file with classes and synth objects.
 
 argument::
-Specify ModImprov Class.
+Specify Radicles Class.
 argument::
 Key to identify synth object.
 
@@ -24,7 +24,7 @@ method::write
 Write synth object for spcecific class into file.
 
 argument::
-Specify ModImprov Class.
+Specify Radicles Class.
 argument::
 Key to identify synth object.
 argument::

@@ -1,4 +1,4 @@
-Space : MainImprov {
+Space : Radicles {
 	var <ndefs, <>objectFile, <numChannels, <inputArr, <arrPan, thisIndex, <>object;
 
 	*new {arg ndefArr, system=\pan2, panArr, chanNum=2, play=true, fadeTime;

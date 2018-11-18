@@ -1,4 +1,4 @@
-ModMap : MainImprov {
+ModMap : Radicles {
 	classvar <modNodes, modIndex=0;
 
 	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, mul=1, add=0, min, val, warp, lag, post=\ide;

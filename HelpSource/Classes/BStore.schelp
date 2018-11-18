@@ -1,11 +1,11 @@
 class:: BStore
-summary:: ModImprov Buffer Store
+summary:: Radicles Buffer Store
 related:: Classes/Store
-categories:: Libraries>ModImprov
+categories:: Libraries>Radicles
 
 Description::
 
-Manage Buffers for ModImprov
+Manage Buffers for Radicles
 
 classmethods::
 

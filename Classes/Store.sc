@@ -1,4 +1,4 @@
-Store : MainImprov {classvar <storeIDs, <stores;
+Store : Radicles {classvar <storeIDs, <stores;
 
 	*store {arg type, subtype, format, settings;
 		var return;

@@ -1,4 +1,4 @@
-Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
+Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo, <pattCount=1;
 
 	*add {arg channels=1;
@@ -7,10 +7,10 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockCount = blockCount + 1;
 		ndefCS1 = "Ndef.ar(";
 		ndefCS1 = (ndefCS1 ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
-		this.rpostln(ndefCS1);
+		ndefCS1.radpost;
 		ndefCS1.interpret;
 		ndefCS2 = ("Ndef(" ++ ndefTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-		this.rpostln(ndefCS2);
+		ndefCS2.radpost;
 		ndefCS2.interpret;
 		ndefs = ndefs.add(Ndef(ndefTag));
 		blocks = blocks.add( [ndefTag, channels] );
@@ -19,12 +19,12 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*addNum {arg number, channels=1;
 		var thisChan;
-		this.startbr;
+		/*this.startbr;*/
 		number.do{|index|
 			if(channels.isArray, {thisChan = channels[index]}, {thisChan = channels});
 			this.add(thisChan);
 		};
-		this.endbr;
+		/*this.endbr;*/
 	}
 
 	*addAll {arg arr;
@@ -87,6 +87,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			blockIndex = block-1;
 			if(ndefs[blockIndex].notNil, {
 				{
+					/*this.startbr;*/
 					if((blockName == 'pattern').not, {
 						blockFunc = SynthFile.read(\block, blockName);
 						blockFuncString = blockFunc.cs;
@@ -147,12 +148,12 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
 												++ [1, bstoreSize+index] ] });
 										});
-										bufferID.postln;
+										/*bufferID.postln;*/
 										BStore.addAll(bufferID, {arg buf;
 											bufferID.do{|item|
 
 												bufIDs = BStore.buffByID(item);
-												bufIDs.postln;
+												/*bufIDs.postln;*/
 												bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
 												bufString = bufString.add(BufferSystem.globVarArray[bufIndex]);
 
@@ -225,7 +226,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
 						++ blockFunc.cs ++ ");");
-					ndefCS.postln;
+					ndefCS.radpost(\br);
 					if((blockName == 'pattern').not, {
 						if(extraArgs.notNil, {
 							if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
@@ -233,7 +234,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							}, {
 								newArgs = [blockFunc.argNames, extraArgs].flop.flat;
 							});
-							this.xset(block, newArgs, true);
+							this.xset(block, newArgs);
 						});
 					}, {
 						/*"no pattern before".postln;*/
@@ -247,6 +248,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
+					/*this.endbr;*/
 				}.fork;
 			}, {
 				"This block does not exist".warn;
@@ -264,7 +266,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
 				++ "nil;" );
 			ndefCS.interpret;
-			ndefCS.postln;
+			ndefCS.radpost;
 			if(liveBlocks[blockIndex].notNil, {
 				this.buffree(blockIndex, fadeOut, {
 					liveBlocks[blockIndex] = nil;
@@ -299,13 +301,13 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		}.fork;
 	}
 
-	*set {arg block, argArr, post=false;
+	*set {arg block, argArr, post=true;
 		var blockIndex;
 		if((block >= 1), {
 			blockIndex = block-1;
 			if(post == true, {
 				(ndefs[blockIndex].cs	++ ".set(" ++
-					argArr.cs.replace("[", "").replace("]", "") ++  ");").postln;
+					argArr.cs.replace("[", "").replace("]", "") ++  ");").radpost;
 			});
 			argArr.keysValuesDo{|key, val|
 				ndefs[blockIndex].set(key, val);
@@ -315,13 +317,13 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		});
 	}
 
-	*xset {arg block, argArr, post=false;
+	*xset {arg block, argArr, post=true;
 		var blockIndex;
 		if((block >= 1), {
 			blockIndex = block-1;
 			if(post == true, {
 				(ndefs[blockIndex].cs	++ ".xset(" ++
-					argArr.cs.replace("[", "").replace("]", "") ++  ");").postln;
+					argArr.cs.replace("[", "").replace("]", "") ++  ");").radpost;
 			});
 			argArr.keysValuesDo{|key, val|
 				ndefs[blockIndex].xset(key, val);
@@ -355,7 +357,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		ndefTag = ("recblock" ++ recBlockCount).asSymbol;
 		recBlockCount = recBlockCount + 1;
 		ndefCS1 = ("Ndef.ar(" ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
-		ndefCS1.postln;
+		ndefCS1.radpost;
 		ndefCS1.interpret;
 		recNdefs = recNdefs.add(Ndef(ndefTag));
 		recBlocks = recBlocks.add( [ndefTag, channels] );
@@ -498,13 +500,13 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					if(preLevel.notNil, {
 						argString = argString.add(".set('preLevel', " ++ preLevel.cs ++ ");");
 					});
-					(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++ blockFuncString ++ ");").postln;
+					(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++ blockFuncString ++ ");").radpost;
 					recNdefs[blockIndex].source = blockFunc;
 					if(argString.notNil,  {
 						argString.do{|item|
 							setRec = (recNdefs[blockIndex].cs ++ item);
 							setRec.interpret;
-							setRec.postln;
+							setRec.radpost;
 						};
 					});
 				}, {
@@ -529,7 +531,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*loopTimer {arg block=1;
 		var elapsedTime, blockindex;
-		(recNdefs[timeInfo[0]-1].cs.replace(")", "") ++ ", 0)").postln.interpret;
+		(recNdefs[timeInfo[0]-1].cs.replace(")", "") ++ ", 0)").radpost.interpret;
 		if(recBufInfo[timeInfo[0]-1][2] == \audio, {
 			elapsedTime = (Main.elapsedTime - timeInfo[1]);
 			blockindex = block-1;
@@ -560,7 +562,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*readWavetable {arg data, buf;
-		DataFile.read(\wavetables, data).cs.postln;
+		DataFile.read(\wavetables, data).cs.radpost;
 		DataFile.read(\wavetables, data).(buf);
 	}
 

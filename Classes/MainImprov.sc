@@ -1,73 +1,28 @@
-MainImprov {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil, <>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1, <bpm, <postDoc, <>posttime, <>postdev=0.01;
+Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil, <>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1, <bpm, <postDoc;
 
-	*new {arg doc=true;
-		^super.new.initMainImprov(doc);
+	*new {
+		^super.new.initRadicles;
 	}
 
-	initMainImprov {arg doc=true;
+	initRadicles {arg doc=false;
 		mainPath = ("~/Library/Application Support/SuperCollider/" ++
 			"Extensions/ModImprov/").standardizePath;
 		server = Server.default;
-		if(doc, {
-			postDoc = Document.new("Radicles: " ++ Date.getDate.asString);
-		});
 	}
 
 	*document {
 		postDoc = Document.new("Radicles: " ++ Date.getDate.asString);
 	}
 
-	*rpost {arg string;
-		var type;
-		if(posttime.isNil, {
-			type = \post;
-		}, {
-			type = \fork;
-		});
-		if(postDoc.notNil, {
-			string.radpost(type, postDoc);
-		}, {
-			string.radpost(type);
-		});
-	}
-
-	*rpostln {arg string;
-			var type;
-			if(posttime.isNil, {
-			type = \ln;
-		}, {
-			type = \forkln;
-		});
-		if(postDoc.notNil, {
-			string.radpost(\ln, postDoc);
-		}, {
-			string.radpost(\ln);
-		});
-	}
-
-		*rpostbr {arg string;
-		var type;
-			if(posttime.isNil, {
-			type = \br;
-		}, {
-			type = \forkbr;
-		});
-		if(postDoc.notNil, {
-			string.radpost(\br, postDoc);
-		}, {
-			string.radpost(\br);
-		});
-	}
-
 	*startbr {
 		if(postDoc.notNil, {
-		this.rpostln("(");
+		"(".radpost;
 		});
 	}
 
 	*endbr {
 		if(postDoc.notNil, {
-		this.rpostln(")");
+		")".radpost;
 		postDoc.selectRange(postDoc.text.size-1, 0);
 		});
 	}

@@ -1,4 +1,4 @@
-GlobalHistory : MainImprov {
+GlobalHistory : Radicles {
 	var startTime, path, <>recordHistory;
 
 	*start {arg fileName, replace;

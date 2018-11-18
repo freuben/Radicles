@@ -1,7 +1,7 @@
 class:: Block
 summary:: A Block
 related:: Classes/Ndef, Classes/BufferSystem,  Classes/Pattern
-categories:: Libraries>ModImprov
+categories:: Libraries>Radicles
 
 Description::
 
@@ -209,11 +209,11 @@ Block.schedCount({|count| Block.stop(count); count.postln }, 1, 5);
 )
 
 //scheduling
-MainImprov.new;
-MainImprov.schedFunc = {|a,b| [a,b].postln};
-MainImprov.schedAction({"boom".postln});
-MainImprov.schedCount({|a| a.postln}, 1, 4);
-MainImprov.schedCount({|a| a.postln}, 10, 14, true); //loop
+Radicles.new;
+Radicles.schedFunc = {|a,b| [a,b].postln};
+Radicles.schedAction({"boom".postln});
+Radicles.schedCount({|a| a.postln}, 1, 4);
+Radicles.schedCount({|a| a.postln}, 10, 14, true); //loop
 
 
 
@@ -373,6 +373,9 @@ Block.set(3, [\rate, rrand(0.5, 1)], true);
 Block.set(4, [\rate, rrand(0.5, 3)], true);
 
 Block.play(1, \loop, \SinedPink, [\rate, 2, \mul, 0.8]);
+
+//blocks with more buffers represented as array:
+Block.play(1, \loopAll, [\marilyn1, \SinedPink], [\rate, 1, \mul, 0.8]); //block, slot, block name, buffer, extra
 
 Block.stop(1);
 Block.stop(2 ,2);

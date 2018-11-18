@@ -1,4 +1,4 @@
-ModFile : MainImprov {var <filePath;
+ModFile : Radicles {var <filePath;
 
 	* new {arg file=\synth, class=\filter;
 		^super.new.initSynthFile(file, class);

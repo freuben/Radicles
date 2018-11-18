@@ -1,4 +1,4 @@
-Plane : MainImprov {classvar <planeIDs, <planes;
+Plane : Radicles {classvar <planeIDs, <planes;
 
 	*new {arg type, subtype, voice, settings;
 		^super.new.initNewPlane(type, subtype, voice, settings);
