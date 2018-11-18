@@ -6,8 +6,8 @@
  val.round;}];
 SinOsc.ar(freq, 0, amp);
 } ], [ 'sine', {arg freq=440 -> [20, 20000, \exp], phase=0 -> [-2pi, 2pi], mul=0.4 -> [0,2]; SinOsc.ar(freq,phase,mul)} ], [ 'play', {arg rate=1 -> [0.1,10], trigger=1 -> [0,1, {|val| val.round(1)}], startPos=0 -> [0,1], mul=1 -> [0,2];
-	Mix(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul);} ], [ 'loop', {arg rate=1 -> [0.1,10], trigger=1 -> [0,1, {|val| val.round(1)}], startPos=0 -> [0,1], mul=1 -> [0,2];
-	Mix(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul);} ], [ 'cue', {arg loop=1 -> [0,1, {|val| val.round(1)}], mul=1 -> [0,2];
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul;} ], [ 'loop', {arg rate=1 -> [0.1,10], trigger=1 -> [0,1, {|val| val.round(1)}], startPos=0 -> [0,1], mul=1 -> [0,2];
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;} ], [ 'cue', {arg loop=1 -> [0,1, {|val| val.round(1)}], mul=1 -> [0,2];
 	DiskIn.ar(\buffer.numChannels, \buffer, loop)*mul;} ], [ 'playpv', {arg rate=1 -> [0.1,10], offset=0 -> [0,1], numFrames=0.6 -> [0,1,\lin, 0.1], winType=0 -> [-1,1, {|val| val.round(1)}], mul=1 -> [0,2];
 	var localbuf, chain;
 	localbuf = LocalBuf.new(numFrames.linexp(0,1,32,32768), \buffer.numChannels);
@@ -37,4 +37,10 @@ SinOsc.ar(freq, 0, amp);
 	Shaper.ar(\buffer, SinOsc.ar(freq, phase, mul), 0.5)} ], [ 'vosc', {arg bufoffset=0 -> [0,10], freq=440 -> [20,20000, \exp], phase=0 -> [-2pi, 2pi], mul=0.5 -> [0,2];
 		var bufnum;
 		bufnum = \buffer.bufnum;
-	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+\buffer.size-1), freq, phase, mul)} ] ]
+	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+\buffer.size-1), freq, phase, mul)} ], [ 'loopAll', {arg rate=1 -> [0.1,10], trigger=1 -> [0,1, {|val| val.round(1)}], startPos=0 -> [0,1], mul=1 -> [0,2];
+	var buffer, play;
+	buffer = \buffer;
+	play = buffer.collect{|item|
+		PlayBuf.ar(item.numChannels, item, rate, trigger, startPos.linlin(0,1,0, item.numFrames), 1)*mul;};
+	play.sum/play.size;
+} ] ]

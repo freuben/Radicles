@@ -1,45 +1,30 @@
-//work on changing the notation of buffers within the block synthfile. get rid of the double function thing and use a symbol instead. Something like this:
-/*
-a = {arg rate=1, trigger=1,
- startPos=0, mul=1;
-		Mix(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos, 0)*mul);};
-
-Ndef(\play).play;
-
-BStore.add(\play, \marilyn1, {|buf|
-	var index;
-index = BufferSystem.bufferArray.indexOf(buf);
-	("Ndef(\\play, " ++
-	a.cs.replace("\\buffer", BufferSystem.globVarArray[index]) ++ ")").radpost.interpret;
-});
-*/
-
-
 Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo, <pattCount=1;
 
 	*add {arg channels=1;
 		var ndefTag, ndefCS1, ndefCS2;
-			ndefTag = ("block" ++ blockCount).asSymbol;
-			blockCount = blockCount + 1;
-			ndefCS1 = "Ndef.ar(";
-			ndefCS1 = (ndefCS1 ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
-			ndefCS1.postln;
-			ndefCS1.interpret;
-			ndefCS2 = ("Ndef(" ++ ndefTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS2.postln;
-			ndefCS2.interpret;
-			ndefs = ndefs.add(Ndef(ndefTag));
-			blocks = blocks.add( [ndefTag, channels] );
-			liveBlocks = liveBlocks.add(nil);
+		ndefTag = ("block" ++ blockCount).asSymbol;
+		blockCount = blockCount + 1;
+		ndefCS1 = "Ndef.ar(";
+		ndefCS1 = (ndefCS1 ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
+		this.rpostln(ndefCS1);
+		ndefCS1.interpret;
+		ndefCS2 = ("Ndef(" ++ ndefTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
+		this.rpostln(ndefCS2);
+		ndefCS2.interpret;
+		ndefs = ndefs.add(Ndef(ndefTag));
+		blocks = blocks.add( [ndefTag, channels] );
+		liveBlocks = liveBlocks.add(nil);
 	}
 
 	*addNum {arg number, channels=1;
 		var thisChan;
+		this.startbr;
 		number.do{|index|
-						if(channels.isArray, {thisChan = channels[index]}, {thisChan = channels});
+			if(channels.isArray, {thisChan = channels[index]}, {thisChan = channels});
 			this.add(thisChan);
 		};
+		this.endbr;
 	}
 
 	*addAll {arg arr;
@@ -107,89 +92,103 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						blockFuncString = blockFunc.cs;
 						if(blockFuncString.includesString("\\buffer")
 							.or(blockFuncString.includesString("'buffer'")), {
-							if(buffer.isArray.not, {
-								bufferArr = BStore.setBufferID(buffer, blockFuncString);
-								storeType = bufferArr[0];
-								bufInfo = bufferArr[1];
-								bufferID = bufferArr[2];
-								cond = Condition(false);
-								cond.test = false;
-								if(bufInfo.notNil.or(bufInfo == \nobuf), {
-									BStore.add(storeType, bufInfo, {arg buf;
+								if(buffer.isArray.not, {
+									bufferArr = BStore.setBufferID(buffer, blockFuncString);
+									storeType = bufferArr[0];
+									bufInfo = bufferArr[1];
+									bufferID = bufferArr[2];
+									cond = Condition(false);
+									cond.test = false;
+									if(bufInfo.notNil.or(bufInfo == \nobuf), {
+										BStore.add(storeType, bufInfo, {arg buf;
 											bufIndex = BufferSystem.bufferArray.indexOf(buf);
 											bufString = BufferSystem.globVarArray[bufIndex];
 											blockFunc = blockFuncString.replace("\\buffer",
 												bufString).replace("'buffer'", bufString).interpret;
-										cond.test = true;
-										cond.signal;
-										if(data.notNil, {
+											cond.test = true;
+											cond.signal;
+											if(data.notNil, {
 												//check this
-											this.readWavetable(data, buf);
-										});
-									});
-									cond.wait;
-								}, {
-									"Buffer not provided".warn;
-								});
-							}, {
-								if([\alloc, \play, \cue].includes(buffer[0]), {
-										bufIDs = BStore.buffByID(buffer);
-										bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
-											bufString = BufferSystem.globVarArray[bufIndex];
-											blockFunc = blockFuncString.replace("\\buffer",
-												bufString).replace("'buffer'", bufString).interpret;
-									/*"this buffer is an existing buffer with ID".postln;*/
-								}, {
-									buffer.do{|item|
-										bufferArr = bufferArr.add(
-											BStore.setBufferID(item, blockFuncString)
-										);
-									};
-									storeType = bufferArr.flop[0];
-									bufInfo = bufferArr.flop[1];
-									bufferID = bufferArr.flop[2];
-									/*"includes buffer array".postln;*/
-									cond = Condition(false);
-									cond.test = false;
-									//for multiple wavetables with consecutive buffer allocation:
-									if(data.notNil, {
-										/*"if this is a wavetable then alloc consecutive buffers".postln;*/
-										if(BStore.bstores.notNil, {
-											bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
-										}, {
-											bstoreSize = 0;
-										});
-										bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
-											++ [1, bstoreSize+index] ] });
-									});
-									BStore.addAll(bufferID, {arg buf;
-										blockFunc = blockFunc.(buf);
-										cond.test = true;
-										cond.signal;
-										//fill buffer with wavetable function
-										if(data.notNil, {
-											if(data.isArray, {
-											/*	"this data is an array".postln;*/
-												data.do{|item, index|
-													DataFile.read(\wavetables, item).cs.postln;
-													DataFile.read(\wavetables, item).(buf[index]);
-												};
-											}, {
-												/*"this data is a symbol".postln;*/
-												DataFile.read(\wavetables, data).cs.postln;
-												buf.do{|item, index|
-													DataFile.read(\wavetables, data).(item, buf.size+1, index);
-												};
+												this.readWavetable(data, buf);
 											});
 										});
+										cond.wait;
+									}, {
+										"Buffer not provided".warn;
 									});
-									cond.wait;
-									nodeTime.wait;
-									/*"this buffer array that need to be allocated".postln;*/
+								}, {
+									if([\alloc, \play, \cue].includes(buffer[0]), {
+										bufIDs = BStore.buffByID(buffer);
+										bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
+										bufString = BufferSystem.globVarArray[bufIndex];
+										blockFunc = blockFuncString.replace("\\buffer",
+											bufString).replace("'buffer'", bufString).interpret;
+										/*"this buffer is an existing buffer with ID".postln;*/
+									}, {
+										buffer.do{|item|
+											bufferArr = bufferArr.add(
+												BStore.setBufferID(item, blockFuncString)
+											);
+										};
+										storeType = bufferArr.flop[0];
+										bufInfo = bufferArr.flop[1];
+										bufferID = bufferArr.flop[2];
+										/*"includes buffer array".postln;*/
+										cond = Condition(false);
+										cond.test = false;
+										//for multiple wavetables with consecutive buffer allocation:
+										if(data.notNil, {
+											/*"if this is a wavetable then alloc consecutive buffers".postln;*/
+											if(BStore.bstores.notNil, {
+												bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
+											}, {
+												bstoreSize = 0;
+											});
+											bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
+												++ [1, bstoreSize+index] ] });
+										});
+										bufferID.postln;
+										BStore.addAll(bufferID, {arg buf;
+											bufferID.do{|item|
+
+												bufIDs = BStore.buffByID(item);
+												bufIDs.postln;
+												bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
+												bufString = bufString.add(BufferSystem.globVarArray[bufIndex]);
+
+											};
+											blockFunc = blockFunc.cs.replace(("\\buffer"),
+												bufString).replace(("'buffer'"), bufString).interpret;
+											cond.test = true;
+											cond.signal;
+
+											/*blockFunc = blockFunc.(buf);
+											cond.test = true;
+											cond.signal;*/
+											//fill buffer with wavetable function
+											if(data.notNil, {
+												if(data.isArray, {
+													/*	"this data is an array".postln;*/
+													data.do{|item, index|
+														DataFile.read(\wavetables, item).cs.postln;
+														DataFile.read(\wavetables, item).(buf[index]);
+													};
+												}, {
+													/*"this data is a symbol".postln;*/
+													DataFile.read(\wavetables, data).cs.postln;
+													buf.do{|item, index|
+														DataFile.read(\wavetables, data).(item, buf.size+1, index);
+													};
+												});
+											});
+										});
+										cond.wait;
+										nodeTime.wait;
+										/*"this buffer array that need to be allocated".postln;*/
+									});
 								});
-							});
-						}, {
-							/*"no buffer".postln;*/
+							}, {
+								/*"no buffer".postln;*/
 						});
 
 					}, {
@@ -202,7 +201,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							if(extraArgs.collect({|item| item.isArray}).includes(true), {
 								blockFunc = this.pattData(extraArgs, data)
 								.toPattern(pattCount);
-							/*	"this is a pattern defined".postln;*/
+								/*	"this is a pattern defined".postln;*/
 							}, {
 								extraPattCount = 1;
 								blockFunc = extraArgs.do{|item|
@@ -212,7 +211,7 @@ Block : MainImprov {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 									extraPattCount = extraPattCount + 1;
 								};
 								blockFunc = Pdef(("'patt" ++ block ++ "'").interpret, Ppar(pattArr, 1));
-							/*	"this is a ppar".postln;*/
+								/*	"this is a ppar".postln;*/
 							});
 						});
 						pattCount = pattCount + 1;

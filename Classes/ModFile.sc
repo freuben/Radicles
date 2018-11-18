@@ -429,6 +429,10 @@ SynthDefFile : ModFile {
 		^synthFile.post(key);
 	}
 
+	* info {arg class=\filter, key;
+		^[class, key, this.read(class, key), DescriptionFile.read(class, key)].cs;
+	}
+
 	* write {arg class=\filter, key, dataArr, desc;
 		var synthFile;
 		synthFile = this.new(\synthdef, class);

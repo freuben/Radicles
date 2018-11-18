@@ -1,6 +1,6 @@
 [ [ 'sine', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)} ], [ 'play', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-	Mix(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul);} ], [ 'loop', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-	Mix(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul);} ], [ 'cue', {arg loop=1 , mul=1 ;
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul;} ], [ 'loop', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;} ], [ 'cue', {arg loop=1 , mul=1 ;
 	DiskIn.ar(\buffer.numChannels, \buffer, loop)*mul;} ], [ 'playpv', {arg rate=1 , offset=0 , numFrames=0.6 , winType=0 , mul=1 ;
 	var localbuf, chain;
 	localbuf = LocalBuf.new(numFrames.linexp(0,1,32,32768), \buffer.numChannels);
@@ -34,4 +34,10 @@
 	Saw.ar(freq, amp);} ], [ 'test1', {arg freq = 400 , amp = 0.4 , mul = 0.4
  , harm = 3;
 SinOsc.ar(freq, 0, amp);
+} ], [ 'loopAll', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+	var buffer, play;
+	buffer = \buffer;
+	play = buffer.collect{|item|
+		PlayBuf.ar(item.numChannels, item, rate, trigger, startPos.linlin(0,1,0, item.numFrames), 1)*mul;};
+	play.sum/play.size;
 } ] ]
