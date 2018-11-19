@@ -133,8 +133,11 @@
 
 	radpost {arg type=\ln;
 		var string, doc;
-		string = this.asString.lineFormat;
+		string = this.asString.lineFormat(Radicles.lineSize);
 		doc = Radicles.postDoc;
+		if(string.includesString(10.asAscii), {
+			type = \br
+		});
 		if(doc.isNil, {
 		string.postin(\ide, type);
 		}, {

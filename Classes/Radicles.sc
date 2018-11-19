@@ -1,6 +1,6 @@
 Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
-	<bpm, <postDoc;
+	<bpm, <postDoc, <>lineSize=73;
 
 	*new {
 		^super.new.initRadicles;
@@ -8,25 +8,12 @@ Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 
 	initRadicles {arg doc=false;
 		mainPath = ("~/Library/Application Support/SuperCollider/" ++
-			"Extensions/ModImprov/").standardizePath;
+			"Extensions/Radicles/").standardizePath;
 		server = Server.default;
 	}
 
 	*document {
 		postDoc = Document.new("Radicles: " ++ Date.getDate.asString);
-	}
-
-	*startbr {
-		if(postDoc.notNil, {
-		"(".radpost;
-		});
-	}
-
-	*endbr {
-		if(postDoc.notNil, {
-		")".radpost;
-		postDoc.selectRange(postDoc.text.size-1, 0);
-		});
 	}
 
 	*clock {var clock, tclock;
