@@ -223,7 +223,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
 						++ blockFunc.cs ++ ");");
-					ndefCS.radpost(\br);
+					ndefCS.radpost;
 					if((blockName == 'pattern').not, {
 						if(extraArgs.notNil, {
 							if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
