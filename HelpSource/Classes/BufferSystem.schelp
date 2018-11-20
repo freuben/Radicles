@@ -47,7 +47,7 @@ BufferSystem.addPairs(['marilyn1',~path, 'SinedPink',~path], {|item| item.do{|bu
 BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], {|item| item.do{|buf| buf.numFrames.postln } });
 
 //add any type
-BufferSystem.addAllTypes(['marilyn1', [1234,2], 'SinedPink'], function: {|item| a = item; });
+BufferSystem.addAllTypes(['marilyn1', [1234,2], 'SinedPink'], ~path, function: {|item| a = item; });
 a.postin(\ide, \doln);
 
 (
@@ -60,6 +60,7 @@ a.postin(\ide, \doln);
 BufferSystem.bufferInfo.postin(\ide, \doln);
 
 BufferSystem.tags;
+BufferSystem.globVarArray;
 BufferSystem.fileNames;
 
 //get buffer with tag

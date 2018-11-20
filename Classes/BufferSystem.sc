@@ -1,10 +1,10 @@
 BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	<tags, countTag=0, <bufAlloc, <>defaultPath,
-	<>postWin, countCue=0;
+	<>postWin, countCue=0, server;
 
 	*cond {
 		condition = Condition.new;
-		/*server = Server.default;*/
+		server = Server.default;
 	}
 
 	*read {arg pathName, function;
@@ -16,7 +16,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					bufAlloc = true;
 					buffer = Buffer.read(server, pathName);
 					bufferArray = bufferArray.add(buffer);
-					globVar = "~buffer" ++ bufferArray.indexOf(buffer);
+					/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
+					globVar = "~buffer" ++ buffer.bufnum;
 					globVarArray = globVarArray.add(globVar);
 					(globVar ++ " = " ++
 						"Buffer.read(s, " ++ pathName.cs ++ ");").radpost;
@@ -41,7 +42,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					pathArr.do{|item|
 						buffer = Buffer.read(server, item);
 						bufferArray = bufferArray.add(buffer);
-						globVar = "~buffer" ++ bufferArray.indexOf(buffer);
+						/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
+						globVar = "~buffer" ++ buffer.bufnum;
 						globVarArray = globVarArray.add(globVar);
 						(globVar ++ " = " ++
 							"Buffer.read(s, " ++ item.cs ++ ");").radpost;
@@ -128,7 +130,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					bufAlloc = true;
 					buffer = Buffer.alloc(server, numFrames, numChannels, bufnum: bufnum);
 					bufferArray = bufferArray.add(buffer);
-					globVar = "~buffer" ++ bufferArray.indexOf(buffer);
+					/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
+					globVar = "~buffer" ++ buffer.bufnum;
 					globVarArray = globVarArray.add(globVar);
 					(globVar ++ " = " ++ "Buffer.alloc(s, " ++ numFrames ++
 						", " ++ numChannels ++ ");").radpost;
@@ -158,7 +161,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 						item[1] ?? {item[1] = 1};
 						buffer = Buffer.alloc(server, item[0], item[1], bufnum: item[2]);
 						bufferArray = bufferArray.add(buffer);
-						globVar = "~buffer" ++ bufferArray.indexOf(buffer);
+						/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
+						globVar = "~buffer" ++ buffer.bufnum;
 						globVarArray = globVarArray.add(globVar);
 						(globVar ++ " = " ++ "Buffer.alloc(s, " ++ item[0] ++
 							", " ++ item[1] ++ ");").radpost;
@@ -190,7 +194,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					buffer = Buffer.cueSoundFile(server, pathName, startFrame, chanNum,
 						cueSize);
 					bufferArray = bufferArray.add(buffer);
-					globVar = "~buffer" ++ bufferArray.indexOf(buffer);
+					/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
+					globVar = "~buffer" ++ buffer.bufnum;
 					globVarArray = globVarArray.add(globVar);
 					(globVar ++ " = " ++ "Buffer.cueSoundFile(s, " ++ pathName.cs ++
 						", " ++ startFrame ++ ", " ++ chanNum ++  ", " ++ cueSize ++  ");").radpost;
@@ -225,7 +230,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 						buffer = Buffer.cueSoundFile(server, item[0], newArr[0], chanNum,
 							cueSize);
 						bufferArray = bufferArray.add(buffer);
-						globVar = "~buffer" ++ bufferArray.indexOf(buffer);
+						/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
+						globVar = "~buffer" ++ buffer.bufnum;
 						globVarArray = globVarArray.add(globVar);
 						(globVar ++ " = " ++ "Buffer.cueSoundFile(s, " ++ item[0].cs ++
 							", " ++ newArr[0] ++ ", " ++ chanNum ++  ", " ++ cueSize ++  ");").radpost;

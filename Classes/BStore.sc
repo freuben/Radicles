@@ -2,8 +2,8 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	classvar <>samplerFormat=\audio, <>diskStart=0, <>diskBufSize=1, <>cueCount=1, <>allocCount=1;
 
 	*addRaw {arg type, format, settings, function;
-		var path, boolean, typeStore;
-
+		var path, boolean, typeStore, existFormat, bstoreIDs;
+		bstoreIDs = this.bstoreIDs;
 		case
 		{type == \play} {
 			path = this.getPlayPath(format);
@@ -42,6 +42,14 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 			});
 		}
 		{type == \alloc} {
+			if(bstoreIDs.notNil, {
+			existFormat = bstoreIDs.flop[1].indexOf(format);
+			});
+			if(existFormat.notNil, {
+				typeStore = this.buffByID(bstoreIDs[existFormat]);
+				("//Buffer already been used as: ~buffer" ++
+					typeStore.bufnum).radpost;
+			}, {
 			typeStore = this.addAlloc(path, function: {|buf|
 				if(typeStore.notNil, {
 					boolean = this.store(\bstore, type, format, path);
@@ -51,8 +59,17 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				});
 				function.(buf);
 			});
+			});
 		}
 		{type == \cue} {
+			if(bstoreIDs.notNil, {
+			existFormat = bstoreIDs.flop[1].indexOf(format);
+			});
+			if(existFormat.notNil, {
+				typeStore = this.buffByID(bstoreIDs[existFormat]);
+				("//Buffer already been used as: ~buffer" ++
+					typeStore.bufnum).radpost;
+			}, {
 			typeStore = this.addCue(settings, path, function: {|buf|
 				if(typeStore.notNil, {
 					boolean = this.store(\bstore, type, format, settings);
@@ -62,6 +79,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				});
 				function.(buf);
 			});
+				});
 		};
 	}
 

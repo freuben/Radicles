@@ -144,6 +144,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 										if(data.notNil, {
 											/*"if this is a wavetable then alloc consecutive buffers".postln;*/
 											if(BStore.bstores.notNil, {
+												/*"bla".postln;
+												bstoreSize = (BufferSystem.globVarArray.collect{|item|
+													item.cs.replace("~buffer", "").interpret}).maxItem.asInteger;
+												bstoreSize = bstoreSize+1;*/
 												bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
 											}, {
 												bstoreSize = 0;
@@ -217,9 +221,12 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						pattCount = pattCount + 1;
 						/*blockFuncCS = blockFunc;*/
 					});
+					liveBlocks[blockIndex].postln;
 					if(liveBlocks[blockIndex].notNil, {
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
 							/*"free buffer from play".postln;*/
+							"free".postln;
+
 							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
 						});
 					});
