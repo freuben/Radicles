@@ -135,6 +135,8 @@ SynthFile.postAll(\block);
 //////////
 //BLOCKS!!!!
 //patterns
+Radicles.document;
+
 (
 Block.clock; //start metronome
 Block.tempo(80); //set tempo
@@ -225,6 +227,8 @@ pattern or synth
 output of blocks (destination - input for planes, or for )
 blocks that requiere external data (arryas, patterns) and blocks that dont
 block for recording
+
+Radicles.document;
 
 Block.add //add 1 block with one channel
 
@@ -317,7 +321,7 @@ Block.play(1, \sine, extraArgs: [220,0,0.4]);
 Block.clear;
 
 //wavetables
-
+Radicles.document;
 
 Block.add;
 Block.ndefs;
@@ -426,6 +430,8 @@ SynthFile.post(\block, \play);
 
 ///////
 //record buffers
+
+Radicles.document;
 
 Block.addRec(10, func: {|buf| buf.postln; }); //add a buffer of 10 seconds
 Block.addRecNum(4,1, func: {|bufs| bufs.postln}) //add 4 buffers of 1 second
@@ -702,6 +708,7 @@ blag 3 /freq 2
 DataFile.postAll(\wavetables);
 
 
+Radicles.document;
 
 Block.addNum(4);
 Block.playNdefs;

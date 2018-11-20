@@ -18,7 +18,7 @@ ModMap : Radicles {
 				ndef.lag(key, val);
 			}
 		});
-		(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").postin(post, \ln);
+		(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost;
 		^modMap;
 	}
 
@@ -55,7 +55,7 @@ ModMap : Radicles {
 				compile = "Ndef('mod" ++ modIndex.cs ++ "').put(0, " ++ ndefString
 				++ ", extraArgs: " ++ extraArgs.cs ++ ");";
 			});
-			compile.postin(post, \ln);
+			compile.radpost;
 			ndef = compile.interpret;
 			ndef.fadeTime = fadeTime;
 		}, {
@@ -65,21 +65,30 @@ ModMap : Radicles {
 	}
 
 	*lag {arg modNum=1, key, value;
-		var modNumIndex;
+		var modNumIndex, string;
 		modNumIndex = modNum-1;
-		modNodes[modNumIndex][0].lag(key, value);
+		string = modNodes[modNumIndex][0].cs ++ ".lag(" ++ key.cs
+				++ ", " ++ value.cs ++ ");";
+				string.radpost;
+				string.interpret;
 	}
 
 	*set {arg modNum=1, key, value;
-		var modNumIndex;
+		var modNumIndex, string;
 		modNumIndex = modNum-1;
-		modNodes[modNumIndex][0].set(key, value);
+		string = modNodes[modNumIndex][0].cs ++ ".set(" ++ key.cs
+				++ ", " ++ value.cs ++ ");";
+				string.radpost;
+				string.interpret;
 	}
 
 	*xset {arg modNum=1, key, value;
-		var modNumIndex;
+		var modNumIndex, string;
 		modNumIndex = modNum-1;
-		modNodes[modNumIndex][0].xset(key, value);
+		string = modNodes[modNumIndex][0].cs ++ ".xset(" ++ key.cs
+				++ ", " ++ value.cs ++ ");";
+				string.radpost;
+				string.interpret;
 	}
 
 	*ndefs {

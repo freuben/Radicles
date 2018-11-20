@@ -138,6 +138,9 @@
 		if(string.includesString(10.asAscii), {
 			type = \br
 		});
+		if(Radicles.logCodeTime, {
+			string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
+		});
 		if(doc.isNil, {
 		string.postin(\ide, type);
 		}, {

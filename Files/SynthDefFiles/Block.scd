@@ -35,9 +35,10 @@ SinOsc.ar(freq, 0, amp);
 	PlayBuf.ar(\buffer.numChannels, \buffer, rate, Impulse.kr(triggerRate),
  startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;} ], [ 'osc1', {arg freq=400 -> [20,20000, \exp], phase=0 -> [-2pi, 2pi], mul=0.5 -> [0,2]; Osc.ar(\buffer, freq, phase, mul)} ], [ 'shaperSine', {arg freq=440 -> [20,20000, \exp], phase=0 -> [-2pi, 2pi], mul=0.5 -> [0,2];
 	Shaper.ar(\buffer, SinOsc.ar(freq, phase, mul), 0.5)} ], [ 'vosc', {arg bufoffset=0 -> [0,10], freq=440 -> [20,20000, \exp], phase=0 -> [-2pi, 2pi], mul=0.5 -> [0,2];
-		var bufnum;
-		bufnum = \buffer.bufnum;
-	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+\buffer.size-1), freq, phase, mul)} ], [ 'loopAll', {arg rate=1 -> [0.1,10], trigger=1 -> [0,1, {|val| val.round(1)}], startPos=0 -> [0,1], mul=1 -> [0,2];
+		var buffer, bufnum;
+	buffer = \buffer;
+	bufnum = buffer[0].bufnum;
+	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+buffer.size-1), freq, phase, mul)} ], [ 'loopAll', {arg rate=1 -> [0.1,10], trigger=1 -> [0,1, {|val| val.round(1)}], startPos=0 -> [0,1], mul=1 -> [0,2];
 	var buffer, play;
 	buffer = \buffer;
 	play = buffer.collect{|item|

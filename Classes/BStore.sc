@@ -312,4 +312,12 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^[storeType, buffer, bufferID];
 	}
 
+	*buffAsString {arg buffer;
+		var bufIDs, bufIndex, bufString;
+		bufIDs = this.buffByID(buffer);
+		bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
+		bufString = BufferSystem.globVarArray[bufIndex];
+		^bufString;
+	}
+
 }

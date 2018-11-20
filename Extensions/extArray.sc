@@ -112,7 +112,7 @@
 		};
 		finalString = finalString.copyRange(0, finalString.size-3);
 		finalString = finalString ++ " ) );";
-		finalString.postln;
+		finalString.radpost;
 		^finalString.interpret;
 	}
 

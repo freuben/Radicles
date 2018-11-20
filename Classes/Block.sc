@@ -32,11 +32,12 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*remove {arg block=1;
-		var blockIndex;
+		var blockIndex, string;
 		blockIndex = block - 1;
 		if((block >= 1).and(block <= blocks.size), {
-			/*ndefs[blockIndex].free;*/
-			ndefs[blockIndex].clear;
+			string = (ndefs[blockIndex].cs ++ ".clear;");
+			string.radpost;
+			string.interpret;
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
 			liveBlocks.removeAt(blockIndex);
@@ -46,12 +47,13 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*removeArr {arg blockArr;
-		var newArr;
+		var newArr, string;
 		blockArr.do{|item|
 			if((item >= 1).and(item <= blocks.size), {
 				newArr = newArr.add(item-1);
-				/*ndefs[item-1].free;*/
-				ndefs[item-1].clear;
+				string = (ndefs[item-1].cs ++ ".clear;");
+				string.radpost;
+				string.interpret;
 			}, {
 				"Block Number not Found".warn;
 			});
@@ -61,8 +63,13 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		liveBlocks.removeAll(newArr);
 	}
 
-	*removeAll {
-		ndefs.do{|item| item.clear };
+	*removeAll {var string;
+		ndefs.do{|item|
+			string = (item.cs ++ ".clear;");
+			string.radpost;
+			string.interpret;
+			/*item.clear*/
+		};
 		ndefs = [];
 		blocks = [];
 		liveBlocks = [];
@@ -70,7 +77,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*clear {
-		Ndef.clear;
+		"Ndef.clear;".radpost.interpret;
 		ndefs = [];
 		blocks = [];
 		liveBlocks = [];
@@ -106,7 +113,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											cond.test = true;
 											cond.signal;
 											if(data.notNil, {
-												//check this
 												this.readWavetable(data, buf);
 											});
 										});
@@ -145,36 +151,32 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
 												++ [1, bstoreSize+index] ] });
 										});
-										/*bufferID.postln;*/
 										BStore.addAll(bufferID, {arg buf;
 											bufferID.do{|item|
-
 												bufIDs = BStore.buffByID(item);
-												/*bufIDs.postln;*/
 												bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
 												bufString = bufString.add(BufferSystem.globVarArray[bufIndex]);
-
 											};
 											blockFunc = blockFunc.cs.replace(("\\buffer"),
 												bufString).replace(("'buffer'"), bufString).interpret;
 											cond.test = true;
 											cond.signal;
-
-											/*blockFunc = blockFunc.(buf);
-											cond.test = true;
-											cond.signal;*/
 											//fill buffer with wavetable function
 											if(data.notNil, {
 												if(data.isArray, {
 													/*	"this data is an array".postln;*/
 													data.do{|item, index|
-														DataFile.read(\wavetables, item).cs.postln;
+														(DataFile.read(\wavetables, item).cs ++ ".(" ++
+															bufString[index].cs ++	");").radpost;
 														DataFile.read(\wavetables, item).(buf[index]);
 													};
 												}, {
 													/*"this data is a symbol".postln;*/
-													DataFile.read(\wavetables, data).cs.postln;
+													/*DataFile.read(\wavetables, data).cs.radpost;*/
 													buf.do{|item, index|
+														(DataFile.read(\wavetables, data).cs ++ ".(" ++
+															bufString[index] ++ "," ++ (buf.size+1) ++ ", " ++
+															index ++ ");").radpost;
 														DataFile.read(\wavetables, data).(item, buf.size+1, index);
 													};
 												});
@@ -330,11 +332,14 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*lag {arg block, argArr;
-		var blockIndex;
+		var blockIndex, string;
 		if((block >= 1), {
 			blockIndex = block-1;
 			argArr.keysValuesDo{|key, val|
-				ndefs[blockIndex].lag(key, val);
+				string = ndefs[blockIndex].cs ++ ".lag(" ++ key.cs
+				++ ", " ++ val.cs ++ ");";
+				string.radpost;
+				string.interpret;
 			};
 		}, {
 			"Block not found".warn;
@@ -343,7 +348,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*playNdefs {
 		Server.default.waitForBoot{
-			ndefs.do{|item| item.play};
+			ndefs.do{|item| (item.cs ++ ".play;").radpost.interpret };
 		};
 	}
 
@@ -552,14 +557,20 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*setFadeTime {arg newFadeTime;
+		var string;
 		newFadeTime ?? {newFadeTime = fadeTime};
 		fadeTime = newFadeTime;
-		ndefs.do{|item| item.fadeTime = fadeTime};
+		ndefs.do{|item| string = (item.cs ++ ".fadeTime = " ++ fadeTime.cs ++ ";");
+			string.radpost.interpret;
+		};
 	}
 
 	*readWavetable {arg data, buf;
-		DataFile.read(\wavetables, data).cs.radpost;
-		DataFile.read(\wavetables, data).(buf);
+		var bufIndex, bufString;
+		bufIndex = BufferSystem.bufferArray.indexOf(buf);
+		bufString = BufferSystem.globVarArray[bufIndex];
+		(DataFile.read(\wavetables, data).cs ++ ".(" ++
+			bufString ++	");").radpost.interpret;
 	}
 
 	*blockPattern {arg block, extraArgs, data;

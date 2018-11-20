@@ -28,9 +28,10 @@
 	PlayBuf.ar(\buffer.numChannels, \buffer, rate, Impulse.kr(triggerRate),
  startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;} ], [ 'osc1', {arg freq=400 , phase=0 , mul=0.5 ; Osc.ar(\buffer, freq, phase, mul)} ], [ 'shaperSine', {arg freq=440 , phase=0 , mul=0.5 ;
 	Shaper.ar(\buffer, SinOsc.ar(freq, phase, mul), 0.5)} ], [ 'vosc', {arg bufoffset=0 , freq=440 , phase=0 , mul=0.5 ;
-		var bufnum;
-		bufnum = \buffer.bufnum;
-	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+\buffer.size-1), freq, phase, mul)} ], [ 'test2', {arg freq = 400 , amp = 0.4 , mul = 0.4 , harm = 3;
+		var buffer, bufnum;
+	buffer = \buffer;
+	bufnum = buffer[0].bufnum;
+	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+buffer.size-1), freq, phase, mul)} ], [ 'test2', {arg freq = 400 , amp = 0.4 , mul = 0.4 , harm = 3;
 	Saw.ar(freq, amp);} ], [ 'test1', {arg freq = 400 , amp = 0.4 , mul = 0.4
  , harm = 3;
 SinOsc.ar(freq, 0, amp);

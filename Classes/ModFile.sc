@@ -430,7 +430,10 @@ SynthDefFile : ModFile {
 	}
 
 	* info {arg class=\filter, key;
-		^[class, key, this.read(class, key), DescriptionFile.read(class, key)].cs;
+		var string;
+		string = [class, key, this.read(class, key), DescriptionFile.read(class, key)].cs;
+		string = string.replaceAt("(", 0).replaceAt(")", string.size-1);
+		^string;
 	}
 
 	* write {arg class=\filter, key, dataArr, desc;
