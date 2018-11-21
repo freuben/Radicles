@@ -1,3 +1,5 @@
+/*getting there. still troubleshoot buffer arrays when the array has files that are already playing. also look at simultaneaus evaluation of blocks - particularly as they have the same buffer file*/
+
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo, <pattCount=1;
 
@@ -7,11 +9,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockCount = blockCount + 1;
 		ndefCS1 = "Ndef.ar(";
 		ndefCS1 = (ndefCS1 ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
-		ndefCS1.radpost;
-		ndefCS1.interpret;
+		ndefCS1.radpost.interpret;
 		ndefCS2 = ("Ndef(" ++ ndefTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-		ndefCS2.radpost;
-		ndefCS2.interpret;
+		ndefCS2.radpost.interpret;
 		ndefs = ndefs.add(Ndef(ndefTag));
 		blocks = blocks.add( [ndefTag, channels] );
 		liveBlocks = liveBlocks.add(nil);
@@ -36,8 +36,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockIndex = block - 1;
 		if((block >= 1).and(block <= blocks.size), {
 			string = (ndefs[blockIndex].cs ++ ".clear;");
-			string.radpost;
-			string.interpret;
+			string.radpost.interpret;
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
 			liveBlocks.removeAt(blockIndex);
@@ -52,8 +51,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			if((item >= 1).and(item <= blocks.size), {
 				newArr = newArr.add(item-1);
 				string = (ndefs[item-1].cs ++ ".clear;");
-				string.radpost;
-				string.interpret;
+				string.radpost.interpret;
 			}, {
 				"Block Number not Found".warn;
 			});
@@ -66,8 +64,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	*removeAll {var string;
 		ndefs.do{|item|
 			string = (item.cs ++ ".clear;");
-			string.radpost;
-			string.interpret;
+			string.radpost.interpret;
 			/*item.clear*/
 		};
 		ndefs = [];
@@ -146,7 +143,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											if(BStore.bstores.notNil, {
 												/*"bla".postln;
 												bstoreSize = (BufferSystem.globVarArray.collect{|item|
-													item.cs.replace("~buffer", "").interpret}).maxItem.asInteger;
+												item.cs.replace("~buffer", "").interpret}).maxItem.asInteger;
 												bstoreSize = bstoreSize+1;*/
 												bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
 											}, {
@@ -194,7 +191,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							}, {
 								/*"no buffer".postln;*/
 						});
-
 					}, {
 						/*"this is a pattern hurray".postln;*/
 						/*blockFunc = this.blockPattern(block, extraArgs, data);*/
@@ -221,12 +217,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						pattCount = pattCount + 1;
 						/*blockFuncCS = blockFunc;*/
 					});
-					liveBlocks[blockIndex].postln;
 					if(liveBlocks[blockIndex].notNil, {
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
 							/*"free buffer from play".postln;*/
-							"free".postln;
-
 							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
 						});
 					});
@@ -267,11 +260,15 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		var blockIndex, slotIndex, ndefCS;
 		if(block >= 1, {
 			blockIndex = block-1;
+			if(fadeOut.notNil, {
+				ndefCS = (ndefs[blockIndex].cs ++ ".fadeTime = " ++
+					fadeOut ++ ";");
+				ndefCS.radpost.interpret;
+			});
 			fadeOut ?? {fadeOut = ndefs[blockIndex].fadeTime};
 			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
 				++ "nil;" );
-			ndefCS.interpret;
-			ndefCS.radpost;
+			ndefCS.radpost.interpret;
 			if(liveBlocks[blockIndex].notNil, {
 				this.buffree(blockIndex, fadeOut, {
 					liveBlocks[blockIndex] = nil;
@@ -283,6 +280,19 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			"Block not found".warn;
 		});
 
+	}
+
+	*stopAll {arg fadeOut;
+		fadeOut ?? {fadeOut = this.fadeTime};
+		if(liveBlocks.notNil, {
+			liveBlocks.do{|item|
+				var index;
+				if(item.notNil, {
+					index = item[0].cs.replace("block", "").interpret.asInteger;
+					this.stop(index, fadeOut);
+				});
+			};
+		});
 	}
 
 	*buffree {arg blockIndex=0, fadeOut, func;
@@ -345,8 +355,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			argArr.keysValuesDo{|key, val|
 				string = ndefs[blockIndex].cs ++ ".lag(" ++ key.cs
 				++ ", " ++ val.cs ++ ");";
-				string.radpost;
-				string.interpret;
+				string.radpost.interpret;
 			};
 		}, {
 			"Block not found".warn;
@@ -365,8 +374,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		ndefTag = ("recblock" ++ recBlockCount).asSymbol;
 		recBlockCount = recBlockCount + 1;
 		ndefCS1 = ("Ndef.ar(" ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
-		ndefCS1.radpost;
-		ndefCS1.interpret;
+		ndefCS1.radpost.interpret;
 		recNdefs = recNdefs.add(Ndef(ndefTag));
 		recBlocks = recBlocks.add( [ndefTag, channels] );
 	}
@@ -513,8 +521,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					if(argString.notNil,  {
 						argString.do{|item|
 							setRec = (recNdefs[blockIndex].cs ++ item);
-							setRec.interpret;
-							setRec.radpost;
+							setRec.radpost.interpret;
 						};
 					});
 				}, {
