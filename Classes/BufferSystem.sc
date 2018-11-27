@@ -1,10 +1,18 @@
 BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	<tags, countTag=0, <bufAlloc, <>defaultPath,
-	<>postWin, countCue=0, server;
+	<>postWin, countCue=0, server, bufcount=0;
 
 	*cond {
 		condition = Condition.new;
 		server = Server.default;
+	}
+
+	*bufferCount {
+		if(bufcount < server.options.numBuffers, {
+					bufcount = bufcount + 1;
+					}, {
+			bufcount = 0;
+		});
 	}
 
 	*read {arg pathName, function;
@@ -14,15 +22,13 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 			server.makeBundle(nil, {
 				{
 					bufAlloc = true;
-					buffer = Buffer.read(server, pathName);
-					bufferArray = bufferArray.add(buffer);
-					/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
-					globVar = "~buffer" ++ buffer.bufnum;
+					globVar = "~buffer" ++ bufcount;
 					globVarArray = globVarArray.add(globVar);
 					(globVar ++ " = " ++
-						"Buffer.read(s, " ++ pathName.cs ++ ");").radpost;
-					(globVar ++ " =  s.cachedBufferAt("
-						++ buffer.bufnum ++ ");").interpret;
+						"Buffer.read(s, " ++ pathName.cs ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+					buffer = globVar.interpret;
+					bufferArray = bufferArray.add(buffer);
+					this.bufferCount;
 					tags = tags.add(this.pathToTag(pathName));
 					server.sync(condition);
 					bufAlloc = false;
@@ -40,15 +46,13 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 				{
 					bufAlloc = true;
 					pathArr.do{|item|
-						buffer = Buffer.read(server, item);
-						bufferArray = bufferArray.add(buffer);
-						/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
-						globVar = "~buffer" ++ buffer.bufnum;
+						globVar = "~buffer" ++ bufcount;
 						globVarArray = globVarArray.add(globVar);
 						(globVar ++ " = " ++
-							"Buffer.read(s, " ++ item.cs ++ ");").radpost;
-						(globVar ++ " =  s.cachedBufferAt(" ++
-							buffer.bufnum ++ ");").interpret;
+							"Buffer.read(s, " ++ item.cs ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						buffer = globVar.interpret;
+						bufferArray = bufferArray.add(buffer);
+						this.bufferCount;
 						tags = tags.add(this.pathToTag(item));
 						returnArray = returnArray.add(buffer);
 						server.sync(condition);
@@ -117,25 +121,22 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		^selectedPath;
 	}
 
-	*alloc {arg numFrames, numChannels, function, bufnum;
+			*alloc {arg numFrames, numChannels, function;
 		var main, buffer, globVar;
 		main = this.cond;
-
 		numFrames ?? {numFrames = 44100};
 		numChannels ?? {numChannels = 1};
-
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
 					bufAlloc = true;
-					buffer = Buffer.alloc(server, numFrames, numChannels, bufnum: bufnum);
-					bufferArray = bufferArray.add(buffer);
-					/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
-					globVar = "~buffer" ++ buffer.bufnum;
+					globVar = "~buffer" ++ bufcount;
 					globVarArray = globVarArray.add(globVar);
-					(globVar ++ " = " ++ "Buffer.alloc(s, " ++ numFrames ++
-						", " ++ numChannels ++ ");").radpost;
-					(globVar ++ " =  s.cachedBufferAt(" ++ buffer.bufnum ++ ");").interpret;
+					(globVar ++ " = " ++ "Buffer.alloc(s, " ++ numFrames ++ ", " ++
+						numChannels ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+					buffer = globVar.interpret;
+					bufferArray = bufferArray.add(buffer);
+					this.bufferCount;
 					tags = tags.add( ("alloc" ++ countTag).asSymbol );
 					countTag = countTag + 1;
 					server.sync(condition);
@@ -146,7 +147,6 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		}, {
 			"Server is not running".warn;
 		});
-
 	}
 
 	*allocAll {arg argArr, function;
@@ -159,14 +159,13 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					argArr.do{|item|
 						item[0] ?? {item[0] = 44100};
 						item[1] ?? {item[1] = 1};
-						buffer = Buffer.alloc(server, item[0], item[1], bufnum: item[2]);
-						bufferArray = bufferArray.add(buffer);
-						/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
-						globVar = "~buffer" ++ buffer.bufnum;
+						globVar = "~buffer" ++ bufcount;
 						globVarArray = globVarArray.add(globVar);
 						(globVar ++ " = " ++ "Buffer.alloc(s, " ++ item[0] ++
-							", " ++ item[1] ++ ");").radpost;
-						(globVar ++ " =  s.cachedBufferAt(" ++ buffer.bufnum ++ ");").interpret;
+							", " ++ item[1] ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						buffer = globVar.interpret;
+						bufferArray = bufferArray.add(buffer);
+						this.bufferCount;
 						tags = tags.add( ("alloc" ++ countTag).asSymbol );
 						countTag = countTag + 1;
 						returnArr = returnArr.add(buffer);
@@ -174,7 +173,6 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					};
 					bufAlloc = false;
 					function.(returnArr);
-
 				}.fork;
 			});
 		}, {
@@ -191,15 +189,14 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					bufAlloc = true;
 					chanNum = this.fileNumChannels(pathName);
 					cueSize = 32768*bufSize;
-					buffer = Buffer.cueSoundFile(server, pathName, startFrame, chanNum,
-						cueSize);
-					bufferArray = bufferArray.add(buffer);
-					/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
-					globVar = "~buffer" ++ buffer.bufnum;
+					globVar = "~buffer" ++ bufcount;
 					globVarArray = globVarArray.add(globVar);
-					(globVar ++ " = " ++ "Buffer.cueSoundFile(s, " ++ pathName.cs ++
-						", " ++ startFrame ++ ", " ++ chanNum ++  ", " ++ cueSize ++  ");").radpost;
-					(globVar ++ " =  s.cachedBufferAt(" ++ buffer.bufnum ++ ");").interpret;
+					(globVar ++ " = " ++ "Buffer.cueSoundFileBuf(s, " ++ pathName.cs ++
+						", " ++ startFrame ++ ", " ++ chanNum ++  ", " ++ cueSize ++
+						", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+					buffer = globVar.interpret;
+					bufferArray = bufferArray.add(buffer);
+					this.bufferCount;
 					tags = tags.add(("disk" ++ countCue ++ "_" ++
 						this.pathToTag(pathName)).asSymbol);
 					countCue = countCue + 1;
@@ -227,15 +224,14 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 							newArr = [0,1];
 						});
 						cueSize = 32768*newArr[1];
-						buffer = Buffer.cueSoundFile(server, item[0], newArr[0], chanNum,
-							cueSize);
-						bufferArray = bufferArray.add(buffer);
-						/*globVar = "~buffer" ++ bufferArray.indexOf(buffer);*/
-						globVar = "~buffer" ++ buffer.bufnum;
+						globVar = "~buffer" ++ bufcount;
 						globVarArray = globVarArray.add(globVar);
-						(globVar ++ " = " ++ "Buffer.cueSoundFile(s, " ++ item[0].cs ++
-							", " ++ newArr[0] ++ ", " ++ chanNum ++  ", " ++ cueSize ++  ");").radpost;
-						(globVar ++ " =  s.cachedBufferAt(" ++ buffer.bufnum ++ ");").interpret;
+						(globVar ++ " = " ++ "Buffer.cueSoundFileBuf(s, " ++ item[0].cs ++
+							", " ++ newArr[0] ++ ", " ++ chanNum ++  ", " ++ cueSize ++
+						", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						buffer = globVar.interpret;
+						bufferArray = bufferArray.add(buffer);
+						this.bufferCount;
 						tags = tags.add(("disk" ++ countCue ++ "_" ++
 							this.pathToTag(item[0])).asSymbol);
 						countCue = countCue + 1;
@@ -249,11 +245,11 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		}, {"Server not running".warn});
 	}
 
-	*add {arg arg1, arg2, function, arg3;
+			*add {arg arg1, arg2, function;
 		var getPath, getIndex, getBufferPaths, cueBool, buffunction;
 		if(arg1.isNumber, {
 			//allocate buffer: arg1: frames, arg2: channels, arg3: bufnum
-			this.alloc(arg1, arg2, function, arg3)
+			this.alloc(arg1, arg2, function)
 		}, {
 			//read buffer: arg1: fileName, arg2: pathDir
 			arg2 ?? {arg2 = defaultPath};
@@ -281,7 +277,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 							if(cueBool, {
 								if(tags.includes(arg1), {
 									("//File already allocated as: ~buffer" ++
-										bufferArray.indexOf(this.get(arg1) ) ).radpost;
+										this.get(arg1).bufnum ).radpost;
 									function.(this.get(arg1));
 								}, {
 									buffunction.();
@@ -668,6 +664,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 			bufferArray = nil;
 			globVarArray = nil;
 			tags = nil;
+			bufcount = 0;
 		});
 	}
 

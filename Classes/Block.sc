@@ -399,9 +399,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					argArr.cs.replace("[", "").replace("]", "") ++  ");").radpost;
 			});
 			argArr.keysValuesDo{|key, val|
-				if(ndefs[blockIndex].isPlaying, {
+				/*if(ndefs[blockIndex].isPlaying, {*/
 				ndefs[blockIndex].xset(key, val);
-				});
+				/*});*/
 			};
 		}, {
 			"Block not found".warn;
