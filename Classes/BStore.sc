@@ -151,16 +151,16 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				BufferSystem.freeAtAll(freeBufArr.sort);
 				this.removeAt(bstoreIndex);
 			}
-		}, {
-			"BStore not found".warn;
 		});
 	}
 
 	*removeID {arg ids;
-		if(this.bstoreIDs.indexOfEqual(ids).notNil, {
+		var currentIDs;
+		currentIDs = this.bstoreIDs;
+		if(currentIDs.notNil, {
+		if(currentIDs.indexOfEqual(ids).notNil, {
 		this.remove(ids[0], ids[1], ids[2]);
-		}, {
-			"BStore not found".warn;
+		});
 		});
 	}
 
@@ -173,8 +173,6 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		ids = this.bstoreIDs[index];
 		if(ids.notNil, {
 			this.remove(ids[0], ids[1], ids[2]);
-		}, {
-			"BStore not found".warn;
 		});
 	}
 
@@ -191,8 +189,6 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		indices = this.bstoreIDs.flop[index].indicesOfEqual(argument);
 		if(indices.notNil, {
 			this.removeIndices(indices);
-		}, {
-			"BStore not found".warn;
 		});
 	}
 
@@ -268,8 +264,6 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				result = buffs;
 			});
 			^result;
-		}, {
-			"BStore not found".warn;
 		});
 	}
 

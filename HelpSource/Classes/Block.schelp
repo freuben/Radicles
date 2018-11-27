@@ -123,11 +123,11 @@ TempoClock.default.tempo = 1.0;
 SynthFile.read(\point, \perkysine).toSynthDef(\synth1);
 
 SynthFile.write(\point, \perkysine, {arg freq=400, amp=1;
-    var osc;
-    osc = SinOsc.ar( [freq,freq+0.05.rand] ) * EnvGen.ar(
-    Env.perc, doneAction: 2) * 0.2;
-    osc*amp;
-    }
+	var osc;
+	osc = SinOsc.ar( [freq,freq+0.05.rand] ) * EnvGen.ar(
+		Env.perc, doneAction: 2) * 0.2;
+	osc*amp;
+}
 );
 
 SynthFile.postAll(\block);
@@ -183,13 +183,13 @@ Block.play(1, \pattern, \nobuf, [\test2, \test1, \test3], [[\quant, 4], [\instru
 Block.schedAction({"boom".postln});
 Block.schedDiv = 0.5;
 
-Block.schedAction({Block.play(1, \pattern, \nobuf, \test1);});
-Block.schedAction({Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \perkysine]);});
-Block.schedAction({Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \perkysine]);})
-Block.schedAction({Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);});
+Block.play(1, \pattern, \nobuf, \test1);
+Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \perkysine]);
+Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \perkysine]);
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);
 
 
-Block.schedAction({Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);});
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);
 
 (
 Block.schedCount({|count| if(count == 5, {
@@ -202,7 +202,8 @@ Block.schedCount({|count| if(count == 5, {
 Block.add;
 Block.playNdefs;
 )
-Block.schedAction({Block.play(5, \pattern, \nobuf, [[\note, \seq, [15,15,15,15]], [\dur, 0.5], [\amp, 0.8] ], [\instrument, \perkysine]);});
+
+Block.play(5, \pattern, \nobuf, [[\note, \seq, [15,15,15,15]], [\dur, 0.5], [\amp, 0.8] ], [\instrument, \perkysine]);
 
 //stop gradually
 (
@@ -213,10 +214,19 @@ Block.schedCount({|count| Block.stop(count); count.postln }, 1, 5);
 //scheduling
 Radicles.new;
 Radicles.schedFunc = {|a,b| [a,b].postln};
-Radicles.schedAction({"boom".postln});
+Radicles.schedAction({"boom".postln}); //although if you set a clock ndefs will synch automatically so no need for this
 Radicles.schedCount({|a| a.postln}, 1, 4);
 Radicles.schedCount({|a| a.postln}, 10, 14, true); //loop
 
+(
+Block.add;
+Block.playNdefs;
+)
+//set synth and wait
+Block.play(1, \loop, \SinedPink, [\rate, 2, \mul, 0.1], sync: true); //block, slot, block name, buffer, extraArgs
+
+//start synth
+Block.syncStart;
 
 
 Types of Blocks
@@ -734,21 +744,7 @@ Block.play(4, \loop, \marilyn1, [\rate, 4.2]);
 
 Block.liveBlocks
 
-BStore.bstores.do{|item| item.plot}
-
-~blockFunc = SynthFile.read(\block, \loop);
-~blockFuncString = ~blockFunc.cs;
-
-Block.setBufferID(\marylin, ~blockFuncString);
-
-SynthFile.postAll(\block);
-
-SynthFile.write(\block, \vosc, {arg buffer; {arg bufoffset=0, freq=440, phase=0, mul=0.5;
-		var bufnum;
-		bufnum = buffer[0].bufnum;
-	VOsc.ar(bufoffset+MouseX.kr(bufnum, bufnum+buffer.size-1), freq, phase, mul)} });
-
-DataFile.postAll(\wavetables)
+Block.stopAll(5);
 
 
 ////////

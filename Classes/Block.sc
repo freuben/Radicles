@@ -1,7 +1,8 @@
 /*getting there. still troubleshoot buffer arrays when the array has files that are already playing. also look at simultaneaus evaluation of blocks - particularly as they have the same buffer file*/
 
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
-	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo, <pattCount=1;
+	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
+	<pattCount=1, <timecond;
 
 	*add {arg channels=1;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -15,6 +16,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		ndefs = ndefs.add(Ndef(ndefTag));
 		blocks = blocks.add( [ndefTag, channels] );
 		liveBlocks = liveBlocks.add(nil);
+		timecond = timecond.add(Condition(false));
 	}
 
 	*addNum {arg number, channels=1;
@@ -40,6 +42,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
 			liveBlocks.removeAt(blockIndex);
+			timecond.removeAt(blockIndex);
 		}, {
 			"Block Number not Found".warn;
 		});
@@ -59,17 +62,18 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		ndefs.removeAtAll(newArr);
 		blocks.removeAtAll(newArr);
 		liveBlocks.removeAll(newArr);
+		timecond.removeAll(newArr);
 	}
 
 	*removeAll {var string;
 		ndefs.do{|item|
 			string = (item.cs ++ ".clear;");
 			string.radpost.interpret;
-			/*item.clear*/
 		};
 		ndefs = [];
 		blocks = [];
 		liveBlocks = [];
+		timecond = [];
 		blockCount = 1;
 	}
 
@@ -78,10 +82,32 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		ndefs = [];
 		blocks = [];
 		liveBlocks = [];
+		timecond = [];
 		blockCount = 1;
 	}
 
-	*play {arg block=1, blockName, buffer, extraArgs, data;
+	*initCond {arg block=1;
+		timecond[block-1] = Condition(false);
+		timecond[block-1].test = false;
+	}
+
+	*syncStart {arg block=1;
+		timecond[block-1].test = true;
+		timecond[block-1].signal;
+	}
+
+	*allSync {
+		/*{*/
+			blocks.flop[0].do{|item|
+				var blockNum;
+				blockNum = item.asString.replace("block").asInteger;
+				this.syncStart(blockNum);
+				/*server.sync;*/
+		};
+		/*}.fork;*/
+	}
+
+	*play {arg block=1, blockName, buffer, extraArgs, data, sync=false, action;
 		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncString,
 		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize,
 		pattArr, extraPattCount, bufIndex, bufString, bufIDs;
@@ -89,6 +115,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			blockIndex = block-1;
 			if(ndefs[blockIndex].notNil, {
 				{
+					this.initCond(block);
 					if((blockName == 'pattern').not, {
 						blockFunc = SynthFile.read(\block, blockName);
 						blockFuncString = blockFunc.cs;
@@ -99,21 +126,19 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 									storeType = bufferArr[0];
 									bufInfo = bufferArr[1];
 									bufferID = bufferArr[2];
-									cond = Condition(false);
-									cond.test = false;
 									if(bufInfo.notNil.or(bufInfo == \nobuf), {
+										server.sync;
 										BStore.add(storeType, bufInfo, {arg buf;
 											bufIndex = BufferSystem.bufferArray.indexOf(buf);
 											bufString = BufferSystem.globVarArray[bufIndex];
 											blockFunc = blockFuncString.replace("\\buffer",
 												bufString).replace("'buffer'", bufString).interpret;
-											cond.test = true;
-											cond.signal;
 											if(data.notNil, {
 												this.readWavetable(data, buf);
 											});
 										});
-										cond.wait;
+										server.sync;
+										/*cond.wait;*/
 									}, {
 										"Buffer not provided".warn;
 									});
@@ -141,10 +166,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 										if(data.notNil, {
 											/*"if this is a wavetable then alloc consecutive buffers".postln;*/
 											if(BStore.bstores.notNil, {
-												/*"bla".postln;
-												bstoreSize = (BufferSystem.globVarArray.collect{|item|
-												item.cs.replace("~buffer", "").interpret}).maxItem.asInteger;
-												bstoreSize = bstoreSize+1;*/
 												bstoreSize = BStore.bstores.collect({|item| item.bufnum}).maxItem+1;
 											}, {
 												bstoreSize = 0;
@@ -152,6 +173,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											bufferID = bufferID.collect({|item, index| item = [item[0], item[1], item[2]
 												++ [1, bstoreSize+index] ] });
 										});
+										server.sync;
 										BStore.addAll(bufferID, {arg buf;
 											bufferID.do{|item|
 												bufIDs = BStore.buffByID(item);
@@ -173,7 +195,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 													};
 												}, {
 													/*"this data is a symbol".postln;*/
-													/*DataFile.read(\wavetables, data).cs.radpost;*/
 													buf.do{|item, index|
 														(DataFile.read(\wavetables, data).cs ++ ".(" ++
 															bufString[index] ++ "," ++ (buf.size+1) ++ ", " ++
@@ -184,7 +205,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											});
 										});
 										cond.wait;
-										nodeTime.wait;
+										server.sync;
+										/*nodeTime.wait;*/
 										/*"this buffer array that need to be allocated".postln;*/
 									});
 								});
@@ -217,6 +239,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						pattCount = pattCount + 1;
 						/*blockFuncCS = blockFunc;*/
 					});
+						if(sync, {
+						timecond[block-1].wait;
+					});
 					if(liveBlocks[blockIndex].notNil, {
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
 							/*"free buffer from play".postln;*/
@@ -245,8 +270,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							});
 						});
 					});
+					server.sync;
 					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
+					action.();
 				}.fork;
 			}, {
 				"This block does not exist".warn;
@@ -282,6 +309,36 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	}
 
+	*playAll {arg blockArr, blockName, buffer, extraArgs, data, sync=false, action;
+		var blockNameArr, bufferArr, extraArgsArr, dataArr, syncArr, cond;
+		cond = Condition(false);
+		if(blockName.isArray, {blockNameArr = blockName}, {blockNameArr =
+			blockName!blockArr.size});
+		if(buffer.isArray, {bufferArr = buffer}, {bufferArr = buffer!blockArr.size});
+		if(extraArgs.rank != 1, {extraArgsArr = extraArgs}, {extraArgsArr =
+			extraArgs!blockArr.size});
+		if(data.isArray, {
+			if(data.rank != 1, {dataArr = data}, {dataArr = data!blockArr.size});
+		}, {dataArr = data!blockArr.size});
+		if(sync.isArray, {syncArr = sync}, {syncArr = sync!blockArr.size});
+		{
+			blockArr.do{|item, index|
+				[item, blockNameArr[index], bufferArr[index], extraArgsArr[index],
+					dataArr[index], syncArr[index]].postln;
+				cond.test = false;
+				this.play(item, blockNameArr[index], bufferArr[index], extraArgsArr[index],
+					dataArr[index], syncArr[index], {
+						cond.test = true;
+						cond.signal;
+				});
+				if(syncArr[index].not, {
+				cond.wait;
+				});
+			};
+			action.();
+		}.fork;
+	}
+
 	*stopAll {arg fadeOut;
 		fadeOut ?? {fadeOut = this.fadeTime};
 		if(liveBlocks.notNil, {
@@ -304,7 +361,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			if(thisBuffer.notNil, {
 				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
 					/*"remove buffer".postln;*/
-					this.nodeTime.wait;
+					server.sync;
+					/*this.nodeTime.wait;*/
 					if(thisBuffer.rank <= 1, {
 						BStore.removeID(thisBuffer);
 					}, {
@@ -341,7 +399,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					argArr.cs.replace("[", "").replace("]", "") ++  ");").radpost;
 			});
 			argArr.keysValuesDo{|key, val|
+				if(ndefs[blockIndex].isPlaying, {
 				ndefs[blockIndex].xset(key, val);
+				});
 			};
 		}, {
 			"Block not found".warn;
