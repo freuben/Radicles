@@ -389,6 +389,7 @@ Block.set(4, [\rate, rrand(0.5, 3)], true);
 Block.play(1, \loop, \SinedPink, [\rate, 2, \mul, 0.8]);
 
 //blocks with more buffers represented as array:
+//some work on this:
 Block.play(1, \loopAll, [\marilyn1, \SinedPink], [\rate, 1, \mul, 0.8]); //block, slot, block name, buffer, extra
 
 Block.stop(1);
@@ -746,7 +747,49 @@ Block.liveBlocks
 
 Block.stopAll(5);
 
+Block.clear
+////////
 
+
+Block.addNum(4);
+Block.playNdefs;
+Block.playAll([1,2,3,4], \loop, \marilyn1, [ [\rate, 2, \mul, 0.8], [\rate, 0.5], [\rate, 1.2], [\rate, 4.2] ]); //block, slot, block name, buffer, extraArgs
+
+Block.playAll([1,2,3,4], \loop, \marilyn1, [\rate, 2], sync: true);
+
+Block.allSync;
+
+Block.set(1, [\rate, 1.2]);
+Block.set(2, [\rate, 2.2]);
+Block.set(3, [\rate, 5.2]);
+Block.set(4, [\rate, 15.2]);
+
+Block.playAll([1,2,3,4], \loop, \SinedPink, [\rate, 2], sync: true);
+
+Block.allSync;
+
+
+Block.playAll([1,2], \vosc, [512!12, 512!8], [[\freq, 200], [\freq, 100]], \varsquared, true);
+Block.allSync;
+
+Block.play(1, \vosc, 512!12, [\freq, 200], \varsquared);
+
+Block.play(2, \vosc, 512!8, [\freq, 100], \varsquared);
+
+Block.playAll([1,2], \vosc, [512!12, 512!8], [[\freq, 100], [\freq, 200]], \varsquared, true);
+Block.allSync;
+
+Block.stopAll(1);
+
+Block.clear;
+
+a = [\rate, 2, \mul, 0.8]
+a.rank
+
+a = [ [\rate, 2, \mul, 0.8], [\rate, 0.5] ]
+
+
+Ndef('block2').set( 'freq', 200 );
 ////////
 "coding ideas"
 

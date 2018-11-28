@@ -107,7 +107,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		/*}.fork;*/
 	}
 
-	*play {arg block=1, blockName, buffer, extraArgs, data, sync=false, action;
+	*play {arg block=1, blockName, buffer, extraArgs, data, sync=false, xfade=true, action;
 		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncString,
 		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize,
 		pattArr, extraPattCount, bufIndex, bufString, bufIDs;
@@ -258,7 +258,11 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							}, {
 								newArgs = [blockFunc.argNames, extraArgs].flop.flat;
 							});
-							this.xset(block, newArgs);
+							if(xfade, {
+								this.xset(block, newArgs);
+							}, {
+							this.set(block, newArgs);
+							});
 						});
 					}, {
 						/*"no pattern before".postln;*/
@@ -309,8 +313,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	}
 
-	*playAll {arg blockArr, blockName, buffer, extraArgs, data, sync=false, action;
-		var blockNameArr, bufferArr, extraArgsArr, dataArr, syncArr, cond;
+	*playAll {arg blockArr, blockName, buffer, extraArgs, data, sync=false, xfade=false, action;
+		var blockNameArr, bufferArr, extraArgsArr, dataArr, syncArr, xfadeArr, cond;
 		cond = Condition(false);
 		if(blockName.isArray, {blockNameArr = blockName}, {blockNameArr =
 			blockName!blockArr.size});
@@ -321,13 +325,14 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			if(data.rank != 1, {dataArr = data}, {dataArr = data!blockArr.size});
 		}, {dataArr = data!blockArr.size});
 		if(sync.isArray, {syncArr = sync}, {syncArr = sync!blockArr.size});
+		if(xfade.isArray, {xfadeArr = xfade}, {xfadeArr = xfade!blockArr.size});
 		{
 			blockArr.do{|item, index|
-				[item, blockNameArr[index], bufferArr[index], extraArgsArr[index],
-					dataArr[index], syncArr[index]].postln;
+				/*[item, blockNameArr[index], bufferArr[index], extraArgsArr[index],
+					dataArr[index], syncArr[index], xfade[index] ].postln;*/
 				cond.test = false;
 				this.play(item, blockNameArr[index], bufferArr[index], extraArgsArr[index],
-					dataArr[index], syncArr[index], {
+					dataArr[index], syncArr[index], xfadeArr[index], {
 						cond.test = true;
 						cond.signal;
 				});
@@ -380,11 +385,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			blockIndex = block-1;
 			if(post == true, {
 				(ndefs[blockIndex].cs	++ ".set(" ++
-					argArr.cs.replace("[", "").replace("]", "") ++  ");").radpost;
+					argArr.cs.replace("[", "").replace("]", "") ++  ");").radpost.interpret;
 			});
-			argArr.keysValuesDo{|key, val|
-				ndefs[blockIndex].set(key, val);
-			};
 		}, {
 			"Block not found".warn;
 		});
@@ -396,13 +398,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			blockIndex = block-1;
 			if(post == true, {
 				(ndefs[blockIndex].cs	++ ".xset(" ++
-					argArr.cs.replace("[", "").replace("]", "") ++  ");").radpost;
+					argArr.cs.replace("[", "").replace("]", "") ++  ");").radpost.interpret;
 			});
-			argArr.keysValuesDo{|key, val|
-				/*if(ndefs[blockIndex].isPlaying, {*/
-				ndefs[blockIndex].xset(key, val);
-				/*});*/
-			};
 		}, {
 			"Block not found".warn;
 		});
