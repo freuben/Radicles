@@ -1,5 +1,3 @@
-/*getting there. still troubleshoot buffer arrays when the array has files that are already playing. also look at simultaneaus evaluation of blocks - particularly as they have the same buffer file*/
-
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
 	<pattCount=1, <timecond;
@@ -98,11 +96,11 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*allSync {
 		/*{*/
-			blocks.flop[0].do{|item|
-				var blockNum;
-				blockNum = item.asString.replace("block").asInteger;
-				this.syncStart(blockNum);
-				/*server.sync;*/
+		blocks.flop[0].do{|item|
+			var blockNum;
+			blockNum = item.asString.replace("block").asInteger;
+			this.syncStart(blockNum);
+			/*server.sync;*/
 		};
 		/*}.fork;*/
 	}
@@ -239,7 +237,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						pattCount = pattCount + 1;
 						/*blockFuncCS = blockFunc;*/
 					});
-						if(sync, {
+					if(sync, {
 						timecond[block-1].wait;
 					});
 					if(liveBlocks[blockIndex].notNil, {
@@ -261,7 +259,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							if(xfade, {
 								this.xset(block, newArgs);
 							}, {
-							this.set(block, newArgs);
+								this.set(block, newArgs);
 							});
 						});
 					}, {
@@ -328,8 +326,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		if(xfade.isArray, {xfadeArr = xfade}, {xfadeArr = xfade!blockArr.size});
 		{
 			blockArr.do{|item, index|
-				/*[item, blockNameArr[index], bufferArr[index], extraArgsArr[index],
-					dataArr[index], syncArr[index], xfade[index] ].postln;*/
 				cond.test = false;
 				this.play(item, blockNameArr[index], bufferArr[index], extraArgsArr[index],
 					dataArr[index], syncArr[index], xfadeArr[index], {
@@ -337,7 +333,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						cond.signal;
 				});
 				if(syncArr[index].not, {
-				cond.wait;
+					cond.wait;
 				});
 			};
 			action.();

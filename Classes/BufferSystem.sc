@@ -9,8 +9,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 
 	*bufferCount {
 		if(bufcount < server.options.numBuffers, {
-					bufcount = bufcount + 1;
-					}, {
+			bufcount = bufcount + 1;
+		}, {
 			bufcount = 0;
 		});
 	}
@@ -121,7 +121,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		^selectedPath;
 	}
 
-			*alloc {arg numFrames, numChannels, function;
+	*alloc {arg numFrames, numChannels, function;
 		var main, buffer, globVar;
 		main = this.cond;
 		numFrames ?? {numFrames = 44100};
@@ -228,7 +228,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 						globVarArray = globVarArray.add(globVar);
 						(globVar ++ " = " ++ "Buffer.cueSoundFileBuf(s, " ++ item[0].cs ++
 							", " ++ newArr[0] ++ ", " ++ chanNum ++  ", " ++ cueSize ++
-						", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+							", bufnum: " ++ bufcount ++ ");").radpost.interpret;
 						buffer = globVar.interpret;
 						bufferArray = bufferArray.add(buffer);
 						this.bufferCount;
@@ -245,7 +245,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		}, {"Server not running".warn});
 	}
 
-			*add {arg arg1, arg2, function;
+	*add {arg arg1, arg2, function;
 		var getPath, getIndex, getBufferPaths, cueBool, buffunction;
 		if(arg1.isNumber, {
 			//allocate buffer: arg1: frames, arg2: channels, arg3: bufnum
