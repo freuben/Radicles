@@ -432,8 +432,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		recBlocks = recBlocks.add( [ndefTag, channels] );
 	}
 
-	*getRecBStoreIDs {arg number=1, seconds=1, channels=1, format=\audio, frameSize=2048,
-		hopSize=0.5;
+	*getRecBStoreIDs {arg number=1, seconds=1, channels=1, format=\audio,
+		frameSize=2048, hopSize=0.5;
 		var buffer, numFrames, resultArr;
 		number.do{
 			if(format==\audio, {numFrames=seconds*Server.default.sampleRate;
@@ -450,15 +450,15 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		^resultArr;
 	}
 
-	*addRecNum {arg number=1, seconds=1, channels=1, format=\audio, frameSize=2048,
-		hopSize=0.5, func;
+	*addRecNum {arg number=1, seconds=1, channels=1, format=\audio,
+		frameSize=2048, hopSize=0.5, func;
 		var bufferArr;
 		number.do{
 			this.addRecNdefs(channels);
 		};
 		bufferArr = this.getRecBStoreIDs(number, seconds, channels, format, frameSize, hopSize);
 		BStore.addAll(bufferArr, {|bufArr|
-			"Record Buffers Allocated".postln;
+			/*"//Record Buffers Allocated".radpost;*/
 			func.(bufArr);
 		});
 	}
@@ -480,7 +480,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 				frameSize,hopSize).unbubble);
 		};
 		BStore.addAll(bufferArr, {|bufArr|
-			"Record Buffers Allocated".postln;
+			/*"//Record Buffers Allocated".postln;*/
 			func.(bufArr);
 		});
 	}
@@ -490,7 +490,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		recindex = recbuf - 1;
 		if((recbuf >= 1).and(recbuf <= recBlocks.size), {
 			{
-				fadeTime = recNdefs[recindex].fadeTime.postln;
+				fadeTime = recNdefs[recindex].fadeTime;
 				recNdefs[recindex].clear;
 				recNdefs.removeAt(recindex);
 				recBlocks.removeAt(recindex);
@@ -530,15 +530,15 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		});
 	}
 
-	*rec {arg recblock=1, input=1, loop=0, recLevel, preLevel;
-		var blockIndex, blockFunc, blockFuncCS, blockFuncString, argString;
-		var setRec, recBufData, inString, recType;
+	*rec {arg recblock=1, input=1, loop=0, recLevel, preLevel, xfade=false;
+		var blockIndex, blockFunc, blockFuncCS, blockFuncString, bufString;
+		var setRec, recBufData, inString, recType, bufIndex, bufIDs, setArg;
 		if(recblock >= 1, {
 			blockIndex = recblock-1;
 			if((input.isNumber).or(input.isArray), {
 				inString = "SoundIn.ar(" ++ (input-1).cs ++ ")";
 			}, {
-				inString = input.cs;
+				inString = input.cs; //for ndefs
 			});
 			if(recNdefs.notNil, {
 				if(recNdefs[blockIndex].notNil, {
@@ -552,30 +552,30 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					}, {
 						recType = \recpv;
 					});
-					blockFunc = SynthFile.string(\block, recType);
-					blockFunc = blockFunc.replace("\\in", inString);
-					blockFunc = blockFunc.interpret;
-					blockFuncCS = blockFunc;
+					blockFunc = SynthFile.read(\block, recType);
 					blockFuncString = blockFunc.cs;
-					if(recBufData[2] == \audio, {
-						blockFunc = blockFunc.(BStore.buffByID(recbuffers[blockIndex]), recBufData[1]);
+					bufIDs = BStore.buffByID(recbuffers[blockIndex]);
+					bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
+					bufString = BufferSystem.globVarArray[bufIndex];
+					blockFuncString = blockFuncString.replace("\\buffer",
+						bufString).replace("'buffer'", bufString);
+					blockFuncString = blockFuncString.replace("\\in", inString);
+					blockFunc = blockFuncString.interpret;
+					(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++
+						blockFuncString ++ ");").radpost;
+					recNdefs[blockIndex].put(0, blockFunc);
+						if(xfade, {
+						setArg = ".xset";
 					}, {
-						blockFunc = blockFunc.(BStore.buffByID(recbuffers[blockIndex]), recBufData[1],
-							recBufData[3], recBufData[4]);
+						setArg = ".set";
 					});
 					if(recLevel.notNil, {
-						argString = argString.add(".set('recLevel', " ++ recLevel.cs ++ ");");
+						(recNdefs[blockIndex].cs ++ setArg ++ "(\\recLevel, " ++
+							recLevel ++ ");").radpost.interpret;
 					});
 					if(preLevel.notNil, {
-						argString = argString.add(".set('preLevel', " ++ preLevel.cs ++ ");");
-					});
-					(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++ blockFuncString ++ ");").radpost;
-					recNdefs[blockIndex].source = blockFunc;
-					if(argString.notNil,  {
-						argString.do{|item|
-							setRec = (recNdefs[blockIndex].cs ++ item);
-							setRec.radpost.interpret;
-						};
+						(recNdefs[blockIndex].cs ++ setArg ++ "(\\preLevel, " ++
+							preLevel ++ ");").radpost.interpret;
 					});
 				}, {
 					"This recblock does not exist".warn;
@@ -603,14 +603,15 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		if(recBufInfo[timeInfo[0]-1][2] == \audio, {
 			elapsedTime = (Main.elapsedTime - timeInfo[1]);
 			blockindex = block-1;
-			this.play(block, \looptr, Block.recBuf(timeInfo[0]), extraArgs: [\triggerRate, 1/elapsedTime]);
+			this.play(block, \looptr, Block.recBuf(timeInfo[0]),
+				extraArgs: [\triggerRate, 1/elapsedTime]);
 		}, {
 			"loopTime only works with audio format".warn;
 		});
 	}
 
-	*recNow {arg seconds=1, channels=1, format=\audio, input=1, loop=0, recLevel=1,
-		preLevel=0, frameSize=2048, hopSize=0.5, timer=false;
+	*recNow {arg seconds=1, channels=1, format=\audio, input=1, loop=0,
+		recLevel=1, preLevel=0, frameSize=2048, hopSize=0.5, timer=false;
 		var recblock;
 		this.addRec(seconds, channels, format, frameSize, hopSize, {|item|
 			recblock = item[1].asString.last.asString.asInteger;

@@ -24,8 +24,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					bufAlloc = true;
 					globVar = "~buffer" ++ bufcount;
 					globVarArray = globVarArray.add(globVar);
-					(globVar ++ " = " ++
-						"Buffer.read(s, " ++ pathName.cs ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+					(globVar ++ " = " ++ "Buffer.read(s, " ++ pathName.cs ++
+						", bufnum: " ++ bufcount ++ ");").radpost.interpret;
 					buffer = globVar.interpret;
 					bufferArray = bufferArray.add(buffer);
 					this.bufferCount;
@@ -48,8 +48,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					pathArr.do{|item|
 						globVar = "~buffer" ++ bufcount;
 						globVarArray = globVarArray.add(globVar);
-						(globVar ++ " = " ++
-							"Buffer.read(s, " ++ item.cs ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						(globVar ++ " = " ++ "Buffer.read(s, " ++ item.cs ++
+							", bufnum: " ++ bufcount ++ ");").radpost.interpret;
 						buffer = globVar.interpret;
 						bufferArray = bufferArray.add(buffer);
 						this.bufferCount;
@@ -161,8 +161,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 						item[1] ?? {item[1] = 1};
 						globVar = "~buffer" ++ bufcount;
 						globVarArray = globVarArray.add(globVar);
-						(globVar ++ " = " ++ "Buffer.alloc(s, " ++ item[0] ++
-							", " ++ item[1] ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						(globVar ++ " = " ++ "Buffer.alloc(s, " ++ item[0] ++ ", " ++
+							item[1] ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
 						buffer = globVar.interpret;
 						bufferArray = bufferArray.add(buffer);
 						this.bufferCount;

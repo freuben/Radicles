@@ -1,3 +1,5 @@
+//fix so that filters work with new buffer system.
+
 Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames,
 	<>masterInput, <busArr, <busInArr, <filters, <filterBuff;

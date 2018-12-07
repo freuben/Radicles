@@ -389,7 +389,6 @@ Block.set(4, [\rate, rrand(0.5, 3)], true);
 Block.play(1, \loop, \SinedPink, [\rate, 2, \mul, 0.8]);
 
 //blocks with more buffers represented as array:
-//some work on this:
 Block.play(1, \loopAll, [\marilyn1, \SinedPink], [\rate, 1, \mul, 0.8]); //block, slot, block name, buffer, extra
 
 Block.stop(1);
@@ -422,8 +421,8 @@ Block.ndefs[0].controlKeysValues;
 
 Block.addNum(4);
 
-Ndef('pan1', {Pan2.ar(Mix(Block.ndefs[0].ar), 0) });
-Ndef('pan1').play;
+// Ndef('pan1', {Pan2.ar(Mix(Block.ndefs[0].ar), 0) });
+// Ndef('pan1').play;
 
 Block.play(1, \cue, \marilyn1, [\mul, 1]);
 
@@ -441,18 +440,19 @@ SynthFile.post(\block, \play);
 
 ///////
 //record buffers
+s.boot;
 
 Radicles.document;
 
 Block.addRec(10, func: {|buf| buf.postln; }); //add a buffer of 10 seconds
-Block.addRecNum(4,1, func: {|bufs| bufs.postln}) //add 4 buffers of 1 second
+Block.addRecNum(4,1) //add 4 buffers of 1 second
 //get rid of rec nums;
 Block.removeRec(1)
 Block.removeAllRec;
 BStore.bstoreIDs;
 
 //let's record something!
-Block.addRecArr([ [1,2,\audio],[2,1,\audio], [3,1,\scpv] ], func: {|bufs| bufs.postln }); //add array of buffers of differnet types
+Block.addRecArr([ [1,2,\audio],[2,1,\audio], [3,1,\scpv] ]); //add array of buffers of differnet types
 
 Block.recNdefs;
 Block.recBlocks;

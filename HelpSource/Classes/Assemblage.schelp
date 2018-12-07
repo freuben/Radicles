@@ -1,0 +1,603 @@
+class:: Assemblage
+summary:: An Assembladge or Ndef based Mixer
+related:: Classes/Ndef, Classes/BufferSystem
+categories:: Libraries>Radicles
+
+Description::
+
+A class that for mixing differnet Ndefs and adding effects.
+
+
+classmethods::
+
+method::new
+
+Create new Assemblage.
+
+argument::
+Number of tracks
+
+argument::
+Number of buses
+
+argument::
+Number of audio channels
+
+argument::
+Space type
+
+instancemethods::
+
+method::filter
+
+argument::
+Type of assembladge element (master, bus or track)
+
+argument::
+Assemblage element number
+
+argument::
+Filter slot number
+
+argument::
+Filter type
+
+argument::
+Extra arguments for filter synth
+
+argument::
+Buffer for filter (if required)
+
+argument::
+Data for filter (if required)
+
+
+Examples::
+
+code::
+
+Ndef(\output).play;
+
+Ndef(\output).fadeTime = 0.5;
+
+Blocks //work a nit more on blocks, check the buffers in patterns and alloc
+
+Radicles.lineSize;
+Radicles.document;
+
+/*a = Assemblage(6, 2, [2, 1, 2]);*/
+
+
+a = Assemblage(6, 2);
+
+a.inputs.dopostln;
+
+Block.addNum(3, 2);
+
+a.input(Block.ndefs[0], \track, 1);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata);
+
+SynthFile.read(\block, \sine).cs.includesString(10.asAscii)
+
+ModMap.map(Block.ndefs[0], \freq, \sin, \freq1, [\freq, 1], lag: [\freq, 1]);
+
+a.getTrackInput(\master);
+
+a.getTrackInput(\track, 2);
+
+a.trackNames;
+a.getTrackInput(\bus, 2);
+a.getTrackInput(\bus, 4);
+
+a.getBuses.dopostln;
+
+a.getTracks.dopostln;
+
+a.getMaster.postln;
+
+
+a = Assemblage(6, 2);
+
+Block.addNum(3, 1);
+
+a.setInputs(Block.ndefs, \track, 1);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata);
+
+ModMap.map(Block.ndefs[0], \freq, \sin, \freq1, [\freq, 1], lag: [\freq, 1]);
+
+a.input(Block.ndefs[0], \bus, 1);
+
+a.getInputs(\track1);
+a.ndefs;
+
+a.getAllInputs(true).dopostln;
+a.getAllInputs(false).dopostln;
+
+a.tracks[0][0]
+
+a.respace(\spaceMaster);
+a.findTrackArr(\spaceMaster);
+
+a.tracks[0][0][1].cs;
+
+"Asdf".find("a");
+
+a.space
+
+Ndef.ar(\input1, 1);
+Ndef(\input1).mold(1);
+Ndef.ar(\input2, 2);
+Ndef(\input2).mold(1);
+
+a.input(Ndef(\input1), \track, 1);
+
+a.input(Ndef(\input2), \track, 1);
+
+a.input([Ndef(\input1), Ndef(\input2)], \track, 1)
+
+// Ndef(\spaceTrack1).getKeysValues;
+
+//start work with buses
+(
+a.masterInput = a.masterInput.copyRange(1, a.masterInput.size-1); //get rid of track1 to master
+
+a.input(a.masterInput, \master);
+)
+
+a = Assemblage(6, 2);
+
+a.bus(1, 1, 1);
+a.bus(2, 1, 1);
+
+a.busArr;
+
+a.bus(2, 2, 1);
+a.bus(3, 2, 0.5);
+
+a.busMix(1, 1, 0);
+a.busLag(1, 1, 1);
+a.busMix(1, 1, 1);
+a.busMix(2, 1, 0.5);
+
+Ndef(\bus1In).set(\vol1, 0.5, \vol2, 1);
+
+
+Ndef(\bus1In).numChannels
+Ndef(\bus1In).getKeysValues
+
+
+a.input(Ndef(\busIt), \bus, 1);
+
+a.getTrackInput(\bus, 1);
+
+Ndef(\busIt).source.cs;
+
+Ndef('track1').source.cs;
+
+Ndef(\busIt).set(\vol1, 0.5);
+
+Ndef(\busIt).getKeysValues;
+
+Ndef(\busIt).set(\vol1, 0);
+
+///
+
+//filters
+
+
+
+Radicles.new;
+Radicles.fadeTime = 2;
+
+a = Assemblage(6, 2);
+
+Block.addNum(3, 1);
+
+a.setInputs(Block.ndefs, \track, 1);
+
+Block.play(1, \sine, \nobuf, [220,0,1], \nodata);
+
+a.filter(extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+Ndef('track1').set(\volume, -50); //change track vol
+
+a.filters;
+
+a.getTracks[0];
+
+a.filter(\track, 1, 2, extraArgs: [\pitchRatio, 0.5, \pitchDispertion, 0.1]);
+
+a.filters;
+
+a.specs[1]
+a.removeFilter(\track, 1, 1);
+
+a.findTrackArr(\track1)
+
+a.ndefs[0]
+a.specs[1].flop[0]
+
+a.removeTrackFilters(\track, 1);
+
+a.removeTrackFilters(\master, 1);
+
+a.filter(\master, 1, 2, extraArgs: [\pitchRatio, 0.5, \pitchDispertion, 0.1]);
+
+a.filters;
+
+a.removeAllFilters;
+
+a.removeAllFilters(\track);
+
+a.removeAllFilters(\master);
+
+a.tracks[1][1][1]
+a.specs[1][1][1]
+
+a.specs[1].flop
+
+
+
+a.filter(\bus, 2, 2, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+a.filter(\master, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+a.filter(\master, 1, 2, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0.1]);
+
+a.collectTrackArr(\filterTrack);
+a.collectTrackArr(\filterTrack1);
+a.collectTrackArr(\filterTrack2);
+a.getTracks[0].dopostln;
+
+SynthFile.read(\filter, \lpf).cs;
+
+a.filter(filter: \lpf);
+a.filters;
+
+a.filter(\track, 1, 3, extraArgs: [\pitchRatio, 3.5, \pitchDispertion, 0.5]);
+a.filters;
+
+Ndef(\filterTrack1).set(\pitchRatio, 2);
+
+Ndef(\filterTrack1).getKeysValues
+
+a.tracks
+
+a.ndefs;
+
+Ndef(\track1).source.cs
+
+Ndef(\track1).set(\volume, 0.ampdb);
+
+Ndef(\track1).getKeysValues
+
+////
+//convolution reverb
+
+a = Assemblage(6, 2);
+
+Block.addNum(3, 1);
+
+a.setInputs(Block.ndefs, \track, 1);
+
+Block.play(1, \loop, \marilyn1);
+
+// Ndef('spaceTrack1').set(\pan, 1);
+
+
+a.filter(\track, 1, 1, \convrev1, data: [\convrev, \ortf_s1r1, 2048]);
+
+a.filterBuff[0];
+
+a.filter(\master, 1, 1, \convrev1, data: [\convrev, \ortf_s1r1, 2048]);
+
+Ndef('track1').set(\volume, -30);
+
+BStore.stores;
+
+SynthFile.read(\block)
+
+// BStore.removeID([\cue, \cue2, \marilyn1]);
+
+////
+a.ndefs.flop[1];
+
+
+a.bus(1, 1, 0.5, false); //track number, bus number, mix, dirIn
+
+
+block1 -> track1 -> master
+block2 -> track2 -> master
+block3 -> track3 -> master
+block4 -> track4 -> master
+input -> track5 -> master
+
+
+//
+~arr = [Ndef(\input1), Ndef(\input2)];
+
+~arr.collect{|item| item.numChannels
+
+~tracksOut = a.getTracks.flop.last.flop[0];
+~busOut = a.getBuses.flop.last.flop[0];
+~masterIn = ~tracksOut ++ ~busOut;
+~ndefArr = ~masterIn.collect({ |item| Ndef(item) });
+a.input(~ndefArr, \master)
+
+// a.tracks[1].insert(0, ~ndefArr);
+
+~input = a.tracks[1].copyRange(0, 1)
+
+a.autoRoute(~input);
+
+a.tracks[2].insert(0, [ [\input2, \input3] ]);
+
+~input = a.tracks[2].copyRange(0, 1)
+
+a.autoRoute(~input);
+
+
+~track  = a.tracks[2];
+~track[0][1]
+"Ndef(" ++ ~track[0][0].cs ++ ", " ++ ~track[0][1].filterFunc([Ndef(\block), Ndef(\block3) ]).cs ++ ");"
+
+
+Ndef(\spaceTrack1, {arg pan=0;
+	Pan2.ar(Ndef.ar('input', 2), pan);
+});
+
+
+Ndef.ar(\filter, 2);
+~arr.insert(1, [\filter, SynthFile.read(\filter, \pch);]);
+
+a.autoRoute(~arr);
+
+Ndef('spaceMaster', {Pan2.ar(SinOsc.ar)});
+
+Ndef('filter').set(\pitchRatio, 0.5);
+
+Ndef('filter').set(\pitchRatio, 4);
+
+Ndef(\master).set(\volume, -10);
+
+SynthDefFile.write(\space, \bal2, {arg pan = 0 -> [-1,1];
+	var source;
+	source = \in;
+	Balance2.ar(source[0], source[1], pan);
+}, "Equal power panner balances two channels");
+
+a = Assemblage(6, 2);
+
+~arr = a.master;
+
+a.tracks;
+
+a.addTrack;
+
+a.space;
+
+a.trackNames;
+
+Ndef.ar(\filter2, 2);
+
+~arr.insert(1, [\filter2, [SynthFile.read(\filter, \pch2), Ndef(\soundin) ] ]);
+
+a.autoRoute(~arr);
+
+
+
+a.filter(1, 1, \pch2, ); //track, slot, filter name, buffer, extraArgs, data
+
+Block
+
+
+SpecFile.read(\filter, \pch2).cs;
+
+SynthDefFile.write(\filter, \pch2, {arg centerpitch=440,bus=0, pitchDispertion=0.0, timeDispersion=0.0, lag=0.1, winSize=0.1;
+	var freq, hasFreq;
+	# freq, hasFreq = Pitch.kr(\in2, ampThreshold: 0.0, median: 7);
+	PitchShift.ar(\in1, winSize, (freq/centerpitch).lag(lag), pitchDispertion, timeDispersion) }, "pitch shifter with pitch follower");
+
+
+NodeProxy
+
+a.autoRoute(~arr);
+
+Ndef('master').lag(5);
+Ndef('master').vol = 1;
+
+Ndef('master').source.cs
+
+~func = {arg volume=0;  ( \in * volume.dbamp ).softclip };
+
+~func = {arg volume=0; (\in * volume.dbamp ).softclip}
+
+~func.filterFunc(Ndef(\bla)).cs
+
+Ndef(\bla)
+Ndef(\bla).numChannels
+
+
+~func.filterFunc(Ndef(\bla));
+~func.filterFunc([Ndef(\bla), Ndef(\bla2)]);
+
+~func.cs.replace(92.asAscii ++ "in", "Ndef('spaceMaster')" )
+
+~func.cs.includes((92.asAscii ++ "in";))
+
+~arr1 = (92.asAscii ++ "in1";);
+
+~arr2 = ~func.cs
+
+~arr2.find(~arr1)
+
+~arr2.includes(~arr1)
+
+nil.interpret
+~func
+
+~func = {arg volume=0;  ( \in1 * volume.dbamp ).softclip + \in2};
+
+~func.filterFunc(Ndef(\bla));
+~func.filterFunc([Ndef(\bla), Ndef(\bla2)]);
+
+
+~ndefArr = [Ndef(\bla), Ndef(\bla2)];
+
+~func = {arg volume=0;  ( \in1 * volume.dbamp ).softclip };
+
+~func.cs.includes();
+
+Ndef(~arr[0], {Pan2.ar(SinOsc.ar, 0)});
+
+a.play;
+
+
+Assemblage.addStem(Block.ndefs[0]);
+
+Assemblage.stems;
+
+Assemblage.outputs;
+
+
+Ndef(\output, { Stem.outputs[0] });
+
+Ndef(\output, {DC.ar(0)});
+
+Assemblage.addStems(5, 2);
+
+Assemblage.stems;
+
+Assemblage.ndefs
+
+Assemblage.ndefs[0].numChannels
+
+Assemblage.filter(1, 1, \nubuf);
+
+Assemblage.addNode();
+
+Assemblage.master();
+
+
+
+//////
+
+Ndef(\output).lag(1);
+
+
+Ndef(\output, { Ndef(\block1) });
+
+
+"as a a".replace("a", "1")
+
+Ndef('master').getKeysValues;
+
+
+Ndef('master', {|freq=400| SinOsc.ar(freq) });
+
+
+"gello".radpost(\fork)
+
+"gello".lineFormat.postin(\ide, \fork)
+
+"hello asd sdfasdfasdfsadf".lineFormat(80)
+
+
+"hello".includes(10.asAscii).not
+
+
+
+Ndef(\output).play;
+
+Ndef(\output).fadeTime = 0.5;
+
+
+Block.addNum(3, 2);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata);
+
+
+Stem.add(Block.ndefs[0]);
+
+Stem.stems;
+
+Stem.outputs;
+
+
+Ndef(\output, { Stem.outputs[0] });
+
+Ndef(\output, {DC.ar(0)});
+
+Stem.addNum(5, 2);
+
+Stem.stems;
+
+Stem.ndefs
+
+Stem.ndefs[0].numChannels
+
+Stem.filter(1, 1);
+
+
+Ndef('master').bus
+
+Ndef('master').vol = 0.5;
+
+Ndef('master').getKeysValues;
+
+Ndef('master').keysValuesDo({|item| item.postln});
+
+////
+
+~input = [\input] ++ [a.tracks[0][0]]
+
+/*~input = [a.tracks[0][0]]*/
+
+autoRoute {arg trackInfo;
+		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
+
+	~newArr = ~input.reverse;
+		~ndefArr = ~newArr.flop[0];
+		~synthArr = ~newArr.flop[1];
+		(newArr.size-1).do{|index|
+			var extraArgs, synthFunc, dest;
+			~extraArgs = Ndef(~ndefArr[0]).getKeysValues;
+			~dest = Ndef(~ndefArr[0+1]);
+		if(~synthArr[0].isFunction, {
+		if(~synthArr[0].isArray, {
+				~thisSynthFunc = ~synthArr[0];
+				~synthFunc = ~thisSynthFunc.filterFunc([~dest] ++
+					~thisSynthFunc.copyRange(1, ~thisSynthFunc.size-1); );
+			}, {
+				~synthFunc = ~synthArr[0].filterFunc(~dest);
+			});
+
+			if(~extraArgs.isEmpty, {
+				~ndefCS = ("Ndef(" ++ ~ndefArr[0].cs ++ ", " ++ ~synthFunc.cs ++ ");");
+			}, {
+				~ndefCS = ("Ndef(" ++ ndefArr[index].cs ++ ").put(0, " ++ synthFunc.cs ++
+					", extraArgs: " ++ extraArgs.cs ++ ");");
+			});
+
+		}, {
+			~synthArr[0].postln;
+		});
+
+
+			~intArr = ~intArr.add(~ndefCS);
+		};
+		~intArr.reverse.do{|item| item.radpost; item.interpret };
+	}
+
+
+~synthFunc.cs
+Ndef.ar(\input, 1);
+Ndef.ar(\input2, 1);
+{Pan2.ar(SinOsc.ar(440)!2, Line.kr(-1,1,5))}.play
+
+
+SynthFile.read(\filter, \pch2).filterFunc([Ndef(\input), Ndef(\input2)]).cs
+
+::
