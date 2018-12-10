@@ -47,11 +47,11 @@ BufferSystem.addPairs(['marilyn1',~path, 'SinedPink',~path], {|item| item.do{|bu
 BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], {|item| item.do{|buf| buf.numFrames.postln } });
 
 //add any type
-BufferSystem.addAllTypes(['marilyn1', [1234,2], 'SinedPink'], ~path, function: {|item| a = item; });
+BufferSystem.addAll(['marilyn1', [1234,2], 'SinedPink'], ~path, function: {|item| a = item; });
 a.postin(\ide, \doln);
 
 (
-BufferSystem.addAllTypes([[35424,1], 'marilyn1', [1234,2], 'SinedPink',  [2342, 1]],
+BufferSystem.addAll([[35424,1], 'marilyn1', [1234,2], 'SinedPink',  [2342, 1]],
 	~path, {|item| a = item.postln});
 )
 a.postin(\ide, \doln);
@@ -97,8 +97,12 @@ BufferSystem.bufferArray.postin(\ide, \doln);
 BufferSystem.freeAll;
 BufferSystem.tags;
 
+//load whole directory
+BufferSystem.readDir(~path, {|bufArr| bufArr.do{|buf| buf.play} });
+
 //post tags and path for a Directory
 BufferSystem.dirDialog;
+
 
 //set default path from Dialog
 BufferSystem.setDefaultPath;
@@ -106,10 +110,11 @@ BufferSystem.dirTags.dopostln;
 
 
 BufferSystem.bufferArray;
+BufferSystem.bufferArray.dopostln;
 BufferSystem.bufferInfo.dopostln;
 
 //add full directory into system
-~dirPath = "/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/"
+~dirPath = "/Users/federicoreuben/Music/Sounds/radiohead_tracks/";
 BufferSystem.addDir(~dirPath, {|item| item.postln });
 BufferSystem.freeAll;
 
@@ -126,26 +131,44 @@ BufferSystem.freeAll;
 ~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/SoundFiles/Play/0/";
 
 //args: [file,[start,bufSize]], path, function
-BufferSystem.add(['marilyn1',[0,2]], ~path, {|item| item.numFrames.postln });
+BufferSystem.add(['marilyn1','cue',[0,2]], ~path, {|item| item.numFrames.postln });
 BufferSystem.tags;
 
 BufferSystem.get(\disk0_marilyn1);
 BufferSystem.free(\disk0_marilyn1);
 
-BufferSystem.addAll([['marilyn1',[0,1]], ['SinedPink',[0,1]]], ~path, {|item| item.postln });
+//readChannels
+BufferSystem.add(['marilyn1',[0]], ~path, {|item| item.play });
+
+BufferSystem.add('marilyn1', ~path, {|item| item.play});
+
+BufferSystem.addAll([['marilyn1','cue',[0,1]], ['SinedPink','cue',[0,1]]], ~path, {|item| item.postln });
+
+~arr = [['marilyn1',[0]], 'marilyn1', [1234,2], [2342, 1], [35424,1], ['marilyn1','cue',[0,1]]]
+
+~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/SoundFiles/Play/0/";
+
+BufferSystem.addAll(~arr, ~path, {|item| item.postln });
+
+
+BufferSystem.addAll([[1234*2,4], 'marilyn1', [1234,2], [1234,1], ['SinedPink', 'cue', [0,1]] ], ~path, function: {|item| a = item; });
+
+BufferSystem.tags
+
 
 BufferSystem.tags;
+
 
 BufferSystem.freeAll;
 
 //mix of alloc, read and cue
-BufferSystem.addAllTypes([[1234*2,4], 'marilyn1', [1234,2], [1234,1], ['SinedPink', [0,1]] ], ~path, function: {|item| a = item; });
+BufferSystem.addAll([[1234*2,4], 'marilyn1', [1234,2], [1234,1], ['SinedPink', [0,1]] ], ~path, function: {|item| a = item; });
 a.postin(\ide, \doln);
 
 BufferSystem.freeAll;
 
 //cue full directory
-~dirPath = "/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/"
+~dirPath = "/Users/federicoreuben/Music/Sounds/radiohead_tracks/";
 
 BufferSystem.cueDir(~dirPath, 0, 1, {|item| item.postln });
 BufferSystem.freeAll;
@@ -173,13 +196,11 @@ BufferSystem.bufferInfo.dopostln;
 BufferSystem.bufferInfo.flop[0].dopostln;
 
 ~path = [
-"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/tr8_glidetom.wav",
-"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/tr8_hihat.wav",
-"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/tr8_kick.wav",
-"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/tr8_tom.wav",
-"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/try1.wav",
-"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/try2.wav",
-"/Users/federicoreuben/Music/Logic/tr8_spiritus/Bounces/try3.wav"
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_bass.aif",
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_drums.aif",
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_FX.aif",
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_guitar.aif",
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_voice.aif"
 ];
 
 BufferSystem.readAll(~path, {|item| item.do{|buf| buf.play} });

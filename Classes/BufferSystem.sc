@@ -15,7 +15,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		});
 	}
 
-	*read {arg pathName, function;
+	*read {arg pathName, function, channels;
 		var main, buffer, globVar;
 		main = this.cond;
 		if(server.serverRunning, {
@@ -24,12 +24,23 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					bufAlloc = true;
 					globVar = "~buffer" ++ bufcount;
 					globVarArray = globVarArray.add(globVar);
-					(globVar ++ " = " ++ "Buffer.read(s, " ++ pathName.cs ++
-						", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+					if(channels.isNil, {
+						(globVar ++ " = " ++ "Buffer.read(s, " ++ pathName.cs ++
+							", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+					}, {
+						(globVar ++ " = " ++ "Buffer.readChannel(s, " ++ pathName.cs ++
+							", bufnum: " ++ bufcount ++ ", channels: " ++ channels ++ ");")
+						.radpost.interpret;
+					});
 					buffer = globVar.interpret;
 					bufferArray = bufferArray.add(buffer);
 					this.bufferCount;
-					tags = tags.add(this.pathToTag(pathName));
+					if(channels.isNil, {
+						tags = tags.add(this.pathToTag(pathName));
+					}, {
+						tags = tags.add((this.pathToTag(pathName) ++
+							channels).asSymbol);
+					});
 					server.sync(condition);
 					bufAlloc = false;
 					function.(buffer);
@@ -38,22 +49,42 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		}, {"Server not running".warn});
 	}
 
-	*readAll {arg pathArr, function;
+	*readAll {arg pathArr, function, channelsArr;
 		var main, buffer, returnArray, globVar;
 		main = this.cond;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
 					bufAlloc = true;
-					pathArr.do{|item|
+					pathArr.do{|item, index|
 						globVar = "~buffer" ++ bufcount;
 						globVarArray = globVarArray.add(globVar);
-						(globVar ++ " = " ++ "Buffer.read(s, " ++ item.cs ++
-							", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						if(channelsArr.isNil, {
+							(globVar ++ " = " ++ "Buffer.read(s, " ++ item.cs ++
+								", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						}, {
+							if(channelsArr[index].isNil, {
+								(globVar ++ " = " ++ "Buffer.read(s, " ++ item.cs ++
+									", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+							}, {
+								(globVar ++ " = " ++ "Buffer.readChannel(s, " ++ item.cs ++
+									", bufnum: " ++ bufcount ++ ", channels: " ++
+									channelsArr[index] ++ ");").radpost.interpret;
+							});
+						});
 						buffer = globVar.interpret;
 						bufferArray = bufferArray.add(buffer);
 						this.bufferCount;
-						tags = tags.add(this.pathToTag(item));
+						if(channelsArr.isNil, {
+							tags = tags.add(this.pathToTag(item));
+						}, {
+							if(channelsArr[index].isNil, {
+								tags = tags.add(this.pathToTag(item));
+							}, {
+								tags = tags.add((this.pathToTag(item) ++  channelsArr[index])
+									.asSymbol);
+							});
+						});
 						returnArray = returnArray.add(buffer);
 						server.sync(condition);
 					};
@@ -64,12 +95,12 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		}, {"Server not running".warn});
 	}
 
-	*readDir {arg path, function;
+	*readDir {arg path, function, channelsArr;
 		var myPath, newArr;
 		if(path.notNil, {
 			myPath = PathName.new(path);
 			myPath.files.do{|item| newArr = newArr.add(item.fullPath)};
-			this.readAll(newArr, function);
+			this.readAll(newArr, function, channelsArr);
 		}, {
 			"Not path specified".warn;
 		});
@@ -246,7 +277,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	}
 
 	*add {arg arg1, arg2, function;
-		var getPath, getIndex, getBufferPaths, cueBool, buffunction;
+		var getPath, getIndex, getBufferPaths, cueBool, buffunction, readChanBuf;
 		if(arg1.isNumber, {
 			//allocate buffer: arg1: frames, arg2: channels, arg3: bufnum
 			this.alloc(arg1, arg2, function)
@@ -264,7 +295,11 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					if(cueBool, {
 						this.read(getPath, function);
 					}, {
-						this.cue(getPath, arg1[1][0], arg1[1][1], function);
+						if(arg1[1].isSymbol, {
+							this.cue(getPath, arg1[2][0], arg1[2][1], function);
+						}, {
+							this.read(getPath, function, arg1[1]);
+						});
 					});
 				};
 				if(getPath.notNil, {
@@ -275,6 +310,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 							buffunction.();
 						}, {
 							if(cueBool, {
+
 								if(tags.includes(arg1), {
 									("//File already allocated as: ~buffer" ++
 										this.get(arg1).bufnum ).radpost;
@@ -283,7 +319,14 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 									buffunction.();
 								});
 							}, {
-								buffunction.();
+								readChanBuf = ((arg1[0] ++ arg1[1]).asSymbol);
+								if(tags.includes(readChanBuf), {
+									("//File already allocated as: ~buffer" ++
+										this.get(readChanBuf).bufnum ).radpost;
+									function.(this.get(readChanBuf));
+								}, {
+									buffunction.();
+								});
 							});
 						});
 					}, {
@@ -297,84 +340,56 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	}
 
 	*addAllPaths {arg arr, path, function;
-		var getPath, getIndex, getBufferPaths, pathArr, stringArr, existingBuffArr,
-		finalArr, cueBool, cueArgs;
-		if(arr.flat[0].isNumber, {
-			this.allocAll(arr, function)
-		}, {
-			if(arr[0].isSymbol, {arr = arr.rejectSame});
-			if(path.notNil, {
-				arr.do{|item, index|
-					cueBool = item.isArray.not;
-					if(cueBool, {
-						getPath = this.getPath(item, path[index]);
-					}, {
-						getPath = this.getPath(item[0], path[index]);
-						cueArgs = cueArgs.add([getPath, item[1]]);
-					});
-					if(getPath.notNil, {
-						getBufferPaths = this.bufferPaths;
-						if(getBufferPaths.notNil, {
-							getIndex = getBufferPaths.flop[0].indexOfEqual(getPath);
-							if(getIndex.isNil, {
-								pathArr = pathArr.add(getPath);
-							}, {
-								if(tags.includes(item), {
-									pathArr = pathArr.add(this.get(item) );
-								}, {
-									pathArr = pathArr.add(getPath);
-								});
-							});
-						}, {
-							pathArr = pathArr.add(getPath);
-						});
-					})
-				};
-				pathArr.do{|item|
-					if(item.isString, {
-						stringArr = stringArr.add(item);
-					}, {
-						existingBuffArr = existingBuffArr.add(item);
-						("File already allocated as: ~buffer" ++
-							bufferArray.indexOf(item)).radpost;
-					});
-				};
-				if(stringArr.notNil, {
-					if(cueArgs.isNil, {
-						this.readAll(stringArr, {
-							finalArr = arr.collect{|tag|	this.get(tag)};
-							function.(finalArr);
-						});
-					}, {
-						this.cueAll(cueArgs, {|buf|
-							function.(buf);
-						});
-					});
+		var allBuffers;
+		{
+			path ?? {path = defaultPath!arr.size};
+			arr.do{|item, index|
+				if(item.isArray.not, {
+					BufferSystem.add(item, path[index], {|buf| allBuffers = allBuffers.add(buf)} );
 				}, {
-					function.(existingBuffArr);
+					if(item[0].isNumber, {
+						BufferSystem.add(item[0], item[1], {|buf| allBuffers = allBuffers.add(buf)});
+					}, {
+						BufferSystem.add(item, path[index], {|buf| allBuffers = allBuffers.add(buf)});
+					});
 				});
-
+				server.sync;
+			};
+			server.sync;
+			if(allBuffers.notNil, {
+			function.(allBuffers.rejectSame);
 			}, {
-				"No path specified".warn;
+				function.();
 			});
-		});
+		}.fork;
 	}
 
 	*addAll {arg arr, path, function;
-		if(arr.flat[0].isNumber, {
-			//allocate arr: [frames, channels]
-			this.addAllPaths(arr, function: function)
-		}, {
+		var allBuffers;
+		{
 			path ?? {path = defaultPath};
-			if(path.notNil, {
-				this.addAllPaths(arr, path!arr.size, function);
+			arr.do{|item|
+				if(item.isArray.not, {
+					BufferSystem.add(item, path, {|buf| allBuffers = allBuffers.add(buf)} );
+				}, {
+					if(item[0].isNumber, {
+						BufferSystem.add(item[0], item[1], {|buf| allBuffers = allBuffers.add(buf)});
+					}, {
+						BufferSystem.add(item, path, {|buf| allBuffers = allBuffers.add(buf)});
+					});
+				});
+				server.sync;
+			};
+			server.sync;
+			if(allBuffers.notNil, {
+			function.(allBuffers.rejectSame);
 			}, {
-				"No path specified".warn;
+				function.();
 			});
-		});
+		}.fork;
 	}
 
-	*addPairs {arg arr, function;
+	*addPairs {arg arr, function, readChansArr;
 		var newArr;
 		if(arr.indexOf(nil).notNil.not, {
 			if(arr.flat[0].isNumber, {
@@ -382,7 +397,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 				this.addAllPaths(arr.clump(2), function: function)
 			}, {
 				newArr = arr.clump(2).flop;
-				this.addAllPaths(newArr[0], newArr[1], function);
+				this.addAllPaths(newArr[0], newArr[1], function, readChansArr);
 			});
 		}, {
 			"Not all infomation is specified".warn;
@@ -397,7 +412,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 			myPath.files.do{|item|
 				newArr = newArr.add(item.fileNameWithoutExtension.asSymbol;
 			)};
-			this.addAll(newArr, path, function);
+			BufferSystem.addAll(newArr, path, function);
 		}, {
 			"Not path specified".warn;
 		});
@@ -410,88 +425,13 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 			myPath = PathName.new(path);
 			myPath.files.do{|item|
 				newArr = newArr.add(
-					[item.fileNameWithoutExtension.asSymbol, [startFrame, bufSize]]
+					[item.fileNameWithoutExtension.asSymbol, 'cue', [startFrame, bufSize]]
 			)};
-			this.addAll(newArr, path, function);
+			newArr.postln;
+			BufferSystem.addAll(newArr, path, function);
 		}, {
 			"Not path specified".warn;
 		});
-	}
-
-	*addAllTypes {arg arr, path, function;
-		var bufs, files, cues, finalArr, condition;
-		var indexSort, sortIndex, newIndexArr;
-		bufs=[];
-		files=[];
-		cues=[];
-		arr.do{|bufInfo|
-			if(bufInfo.isArray, {
-				if(bufInfo[0].isNumber, {
-					bufs = bufs.add(bufInfo);
-				}, {
-					cues = cues.add(bufInfo);
-				});
-			}, {
-				files = files.add(bufInfo);
-			});
-		};
-		arr.do{|it|
-			if(it.isArray, {
-				if(it[0].isNumber, {
-					indexSort = indexSort.add(0);
-				}, {
-					indexSort = indexSort.add(2);
-				});
-			}, {
-				indexSort = indexSort.add(1);
-			});
-		};
-		indexSort.do{|it,in| sortIndex = sortIndex.add([it,in]) };
-		sortIndex.sort{ arg a, b; a[0] <= b[0] };
-		{
-			condition = Condition(false);
-			if(bufs.notEmpty, {
-				BufferSystem.addAll(bufs, function: {|item|
-					finalArr = finalArr.add(item);
-					condition.test = true;
-					condition.signal;
-				});
-			}, {
-				condition.test = true;
-				condition.signal;
-			});
-			condition.wait;
-			condition.test = false;
-			if(files.notEmpty, {
-				BufferSystem.addAll(files, path, {|item|
-					finalArr = finalArr.add(item);
-					condition.test = true;
-					condition.signal;
-				});
-			}, {
-				condition.test = true;
-				condition.signal;
-			});
-			condition.wait;
-			condition.test = false;
-			if(cues.notEmpty, {
-				BufferSystem.addAll(cues, path, {|item|
-					finalArr = finalArr.add(item);
-					condition.test = true;
-					condition.signal;
-				});
-			}, {
-				condition.test = true;
-				condition.signal;
-			});
-			condition.wait;
-			condition.test = false;
-			finalArr = finalArr.flat;
-			newIndexArr = Array.fill(sortIndex.size, nil);
-			sortIndex.flop[1].do{|item, index| newIndexArr[item] = finalArr[index] };
-			newIndexArr.flat.radpost;
-			function.(newIndexArr.flat);
-		}.fork;
 	}
 
 	*fileNames {var tagArr;
@@ -582,14 +522,14 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 		^bufferArray.reshapeLike(indexShape);
 	}
 
-	*readSubDirs {arg path, function;
+	*readSubDirs {arg path, function, readChansArr;
 		var fullPaths;
 		path ?? {path = defaultPath};
 		PathName(path).entries.do{|subfolder|
 			subfolder.entries.do{|file| fullPaths = fullPaths.add(file.fullPath) };
 		};
 		if(fullPaths.notNil, {
-			this.readAll(fullPaths, { function.(this.bufferByDir); });
+			this.readAll(fullPaths, { function.(this.bufferByDir); }, readChansArr);
 		}, {
 			"No subdirectories in this directory".warn;
 		});
