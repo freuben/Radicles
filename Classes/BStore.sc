@@ -261,7 +261,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	}
 
 	*addCue {arg settings, path, function;
-		^BufferSystem.add([settings, [diskStart,diskBufSize]], path, function);
+		^BufferSystem.add([settings, 'cue', [diskStart,diskBufSize]], path, function);
 	}
 
 	*buffByArg {arg argument, index;
