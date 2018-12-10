@@ -1,11 +1,6 @@
-BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
+BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 	<tags, countTag=0, <bufAlloc, <>defaultPath,
-	<>postWin, countCue=0, server, bufcount=0;
-
-	*cond {
-		condition = Condition.new;
-		server = Server.default;
-	}
+	<>postWin, countCue=0,  bufcount=0;
 
 	*bufferCount {
 		if(bufcount < server.options.numBuffers, {
@@ -16,8 +11,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	}
 
 	*read {arg pathName, function, channels;
-		var main, buffer, globVar;
-		main = this.cond;
+		var buffer, globVar;
+		this.new;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -41,7 +36,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 						tags = tags.add((this.pathToTag(pathName) ++
 							channels).asSymbol);
 					});
-					server.sync(condition);
+					server.sync;
 					bufAlloc = false;
 					function.(buffer);
 				}.fork;
@@ -50,8 +45,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	}
 
 	*readAll {arg pathArr, function, channelsArr;
-		var main, buffer, returnArray, globVar;
-		main = this.cond;
+		var buffer, returnArray, globVar;
+		this.new;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -86,7 +81,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 							});
 						});
 						returnArray = returnArray.add(buffer);
-						server.sync(condition);
+						server.sync;
 					};
 					function.(returnArray);
 					bufAlloc = false;
@@ -153,8 +148,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	}
 
 	*alloc {arg numFrames, numChannels, function;
-		var main, buffer, globVar;
-		main = this.cond;
+		var buffer, globVar;
+		this.new;
 		numFrames ?? {numFrames = 44100};
 		numChannels ?? {numChannels = 1};
 		if(server.serverRunning, {
@@ -170,7 +165,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					this.bufferCount;
 					tags = tags.add( ("alloc" ++ countTag).asSymbol );
 					countTag = countTag + 1;
-					server.sync(condition);
+					server.sync;
 					bufAlloc = false;
 					function.(buffer);
 				}.fork;
@@ -181,8 +176,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	}
 
 	*allocAll {arg argArr, function;
-		var main, buffer, returnArr, globVar;
-		main = this.cond;
+		var buffer, returnArr, globVar;
+		this.new;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -200,7 +195,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 						tags = tags.add( ("alloc" ++ countTag).asSymbol );
 						countTag = countTag + 1;
 						returnArr = returnArr.add(buffer);
-						server.sync(condition);
+						server.sync;
 					};
 					bufAlloc = false;
 					function.(returnArr);
@@ -212,8 +207,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 	}
 
 	*cue {arg pathName, startFrame=0, bufSize=1, function;
-		var main, buffer, chanNum, cueSize, globVar;
-		main = this.cond;
+		var buffer, chanNum, cueSize, globVar;
+		this.new;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -231,7 +226,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					tags = tags.add(("disk" ++ countCue ++ "_" ++
 						this.pathToTag(pathName)).asSymbol);
 					countCue = countCue + 1;
-					server.sync(condition);
+					server.sync;
 					bufAlloc = false;
 					function.(buffer);
 				}.fork;
@@ -241,8 +236,8 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 
 	*cueAll {arg arr, function;
 		//arr: [ [path1, [startFrame1, bufSize1], [path2, [startFrame2, bufSize2]...]
-		var main, buffer, returnArray, file, chanNum, newArr, globVar, cueSize;
-		main = this.cond;
+		var buffer, returnArray, file, chanNum, newArr, globVar, cueSize;
+		this.new;
 		if(server.serverRunning, {
 			server.makeBundle(nil, {
 				{
@@ -267,7 +262,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 							this.pathToTag(item[0])).asSymbol);
 						countCue = countCue + 1;
 						returnArray = returnArray.add(buffer);
-						server.sync(condition);
+						server.sync;
 					};
 					function.(returnArray);
 					bufAlloc = false;
@@ -345,12 +340,12 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 			path ?? {path = defaultPath!arr.size};
 			arr.do{|item, index|
 				if(item.isArray.not, {
-					BufferSystem.add(item, path[index], {|buf| allBuffers = allBuffers.add(buf)} );
+					this.add(item, path[index], {|buf| allBuffers = allBuffers.add(buf)} );
 				}, {
 					if(item[0].isNumber, {
-						BufferSystem.add(item[0], item[1], {|buf| allBuffers = allBuffers.add(buf)});
+						this.add(item[0], item[1], {|buf| allBuffers = allBuffers.add(buf)});
 					}, {
-						BufferSystem.add(item, path[index], {|buf| allBuffers = allBuffers.add(buf)});
+						this.add(item, path[index], {|buf| allBuffers = allBuffers.add(buf)});
 					});
 				});
 				server.sync;
@@ -370,12 +365,12 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 			path ?? {path = defaultPath};
 			arr.do{|item|
 				if(item.isArray.not, {
-					BufferSystem.add(item, path, {|buf| allBuffers = allBuffers.add(buf)} );
+					this.add(item, path, {|buf| allBuffers = allBuffers.add(buf)} );
 				}, {
 					if(item[0].isNumber, {
-						BufferSystem.add(item[0], item[1], {|buf| allBuffers = allBuffers.add(buf)});
+						this.add(item[0], item[1], {|buf| allBuffers = allBuffers.add(buf)});
 					}, {
-						BufferSystem.add(item, path, {|buf| allBuffers = allBuffers.add(buf)});
+						this.add(item, path, {|buf| allBuffers = allBuffers.add(buf)});
 					});
 				});
 				server.sync;
@@ -412,7 +407,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 			myPath.files.do{|item|
 				newArr = newArr.add(item.fileNameWithoutExtension.asSymbol;
 			)};
-			BufferSystem.addAll(newArr, path, function);
+			this.addAll(newArr, path, function);
 		}, {
 			"Not path specified".warn;
 		});
@@ -428,7 +423,7 @@ BufferSystem : Radicles {classvar condition, <bufferArray, <globVarArray,
 					[item.fileNameWithoutExtension.asSymbol, 'cue', [startFrame, bufSize]]
 			)};
 			newArr.postln;
-			BufferSystem.addAll(newArr, path, function);
+			this.addAll(newArr, path, function);
 		}, {
 			"Not path specified".warn;
 		});
