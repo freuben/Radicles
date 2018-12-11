@@ -109,6 +109,10 @@ BStore.remove(\sampler, \audio, \tom);
 
 BStore.add(\sampler, \gt1, {|buf| buf.postln});
 
+//load impulse response buffers (separate channels)
+BStore.add(\ir, [\ortf_s1r1, [0]]);
+BStore.add(\ir, [\ortf_s1r1, [1]]);
+
 BStore.bstoreIDs;
 
 a = BStore.bstoreIDs;

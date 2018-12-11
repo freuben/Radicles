@@ -1,7 +1,7 @@
 BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\audio;
 	classvar <>samplerFormat=\audio, <>diskStart=0, <>diskBufSize=1, <>cueCount=1, <>allocCount=1;
 
-	*addRaw {arg type, format, settings, function, playChans;
+	*addRaw {arg type, format, settings, function;
 		var path, boolean, typeStore, existFormat, bstoreIDs;
 		bstoreIDs = this.bstoreIDs;
 		case
@@ -16,10 +16,12 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		}
 		{type == \cue} {
 			path = this.getPlayPath(\audio);
+		}
+		{type == \ir} {
+			path = this.getIRPath;
 		};
 		case
 		{type == \play} {
-			if(settings.isArray.not, {
 			typeStore = this.addPlay(settings, path, {|buf|
 				if(typeStore.notNil, {
 					boolean = this.store(\bstore, type, format, settings);
@@ -28,17 +30,6 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 					});
 				});
 				function.(buf);
-			});
-			}, {
-				typeStore = this.addPlay(settings[0], path, {|buf|
-				if(typeStore.notNil, {
-					boolean = this.store(\bstore, type, format, settings);
-					if(boolean, {
-						stores = stores.add(buf);
-					});
-				});
-				function.(buf);
-			}, settings[1]);
 			});
 		}
 		{type == \sampler} {
@@ -91,7 +82,19 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				function.(buf);
 			});
 				});
-		};
+		}
+		{type == \ir} {
+			typeStore = this.addIR(settings, path, {|buf|
+				if(typeStore.notNil, {
+					boolean = this.store(\bstore, type, format, settings);
+					if(boolean, {
+						stores = stores.add(buf);
+					});
+				});
+				function.(buf);
+			});
+		}
+		;
 	}
 
 	*add {arg type, settings, function;
@@ -113,8 +116,11 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		{type == \cue} {
 			format = settings[0];
 			newSettings = settings[1];
+		}
+		{type == \ir} {
+			format = \audio;
+			newSettings = settings;
 		};
-
 		this.addRaw(type, format, newSettings, function);
 	}
 
@@ -148,10 +154,9 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 			thisBStore = bstores[bstoreIndex];
 
 			case
-			{(type == \play).or(type == \alloc).or(type == \cue)} {
+			{ [\play, \alloc, \cue, \ir].includes(type)} {
 				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
 				this.removeAt(bstoreIndex);
-
 			}
 			{type == \sampler} {
 				thisBStore.do{|item|
@@ -242,8 +247,15 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^this.getDirPath(format, "SoundFiles/Sampler/", "");
 	}
 
-	*addPlay {arg settings, path, function, playChans;
-		^BufferSystem.add(settings, path, function, playChans);
+		*getIRPath {arg format=\audio, samplerName=\str;
+		var irpath;
+		this.new;
+		irpath = this.mainPath ++ "SoundFiles/IR/"
+		^irpath;
+	}
+
+	*addPlay {arg settings, path, function;
+		^BufferSystem.add(settings, path, function);
 	}
 
 	*addSampler {arg settings, path, function;
@@ -262,6 +274,10 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 
 	*addCue {arg settings, path, function;
 		^BufferSystem.add([settings, 'cue', [diskStart,diskBufSize]], path, function);
+	}
+
+		*addIR {arg settings, path, function;
+		^BufferSystem.add(settings, path, function);
 	}
 
 	*buffByArg {arg argument, index;
