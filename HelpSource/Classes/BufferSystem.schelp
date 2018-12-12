@@ -69,6 +69,12 @@ BufferSystem.get(\alloc0);
 BufferSystem.get(\alloc3);
 BufferSystem.get(\marilyn1).play;
 
+//get getGlobVar with tag
+BufferSystem.getGlobVar(BufferSystem.get(\marilyn1););
+BufferSystem.getGlobVar(BufferSystem.get(\alloc0);).postln.interpret;
+
+BufferSystem.getGlobVarArr(BufferSystem.bufferArray.copyRange(0,1));
+
 //get buffer with fileName
 BufferSystem.getFile("marilyn1.wav");
 

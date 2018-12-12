@@ -305,7 +305,6 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 							buffunction.();
 						}, {
 							if(cueBool, {
-
 								if(tags.includes(arg1), {
 									("//File already allocated as: ~buffer" ++
 										this.get(arg1).bufnum ).radpost;
@@ -463,6 +462,17 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 			"No buffers allocated".warn;
 		});
 		^resultBuf;
+	}
+
+	*getGlobVar {arg buf;
+		var bufIndex, bufString;
+		bufIndex = BufferSystem.bufferArray.indexOf(buf);
+		bufString = BufferSystem.globVarArray[bufIndex];
+		^bufString;
+	}
+
+	*getGlobVarArr {arg bufArr;
+		^bufArr.collect{|item| this.getGlobVar(item) };
 	}
 
 	*getFile {arg string;

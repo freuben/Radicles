@@ -113,6 +113,11 @@ BStore.add(\sampler, \gt1, {|buf| buf.postln});
 BStore.add(\ir, [\ortf_s1r1, [0]]);
 BStore.add(\ir, [\ortf_s1r1, [1]]);
 
+BStore.buffStrByID([\ir, \audio, [\ortf_s1r1, [0]]]);
+
+BStore.buffIDstoStrArr(BStore.bstoreIDs);
+
+
 BStore.bstoreIDs;
 
 a = BStore.bstoreIDs;

@@ -668,16 +668,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		string, filterBuffArr;
 		{
 			inVar ?? {inVar = "input"};
-			path = mainPath ++ "SoundFiles/IRs/" ++ impulse ++ ".wav";
+			path = mainPath ++ "SoundFiles/IR/" ++ impulse ++ ".wav";
 			file = SoundFile.new;
 			file.openRead(path);
 			numChan = file.numChannels;
 			file.close;
 			numChan.do{|index|
-				irbuffer = Buffer.readChannel(server, path, channels: [index]);
+				BStore.add(\ir, [impulse, [index]]);
+				/*irbuffer = Buffer.readChannel(server, path, channels: [index]);
 				irbuffer.radpost;
-				irArr = irArr.add(irbuffer);
+				irArr = irArr.add(irbuffer);*/
 				server.sync;
+				irbuffer = BStore.buffStrByID([\ir, \audio, [impulse, [index]]]).interpret;
 				bufsize= PartConv.calcBufSize(fftsize, irbuffer);
 				numtag = (\alloc++BStore.allocCount).asSymbol;
 				filterBuffArr = filterBuffArr.add([\alloc, numtag, [bufsize] ]);
