@@ -1,5 +1,3 @@
-//fix so that filters work with new buffer system.
-
 Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames,
 	<>masterInput, <busArr, <busInArr, <filters, <filterBuff;
@@ -528,7 +526,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	}
 
 	removeFilter {arg type=\track, num= 1, slot=1;
-		var thisTrack, thisSlot, ndefCS, setArr;
+		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd;
 		thisTrack = this.get(type)[num-1];
 		if(thisTrack.size > 2, {
 			if(slot < (thisTrack.size-1), {
@@ -541,6 +539,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				setArr = this.findTrackArr((type ++ num).asSymbol);
 				ndefs[setArr[0]].removeAt(slot);
 				specs[setArr[0]].removeAt(slot);
+				//work on remove filter buffers
+				{
+					fadeTime.wait;
+					bufArrInd = filterBuff.flop[0].indexOf(thisSlot[0]);
+					filterBuff.flop[1][bufArrInd].do{|item|
+						server.sync;
+						BStore.remove(item[0], item[1], item[2]);
+					};
+				}.fork;
+				//
 				filters = filters.reject({|item| item[0] == thisSlot[0] });
 				this.autoRoute(thisTrack);
 			}, {
@@ -608,7 +616,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		var trackIndex;
 		trackIndex = track - 1;
 		if((track >= 1).and(track <= tracks.size), {
-			/*ndefs[trackIndex].free;*/
 			ndefs[trackIndex].clear;
 			ndefs.removeAt(trackIndex);
 			tracks.removeAt(trackIndex);
@@ -624,7 +631,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		trackArr.do{|item|
 			if((item >= 1).and(item <= tracks.size), {
 				newArr = newArr.add(item-1);
-				/*ndefs[item-1].free;*/
 				ndefs[item-1].clear;
 			}, {
 				"track Number not Found".warn;

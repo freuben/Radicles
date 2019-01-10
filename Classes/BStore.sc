@@ -3,6 +3,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 
 	*addRaw {arg type, format, settings, function;
 		var path, boolean, typeStore, existFormat, bstoreIDs;
+		this.updateFree;
 		bstoreIDs = this.bstoreIDs;
 		case
 		{type == \play} {
@@ -218,6 +219,10 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 
 	*removeBySetting {arg setting;
 		this.removeByArg(setting, 2);
+	}
+
+	*updateFree {
+		this.bstores.do{|buf, ind| if(buf.bufnum.isNil, {this.removeByIndex(ind); });};
 	}
 
 	*getDirPath {arg format=\audio, directory, subDir;
