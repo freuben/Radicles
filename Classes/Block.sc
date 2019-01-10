@@ -127,8 +127,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 									if(bufInfo.notNil.or(bufInfo == \nobuf), {
 										server.sync;
 										BStore.add(storeType, bufInfo, {arg buf;
-											bufIndex = BufferSystem.bufferArray.indexOf(buf);
-											bufString = BufferSystem.globVarArray[bufIndex];
+											bufString = BufferSystem.getGlobVar(buf);
+											/*bufIndex = BufferSystem.bufferArray.indexOf(buf);
+											bufString = BufferSystem.globVarArray[bufIndex];*/
 											blockFunc = blockFuncString.replace("\\buffer",
 												bufString).replace("'buffer'", bufString).interpret;
 											if(data.notNil, {
@@ -142,9 +143,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 									});
 								}, {
 									if([\alloc, \play, \cue].includes(buffer[0]), {
-										bufIDs = BStore.buffByID(buffer);
+										/*bufIDs = BStore.buffByID(buffer);
 										bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
-										bufString = BufferSystem.globVarArray[bufIndex];
+										bufString = BufferSystem.globVarArray[bufIndex];*/
+										bufString = BStore.buffStrByID(buffer);
 										blockFunc = blockFuncString.replace("\\buffer",
 											bufString).replace("'buffer'", bufString).interpret;
 										/*"this buffer is an existing buffer with ID".postln;*/
@@ -174,9 +176,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 										server.sync;
 										BStore.addAll(bufferID, {arg buf;
 											bufferID.do{|item|
-												bufIDs = BStore.buffByID(item);
+												bufString = BStore.buffStrByID(item);
+												/*bufIDs = BStore.buffByID(item);
 												bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
-												bufString = bufString.add(BufferSystem.globVarArray[bufIndex]);
+												bufString = bufString.add(BufferSystem.globVarArray[bufIndex]);*/
 											};
 											blockFunc = blockFunc.cs.replace(("\\buffer"),
 												bufString).replace(("'buffer'"), bufString).interpret;
@@ -554,9 +557,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 					blockFunc = SynthFile.read(\block, recType);
 					blockFuncString = blockFunc.cs;
-					bufIDs = BStore.buffByID(recbuffers[blockIndex]);
+					bufString = BStore.buffStrByID(recbuffers[blockIndex]);
+					/*bufIDs = BStore.buffByID(recbuffers[blockIndex]);
 					bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
-					bufString = BufferSystem.globVarArray[bufIndex];
+					bufString = BufferSystem.globVarArray[bufIndex];*/
 					blockFuncString = blockFuncString.replace("\\buffer",
 						bufString).replace("'buffer'", bufString);
 					blockFuncString = blockFuncString.replace("\\in", inString);
@@ -635,8 +639,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*readWavetable {arg data, buf;
 		var bufIndex, bufString;
-		bufIndex = BufferSystem.bufferArray.indexOf(buf);
-		bufString = BufferSystem.globVarArray[bufIndex];
+		bufString = BufferSystem.getGlobVar(buf);
+		/*bufIndex = BufferSystem.bufferArray.indexOf(buf);
+		bufString = BufferSystem.globVarArray[bufIndex];*/
 		(DataFile.read(\wavetables, data).cs ++ ".(" ++
 			bufString ++	");").radpost.interpret;
 	}

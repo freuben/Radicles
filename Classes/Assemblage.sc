@@ -408,15 +408,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				bufIndex = filterBuff.flop[0].indicesOfEqual(filterTag);
 
 				if(bufIndex.notNil, {
-						bufFunc = {
+					bufFunc = {
 						(nodeTime+fadeTime).yield;
 						bufIndex.do{|index|
 							filterBuff.flop[1][index].do{|item|
-						BStore.removeID(item);
-						server.sync;
-					};
-						filterBuff.removeAt(index);
-					};
+								BStore.removeID(item);
+								server.sync;
+							};
+							filterBuff.removeAt(index);
+						};
 					};
 				});
 			}, {
@@ -444,17 +444,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 
 			filterInfo = [filterTag, SynthFile.read(\filter, filter);];
 			filterSpecs = [filterTag, SpecFile.read(\filter, \pch)];
-
 			cond = Condition(false);
 			cond.test = false;
-
 			if(data.notNil, {
 				if(data[0] == \convrev, {
 					convString = filterInfo[1].cs;
 					this.convRevBuf(filterTag, data[1], data[2], data[3], {|string|
 						replaceString = string;
-						if(convString.find("'convrev'").notNil, {
-							convString = convString.replace("'convrev'", replaceString);
+						if(convString.find("\\convrev").notNil, {
+							convString = convString.replace("\\convrev", string);
 							filterInfo[1] = convString.interpret;
 						});
 						cond.test = true;
@@ -665,8 +663,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
 		action={|val| val.radpost}, chanIn;
 		var path, buffArr, file, numChan, irbuffer, irArr, bufsize, numtag,
-		string, filterBuffArr;
+		string, filterBuffArr, wcond;
 		{
+			wcond = Condition.new(false);
 			inVar ?? {inVar = "input"};
 			path = mainPath ++ "SoundFiles/IR/" ++ impulse ++ ".wav";
 			file = SoundFile.new;
@@ -674,33 +673,36 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			numChan = file.numChannels;
 			file.close;
 			numChan.do{|index|
-				BStore.add(\ir, [impulse, [index]]);
-				/*irbuffer = Buffer.readChannel(server, path, channels: [index]);
-				irbuffer.radpost;
-				irArr = irArr.add(irbuffer);*/
-				server.sync;
-				irbuffer = BStore.buffStrByID([\ir, \audio, [impulse, [index]]]).interpret;
-				bufsize= PartConv.calcBufSize(fftsize, irbuffer);
-				numtag = (\alloc++BStore.allocCount).asSymbol;
-				filterBuffArr = filterBuffArr.add([\alloc, numtag, [bufsize] ]);
-				BStore.addRaw(\alloc, numtag, [bufsize], {|buf|
-					buf.preparePartConv(irbuffer, fftsize);
-					buffArr = buffArr.add(buf);
-					BStore.allocCount = BStore.allocCount + 1;
+				wcond.test = false;
+				BStore.add(\ir, [impulse, [index]], {|buf|
+					irbuffer = buf;
+					irArr = irArr.add(irbuffer);
+					bufsize= PartConv.calcBufSize(fftsize, irbuffer);
+					numtag = (\alloc++BStore.allocCount).asSymbol;
+					filterBuffArr = filterBuffArr.add([\alloc, numtag, [bufsize] ]);
+					BStore.addRaw(\alloc, numtag, [bufsize], {|buf|
+						buf.preparePartConv(irbuffer, fftsize);
+						buffArr = buffArr.add(buf);
+						BStore.allocCount = BStore.allocCount + 1;
+						wcond.test = true;
+						wcond.signal;
+					});
 				});
-				nodeTime.yield;
-				server.sync;
+				wcond.wait;
 			};
-			irArr.do{|item| item.free; server.sync; };
+			server.sync;
+			irArr.do{|item|
+				(BufferSystem.getGlobVar(item) ++ ".free;").radpost.interpret;
+				server.sync; };
 			filterBuff = filterBuff.add([filterTag, filterBuffArr]);
 			string = "[";
 			buffArr.do{|item, index|
 				if(chanIn == 1, {
 					string = string ++ ("PartConv.ar(" ++ inVar ++ ", " ++ fftsize ++ ", "
-					++ item.bufnum ++ "),");
+						++ item.bufnum ++ "),");
 				}, {
-				string = string ++ ("PartConv.ar(" ++ inVar ++ "[" ++ index ++ "], " ++ fftsize ++ ", "
-					++ item.bufnum ++ "),");
+					string = string ++ ("PartConv.ar(" ++ inVar ++ "[" ++ index ++ "], " ++ fftsize ++ ", "
+						++ item.bufnum ++ "),");
 				});
 			};
 			string = string.copyRange(0, string.size-2);
