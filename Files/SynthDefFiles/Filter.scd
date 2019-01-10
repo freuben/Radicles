@@ -74,11 +74,9 @@
 	PitchShift.ar(input, windowSize, (latch1/latch3)[0].lag(lag), pitchDispersion,
  timeDispersion);
 } ], [ 'cbg', {arg decayTime=0.5, freq=10, lag=5.0; 
-	CombL.ar(\in * (LFNoise0.ar(freq.lag(lag)) > 0), 0.2, 0.2, decayTime);} ],
- [ 'lpf', {arg freq=20000, lag=0.1; LPF.ar(\in, freq.lag(lag));} ], [ 'convrev1',
- {arg mix=1.0 -> [ 0, 1];
+	CombL.ar(\in * (LFNoise0.ar(freq.lag(lag)) > 0), 0.2, 0.2, decayTime);} ], [ 'lpf', {arg freq=20000, lag=0.1; LPF.ar(\in, freq.lag(lag));} ], [ 'convrev1', {arg mix=1.0 -> [ 0, 1];
 	var input, output;
-	input = \in;
+	input = \in * Line.kr(0,1,0.1);
 	output = \convrev;
 	(output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
 } ] ]

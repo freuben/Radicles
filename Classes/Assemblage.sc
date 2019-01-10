@@ -539,7 +539,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				setArr = this.findTrackArr((type ++ num).asSymbol);
 				ndefs[setArr[0]].removeAt(slot);
 				specs[setArr[0]].removeAt(slot);
-				//work on remove filter buffers
 				{
 					fadeTime.wait;
 					bufArrInd = filterBuff.flop[0].indexOf(thisSlot[0]);
@@ -548,7 +547,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 						BStore.remove(item[0], item[1], item[2]);
 					};
 				}.fork;
-				//
 				filters = filters.reject({|item| item[0] == thisSlot[0] });
 				this.autoRoute(thisTrack);
 			}, {
@@ -667,7 +665,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	}
 
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
-		action={|val| val.radpost}, chanIn;
+		action={|val| val.radpost}, chanIn, globBuf;
 		var path, buffArr, file, numChan, irbuffer, irArr, bufsize, numtag,
 		string, filterBuffArr, wcond;
 		{
@@ -703,12 +701,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			filterBuff = filterBuff.add([filterTag, filterBuffArr]);
 			string = "[";
 			buffArr.do{|item, index|
+				globBuf = BufferSystem.getGlobVar(item);
 				if(chanIn == 1, {
 					string = string ++ ("PartConv.ar(" ++ inVar ++ ", " ++ fftsize ++ ", "
-						++ item.bufnum ++ "),");
+						++ globBuf ++ "),");
 				}, {
 					string = string ++ ("PartConv.ar(" ++ inVar ++ "[" ++ index ++ "], " ++ fftsize ++ ", "
-						++ item.bufnum ++ "),");
+						++ globBuf ++ "),");
 				});
 			};
 			string = string.copyRange(0, string.size-2);
