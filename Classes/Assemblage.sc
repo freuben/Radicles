@@ -692,7 +692,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			};
 			server.sync;
 			irArr.do{|item|
-				(BufferSystem.getGlobVar(item) ++ ".free;").radpost.interpret;
+				BStore.removeByIndex(BStore.bstores.indexOf(item));
 				server.sync; };
 			filterBuff = filterBuff.add([filterTag, filterBuffArr]);
 			string = "[";
