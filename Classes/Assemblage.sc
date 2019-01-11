@@ -194,6 +194,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		^arr;
 	}
 
+		collectSpecArr {arg find=\track;
+		var arr;
+		specs.do{|it, in|
+			it.do{|item, index| if(item[0].asString.find(find.asString).notNil, {arr = arr.add(item)}); }
+		};
+		^arr;
+	}
+
 	replaceFunc {arg name, function;
 		var array;
 		array = this.findTrackArr(name);
@@ -662,6 +670,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		Server.default.waitForBoot{
 			outputs.do{|item| item.play};
 		};
+	}
+
+	setFilterTag {arg filterTag, arg1, arg2, post=\code;
+		var ndefCS;
+		ndefCS = "Ndef(" ++ filterTag.cs ++ ").set(" ++ arg1.cs ++ ", " ++ arg2.cs ++ ")";
+		ndefCS.interpret;
+		if(post.notNil, {
+		case
+		{post == \code} {ndefCS.radpost}
+			{post == \spec} {[arg1, arg2].cs.post;};
+		});
+	}
+
+	setFilterAt {arg filterIndex, arg1, arg2, post=\code;
+		var filterTag, specArr, thisSpec, thisVal;
+		filterTag = filters.flop[0][filterIndex];
+		specArr = this.collectSpecArr(filterTag)[0][1];
+		thisSpec = 	specArr[arg1];
+		thisVal = thisSpec[2].(thisSpec[1].asSpec.map(arg2));
+		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
 	}
 
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
