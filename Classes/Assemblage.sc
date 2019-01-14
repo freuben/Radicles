@@ -194,7 +194,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		^arr;
 	}
 
-		collectSpecArr {arg find=\track;
+	collectSpecArr {arg find=\track;
 		var arr;
 		specs.do{|it, in|
 			it.do{|item, index| if(item[0].asString.find(find.asString).notNil, {arr = arr.add(item)}); }
@@ -677,8 +677,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		ndefCS = "Ndef(" ++ filterTag.cs ++ ").set(" ++ arg1.cs ++ ", " ++ arg2.cs ++ ")";
 		ndefCS.interpret;
 		if(post.notNil, {
-		case
-		{post == \code} {ndefCS.radpost}
+			case
+			{post == \code} {ndefCS.radpost}
 			{post == \spec} {[arg1, arg2].cs.post;};
 		});
 	}
@@ -690,6 +690,56 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		thisSpec = 	specArr[arg1];
 		thisVal = thisSpec[2].(thisSpec[1].asSpec.map(arg2));
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
+	}
+
+	findFilterTag {arg type, arg1, arg2;
+		var tagString, tagIndex;
+		if(type == \master, {
+			tagString = "filter" ++ type.asString.capitalise ++ "_" ++ arg1;
+		}, {
+			tagString = "filter" ++ type.asString.capitalise ++ arg1 ++ "_" ++ arg2;
+		});
+		tagString = tagString.asSymbol;
+		tagIndex = filters.flop[0].indexOf(tagString);
+		if(tagIndex.notNil, {
+			^filters.flop[0][tagIndex]
+		}, {
+			"filter slot is not active".warn;
+		});
+	}
+
+	setFilterCode {arg type, num, slot, arg1, arg2, post=\code;
+		var filterTag;
+		filterTag = this.findFilterTag(type, num, slot);
+			this.setFilterTag(filterTag, arg1, arg2, post);
+	}
+
+	setFilterSpec {arg type, num, slot, arg1, arg2, post=\code;
+		var filterTag, specArr, thisSpec, thisVal;
+		filterTag = this.findFilterTag(type, num, slot);
+		if(arg1.isNumber, {
+			this.setFilterAt(filterTag, arg1, arg2, post);
+		}, {
+			specArr = this.collectSpecArr(filterTag)[0][1];
+			thisSpec = 	specArr[specArr.flop[0].indexOf(arg1)];
+			thisSpec.postln;
+			thisVal = thisSpec[2].(thisSpec[1].asSpec.map(arg2));
+		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
+//work on this to be able to change argument 1 with symbol
+			/*this.setFilterTag(filterTag, arg1, arg2, post);*/
+		});
+	}
+
+	getFilterArgs {arg type, num, slot;
+		^Ndef(this.findFilterTag(type, num, slot)).controlKeys;
+	}
+
+	getFilterVals {arg type, num, slot;
+		^Ndef(this.findFilterTag(type, num, slot)).controlKeysValues;
+	}
+
+	getFilterPairs {arg type, num, slot;
+		^Ndef(this.findFilterTag(type, num, slot)).getKeysValues;
 	}
 
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,

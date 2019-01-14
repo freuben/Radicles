@@ -1,13 +1,13 @@
 ModMap : Radicles {
 	classvar <modNodes, modIndex=0;
 
-	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, mul=1, add=0, min, val, warp, lag, post=\ide;
+	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag, post=\ide;
 		var modMap;
 		if(spec.isSymbol, {spec = SpecFile.read(\modulation, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
 
 		spec = spec.specFactor(mul, add, min, val, warp);
-		modMap = this.getFile(type, spec, extraArgs, post);
+		modMap = this.getFile(type, spec, extraArgs, func, post);
 		modNodes.do{|item| if( [item[1], item[2]] == [ndef, key], {item[0].clear;
 			modNodes.remove(item);
 		}); };
@@ -43,12 +43,19 @@ ModMap : Radicles {
 		});
 	}
 
-	*getFile {arg type=\sin, spec=[-1,1], extraArgs, post=\ide;
-		var ndefString, compile, ndef, fileData;
+	*getFile {arg type=\sin, spec=[-1,1], extraArgs, func, post=\ide;
+		var ndefString, compile, ndef, fileData, fileFuncDef, getArgString, getFuncArgs;
 		fileData = ControlFile.read(\map, type);
 		if(fileData.notNil, {
 			modIndex = modIndex + 1;
 			ndefString = fileData.cs.replace(".map", spec.mapSpec);
+			if(func.notNil, {
+				fileFuncDef = fileData.def;
+				getArgString = "arg " ++ fileFuncDef.argumentString ++ "; ";
+				getFuncArgs = fileFuncDef.makeEnvirFromArgs;
+				ndefString = "{" ++ getArgString ++ func.cs ++".(" ++ ndefString ++ "." ++ getFuncArgs.keys.asArray.asString.replace("[", "(").replace("]", ")") ++ ")}";
+				ndefString.postln;
+			});
 			if(extraArgs.isNil, {
 				compile = "Ndef('mod" ++ modIndex.cs ++ "', " ++ ndefString ++ ");";
 			}, {
