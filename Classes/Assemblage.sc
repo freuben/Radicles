@@ -723,7 +723,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 	setFilterCode {arg type, num, slot, arg1, arg2, post=\code;
 		var filterTag;
 		filterTag = this.findFilterTag(type, num, slot);
-			this.setFilterTag(filterTag, arg1, arg2, post);
+		this.setFilterTag(filterTag, arg1, arg2, post);
 	}
 
 	setFilterSpec {arg type, num, slot, arg1, arg2, post=\code;
@@ -734,10 +734,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		}, {
 			specArr = this.collectSpecArr(filterTag)[0][1];
 			thisSpec = 	specArr[specArr.flop[0].indexOf(arg1)];
-			thisSpec.postln;
+			/*thisSpec.postln;*/
 			thisVal = thisSpec[2].(thisSpec[1].asSpec.map(arg2));
-		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
+			this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
 		});
+	}
+
+	getFilterTag {arg filterIndex=0;
+		^filters[filterIndex][0];
 	}
 
 	getFilterKeys {arg filterTag, type=\args;
@@ -768,7 +772,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		^this.getFilterKeys(filterTag, \pairs);
 	}
 
-	modFilterTag {arg filterTag, argument, modType=\sin, spec, extraArgs, func;
+	modFilterTag {arg filterTag, argument, modType=\sin, spec=[-1,1], extraArgs,
+		func, mul=1, add=0, min, val, warp, lag;
 		var key, argArr, modMap;
 
 		if(argument.isNumber, {
@@ -776,23 +781,53 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		}, {
 			key = argument;
 		});
-		modMap = ModMap.map(Ndef(filterTag), key, modType, spec, extraArgs, func);
-		/*filterMod = filterMod.add([filterTag, key,  modMap]);*/
+		modMap = ModMap.map(Ndef(filterTag), key, modType, spec, extraArgs,
+			func, mul, add, min, val, warp, lag);
 	}
 
-/*//arg filterIndex, arg1, arg2, post=\code;
-	modFilter {arg filterIndex, argIndex, modType=\sin, spec, extraArg;
-		filterTag = filters.flop[0][filterIndex];
-		specArr = this.collectSpecArr(filterTag)[0][1];
-		thisSpec = 	specArr[arg1];
-		specArr.postln;
-	/*	if(key.isNumber, {
-			this.getFilterArgs(type, num, slot);
-		ModMap.map(Ndef(filterTag), key, modType, spec, extraArgs);
+	modFilterIndex {arg filterIndex, argument, modType=\sin, spec=[-1,1], extraArgs,
+		func, mul=1, add=0, min, val, warp, lag;
+		var filterTag;
+		filterTag = this.getFilterTag(filterIndex);
+		this.modFilterTag(filterTag, argument, modType, spec, extraArgs, func,
+			mul, add, min, val, warp, lag);
+	}
+
+	modFilterIndexCode {arg type, num, slot, argument, modType=\sin, spec=[-1,1],
+		extraArgs, func, mul=1, add=0, min, val, warp, lag;
+		var filterTag;
+		filterTag = this.findFilterTag(type, num, slot);
+		this.modFilterTag(filterTag, argument, modType, spec, extraArgs, func,
+			mul, add, min, val, warp, lag);
+	}
+
+	modFilter {arg filterInfo, argument, modType=\sin, extraArgs,
+		mul=1, add=0, min, val, warp, lag;
+		var filterTag, specArr, thisSpec, argIndex;
+		if(filterInfo.isNumber, {
+		filterTag = this.getFilterTag(filterInfo);
 		}, {
-		ModMap.map(Ndef(filterTag), key, modType, spec, extraArgs);
-		});*/
-	}*/
+		filterTag = filterInfo;
+		});
+		specArr = this.collectSpecArr(filterTag)[0][1];
+		if(argument.isNumber, {
+			argIndex = this.getFilterKeys(filterTag, \args)[argument];
+		}, {
+			argIndex = argument;
+		});
+		thisSpec = 	specArr[specArr.flop[0].indexOf(argIndex)];
+		thisSpec.postln;
+		this.modFilterTag(filterTag, thisSpec[0], modType, thisSpec[1], extraArgs,
+			thisSpec[2], mul=1, add=0, min, val, warp, lag);
+	}
+
+	modFilterCode {arg type, num, slot, argument, modType=\sin, extraArgs,
+		mul=1, add=0, min, val, warp, lag;
+		var filterTag;
+		filterTag = this.findFilterTag(type, num, slot);
+		this.modFilter(filterTag, argument, modType, extraArgs,
+			mul, add, min, val, warp, lag);
+	}
 
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
 		action={|val| val.radpost}, chanIn, globBuf;
@@ -836,8 +871,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 					string = string ++ ("PartConv.ar(" ++ inVar ++ ", " ++ fftsize ++ ", "
 						++ globBuf ++ "),");
 				}, {
-					string = string ++ ("PartConv.ar(" ++ inVar ++ "[" ++ index ++ "], " ++ fftsize ++ ", "
-						++ globBuf ++ "),");
+					string = string ++ ("PartConv.ar(" ++ inVar ++ "[" ++ index ++ "], "
+						++ fftsize ++ ", " ++ globBuf ++ "),");
 				});
 			};
 			string = string.copyRange(0, string.size-2);

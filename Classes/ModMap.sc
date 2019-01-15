@@ -5,13 +5,12 @@ ModMap : Radicles {
 		var modMap;
 		if(spec.isSymbol, {spec = SpecFile.read(\modulation, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
-
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
 		modNodes.do{|item| if( [item[1], item[2]] == [ndef, key], {item[0].clear;
 			modNodes.remove(item);
 		}); };
-		modNodes = modNodes.add([modMap, ndef, key, spec, func]);
+		modNodes = modNodes.add([modMap, ndef, key]);
 		ndef.xset(key, modMap);
 		if(lag.notNil, {
 			lag.keysValuesDo{|key, val|
