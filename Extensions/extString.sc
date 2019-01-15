@@ -143,4 +143,12 @@
 		^out;
 	}
 
+	squareToRound {
+		^this.replace("[", "(").replace("]", ")");
+	}
+
+	roundToSquare {
+		^this.replace("(", "[").replace(")", "]");
+	}
+
 }

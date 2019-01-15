@@ -1,17 +1,17 @@
 ModMap : Radicles {
 	classvar <modNodes, modIndex=0;
 
-	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag, post=\ide;
+	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag;
 		var modMap;
 		if(spec.isSymbol, {spec = SpecFile.read(\modulation, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
 
 		spec = spec.specFactor(mul, add, min, val, warp);
-		modMap = this.getFile(type, spec, extraArgs, func, post);
+		modMap = this.getFile(type, spec, extraArgs, func);
 		modNodes.do{|item| if( [item[1], item[2]] == [ndef, key], {item[0].clear;
 			modNodes.remove(item);
 		}); };
-		modNodes = modNodes.add([modMap, ndef, key, spec]);
+		modNodes = modNodes.add([modMap, ndef, key, spec, func]);
 		ndef.xset(key, modMap);
 		if(lag.notNil, {
 			lag.keysValuesDo{|key, val|
@@ -43,7 +43,7 @@ ModMap : Radicles {
 		});
 	}
 
-	*getFile {arg type=\sin, spec=[-1,1], extraArgs, func, post=\ide;
+	*getFile {arg type=\sin, spec=[-1,1], extraArgs, func;
 		var ndefString, compile, ndef, fileData, fileFuncDef, getArgString, getFuncArgs;
 		fileData = ControlFile.read(\map, type);
 		if(fileData.notNil, {
@@ -53,14 +53,17 @@ ModMap : Radicles {
 				fileFuncDef = fileData.def;
 				getArgString = "arg " ++ fileFuncDef.argumentString ++ "; ";
 				getFuncArgs = fileFuncDef.makeEnvirFromArgs;
-				ndefString = "{" ++ getArgString ++ func.cs ++".(" ++ ndefString ++ "." ++ getFuncArgs.keys.asArray.asString.replace("[", "(").replace("]", ")") ++ ")}";
-				ndefString.postln;
+				ndefString = "{" ++ getArgString ++ func.cs ++".(" ++ ndefString
+				++ "." ++ getFuncArgs.keys.asArray.asString.squareToRound ++ ")}";
 			});
 			if(extraArgs.isNil, {
 				compile = "Ndef('mod" ++ modIndex.cs ++ "', " ++ ndefString ++ ");";
 			}, {
-				compile = "Ndef('mod" ++ modIndex.cs ++ "').put(0, " ++ ndefString
-				++ ", extraArgs: " ++ extraArgs.cs ++ ");";
+				/*compile = "Ndef('mod" ++ modIndex.cs ++ "').put(0, " ++ ndefString
+				++ ", extraArgs: " ++ extraArgs.cs ++ ");";*/
+				compile = "Ndef('mod" ++ modIndex.cs ++ "', " ++ ndefString ++ ");" ++
+				10.asAscii ++"Ndef('mod" ++ modIndex.cs ++ "').set" ++
+				extraArgs.cs.squareToRound ++ ";";
 			});
 			compile.radpost;
 			ndef = compile.interpret;

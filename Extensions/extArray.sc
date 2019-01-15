@@ -133,5 +133,23 @@
 		^Ppar(this, repeats);
 	}
 
+	presetToNdefCS {var key, source, extraArgs;
+		var result;
+		key = this[0];
+		source = this[1];
+		if(this.size < 3, {
+			result = ("Ndef(" ++ key.cs ++ ", " ++ source.cs ++ ");");
+		}, {
+		extraArgs  = this[2];
+		result = ("Ndef(" ++ key.cs ++ ", " ++ source.cs ++ ");" ++ 10.asAscii ++
+			"Ndef(" ++ key.cs ++ ").set" ++ extraArgs.cs.squareToRound);
+		});
+		^result;
+	}
+
+	presetToNdef {var key, source, extraArgs;
+		this.presetToNdefCS(key, source, extraArgs).radpost.interpret;
+	}
+
 }
 

@@ -269,6 +269,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						/*"no pattern before".postln;*/
 						if(liveBlocks[blockIndex].notNil, {
 							if((liveBlocks[blockIndex][1] != \pattern), {
+								//replace out with cs string using presetToNdef
 								ndefs[blockIndex].put(0, nil);
 								fadeTime.wait;
 								ndefs[blockIndex].resetNodeMap;
@@ -276,6 +277,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						});
 					});
 					server.sync;
+					//replace out with cs string using presetToNdef
 					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
 					action.();
@@ -567,6 +569,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					blockFunc = blockFuncString.interpret;
 					(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++
 						blockFuncString ++ ");").radpost;
+					//replace out with cs string using presetToNdef
 					recNdefs[blockIndex].put(0, blockFunc);
 						if(xfade, {
 						setArg = ".xset";

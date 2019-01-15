@@ -167,13 +167,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 
 	ndefPrepare {arg ndef, func;
 		var extraArgs, key, result;
-		extraArgs = ndef.getKeysValues;
+		extraArgs = ndef.controlKeysValues;
 		key = ndef.key;
 		if(extraArgs.isEmpty, {
-			result = ("Ndef(" ++ key.cs ++ ", " ++ func.cs ++ ");");
+			result = [key, func].presetToNdefCS;
 		}, {
-			result = ("Ndef(" ++ key.cs ++ ").put(0, " ++ func.cs ++
-				", extraArgs: " ++ extraArgs.flat.cs ++ ");");
+			result = [key, func, extraArgs].presetToNdefCS;
 		});
 		^result;
 	}
@@ -406,8 +405,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		{
 			if(type == \master, {
 				filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ slot).asSymbol;
+				num = 1;
 			}, {
-				filterTag = ("filter" ++ type.asString.capitalise ++ num ++ "_" ++ slot).asSymbol;
+				filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ num ++ "_" ++ slot).asSymbol;
 			});
 
 			if(filterBuff.notNil, {
@@ -697,7 +697,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		if(type == \master, {
 			tagString = "filter" ++ type.asString.capitalise ++ "_" ++ arg1;
 		}, {
-			tagString = "filter" ++ type.asString.capitalise ++ arg1 ++ "_" ++ arg2;
+			tagString = "filter" ++ type.asString.capitalise ++ "_" ++ arg1 ++ "_" ++ arg2;
 		});
 		tagString = tagString.asSymbol;
 		tagIndex = filters.flop[0].indexOf(tagString);
@@ -706,6 +706,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		}, {
 			"filter slot is not active".warn;
 		});
+	}
+
+	convFilterTag {arg filterTag;
+		var keyString, resultArr, varArr;
+		keyString = filterTag.asString.replace("filter").toLower;
+		varArr =  keyString.asString.split($_);
+		if(varArr.size == 2, {
+			resultArr = [varArr[0].asSymbol, 1, varArr[1] ];
+		}, {
+			resultArr = [varArr[0].asSymbol, varArr[1], varArr[1] ];
+		});
+		^resultArr;
 	}
 
 	setFilterCode {arg type, num, slot, arg1, arg2, post=\code;
@@ -725,22 +737,62 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			thisSpec.postln;
 			thisVal = thisSpec[2].(thisSpec[1].asSpec.map(arg2));
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
-//work on this to be able to change argument 1 with symbol
-			/*this.setFilterTag(filterTag, arg1, arg2, post);*/
 		});
 	}
 
+	getFilterKeys {arg filterTag, type=\args;
+		var result;
+		Ndef(filterTag).cleanNodeMap;
+		case
+		{type == \args} { result = Ndef(filterTag).controlKeys; }
+		{type == \vals} { result = Ndef(filterTag).controlKeysValues;}
+		{type == \pairs} { result = Ndef(filterTag).getKeysValues;};
+		^result;
+	}
+
 	getFilterArgs {arg type, num, slot;
-		^Ndef(this.findFilterTag(type, num, slot)).controlKeys;
+		var filterTag;
+		filterTag = this.findFilterTag(type, num, slot);
+		^this.getFilterKeys(filterTag, \args);
 	}
 
 	getFilterVals {arg type, num, slot;
-		^Ndef(this.findFilterTag(type, num, slot)).controlKeysValues;
+		var filterTag;
+		filterTag = this.findFilterTag(type, num, slot);
+		^this.getFilterKeys(filterTag, \vals);
 	}
 
 	getFilterPairs {arg type, num, slot;
-		^Ndef(this.findFilterTag(type, num, slot)).getKeysValues;
+		var filterTag;
+		filterTag = this.findFilterTag(type, num, slot);
+		^this.getFilterKeys(filterTag, \pairs);
 	}
+
+	modFilterTag {arg filterTag, argument, modType=\sin, spec, extraArgs, func;
+		var key, argArr, modMap;
+
+		if(argument.isNumber, {
+			key = this.getFilterKeys(filterTag, \args)[argument];
+		}, {
+			key = argument;
+		});
+		modMap = ModMap.map(Ndef(filterTag), key, modType, spec, extraArgs, func);
+		/*filterMod = filterMod.add([filterTag, key,  modMap]);*/
+	}
+
+/*//arg filterIndex, arg1, arg2, post=\code;
+	modFilter {arg filterIndex, argIndex, modType=\sin, spec, extraArg;
+		filterTag = filters.flop[0][filterIndex];
+		specArr = this.collectSpecArr(filterTag)[0][1];
+		thisSpec = 	specArr[arg1];
+		specArr.postln;
+	/*	if(key.isNumber, {
+			this.getFilterArgs(type, num, slot);
+		ModMap.map(Ndef(filterTag), key, modType, spec, extraArgs);
+		}, {
+		ModMap.map(Ndef(filterTag), key, modType, spec, extraArgs);
+		});*/
+	}*/
 
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
 		action={|val| val.radpost}, chanIn, globBuf;
