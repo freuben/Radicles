@@ -683,14 +683,65 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		});
 	}
 
-	setFilterAt {arg filterIndex, arg1, arg2, post=\code;
+	filterInfoToTag {arg filterInfo;
+		var filterTag;
+		case
+		{filterInfo.isNumber} {
+			filterTag = this.getFilterTag(filterInfo);
+		}
+		{filterInfo.isSymbol} {
+			filterTag = filterInfo;}
+		{filterInfo.isArray} {
+			if(filterInfo.size > 2, {
+				filterTag = this.findFilterTag(filterInfo[0], filterInfo[1], filterInfo[2]);
+			}, {
+				filterTag = this.findFilterTag(filterInfo[0], filterInfo[1]);
+			});
+		};
+		^filterTag;
+	}
+
+	setFilter {arg filterInfo, arg1, arg2, post=\code;
+		var filterTag, key;
+		filterTag = this.filterInfoToTag(filterInfo);
+		if(filterTag.notNil, {
+		if(arg1.isNumber, {
+			key = this.getFilterKeys(filterTag)[arg1];
+		}, {
+			key = arg1;
+		});
+		this.setFilterTag(filterTag, key, arg2, post);
+		}, {
+			"filter info not found".warn;
+		});
+	}
+
+	setFilterSpec {arg filterInfo, arg1, arg2, mul=1, add=0, min, val, warp, post=\code;
+		var filterTag, specArr, thisSpec, modSpec, thisVal;
+		filterTag = this.filterInfoToTag(filterInfo);
+		specArr = this.collectSpecArr(filterTag)[0][1];
+		if(arg1.isNumber, {
+		thisSpec =	specArr[arg1];
+		}, {
+		thisSpec = 	specArr[specArr.flop[0].indexOf(arg1)];
+		});
+		/*thisSpec.postln;*/
+		modSpec = thisSpec[1].specFactor(mul, add, min, val, warp);
+		thisVal = thisSpec[2].(modSpec.asSpec.map(arg2));
+/*		thisVal = thisVal.specFactor(mul, add, min, val, warp);*/
+
+		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
+
+	}
+
+/*	setFilterAt {arg filterIndex, arg1, arg2, post=\code;
 		var filterTag, specArr, thisSpec, thisVal;
 		filterTag = filters.flop[0][filterIndex];
 		specArr = this.collectSpecArr(filterTag)[0][1];
 		thisSpec = 	specArr[arg1];
 		thisVal = thisSpec[2].(thisSpec[1].asSpec.map(arg2));
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
-	}
+	}*/
 
 	findFilterTag {arg type, arg1, arg2;
 		var tagString, tagIndex;
@@ -705,6 +756,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			^filters.flop[0][tagIndex]
 		}, {
 			"filter slot is not active".warn;
+			^nil;
 		});
 	}
 
@@ -718,26 +770,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			resultArr = [varArr[0].asSymbol, varArr[1], varArr[1] ];
 		});
 		^resultArr;
-	}
-
-	setFilterCode {arg type, num, slot, arg1, arg2, post=\code;
-		var filterTag;
-		filterTag = this.findFilterTag(type, num, slot);
-		this.setFilterTag(filterTag, arg1, arg2, post);
-	}
-
-	setFilterSpec {arg type, num, slot, arg1, arg2, post=\code;
-		var filterTag, specArr, thisSpec, thisVal;
-		filterTag = this.findFilterTag(type, num, slot);
-		if(arg1.isNumber, {
-			this.setFilterAt(filterTag, arg1, arg2, post);
-		}, {
-			specArr = this.collectSpecArr(filterTag)[0][1];
-			thisSpec = 	specArr[specArr.flop[0].indexOf(arg1)];
-			/*thisSpec.postln;*/
-			thisVal = thisSpec[2].(thisSpec[1].asSpec.map(arg2));
-			this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
-		});
 	}
 
 	getFilterTag {arg filterIndex=0;
@@ -805,9 +837,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		mul=1, add=0, min, val, warp, lag;
 		var filterTag, specArr, thisSpec, argIndex;
 		if(filterInfo.isNumber, {
-		filterTag = this.getFilterTag(filterInfo);
+			filterTag = this.getFilterTag(filterInfo);
 		}, {
-		filterTag = filterInfo;
+			filterTag = filterInfo;
 		});
 		specArr = this.collectSpecArr(filterTag)[0][1];
 		if(argument.isNumber, {
@@ -827,6 +859,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		filterTag = this.findFilterTag(type, num, slot);
 		this.modFilter(filterTag, argument, modType, extraArgs,
 			mul, add, min, val, warp, lag);
+	}
+
+	savePresetFilter {arg filterTag;
+
 	}
 
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
