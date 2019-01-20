@@ -1,6 +1,6 @@
-Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
-	<trackCount=1, <busCount=1, <space, <ndefs, <>masterSynth, <trackNames,
-	<>masterInput, <busArr, <busInArr, <filters, <filterBuff;
+Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
+	<trackCount=1, <busCount=1, <space, <masterNdefs, <ndefRoute, <>masterSynth, <trackNames,
+	<>masterInput, <busArr, <filters, <filterBuff;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -39,7 +39,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 					this.autoRoute(item);
 				};
 				server.sync;
-				inArr = ndefs.flop[1];
+				inArr = masterNdefs.flop[1];
 				masterInput = inArr.copyRange(1, inArr.size-1);
 				this.input(masterInput, \master);
 				server.sync;
@@ -67,8 +67,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 
 	play {var ndefCS;
 		ndefCS = "Ndef('master').play;";
-		ndefCS.radpost;
-		ndefCS.interpret;
+		ndefCS.radpost.interpret;
 	}
 
 	findSpaceType {arg chanNum=1;
@@ -80,9 +79,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		^spaceType;
 	}
 
-	addTrack {arg type=\track, chanNum=1, spaceType, trackSynth;
-		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth, spaceSpecs, trackSpecs;
+	addTrack {arg type=\track, chanNum=1, spaceType, trackSynth, trackSpecs;
+		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth, spaceSpecs, thisTrackInfo;
 		if([\track, \bus, \master].includes(type), {
+			/*{*/
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
 			trackSynth ?? {trackSynth = {arg volume=0; (\in * volume.dbamp )}; };
 			trackSpecs ?? trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ] ];
@@ -117,11 +117,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			ndefCS2.radpost;
 			ndefCS2.interpret;
 			server.sync;
+			thisTrackInfo = [ [spaceTag, spaceSynth], [trackTag, trackSynth] ];
 			tracks = tracks.add([ [spaceTag, spaceSynth], [trackTag, trackSynth] ]);
 			specs = specs.add([ [spaceTag, spaceSpecs], [trackTag, trackSpecs] ]);
-			ndefs = ndefs.add([Ndef(spaceTag), Ndef(trackTag)]);
+			masterNdefs = masterNdefs.add([Ndef(spaceTag), Ndef(trackTag)]);
 			trackNames = trackNames.add(trackTag);
-			space = space.add([spaceTag, chanNum, spaceType ]);
+			^thisTrackInfo;
 		}, {
 			"track type not found".warn;
 		});
@@ -136,7 +137,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 
 	addAlltracks {arg arr;
 		arr.do{|item|
-			this.addtrack(item);
+			this.addTrack(item);
 		}
 	}
 
@@ -161,8 +162,33 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				synthArr[index].radpost;
 			});
 			intArr = intArr.add(ndefCS);
+			this.mapRoute([dest, Ndef(ndefArr[index])]);
 		};
 		{intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
+	}
+
+	mapRoute {arg arr, replace=false;
+		var sameNdefIndex;
+		if(ndefRoute.notNil, {
+		sameNdefIndex = ndefRoute.flop[0].indexOf(arr[0]);
+		});
+		if(replace, {
+			ndefRoute.removeAt(sameNdefIndex);
+		});
+		ndefRoute = ndefRoute.add([arr[0], arr[1]]);
+	}
+
+	autoAddTrack {arg type=\track, chanNum=1, spaceType, trackSynth, trackSpecs;
+		var trackInfo, inArr, masterInput;
+		{
+			trackInfo = this.addTrack(type, chanNum, spaceType, trackSynth, trackSpecs);
+			server.sync;
+			this.autoRoute(trackInfo);
+			server.sync;
+			inArr = masterNdefs.flop[1];
+			masterInput = inArr.copyRange(1, inArr.size-1);
+			this.input(masterInput, \master);
+		}.fork;
 	}
 
 	ndefPrepare {arg ndef, func;
@@ -175,6 +201,66 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			result = [key, func, extraArgs].presetToNdefCS;
 		});
 		^result;
+	}
+
+	routePairs {var newArr;
+		inputs.do{|item, index|
+	var ndefOut;
+	ndefOut = Ndef(item[0]);
+	if(item[1].isArray, {item[1].do{|it| newArr = newArr.add([it, ndefOut])   };
+	}, {
+		newArr = newArr.add([item[1], ndefOut]);
+	});
+};
+^(ndefRoute ++ newArr);
+
+	}
+
+	routingPairs {var dest, newDest, newArr;
+		dest = this.inputs.flop[0];
+		newDest = [[],[],[]];
+		dest.do{|item, index|
+			case
+			{item.asString[0].ascii == 116} {newDest[0] = newDest[0].add(this.inputs[index]); }
+			{item.asString[0].ascii == 98} {newDest[1] = newDest[1].add(this.inputs[index]);}
+			{item.asString[0].ascii == 109 } {newDest[2] = newDest[2].add(this.inputs[index]);};
+		};
+		newDest.do{|input| input.do{|item|
+			item[1].do{|it| newArr = newArr.add([it.key, item[0]]); }
+		} };
+		^newArr;
+	}
+
+	routingMap {var rout, newArr, noRepeat, symb, symbArr, string, indices;
+rout = [];
+			newArr = this.routingPairs;
+noRepeat = newArr.select({|item| newArr.flop[1].indexOf(item[0]).isNil });
+noRepeat.do{|selArr|
+	symb = selArr;
+			symbArr = [];
+	newArr.select{|item| item[0] == symb[1] }.do{|item| symbArr = symbArr.add(item); };
+	symbArr.do{|it| newArr.select{|item| item[0] == it[1] }.do{|item| symbArr = symbArr.add(item); }; };
+	rout = rout.add(	([symb] ++ symbArr) );
+};
+string = "";
+rout.do{|chain, chainInd|
+	/*~thisChain = chain;*/
+	/*~chainInd = chainInd;*/
+	chain.flat.indicesOfEqual(\master).size.do{
+		indices = [];
+		string = string ++ chain[0][0] ++ "->";
+		chain.do{|item| var selindex;
+			selindex = rout[chainInd].flop[0].indexOf(item[1]);
+			if(selindex.notNil, {
+				string = string ++ (item[1] ++ "->");
+				indices = indices.add(selindex);
+			});
+		};
+		chain.removeAtAll(indices);
+		string = string ++ "master" ++ 10.asAscii;
+	}
+};
+^string;
 	}
 
 	findTrackArr {arg key=\master;
@@ -221,7 +307,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			spaceSynth = SynthFile.read(\space, spaceType);
 			func = spaceSynth.filterFunc(trackInput);
 			this.replaceFunc(trackName, func);
-			space.do{|item| if(item[0] == trackName, {item[1] = chanNum; item[2] = spaceType }) };
+			/*space.do{|item| if(item[0] == trackName, {item[1] = chanNum; item[2] = spaceType }) };*/
 		}, {
 			"track name not found".warn;
 		});
@@ -231,6 +317,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		var trackArr, ndefCS, connect, inTag;
 		trackArr = this.get(type)[num-1];
 		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
+		if(inputs.notNil, {
+			if(inputs.flop[0].includes(inTag), {
+				inputs.removeAt(inputs.flop[0].indexOf(inTag));
+			});
+		});
+		inTag = ("space" ++ inTag.asString.capitalise).asSymbol;
 		inputs = inputs.add([inTag, ndefsIn]);
 		inputs = ([ inputs[0] ] ++
 			inputs.copyRange(1, inputs.size-1).sort { arg a, b; a[0] <= b[0] };);
@@ -247,6 +339,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				connect = true;
 			});
 		});
+		/*ndefsIn.do{|item|
+		this.mapRoute([item, Ndef(trackArr[0][0])]);
+		};*/
 		if(connect, {
 			ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
 			ndefCS.radpost;
@@ -327,6 +422,28 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		^Ndef(inTag);
 	}
 
+	getTrackDestination {arg type=\master, num=1;
+		var key, ind;
+		ind = [];
+		key = (type ++ num).asSymbol;
+		inputs.flop[1].do{|item, index|
+			if(item.isArray, {
+				if(item.includes(Ndef(key) ), {
+					ind = ind.add(index)});
+			}, {
+				if(item == Ndef(key), { ind = ind.add(index) });
+		});  };
+		if(ind.notNil, {
+			if(ind.size == 1, {
+				^Ndef(inputs.flop[0][ind[0]]);
+			}, {
+				^inputs.flop[0].atAll(ind);
+			});
+		}, {
+			"destination not found".warn;
+		});
+	}
+
 	bus {arg trackNum=1, busNum=1, mix=1, dirIn=true;
 		var numChan, busTag, ndefCS1, ndefCS2, ndefCS3, funcBus, thisBusArr,
 		busAdd, argIndex;
@@ -352,6 +469,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			busAdd = {busArr[busNum-1][1] = busArr[busNum-1][1].add(
 				this.getTrackOutput(\track, trackNum));};
 			thisBusArr = busArr[busNum-1][1];
+
 			if(thisBusArr.notNil, {
 				if(thisBusArr.includes(this.getTrackOutput(\track, trackNum)).not, {
 					busAdd.()
@@ -359,12 +477,28 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			}, {
 				busAdd.();
 			});
+
+			if(inputs.notNil, {
+				if(inputs.flop[0].includes(busTag), {
+					inputs.removeAt(inputs.flop[0].indexOf(busTag));
+				});
+			});
+
+			if(busArr[busNum-1][1].size == 1, {
+				inputs = inputs.add( [busTag, busArr[busNum-1][1][0]]);
+			}, {
+				inputs = inputs.add( [busTag, busArr[busNum-1][1]]);
+			});
+
+			busArr[busNum-1][1].postln;
 			funcBus = busArr[busNum-1][1].busFunc;
 			ndefCS2 = this.ndefPrepare(Ndef(busTag), funcBus);
 			server.sync;
 			ndefCS2.radpost;
 			ndefCS2.interpret;
 			server.sync;
+			/*argIndex = busArr[busNum-1][1].indexOf(Ndef(("track" ++ trackNum).asSymbol));*/
+			//make sure this is correct
 			argIndex = busArr[busNum-1][1].indexOf(Ndef(("track" ++ trackNum).asSymbol));
 			ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set('vol" ++ (argIndex+1)
 			++ "', " ++ mix ++ ");";
@@ -516,7 +650,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 			});
 			setArr = this.findTrackArr(setTag);
 			tracks[setArr[0]] = arr1;
-			ndefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
+			masterNdefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
 
 			trackTags = specs[setArr[0]].flop[0];
 			specs[setArr[0]] = arr1.flop[0].collect{|item|
@@ -545,7 +679,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				thisTrack.removeAt(slot);
 				if(type == \master, {num=""});
 				setArr = this.findTrackArr((type ++ num).asSymbol);
-				ndefs[setArr[0]].removeAt(slot);
+				masterNdefs[setArr[0]].removeAt(slot);
 				specs[setArr[0]].removeAt(slot);
 				{
 					fadeTime.wait;
@@ -578,7 +712,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 				thisTrack.remove(item);
 				if(type == \master, {num=""});
 				setArr = this.findTrackArr((type ++ num).asSymbol);
-				ndefs[setArr[0]].remove(Ndef(item[0]));
+				masterNdefs[setArr[0]].remove(Ndef(item[0]));
 				specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
 				filters = filters.reject({|it| it[0] == item[0] });
 			};
@@ -622,8 +756,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		var trackIndex;
 		trackIndex = track - 1;
 		if((track >= 1).and(track <= tracks.size), {
-			ndefs[trackIndex].clear;
-			ndefs.removeAt(trackIndex);
+			masterNdefs[trackIndex].clear;
+			masterNdefs.removeAt(trackIndex);
+
 			tracks.removeAt(trackIndex);
 			specs.removeAt(trackIndex);
 			livetracks.removeAt(trackIndex);
@@ -637,20 +772,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		trackArr.do{|item|
 			if((item >= 1).and(item <= tracks.size), {
 				newArr = newArr.add(item-1);
-				ndefs[item-1].clear;
+				masterNdefs[item-1].clear;
 			}, {
 				"track Number not Found".warn;
 			});
 		};
-		ndefs.removeAtAll(newArr);
+		masterNdefs.removeAtAll(newArr);
 		tracks.removeAtAll(newArr);
 		specs.removeAtAll(newArr);
 		livetracks.removeAll(newArr);
 	}
 
 	removeAll {
-		ndefs.do{|item| item.clear };
-		ndefs = [];
+		masterNdefs.do{|item| item.clear };
+		masterNdefs = [];
+
 		tracks = [];
 		specs = [];
 		livetracks = [];
@@ -659,17 +795,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 
 	clear {
 		Ndef.clear;
-		ndefs = [];
+		masterNdefs = [];
+
 		tracks = [];
 		specs = [];
 		livetracks = [];
 		trackCount = 1;
-	}
-
-	playNdefs {
-		Server.default.waitForBoot{
-			outputs.do{|item| item.play};
-		};
 	}
 
 	setFilterTag {arg filterTag, arg1, arg2, post=\code;
@@ -705,12 +836,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		var filterTag, key;
 		filterTag = this.filterInfoToTag(filterInfo);
 		if(filterTag.notNil, {
-		if(arg1.isNumber, {
-			key = this.getFilterKeys(filterTag)[arg1];
-		}, {
-			key = arg1;
-		});
-		this.setFilterTag(filterTag, key, arg2, post);
+			if(arg1.isNumber, {
+				key = this.getFilterKeys(filterTag)[arg1];
+			}, {
+				key = arg1;
+			});
+			this.setFilterTag(filterTag, key, arg2, post);
 		}, {
 			"filter info not found".warn;
 		});
@@ -721,27 +852,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <outputs, <livetracks,
 		filterTag = this.filterInfoToTag(filterInfo);
 		specArr = this.collectSpecArr(filterTag)[0][1];
 		if(arg1.isNumber, {
-		thisSpec =	specArr[arg1];
+			thisSpec =	specArr[arg1];
 		}, {
-		thisSpec = 	specArr[specArr.flop[0].indexOf(arg1)];
+			thisSpec = 	specArr[specArr.flop[0].indexOf(arg1)];
 		});
 		/*thisSpec.postln;*/
 		modSpec = thisSpec[1].specFactor(mul, add, min, val, warp);
 		thisVal = thisSpec[2].(modSpec.asSpec.map(arg2));
-/*		thisVal = thisVal.specFactor(mul, add, min, val, warp);*/
-
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
 
 	}
-
-/*	setFilterAt {arg filterIndex, arg1, arg2, post=\code;
-		var filterTag, specArr, thisSpec, thisVal;
-		filterTag = filters.flop[0][filterIndex];
-		specArr = this.collectSpecArr(filterTag)[0][1];
-		thisSpec = 	specArr[arg1];
-		thisVal = thisSpec[2].(thisSpec[1].asSpec.map(arg2));
-		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
-	}*/
 
 	findFilterTag {arg type, arg1, arg2;
 		var tagString, tagIndex;

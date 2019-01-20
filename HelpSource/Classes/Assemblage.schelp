@@ -96,8 +96,40 @@ a.getTracks.dopostln;
 
 a.getMaster.postln;
 
+////
+a = Assemblage(1,0,2);
+
+Block.addNum(3, 2);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata);
+
+a.input(Block.ndefs[0], \track, 1);
+
+//add more tracks after initiating
+a.autoAddTrack(\track, 2); //type, chanNum
+
+Block.play(2, \sine, \nobuf, [320,0,0.4], \nodata);
+
+a.input(Block.ndefs[1], \track, 2);
+
+//add more tracks after initiating
+a.autoAddTrack(\track, 2); //type, chanNum
+
+Block.play(3, \sine, \nobuf, [420,0,0.4], \nodata);
+
+a.input(Block.ndefs[2], \track, 3);
+
+a.ndefs.dopostln;
+a.ndefs.flat.do{|item| item.controlKeysValues.postln };
+
+//if you stop with cmd .  you can restart with:
+a.play;
+
+////
 
 a = Assemblage(6, 2);
+
+a.busArr
 
 Block.addNum(3, 1);
 
