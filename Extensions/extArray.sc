@@ -151,5 +151,10 @@
 		this.presetToNdefCS(key, source, extraArgs).radpost.interpret;
 	}
 
+	collectAdjacentPairs {var arr;
+		this.doAdjacentPairs({|a,b| arr = arr.add([a,b]) });
+		^arr;
+	}
+
 }
 

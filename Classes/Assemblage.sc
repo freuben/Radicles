@@ -141,7 +141,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}
 	}
 
-	autoRoute {arg trackInfo;
+	autoRoute {arg trackInfo, replace=false;
 		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
 		newArr = trackInfo.reverse;
 		ndefArr = newArr.flop[0];
@@ -162,20 +162,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				synthArr[index].radpost;
 			});
 			intArr = intArr.add(ndefCS);
-			this.mapRoute([dest, Ndef(ndefArr[index])]);
 		};
 		{intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
-	}
-
-	mapRoute {arg arr, replace=false;
-		var sameNdefIndex;
-		if(ndefRoute.notNil, {
-		sameNdefIndex = ndefRoute.flop[0].indexOf(arr[0]);
-		});
-		if(replace, {
-			ndefRoute.removeAt(sameNdefIndex);
-		});
-		ndefRoute = ndefRoute.add([arr[0], arr[1]]);
 	}
 
 	autoAddTrack {arg type=\track, chanNum=1, spaceType, trackSynth, trackSpecs;
@@ -203,17 +191,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^result;
 	}
 
-	routePairs {var newArr;
+	//still have to look at filters and how it affects the routing
+	routePairs {var newArr, newMasNdefs;
 		inputs.do{|item, index|
-	var ndefOut;
-	ndefOut = Ndef(item[0]);
-	if(item[1].isArray, {item[1].do{|it| newArr = newArr.add([it, ndefOut])   };
-	}, {
-		newArr = newArr.add([item[1], ndefOut]);
-	});
-};
-^(ndefRoute ++ newArr);
-
+			var ndefOut;
+			ndefOut = Ndef(item[0]);
+			if(item[1].isArray, {item[1].do{|it| newArr = newArr.add([it, ndefOut])   };
+			}, {
+				newArr = newArr.add([item[1], ndefOut]);
+			});
+		};
+		newMasNdefs = masterNdefs.collect{|it| it.collectAdjacentPairs };
+		newMasNdefs = newMasNdefs.reshape((newMasNdefs.flat.size/2).asInteger, 2);
+		^(newMasNdefs ++ newArr);
 	}
 
 	routingPairs {var dest, newDest, newArr;
@@ -232,35 +222,35 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	routingMap {var rout, newArr, noRepeat, symb, symbArr, string, indices;
-rout = [];
-			newArr = this.routingPairs;
-noRepeat = newArr.select({|item| newArr.flop[1].indexOf(item[0]).isNil });
-noRepeat.do{|selArr|
-	symb = selArr;
+		rout = [];
+		newArr = this.routingPairs;
+		noRepeat = newArr.select({|item| newArr.flop[1].indexOf(item[0]).isNil });
+		noRepeat.do{|selArr|
+			symb = selArr;
 			symbArr = [];
-	newArr.select{|item| item[0] == symb[1] }.do{|item| symbArr = symbArr.add(item); };
-	symbArr.do{|it| newArr.select{|item| item[0] == it[1] }.do{|item| symbArr = symbArr.add(item); }; };
-	rout = rout.add(	([symb] ++ symbArr) );
-};
-string = "";
-rout.do{|chain, chainInd|
-	/*~thisChain = chain;*/
-	/*~chainInd = chainInd;*/
-	chain.flat.indicesOfEqual(\master).size.do{
-		indices = [];
-		string = string ++ chain[0][0] ++ "->";
-		chain.do{|item| var selindex;
-			selindex = rout[chainInd].flop[0].indexOf(item[1]);
-			if(selindex.notNil, {
-				string = string ++ (item[1] ++ "->");
-				indices = indices.add(selindex);
-			});
+			newArr.select{|item| item[0] == symb[1] }.do{|item| symbArr = symbArr.add(item); };
+			symbArr.do{|it| newArr.select{|item| item[0] == it[1] }.do{|item| symbArr = symbArr.add(item); }; };
+			rout = rout.add(	([symb] ++ symbArr) );
 		};
-		chain.removeAtAll(indices);
-		string = string ++ "master" ++ 10.asAscii;
-	}
-};
-^string;
+		string = "";
+		rout.do{|chain, chainInd|
+			/*~thisChain = chain;*/
+			/*~chainInd = chainInd;*/
+			chain.flat.indicesOfEqual(\master).size.do{
+				indices = [];
+				string = string ++ chain[0][0] ++ "->";
+				chain.do{|item| var selindex;
+					selindex = rout[chainInd].flop[0].indexOf(item[1]);
+					if(selindex.notNil, {
+						string = string ++ (item[1] ++ "->");
+						indices = indices.add(selindex);
+					});
+				};
+				chain.removeAtAll(indices);
+				string = string ++ "master" ++ 10.asAscii;
+			}
+		};
+		^string;
 	}
 
 	findTrackArr {arg key=\master;
@@ -339,9 +329,6 @@ rout.do{|chain, chainInd|
 				connect = true;
 			});
 		});
-		/*ndefsIn.do{|item|
-		this.mapRoute([item, Ndef(trackArr[0][0])]);
-		};*/
 		if(connect, {
 			ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
 			ndefCS.radpost;
@@ -618,10 +605,10 @@ rout.do{|chain, chainInd|
 				}, {
 
 					arr2 = arr2.add(filterInfo);
-					arr2.sort({ arg a, b; a[0] <= b[0] });
+					arr2.sort({arg a, b; a[0] <= b[0] });
 
 					filters = filters.add([filterTag, filter]);
-					filters.sort({ arg a, b; a[0] <= b[0] });
+					filters.sort({arg a, b; a[0] <= b[0] });
 				});
 
 				arr1.insert(1, arr2);
@@ -631,7 +618,7 @@ rout.do{|chain, chainInd|
 			}, {
 
 				filters = filters.add([filterTag, filter]);
-				filters.sort({ arg a, b; a[0] <= b[0] });
+				filters.sort({arg a, b; a[0] <= b[0] });
 
 				arr1 = ndefArr;
 				arr2 = filterInfo;
@@ -661,7 +648,7 @@ rout.do{|chain, chainInd|
 				});
 			};
 
-			this.autoRoute(arr1);
+			this.autoRoute(arr1, true);
 			server.sync;
 			bufFunc.();
 		}.fork;
@@ -1038,3 +1025,127 @@ rout.do{|chain, chainInd|
 	}
 
 }
+
+/*~arr = a.routePairs.collect{|item| [item[0].key, item[1].key] };
+
+~arr.dopostln;
+
+
+(
+~labelArr = Array.fill(~arr.collect{|item| ~arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
+~globArr = [];
+~globArr2 = [];
+~arr.do{|item|
+	~labelArr = Array.fill(~arr.collect{|item| ~arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
+	item.do{|lab|
+		~labelArr[0] = lab.postln;
+		~globArr = ~globArr.add(~labelArr.postln);
+		~labelArr = Array.fill(~arr.collect{|item| ~arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
+	};
+	~indices = ~arr.flop[0].indicesOfEqual(item[1]);
+	~thisArr = ~indices.collect{|it| ~arr.flop[1][it] };
+	if(~thisArr.notNil, {
+		~labelArr.do{|item, index|
+			~labelArr[index] = ~thisArr[index];
+		};
+		~labelArr.postln;
+		while ({ ~labelArr.collect({|item| item == nil }).includes(false) }, {
+			~globArr = ~globArr.add(~labelArr);
+			~labelArr.postln;
+			~labelArr2 = ~labelArr.collect{|lab|
+				~arr.flop[0].indicesOfEqual(lab);
+			};
+			~labelArr = ~labelArr2.collect{|lab|
+				if(lab.notNil, {
+					lab.collect{|lab2|
+						~arr[lab2][1];
+					};
+				});
+			}.flat;
+		});
+	});
+	~globArr2 = ~globArr2.add(~globArr);
+	~globArr = [];
+}
+)
+
+~globArr2.dopostln;
+
+~globArr3 = [];
+~globArr2.do{|globArr|
+	var newArr, newArr2, newArr3, newArrMod, switch, newArr4;
+	newArr = globArr.flop.select{|item| item.includes(\master)};
+	newArr2 = newArr.flop;
+	newArr2.do{|item, index|
+		var thisNils, replace;
+		if(item.includes(nil), {
+			thisNils = item.indicesOfEqual(nil).postln;
+			replace = item.select({|it| it.notNil });
+			thisNils.do{|ind| newArr2[index][ind] = replace[0].postln };
+		});
+	};
+	newArr3 = newArr2.flop;
+	newArrMod = [];
+	newArr3.do{|item, index|
+		switch = true;
+		item.do{|it| if(it == \master, {switch = false});
+			if(switch, {newArrMod = newArrMod.add(it);
+			}, {
+				newArrMod = newArrMod.add(\master);
+			});
+		};
+	};
+
+	newArr4 = newArrMod.reshapeLike(newArr3);
+	newArr4.do{|item| item.rejectSame };
+	newArr4.do{|item|
+		~globArr3 = ~globArr3.add(item);
+	};
+};
+
+~globArr3.dopostln;
+
+
+(
+~stringArr = ~globArr3.collect{|item|
+	item.asString.replace("[", "").replace("]", "").replace(", ","->").replace(" ", "");
+};
+)
+
+~stringArr.dopostln;
+
+(
+~selectString = [];
+(~stringArr.size-1).do{|num|
+	~thisIndex = num;
+	~thisString.postln;
+	~thisString = ~stringArr[~thisIndex];
+	~indArr =	~stringArr.collect{|item, index| if(item.find(~thisString).notNil, {index}); };
+	~indArr =	~indArr.select({|item| item.notNil }).size;
+	if(~indArr == 1, {  ~selectString = ~selectString.add(~stringArr[~thisIndex]) });
+};
+)
+
+~selectString.dopostln;
+
+//sort order of strings??
+
+(
+//string filters
+~filterString = {arg filter1="", filter2="", filter3="", filter4="";
+	~selectString2 = [];
+	~selectString.do{|item| ~selectString2 = ~selectString2.add(
+		item.replace(">", "").split($-).select({|it|
+			(it.find(filter1).isNil).and(it.find(filter2).isNil)
+			.and(it.find(filter3).isNil).and(it.find(filter4).isNil) })
+	) };
+	~selectString3 = ~selectString2.collect{|item|
+		item.asString.replace("[", "").replace("]", "").replace(", ","->").replace(" ", "");
+	};
+};
+)
+
+~filterString.("space").dopostln;
+~filterString.("space", "In", "filter").dopostln;
+
+~filterString.("space", "block", "filter", "bus").dopostln;*/
