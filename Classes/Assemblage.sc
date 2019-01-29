@@ -1,6 +1,6 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
-	<trackCount=1, <busCount=1, <space, <masterNdefs, <ndefRoute, <>masterSynth, <trackNames,
-	<>masterInput, <busArr, <filters, <filterBuff;
+	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
+	<trackNames, <>masterInput, <busArr, <filters, <filterBuff;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -191,7 +191,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^result;
 	}
 
-	//still have to look at filters and how it affects the routing
 	routePairs {var newArr, newMasNdefs;
 		inputs.do{|item, index|
 			var ndefOut;
@@ -206,51 +205,122 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^(newMasNdefs ++ newArr);
 	}
 
-	routingPairs {var dest, newDest, newArr;
-		dest = this.inputs.flop[0];
-		newDest = [[],[],[]];
-		dest.do{|item, index|
+	routePairsSort {
+		var keyArr, newKeyArr = [[],[],[],[]];
+		keyArr = this.routePairs.collect({|ndef| [ndef[0].key, ndef[1].key] });
+		keyArr.do{|item, index|
+			var bol;
+			bol = true;
 			case
-			{item.asString[0].ascii == 116} {newDest[0] = newDest[0].add(this.inputs[index]); }
-			{item.asString[0].ascii == 98} {newDest[1] = newDest[1].add(this.inputs[index]);}
-			{item.asString[0].ascii == 109 } {newDest[2] = newDest[2].add(this.inputs[index]);};
+			{
+				(item[0].asString.find("track").notNil).or(item[0].asString.find("Track").notNil)
+			} {newKeyArr[1] = newKeyArr[1].add(keyArr[index]); bol = false}
+			{
+				(item[0].asString.find("bus").notNil).or(item[0].asString.find("Bus").notNil)
+			} {newKeyArr[2] = newKeyArr[2].add(keyArr[index]); bol = false}
+			{
+				(item[0].asString.find("Master").notNil)
+			} {newKeyArr[3] = newKeyArr[3].add(keyArr[index]); bol = false};
+			if(bol, {
+				newKeyArr[0] = newKeyArr[0].add(keyArr[index]);
+			});
 		};
-		newDest.do{|input| input.do{|item|
-			item[1].do{|it| newArr = newArr.add([it.key, item[0]]); }
-		} };
-		^newArr;
+		newKeyArr = newKeyArr.collect{|item| item.sort({ arg a, b; a[0] <= b[0] }; ) };
+		newKeyArr = newKeyArr.reshapeLike(keyArr);
+		^newKeyArr;
 	}
 
-	routingMap {var rout, newArr, noRepeat, symb, symbArr, string, indices;
-		rout = [];
-		newArr = this.routingPairs;
-		noRepeat = newArr.select({|item| newArr.flop[1].indexOf(item[0]).isNil });
-		noRepeat.do{|selArr|
-			symb = selArr;
-			symbArr = [];
-			newArr.select{|item| item[0] == symb[1] }.do{|item| symbArr = symbArr.add(item); };
-			symbArr.do{|it| newArr.select{|item| item[0] == it[1] }.do{|item| symbArr = symbArr.add(item); }; };
-			rout = rout.add(	([symb] ++ symbArr) );
+	routingMap {var arr, labelArr, labelArr2, globArr, globArr2, globArr3, indices,
+		thisArr, stringArr, selectString, thisIndex, thisString, indArr;
+		arr = this.routePairsSort;
+		labelArr = Array.fill(
+			arr.collect{|item| arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
+		arr.do{|item|
+			labelArr = Array.fill(
+				arr.collect{|item| arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
+			item.do{|lab|
+				labelArr[0] = lab;
+				globArr = globArr.add(labelArr);
+				labelArr = Array.fill(
+					arr.collect{|item| arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
+			};
+			indices = arr.flop[0].indicesOfEqual(item[1]);
+			thisArr = indices.collect{|it| arr.flop[1][it] };
+			if(thisArr.notNil, {
+				labelArr.do{|item, index|
+					labelArr[index] = thisArr[index];
+				};
+				while ({ labelArr.collect({|item| item == nil }).includes(false) }, {
+					globArr = globArr.add(labelArr);
+					labelArr2 = labelArr.collect{|lab|
+						arr.flop[0].indicesOfEqual(lab);
+					};
+					labelArr = labelArr2.collect{|lab|
+						if(lab.notNil, {
+							lab.collect{|lab2|
+								arr[lab2][1];
+							};
+						});
+					}.flat;
+				});
+			});
+			globArr2 = globArr2.add(globArr);
+			globArr = [];
 		};
-		string = "";
-		rout.do{|chain, chainInd|
-			/*~thisChain = chain;*/
-			/*~chainInd = chainInd;*/
-			chain.flat.indicesOfEqual(\master).size.do{
-				indices = [];
-				string = string ++ chain[0][0] ++ "->";
-				chain.do{|item| var selindex;
-					selindex = rout[chainInd].flop[0].indexOf(item[1]);
-					if(selindex.notNil, {
-						string = string ++ (item[1] ++ "->");
-						indices = indices.add(selindex);
+		globArr2.do{|globArr|
+			var newArr, newArr2, newArr3, newArrMod, switch, newArr4;
+			newArr = globArr.flop.select{|item| item.includes(\master)};
+			newArr2 = newArr.flop;
+			newArr2.do{|item, index|
+				var thisNils, replace;
+				if(item.includes(nil), {
+					thisNils = item.indicesOfEqual(nil);
+					replace = item.select({|it| it.notNil });
+					thisNils.do{|ind| newArr2[index][ind] = replace[0] };
+				});
+			};
+			newArr3 = newArr2.flop;
+			newArrMod = [];
+			newArr3.do{|item, index|
+				switch = true;
+				item.do{|it| if(it == \master, {switch = false});
+					if(switch, {newArrMod = newArrMod.add(it);
+					}, {
+						newArrMod = newArrMod.add(\master);
 					});
 				};
-				chain.removeAtAll(indices);
-				string = string ++ "master" ++ 10.asAscii;
-			}
+			};
+			newArr4 = newArrMod.reshapeLike(newArr3);
+			newArr4.do{|item| item.rejectSame };
+			newArr4.do{|item|
+				globArr3 = globArr3.add(item);
+			};
 		};
-		^string;
+		stringArr = globArr3.collect{|item|
+			item.asString.replace("[", "").replace("]", "").replace(", ","->").replace(" ", "");
+		};
+		selectString = [];
+		(stringArr.size-1).do{|num|
+			thisIndex = num;
+			thisString = stringArr[thisIndex];
+			indArr =	stringArr.collect{|item, index| if(item.find(thisString).notNil, {index}); };
+			indArr =	indArr.select({|item| item.notNil }).size;
+			if(indArr == 1, { selectString = selectString.add(stringArr[thisIndex]) });
+		};
+		^selectString;
+	}
+
+	routingSelMap {arg filter1="", filter2="", filter3="", filter4="";
+		var selectString2, selectString3;
+		this.routingMap.do{|item| selectString2 = selectString2.add(
+			item.replace(">", "").split($-).select({|it|
+				(it.find(filter1).isNil).and(it.find(filter2).isNil)
+				.and(it.find(filter3).isNil).and(it.find(filter4).isNil) })
+		) };
+		selectString3 = selectString2.collect{|item|
+			item.asString.replace("[", "").replace("]", "").replace(", ","->").replace(" ", "");
+		};
+		^selectString3;
 	}
 
 	findTrackArr {arg key=\master;
@@ -347,9 +417,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	getTrackInput {arg type=\master, num=1;
-		var inTag, index;
-		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
-		if(trackNames.includes(inTag), {
+		var inTag, index, trackTag;
+		if(type == \master, {inTag = ("space" ++ type.asString.capitalise).asSymbol;
+			trackTag = type;
+		}, {inTag = (("space" ++ type.asString.capitalise) ++ num).asSymbol;
+			trackTag = (type ++ num).asSymbol;
+		});
+		if(trackNames.includes(trackTag), {
 			index = inputs.flop[0].indexOfEqual(inTag);
 			if(index.notNil, {
 				^inputs.flop[1][index];
@@ -477,7 +551,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				inputs = inputs.add( [busTag, busArr[busNum-1][1]]);
 			});
 
-			busArr[busNum-1][1].postln;
 			funcBus = busArr[busNum-1][1].busFunc;
 			ndefCS2 = this.ndefPrepare(Ndef(busTag), funcBus);
 			server.sync;
@@ -1025,127 +1098,3 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 }
-
-/*~arr = a.routePairs.collect{|item| [item[0].key, item[1].key] };
-
-~arr.dopostln;
-
-
-(
-~labelArr = Array.fill(~arr.collect{|item| ~arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
-~globArr = [];
-~globArr2 = [];
-~arr.do{|item|
-	~labelArr = Array.fill(~arr.collect{|item| ~arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
-	item.do{|lab|
-		~labelArr[0] = lab.postln;
-		~globArr = ~globArr.add(~labelArr.postln);
-		~labelArr = Array.fill(~arr.collect{|item| ~arr.flop[0].indicesOfEqual(item[1]).size;}.maxIndex, nil);
-	};
-	~indices = ~arr.flop[0].indicesOfEqual(item[1]);
-	~thisArr = ~indices.collect{|it| ~arr.flop[1][it] };
-	if(~thisArr.notNil, {
-		~labelArr.do{|item, index|
-			~labelArr[index] = ~thisArr[index];
-		};
-		~labelArr.postln;
-		while ({ ~labelArr.collect({|item| item == nil }).includes(false) }, {
-			~globArr = ~globArr.add(~labelArr);
-			~labelArr.postln;
-			~labelArr2 = ~labelArr.collect{|lab|
-				~arr.flop[0].indicesOfEqual(lab);
-			};
-			~labelArr = ~labelArr2.collect{|lab|
-				if(lab.notNil, {
-					lab.collect{|lab2|
-						~arr[lab2][1];
-					};
-				});
-			}.flat;
-		});
-	});
-	~globArr2 = ~globArr2.add(~globArr);
-	~globArr = [];
-}
-)
-
-~globArr2.dopostln;
-
-~globArr3 = [];
-~globArr2.do{|globArr|
-	var newArr, newArr2, newArr3, newArrMod, switch, newArr4;
-	newArr = globArr.flop.select{|item| item.includes(\master)};
-	newArr2 = newArr.flop;
-	newArr2.do{|item, index|
-		var thisNils, replace;
-		if(item.includes(nil), {
-			thisNils = item.indicesOfEqual(nil).postln;
-			replace = item.select({|it| it.notNil });
-			thisNils.do{|ind| newArr2[index][ind] = replace[0].postln };
-		});
-	};
-	newArr3 = newArr2.flop;
-	newArrMod = [];
-	newArr3.do{|item, index|
-		switch = true;
-		item.do{|it| if(it == \master, {switch = false});
-			if(switch, {newArrMod = newArrMod.add(it);
-			}, {
-				newArrMod = newArrMod.add(\master);
-			});
-		};
-	};
-
-	newArr4 = newArrMod.reshapeLike(newArr3);
-	newArr4.do{|item| item.rejectSame };
-	newArr4.do{|item|
-		~globArr3 = ~globArr3.add(item);
-	};
-};
-
-~globArr3.dopostln;
-
-
-(
-~stringArr = ~globArr3.collect{|item|
-	item.asString.replace("[", "").replace("]", "").replace(", ","->").replace(" ", "");
-};
-)
-
-~stringArr.dopostln;
-
-(
-~selectString = [];
-(~stringArr.size-1).do{|num|
-	~thisIndex = num;
-	~thisString.postln;
-	~thisString = ~stringArr[~thisIndex];
-	~indArr =	~stringArr.collect{|item, index| if(item.find(~thisString).notNil, {index}); };
-	~indArr =	~indArr.select({|item| item.notNil }).size;
-	if(~indArr == 1, {  ~selectString = ~selectString.add(~stringArr[~thisIndex]) });
-};
-)
-
-~selectString.dopostln;
-
-//sort order of strings??
-
-(
-//string filters
-~filterString = {arg filter1="", filter2="", filter3="", filter4="";
-	~selectString2 = [];
-	~selectString.do{|item| ~selectString2 = ~selectString2.add(
-		item.replace(">", "").split($-).select({|it|
-			(it.find(filter1).isNil).and(it.find(filter2).isNil)
-			.and(it.find(filter3).isNil).and(it.find(filter4).isNil) })
-	) };
-	~selectString3 = ~selectString2.collect{|item|
-		item.asString.replace("[", "").replace("]", "").replace(", ","->").replace(" ", "");
-	};
-};
-)
-
-~filterString.("space").dopostln;
-~filterString.("space", "In", "filter").dopostln;
-
-~filterString.("space", "block", "filter", "bus").dopostln;*/

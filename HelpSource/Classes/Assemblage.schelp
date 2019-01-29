@@ -413,6 +413,56 @@ a.modFilterCode(\track, 1, 1, \pitchDispertion, \lfn1, [\freq, 1]);
 
 /////
 
+//routing
 
+a = Assemblage(6, 2);
+
+a.inputs.dopostln;
+a.routePairs.dopostln;
+
+Block.addNum(3, 2);
+(
+~ndefs = [];
+Block.ndefs.do{|item| ~ndefs = ~ndefs.add(item); };
+)
+
+a.input(~ndefs, \track, 1);
+
+a.inputs.dopostln;
+
+a.getTrackInput(\track, 1);
+a.getTrackOutput(\track, 1);
+a.getTrackDestination(\track, 1);
+
+a.bus(1, 1, 1);
+a.bus(2, 1, 1);
+a.bus(1, 2, 1);
+
+a.filter(\track, 1, 1, \pch, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+a.filter(\bus, 1, 1, \pch, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+a.filter(\master, 1, 1, \pch, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+a.routePairs.dopostln;
+a.routePairsSort.dopostln;
+
+a.routingMap.dopostln;
+
+a.routingSelMap("space", "In").dopostln;
+a.routingSelMap("space", "filter", "ln").dopostln;
+
+Block.addNum(3, 2);
+
+a.inputs.dopostln;
+
+Block.ndefs;
+(
+~ndefs = [];
+Block.ndefs.do{|item| ~ndefs = ~ndefs.add(item); };
+~ndefs = ~ndefs.copyRange(3,5);
+)
+a.input(~ndefs, \track, 4);
+a.inputs.dopostln;
+
+a.routingMap.dopostln;
 
 ::
