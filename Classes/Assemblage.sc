@@ -320,7 +320,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		selectString3 = selectString2.collect{|item|
 			item.asString.replace("[", "").replace("]", "").replace(", ","->").replace(" ", "");
 		};
-		^selectString3;
+		^selectString3.rejectSame;
 	}
 
 	findTrackArr {arg key=\master;
@@ -1096,5 +1096,296 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			action.(string.cs.interpret);
 		}.fork;
 	}
+
+	/*mixGUI {
+(
+~sysChans = (1!4) ++ (2!4) ++ (1!2) ++ (4!2);
+~sysPan = (0!(~sysChans.size-2)) ++ (1!2); //type 0 is normal Knob, 1 is Slider2D
+~sends = 2;
+~fxsNum = 2;
+
+~knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353), Color.white, Color.black, Color() ];
+
+~winHeight = 442;
+~winWidth = (43*(~sysChans.sum));
+if(~sysPan.includes(1), {~knobSize = 40;}, {~knobSize = 30; });
+~scroll = ScrollView(bounds: (Rect(0, 0, ~winWidth,~winHeight))).name_("Assemblage");
+~scroll.hasVerticalScroller = false;
+/*~scroll.fixedHeight = ~winHeight;*/
+~canvas = View();
+/*~canvas.background_(Color.new255(29, 46, 73));*/
+~canvas.background_(Color.black);
+~panKnobTextArr = [];
+~sliderTextArr = [];
+~levelTextArr = [];
+~panKnobArr = [];
+~sliderArr = [];
+~levelArr = [];
+~vlay = [];
+~sendsMenuArr = [];
+~sendsKnobArr = [];
+~inputMenuArr = [];
+~outputMenuArr = [];
+~fxSlotArr = [];
+
+~sysChans.do{|item, index|
+	var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
+	panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
+	sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot;
+		//volume slider
+	sliderText = StaticText(~canvas).align_(\center).background_(Color.black).stringColor_(Color.white)
+	.minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+		~sliderTextArr = ~sliderTextArr.add(sliderText);
+	slider = Slider().minWidth_(20).maxWidth_(20).maxHeight_(160).minHeight_(160)
+	.focusColor_(Color.red(alpha:0.2))
+	.background_(Color.black);
+
+	//levelIndicator
+	levelText = StaticText(~canvas).align_(\center).background_(Color.new255(39, 104, 59);).stringColor_(Color.white).minWidth_(24).maxHeight_(10).minHeight_(10);
+	~levelTextArr = ~levelTextArr.add(levelText);
+	item.do({
+			level = level.add(LevelIndicator()
+	.drawsPeak_(true)
+/*	.style_(\led)*/
+	.warning_(0.9)
+	.critical_(1.0)
+			.minWidth_(10)
+		.maxWidth_(10)
+		);
+	});
+		hlay = HLayout(sliderText, levelText);
+
+	//panning knob(s)/slider2D(s)
+
+	if(~sysPan[index] == 0, {
+	panKnob = Knob().minWidth_(~knobSize).maxWidth_(~knobSize)
+		.maxHeight_(~knobSize).minHeight_(~knobSize).centered_(true);
+		panKnob.color = ~knobColors;
+		panKnobText = StaticText(~canvas).align_(\center).background_(Color.black)
+		.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+		panKnobText = [panKnobText];
+	}, {
+		panKnob = Slider2D().minWidth_(~knobSize).maxWidth_(~knobSize)
+		.maxHeight_(~knobSize).minHeight_(~knobSize);
+		panKnob.x = 0.5;
+		panKnob.y = 0.5;
+
+		panKnobText1 = StaticText(~canvas).align_(\center).background_(Color.black)
+		.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+
+		panKnobText2 = StaticText(~canvas).align_(\center).background_(Color.black)
+		.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+
+		panKnobText = [panKnobText1, panKnobText2];
+	});
+
+	~panKnobTextArr = ~panKnobTextArr.add(panKnobText);
+	~spaceTextLay = HLayout(*panKnobText);
+	~panKnobArr = ~panKnobArr.add(panKnob);
+
+	~popupmenusize = 14;
+
+	~slotsSize = 68;
+
+	//output label
+	outputLabel = StaticText(~canvas).align_(\center).background_(Color.black)
+		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+	outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
+	//output menu
+	outputMenu = PopUpMenu().maxHeight_(~popupmenusize).minHeight_(~popupmenusize).minWidth_(~slotsSize);
+outputMenu.items = [
+ "master", "bus1", "bus2", "bus3",
+		"bus4", "bus5", "bus6", "bus7", "bus8"
+];
+outputMenu.background_(Color.black).stringColor_(Color.white)
+	.font_(Font("Monaco", 8)).action = { arg menu;
+		/*~outputMenuInfo[index] =*/
+ [menu.value, menu.item].postln;
+};
+	~outputMenuArr = ~outputMenuArr.add(outputMenu);
+
+	//sends
+	sendsLabel = StaticText(~canvas).align_(\center).background_(Color.black)
+		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+	sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
+	//sends menu
+	~sends.do{var smenu, sknob;
+	smenu = PopUpMenu().maxHeight_(~popupmenusize).minHeight_(~popupmenusize);
+smenu.items = [
+			"", "bus1", "bus2", "bus3", "bus4",
+		"bus5", "bus6", "bus7", "bus8"
+];
+smenu.background_(Color.black).stringColor_(Color.white)
+	.font_(Font("Monaco", 8)).action = { arg menu;
+ [menu.value, menu.item].postln;
+};
+		sknob = Knob().minWidth_(~popupmenusize).maxWidth_(~popupmenusize)
+		.maxHeight_(~popupmenusize).minHeight_(~popupmenusize);
+		sknob.color = ~knobColors;
+
+		sendsMenu = sendsMenu.add(smenu);
+		sendsKnobs = sendsKnobs.add(sknob);
+		sendsLay = sendsLay.add(HLayout(smenu, sknob));
+	};
+	~sendsMenuArr = ~sendsMenuArr.add(sendsMenu);
+	~sendsKnobArr = ~sendsKnobArr.add(sendsKnobs);
+
+//audio fxs
+	fxLabel = StaticText(~canvas).align_(\center).background_(Color.black)
+		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+	fxLabel.font = Font("Monaco", 8); fxLabel.string_("Audio FX");
+	//fx buttons
+	~fxsNum.do{var fxbutton;
+		fxbutton = Button().maxHeight_(~popupmenusize).minHeight_(~popupmenusize).minWidth_(~slotsSize);
+		fxbutton.states_([["", Color.white, Color.black]])
+		// fxbutton.background_(Color.black)
+		/*.stringColor_(Color.white)*/
+	.font_(Font("Monaco", 8)).action = { arg menu;
+ menu.postln;
+};
+
+		fxSlot = fxSlot.add(fxbutton);
+			};
+	~fxSlotArr = ~fxSlotArr.add(fxSlot);
+
+	//input label
+	inputLabel = StaticText(~canvas).align_(\center).background_(Color.black)
+		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+	inputLabel.font = Font("Monaco", 8); inputLabel.string_("Input");
+	//input menu
+	inputMenu = PopUpMenu().maxHeight_(~popupmenusize).minHeight_(~popupmenusize).minWidth_(~slotsSize);
+inputMenu.items = [
+ "block1", "block2", "block3", "track1",
+		"track2", "track3", "track4", "bus1", "bus2"
+];
+inputMenu.background_(Color.black).stringColor_(Color.white)
+	.font_(Font("Monaco", 8)).action = { arg menu;
+ [menu.value, menu.item].postln;
+};
+	~inputMenuArr = ~inputMenuArr.add(inputMenu);
+
+	~sliderArr = ~sliderArr.add(slider);
+	~levelArr = ~levelArr.add(level);
+	ts = [slider] ++ level;
+	/*ts.postln;*/
+	thisLay = HLayout(*ts);
+
+	//master fader omits sends and I/O
+	if(index == (~sysChans.size-1), {
+		sendsLabel.string_("");
+		sendsLay = nil;
+		outputLabel.string_("");
+		outputMenu = nil;
+		inputMenu.items = ["master"];
+	});
+
+	//input
+	[[inputLabel, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
+	finalLayout = finalLayout.add(lay);
+	};
+	//audio fx
+	finalLayout = finalLayout.add([fxLabel, align: \center]);
+	fxSlot.do{|thisSlot|
+	finalLayout = finalLayout.add([thisSlot, align: \center]);
+	};
+	//sends
+	finalLayout = finalLayout.add([sendsLabel, align: \bottom]);
+	sendsLay.do{|smenu|
+	finalLayout = finalLayout.add([smenu, align: \bottom]);
+	};
+	//output
+	[[outputLabel, align: \bottom], [outputMenu, align: \bottom]].do{|lay|
+	finalLayout = finalLayout.add(lay);
+	};
+	//satialisation interface
+	[[~spaceTextLay, align: \bottom], [panKnob, align: \bottom]].do{|lay|
+	finalLayout = finalLayout.add(lay);
+	};
+		//slider and levelIndicators
+	[[hlay, align: \center], [thisLay, align: \center]].do{|lay|
+	finalLayout = finalLayout.add(lay);
+	};
+
+	~vlay = ~vlay.add(VLayout(*finalLayout) );
+
+	/*~vlay = ~vlay.add(VLayout([outputLabel, align: \bottom], [outputMenu, align: \bottom], [~spaceTextLay, align: \bottom], [panKnob, align: \bottom], [hlay, align: \center], [thisLay, align: \center]));*/
+
+};
+
+~sliderTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
+~levelTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("-inf");  };
+~panKnobTextArr.flat.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
+~panSpec = \pan.asSpec;
+~panKnobArr.do{|item, index|
+if(~sysPan[index] == 0, {
+		item.value_(~panSpec.unmap(0)).action_({|val| ~panKnobTextArr[index][0].string_(~panSpec.map(val.value).round(0.01).asString) });
+	}, {
+		item.action_({|sl|
+			~panKnobTextArr[index][0].string_(~panSpec.map(sl.x).round(0.01).asString);
+			~panKnobTextArr[index][1].string_(~panSpec.map(sl.y).round(0.01).asString);
+		});
+		/*item.x_(0);
+		item.y_(0);*/
+	/*~panSpec = [0,1].asSpec;*/
+	});
+  };
+~spec = [-inf, 6, \db, 0, -inf, " dB" ].asSpec;
+~sliderArr.do{|item, index| item.value_(~spec.unmap(0) ).action_({|val| ~sliderTextArr[index].string_(~spec.map(val.value).round(0.1).asString) });  };
+
+~levelArr.do{|it| it.do{|item|
+	item.meterColor = Color.new255(39, 104, 59);
+item.warningColor = Color.new255(232, 90, 13);
+item.criticalColor = Color.new255(211, 14, 14);
+	item.drawsPeak = true;
+}
+};
+~levelFunc = {arg chan=0, db=[0.9, 0.6], peak=[1, 0.7];
+	db.do{|it, in|
+	~levelArr[chan][in].value = it;
+	};
+	peak.do{|it, in|
+		~levelArr[chan][in].peakLevel = it;
+	};
+	case
+	{peak.maxItem <= 0.9 } {~levelTextArr[chan].background_(Color.new255(39, 104, 59));}
+	{(peak.maxItem > 0.9).and(peak.maxItem <= 1) } {~levelTextArr[chan].background_(Color.new255(232, 90, 13));}
+	{peak.maxItem > 1} {~levelTextArr[chan].background_(Color.new255(211, 14, 14));};
+~levelTextArr[chan].string =peak.maxItem.asString;
+};
+~canvas.layout = HLayout(*~vlay);
+~scroll.canvas = ~canvas;
+~scroll.front;
+)
+
+(
+~levelArr.do{|item, index| if(item.size.postln == 1, {~levelFunc.(index, [0.8], [0.9]);}, { ~levelFunc.(index, [0.8, 0.6], [0.9, 0.7]);});  };
+~levelFunc.(4, [0.9, 0.8], [1.01, 0.91]);
+~levelFunc.(7, [0.8, 0.9], [0.9, 1.01]);
+~levelFunc.(10, [0.8, 0.6, 0.7, 0.3], [0.9, 0.7, 0.8, 0.4]);
+~levelFunc.(11, [0.8, 0.6, 0.7, 0.3].reverse, [0.9, 0.7, 0.8, 0.4].reverse);
+~panKnobArr.do{|item, index|
+	if(~sysPan[index][2] == 0, {
+	~panSpec = \pan.asSpec;
+		~rand = rrand(-1,1.0).round(0.01);
+		item.value_(~panSpec.unmap(~rand));
+		~panKnobTextArr[index][0].string_(~rand);
+	}, {
+		~randx = rrand(0,1.0).round(0.01);
+		~randy = rrand(0,1.0).round(0.01);
+		item.x_(~randx);
+		item.y_(~randx);
+		~panKnobTextArr[index][0].string_(~randx);
+		~panKnobTextArr[index][0].string_(~randy);
+	});
+  };
+)
+
+
+~fxSlotArr[0][0].string = "ConvReverb";
+~fxSlotArr[0][1].string = "Chorus";
+~fxSlotArr[1][0].string = "EQ";
+~fxSlotArr[11][0].string = "EQ";
+~fxSlotArr[11][1].string = "Limiter";
+	}*/
 
 }
