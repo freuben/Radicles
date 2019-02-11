@@ -1098,15 +1098,25 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	/*mixGUI {
+//still some work on different knob types and on knob interface (layers, knobNum)
 (
 ~sysChans = (1!4) ++ (2!4) ++ (1!2) ++ (4!2);
+~trackNames = [];
+~sysChans.size.do{|ind|
+	var num, string;
+	num = ind+1;
+	if(num < 9, {string = "track"}, {string = "bus"; num = num - 8});
+	~trackNames = ~trackNames.add((string ++ num.asString).asSymbol);
+};
+~trackNames[~trackNames.size-1] = \master;
+
 ~sysPan = (0!(~sysChans.size-2)) ++ (1!2); //type 0 is normal Knob, 1 is Slider2D
 ~sends = 2;
 ~fxsNum = 2;
 
 ~knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353), Color.white, Color.black, Color() ];
 
-~winHeight = 442;
+~winHeight = 458;
 ~winWidth = (43*(~sysChans.sum));
 if(~sysPan.includes(1), {~knobSize = 40;}, {~knobSize = 30; });
 ~scroll = ScrollView(bounds: (Rect(0, 0, ~winWidth,~winHeight))).name_("Assemblage");
@@ -1127,11 +1137,13 @@ if(~sysPan.includes(1), {~knobSize = 40;}, {~knobSize = 30; });
 ~inputMenuArr = [];
 ~outputMenuArr = [];
 ~fxSlotArr = [];
+~trackLabelArr = [];
 
 ~sysChans.do{|item, index|
 	var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
 	panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
-	sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot;
+	sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot,
+	trackLabel, trackColor;
 		//volume slider
 	sliderText = StaticText(~canvas).align_(\center).background_(Color.black).stringColor_(Color.white)
 	.minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
@@ -1256,7 +1268,7 @@ smenu.background_(Color.black).stringColor_(Color.white)
 	inputMenu = PopUpMenu().maxHeight_(~popupmenusize).minHeight_(~popupmenusize).minWidth_(~slotsSize);
 inputMenu.items = [
  "block1", "block2", "block3", "track1",
-		"track2", "track3", "track4", "bus1", "bus2"
+		"track2", "track3", "track4", "bus1", "bus2", "bus3"
 ];
 inputMenu.background_(Color.black).stringColor_(Color.white)
 	.font_(Font("Monaco", 8)).action = { arg menu;
@@ -1269,6 +1281,17 @@ inputMenu.background_(Color.black).stringColor_(Color.white)
 	ts = [slider] ++ level;
 	/*ts.postln;*/
 	thisLay = HLayout(*ts);
+
+	//track name label
+	case
+	{~trackNames[index].asString.find("track").notNil} {trackColor = Color.new255(58, 162, 175)}
+	{~trackNames[index].asString.find("bus").notNil} {trackColor = Color.new255(132, 124, 10)}
+	{~trackNames[index].asString.find("master").notNil} {trackColor = Color.new255(102, 57, 130)};
+	trackLabel = StaticText(~canvas).align_(\center).background_(trackColor)
+		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+	trackLabel.font = Font("Monaco", 8);
+	trackLabel.string_(~trackNames[index].asString.capitalise);
+	~trackLabelArr = ~trackLabelArr.add(trackLabel);
 
 	//master fader omits sends and I/O
 	if(index == (~sysChans.size-1), {
@@ -1305,6 +1328,8 @@ inputMenu.background_(Color.black).stringColor_(Color.white)
 	[[hlay, align: \center], [thisLay, align: \center]].do{|lay|
 	finalLayout = finalLayout.add(lay);
 	};
+	//track names
+	finalLayout = finalLayout.add([trackLabel, align: \below]);
 
 	~vlay = ~vlay.add(VLayout(*finalLayout) );
 
@@ -1333,7 +1358,7 @@ if(~sysPan[index] == 0, {
 ~sliderArr.do{|item, index| item.value_(~spec.unmap(0) ).action_({|val| ~sliderTextArr[index].string_(~spec.map(val.value).round(0.1).asString) });  };
 
 ~levelArr.do{|it| it.do{|item|
-	item.meterColor = Color.new255(39, 104, 59);
+	item.meterColor = Color.new255(78, 109, 38);
 item.warningColor = Color.new255(232, 90, 13);
 item.criticalColor = Color.new255(211, 14, 14);
 	item.drawsPeak = true;
@@ -1347,7 +1372,8 @@ item.criticalColor = Color.new255(211, 14, 14);
 		~levelArr[chan][in].peakLevel = it;
 	};
 	case
-	{peak.maxItem <= 0.9 } {~levelTextArr[chan].background_(Color.new255(39, 104, 59));}
+
+	{peak.maxItem <= 0.9 } {~levelTextArr[chan].background_(Color.new255(78, 109, 38));}
 	{(peak.maxItem > 0.9).and(peak.maxItem <= 1) } {~levelTextArr[chan].background_(Color.new255(232, 90, 13));}
 	{peak.maxItem > 1} {~levelTextArr[chan].background_(Color.new255(211, 14, 14));};
 ~levelTextArr[chan].string =peak.maxItem.asString;
@@ -1385,7 +1411,6 @@ item.criticalColor = Color.new255(211, 14, 14);
 ~fxSlotArr[0][1].string = "Chorus";
 ~fxSlotArr[1][0].string = "EQ";
 ~fxSlotArr[11][0].string = "EQ";
-~fxSlotArr[11][1].string = "Limiter";
-	}*/
+~fxSlotArr[11][1].string = "Limiter";*/
 
 }
