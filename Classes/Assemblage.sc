@@ -1,6 +1,6 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
-	<trackNames, <>masterInput, <busArr, <filters, <filterBuff;
+	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <mixerWin;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -18,18 +18,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					chanTrack = chanNum;
 					chanBus = chanNum;
 				}, {
-					chanMaster = chanNum[0];
-					chanTrack = chanNum[1];
-					chanBus = chanNum[2];
+					chanTrack = chanNum[0];
+					chanBus = chanNum[1];
+					chanMaster = chanNum[2];
 				});
 				if(spaceType.isArray.not, {
 					spaceMaster = spaceType;
 					spaceTrack = spaceType;
 					spaceBus = spaceType;
 				}, {
-					spaceMaster = spaceType[0];
-					spaceTrack = spaceType[1];
-					spaceBus = spaceType[2];
+					spaceTrack = spaceType[0];
+					spaceBus = spaceType[1];
+					spaceMaster = spaceType[2];
 				});
 				this.addTrack(\master, chanMaster, spaceMaster, masterSynth);
 				this.addTracks(trackNum, \track, chanTrack, spaceTrack);
@@ -122,6 +122,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			specs = specs.add([ [spaceTag, spaceSpecs], [trackTag, trackSpecs] ]);
 			masterNdefs = masterNdefs.add([Ndef(spaceTag), Ndef(trackTag)]);
 			trackNames = trackNames.add(trackTag);
+			space = space.add([spaceTag, spaceType]);
 			^thisTrackInfo;
 		}, {
 			"track type not found".warn;
@@ -367,6 +368,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			spaceSynth = SynthFile.read(\space, spaceType);
 			func = spaceSynth.filterFunc(trackInput);
 			this.replaceFunc(trackName, func);
+			//test this
+			space[space.flop[0].indexOf(trackName)] = [trackName, spaceType];
+
 			/*space.do{|item| if(item[0] == trackName, {item[1] = chanNum; item[2] = spaceType }) };*/
 		}, {
 			"track name not found".warn;
@@ -821,6 +825,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			tracks.removeAt(trackIndex);
 			specs.removeAt(trackIndex);
+			trackNames.removeAt(trackIndex);
+			space.removeAt(trackIndex);
 			livetracks.removeAt(trackIndex);
 		}, {
 			"track number not found".warn;
@@ -840,6 +846,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		masterNdefs.removeAtAll(newArr);
 		tracks.removeAtAll(newArr);
 		specs.removeAtAll(newArr);
+		trackNames.removeAt(newArr);
+		space.removeAt(newArr);
 		livetracks.removeAll(newArr);
 	}
 
@@ -849,6 +857,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		tracks = [];
 		specs = [];
+		trackNames = [];
+		space = [];
 		livetracks = [];
 		trackCount = 1;
 	}
@@ -859,6 +869,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		tracks = [];
 		specs = [];
+		trackNames = [];
+		space = [];
 		livetracks = [];
 		trackCount = 1;
 	}
@@ -1097,320 +1109,306 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
-	/*mixGUI {
-//still some work on different knob types and on knob interface (layers, knobNum)
-(
-~sysChans = (1!4) ++ (2!4) ++ (1!2) ++ (4!2);
-~trackNames = [];
-~sysChans.size.do{|ind|
-	var num, string;
-	num = ind+1;
-	if(num < 9, {string = "track"}, {string = "bus"; num = num - 8});
-	~trackNames = ~trackNames.add((string ++ num.asString).asSymbol);
-};
-~trackNames[~trackNames.size-1] = \master;
+		sortTrackNames {arg trackNameArr;
+		var newSortArr = [[],[],[],[]];
+		trackNameArr.do{|item|
+			case
+			{(item.asString.find("track").notNil)} {newSortArr[0] = newSortArr[0].add(item) }
+			{(item.asString.find("bus").notNil)} {newSortArr[1] = newSortArr[1].add(item)}
+			{(item.asString.find("master").notNil)} {newSortArr[2] = newSortArr[2].add(item)};
+		};
+		^newSortArr.flat;
+	}
 
-~sysPan = (0!(~sysChans.size-2)) ++ (1!2); //type 0 is normal Knob, 1 is Slider2D
-~sends = 2;
-~fxsNum = 2;
+	mixGUI {var sysChans, mixTrackNames, sysPan, sends, fxsNum, knobColors, winHeight, winWidth,
+		knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr, levelArr,
+		vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
+		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, volSpec;
 
-~knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353), Color.white, Color.black, Color() ];
+		mixTrackNames = this.sortTrackNames(trackNames);
+		sysChans = mixTrackNames.collect({|item| Ndef(item.asSymbol).numChannels});
 
-~winHeight = 458;
-~winWidth = (43*(~sysChans.sum));
-if(~sysPan.includes(1), {~knobSize = 40;}, {~knobSize = 30; });
-~scroll = ScrollView(bounds: (Rect(0, 0, ~winWidth,~winHeight))).name_("Assemblage");
-~scroll.hasVerticalScroller = false;
-/*~scroll.fixedHeight = ~winHeight;*/
-~canvas = View();
-/*~canvas.background_(Color.new255(29, 46, 73));*/
-~canvas.background_(Color.black);
-~panKnobTextArr = [];
-~sliderTextArr = [];
-~levelTextArr = [];
-~panKnobArr = [];
-~sliderArr = [];
-~levelArr = [];
-~vlay = [];
-~sendsMenuArr = [];
-~sendsKnobArr = [];
-~inputMenuArr = [];
-~outputMenuArr = [];
-~fxSlotArr = [];
-~trackLabelArr = [];
+		mixTrackNames.do{|item|
+			var spatialType;
+			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++ item.asString.capitalise).asSymbol)];
+			if([\bal2, \pan2].includes(spatialType), {sysPan = sysPan.add(0); }, {sysPan = sysPan.add(1) });
+			 };
 
-~sysChans.do{|item, index|
-	var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
-	panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
-	sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot,
-	trackLabel, trackColor;
-		//volume slider
-	sliderText = StaticText(~canvas).align_(\center).background_(Color.black).stringColor_(Color.white)
-	.minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
-		~sliderTextArr = ~sliderTextArr.add(sliderText);
-	slider = Slider().minWidth_(20).maxWidth_(20).maxHeight_(160).minHeight_(160)
-	.focusColor_(Color.red(alpha:0.2))
-	.background_(Color.black);
+		sysPan.postln;
+		/*sysPan = (0!(sysChans.size-2)) ++ (1!2); //type 0 is normal Knob, 1 is Slider2D*/
+		sends = 2;
+		fxsNum = 2;
 
-	//levelIndicator
-	levelText = StaticText(~canvas).align_(\center).background_(Color.new255(39, 104, 59);).stringColor_(Color.white).minWidth_(24).maxHeight_(10).minHeight_(10);
-	~levelTextArr = ~levelTextArr.add(levelText);
-	item.do({
-			level = level.add(LevelIndicator()
-	.drawsPeak_(true)
-/*	.style_(\led)*/
-	.warning_(0.9)
-	.critical_(1.0)
-			.minWidth_(10)
-		.maxWidth_(10)
-		);
-	});
-		hlay = HLayout(sliderText, levelText);
+		knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353),
+			Color.white, Color.black, Color() ];
 
-	//panning knob(s)/slider2D(s)
+		winHeight = 458;
+		winWidth = (43*(sysChans.sum));
+		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
+		mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
+		mixerWin.hasVerticalScroller = false;
+		/*mixerWin.fixedHeight = winHeight;*/
+		canvas = View();
+		/*canvas.background_(Color.new255(29, 46, 73));*/
+		canvas.background_(Color.black);
+		/*panKnobTextArr = [];
+		sliderTextArr = [];
+		levelTextArr = [];
+		panKnobArr = [];
+		sliderArr = [];
+		levelArr = [];
+		vlay = [];
+		sendsMenuArr = [];
+		sendsKnobArr = [];
+		inputMenuArr = [];
+		outputMenuArr = [];
+		fxSlotArr = [];
+		trackLabelArr = [];*/
 
-	if(~sysPan[index] == 0, {
-	panKnob = Knob().minWidth_(~knobSize).maxWidth_(~knobSize)
-		.maxHeight_(~knobSize).minHeight_(~knobSize).centered_(true);
-		panKnob.color = ~knobColors;
-		panKnobText = StaticText(~canvas).align_(\center).background_(Color.black)
-		.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
-		panKnobText = [panKnobText];
-	}, {
-		panKnob = Slider2D().minWidth_(~knobSize).maxWidth_(~knobSize)
-		.maxHeight_(~knobSize).minHeight_(~knobSize);
-		panKnob.x = 0.5;
-		panKnob.y = 0.5;
+		sysChans.do{|item, index|
+			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
+			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
+			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot,
+			trackLabel, trackColor;
+			//volume slider
+			sliderText = StaticText(canvas).align_(\center)
+			.background_(Color.black).stringColor_(Color.white)
+			.minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+			sliderTextArr = sliderTextArr.add(sliderText);
+			slider = Slider().minWidth_(20).maxWidth_(20).maxHeight_(160).minHeight_(160)
+			.focusColor_(Color.red(alpha:0.2))
+			.background_(Color.black);
 
-		panKnobText1 = StaticText(~canvas).align_(\center).background_(Color.black)
-		.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+			//levelIndicator
+			levelText = StaticText(canvas).align_(\center)
+			.background_(Color.new255(39, 104, 59)).stringColor_(Color.white)
+			.minWidth_(24).maxHeight_(10).minHeight_(10);
+			levelTextArr = levelTextArr.add(levelText);
+			item.do({
+				level = level.add(LevelIndicator()
+					.drawsPeak_(true)
+					/*	.style_(\led)*/
+					.warning_(0.9)
+					.critical_(1.0)
+					.minWidth_(10)
+					.maxWidth_(10)
+				);
+			});
+			hlay = HLayout(sliderText, levelText);
 
-		panKnobText2 = StaticText(~canvas).align_(\center).background_(Color.black)
-		.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+			//panning knob(s)/slider2D(s)
+			if(sysPan[index] == 0, {
+				panKnob = Knob().minWidth_(knobSize).maxWidth_(knobSize)
+				.maxHeight_(knobSize).minHeight_(knobSize).centered_(true);
+				panKnob.color = knobColors;
+				panKnobText = StaticText(canvas).align_(\center).background_(Color.black)
+				.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+				panKnobText = [panKnobText];
+			}, {
+				panKnob = Slider2D().minWidth_(knobSize).maxWidth_(knobSize)
+				.maxHeight_(knobSize).minHeight_(knobSize);
+				panKnob.x = 0.5;
+				panKnob.y = 0.5;
 
-		panKnobText = [panKnobText1, panKnobText2];
-	});
+				panKnobText1 = StaticText(canvas).align_(\center).background_(Color.black)
+				.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
 
-	~panKnobTextArr = ~panKnobTextArr.add(panKnobText);
-	~spaceTextLay = HLayout(*panKnobText);
-	~panKnobArr = ~panKnobArr.add(panKnob);
+				panKnobText2 = StaticText(canvas).align_(\center).background_(Color.black)
+				.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
 
-	~popupmenusize = 14;
+				panKnobText = [panKnobText1, panKnobText2];
+			});
 
-	~slotsSize = 68;
+			panKnobTextArr = panKnobTextArr.add(panKnobText);
+			spaceTextLay = HLayout(*panKnobText);
+			panKnobArr = panKnobArr.add(panKnob);
 
-	//output label
-	outputLabel = StaticText(~canvas).align_(\center).background_(Color.black)
-		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-	outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
-	//output menu
-	outputMenu = PopUpMenu().maxHeight_(~popupmenusize).minHeight_(~popupmenusize).minWidth_(~slotsSize);
-outputMenu.items = [
- "master", "bus1", "bus2", "bus3",
-		"bus4", "bus5", "bus6", "bus7", "bus8"
-];
-outputMenu.background_(Color.black).stringColor_(Color.white)
-	.font_(Font("Monaco", 8)).action = { arg menu;
-		/*~outputMenuInfo[index] =*/
- [menu.value, menu.item].postln;
-};
-	~outputMenuArr = ~outputMenuArr.add(outputMenu);
+			popupmenusize = 14;
 
-	//sends
-	sendsLabel = StaticText(~canvas).align_(\center).background_(Color.black)
-		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-	sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
-	//sends menu
-	~sends.do{var smenu, sknob;
-	smenu = PopUpMenu().maxHeight_(~popupmenusize).minHeight_(~popupmenusize);
-smenu.items = [
-			"", "bus1", "bus2", "bus3", "bus4",
-		"bus5", "bus6", "bus7", "bus8"
-];
-smenu.background_(Color.black).stringColor_(Color.white)
-	.font_(Font("Monaco", 8)).action = { arg menu;
- [menu.value, menu.item].postln;
-};
-		sknob = Knob().minWidth_(~popupmenusize).maxWidth_(~popupmenusize)
-		.maxHeight_(~popupmenusize).minHeight_(~popupmenusize);
-		sknob.color = ~knobColors;
+			slotsSize = 68;
 
-		sendsMenu = sendsMenu.add(smenu);
-		sendsKnobs = sendsKnobs.add(sknob);
-		sendsLay = sendsLay.add(HLayout(smenu, sknob));
-	};
-	~sendsMenuArr = ~sendsMenuArr.add(sendsMenu);
-	~sendsKnobArr = ~sendsKnobArr.add(sendsKnobs);
-
-//audio fxs
-	fxLabel = StaticText(~canvas).align_(\center).background_(Color.black)
-		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-	fxLabel.font = Font("Monaco", 8); fxLabel.string_("Audio FX");
-	//fx buttons
-	~fxsNum.do{var fxbutton;
-		fxbutton = Button().maxHeight_(~popupmenusize).minHeight_(~popupmenusize).minWidth_(~slotsSize);
-		fxbutton.states_([["", Color.white, Color.black]])
-		// fxbutton.background_(Color.black)
-		/*.stringColor_(Color.white)*/
-	.font_(Font("Monaco", 8)).action = { arg menu;
- menu.postln;
-};
-
-		fxSlot = fxSlot.add(fxbutton);
+			//output label
+			outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
+			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+			outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
+			//output menu
+			outputMenu = PopUpMenu().maxHeight_(popupmenusize)
+			.minHeight_(popupmenusize).minWidth_(slotsSize);
+			outputMenu.items = [
+				"master", "bus1", "bus2", "bus3",
+				"bus4", "bus5", "bus6", "bus7", "bus8"
+			];
+			outputMenu.background_(Color.black).stringColor_(Color.white)
+			.font_(Font("Monaco", 8)).action = { arg menu;
+				/*outputMenuInfo[index] =*/
+				[menu.value, menu.item].postln;
 			};
-	~fxSlotArr = ~fxSlotArr.add(fxSlot);
+			outputMenuArr = outputMenuArr.add(outputMenu);
 
-	//input label
-	inputLabel = StaticText(~canvas).align_(\center).background_(Color.black)
-		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-	inputLabel.font = Font("Monaco", 8); inputLabel.string_("Input");
-	//input menu
-	inputMenu = PopUpMenu().maxHeight_(~popupmenusize).minHeight_(~popupmenusize).minWidth_(~slotsSize);
-inputMenu.items = [
- "block1", "block2", "block3", "track1",
-		"track2", "track3", "track4", "bus1", "bus2", "bus3"
-];
-inputMenu.background_(Color.black).stringColor_(Color.white)
-	.font_(Font("Monaco", 8)).action = { arg menu;
- [menu.value, menu.item].postln;
-};
-	~inputMenuArr = ~inputMenuArr.add(inputMenu);
+			//sends
+			sendsLabel = StaticText(canvas).align_(\center).background_(Color.black)
+			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+			sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
+			//sends menu
+			sends.do{var smenu, sknob;
+				smenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize);
+				smenu.items = [
+					"", "bus1", "bus2", "bus3", "bus4",
+					"bus5", "bus6", "bus7", "bus8"
+				];
+				smenu.background_(Color.black).stringColor_(Color.white)
+				.font_(Font("Monaco", 8)).action = { arg menu;
+					[menu.value, menu.item].postln;
+				};
+				sknob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
+				.maxHeight_(popupmenusize).minHeight_(popupmenusize);
+				sknob.color = knobColors;
 
-	~sliderArr = ~sliderArr.add(slider);
-	~levelArr = ~levelArr.add(level);
-	ts = [slider] ++ level;
-	/*ts.postln;*/
-	thisLay = HLayout(*ts);
+				sendsMenu = sendsMenu.add(smenu);
+				sendsKnobs = sendsKnobs.add(sknob);
+				sendsLay = sendsLay.add(HLayout(smenu, sknob));
+			};
+			sendsMenuArr = sendsMenuArr.add(sendsMenu);
+			sendsKnobArr = sendsKnobArr.add(sendsKnobs);
 
-	//track name label
-	case
-	{~trackNames[index].asString.find("track").notNil} {trackColor = Color.new255(58, 162, 175)}
-	{~trackNames[index].asString.find("bus").notNil} {trackColor = Color.new255(132, 124, 10)}
-	{~trackNames[index].asString.find("master").notNil} {trackColor = Color.new255(102, 57, 130)};
-	trackLabel = StaticText(~canvas).align_(\center).background_(trackColor)
-		.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-	trackLabel.font = Font("Monaco", 8);
-	trackLabel.string_(~trackNames[index].asString.capitalise);
-	~trackLabelArr = ~trackLabelArr.add(trackLabel);
+			//audio fxs
+			fxLabel = StaticText(canvas).align_(\center).background_(Color.black)
+			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+			fxLabel.font = Font("Monaco", 8); fxLabel.string_("Audio FX");
+			//fx buttons
+			fxsNum.do{var fxbutton;
+				fxbutton = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize).minWidth_(slotsSize);
+				fxbutton.states_([["", Color.white, Color.black]])
+				// fxbutton.background_(Color.black)
+				/*.stringColor_(Color.white)*/
+				.font_(Font("Monaco", 8)).action = { arg menu;
+					menu.postln;
+				};
 
-	//master fader omits sends and I/O
-	if(index == (~sysChans.size-1), {
-		sendsLabel.string_("");
-		sendsLay = nil;
-		outputLabel.string_("");
-		outputMenu = nil;
-		inputMenu.items = ["master"];
-	});
+				fxSlot = fxSlot.add(fxbutton);
+			};
+			fxSlotArr = fxSlotArr.add(fxSlot);
 
-	//input
-	[[inputLabel, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
-	finalLayout = finalLayout.add(lay);
-	};
-	//audio fx
-	finalLayout = finalLayout.add([fxLabel, align: \center]);
-	fxSlot.do{|thisSlot|
-	finalLayout = finalLayout.add([thisSlot, align: \center]);
-	};
-	//sends
-	finalLayout = finalLayout.add([sendsLabel, align: \bottom]);
-	sendsLay.do{|smenu|
-	finalLayout = finalLayout.add([smenu, align: \bottom]);
-	};
-	//output
-	[[outputLabel, align: \bottom], [outputMenu, align: \bottom]].do{|lay|
-	finalLayout = finalLayout.add(lay);
-	};
-	//satialisation interface
-	[[~spaceTextLay, align: \bottom], [panKnob, align: \bottom]].do{|lay|
-	finalLayout = finalLayout.add(lay);
-	};
-		//slider and levelIndicators
-	[[hlay, align: \center], [thisLay, align: \center]].do{|lay|
-	finalLayout = finalLayout.add(lay);
-	};
-	//track names
-	finalLayout = finalLayout.add([trackLabel, align: \below]);
+			//input label
+			inputLabel = StaticText(canvas).align_(\center).background_(Color.black)
+			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+			inputLabel.font = Font("Monaco", 8); inputLabel.string_("Input");
+			//input menu
+			inputMenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize).minWidth_(slotsSize);
+			inputMenu.items = [
+				"block1", "block2", "block3", "track1",
+				"track2", "track3", "track4", "bus1", "bus2", "bus3"
+			];
+			inputMenu.background_(Color.black).stringColor_(Color.white)
+			.font_(Font("Monaco", 8)).action = { arg menu;
+				[menu.value, menu.item].postln;
+			};
+			inputMenuArr = inputMenuArr.add(inputMenu);
 
-	~vlay = ~vlay.add(VLayout(*finalLayout) );
+			sliderArr = sliderArr.add(slider);
+			levelArr = levelArr.add(level);
+			ts = [slider] ++ level;
+			/*ts.postln;*/
+			thisLay = HLayout(*ts);
 
-	/*~vlay = ~vlay.add(VLayout([outputLabel, align: \bottom], [outputMenu, align: \bottom], [~spaceTextLay, align: \bottom], [panKnob, align: \bottom], [hlay, align: \center], [thisLay, align: \center]));*/
+			//track name label
+			case
+			{mixTrackNames[index].asString.find("track").notNil} {trackColor = Color.new255(58, 162, 175)}
+			{mixTrackNames[index].asString.find("bus").notNil} {trackColor = Color.new255(132, 124, 10)}
+			{mixTrackNames[index].asString.find("master").notNil} {trackColor = Color.new255(102, 57, 130)};
+			trackLabel = StaticText(canvas).align_(\center).background_(trackColor)
+			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+			trackLabel.font = Font("Monaco", 8);
+			trackLabel.string_(mixTrackNames[index].asString.capitalise);
+			trackLabelArr = trackLabelArr.add(trackLabel);
 
-};
+			//master fader omits sends and I/O
+			if(index == (sysChans.size-1), {
+				sendsLabel.string_("");
+				sendsLay = nil;
+				outputLabel.string_("");
+				outputMenu = nil;
+				inputMenu.items = ["master"];
+			});
 
-~sliderTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
-~levelTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("-inf");  };
-~panKnobTextArr.flat.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
-~panSpec = \pan.asSpec;
-~panKnobArr.do{|item, index|
-if(~sysPan[index] == 0, {
-		item.value_(~panSpec.unmap(0)).action_({|val| ~panKnobTextArr[index][0].string_(~panSpec.map(val.value).round(0.01).asString) });
-	}, {
-		item.action_({|sl|
-			~panKnobTextArr[index][0].string_(~panSpec.map(sl.x).round(0.01).asString);
-			~panKnobTextArr[index][1].string_(~panSpec.map(sl.y).round(0.01).asString);
-		});
-		/*item.x_(0);
-		item.y_(0);*/
-	/*~panSpec = [0,1].asSpec;*/
-	});
-  };
-~spec = [-inf, 6, \db, 0, -inf, " dB" ].asSpec;
-~sliderArr.do{|item, index| item.value_(~spec.unmap(0) ).action_({|val| ~sliderTextArr[index].string_(~spec.map(val.value).round(0.1).asString) });  };
+			//input
+			[[inputLabel, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
+				finalLayout = finalLayout.add(lay);
+			};
+			//audio fx
+			finalLayout = finalLayout.add([fxLabel, align: \center]);
+			fxSlot.do{|thisSlot|
+				finalLayout = finalLayout.add([thisSlot, align: \center]);
+			};
+			//sends
+			finalLayout = finalLayout.add([sendsLabel, align: \bottom]);
+			sendsLay.do{|smenu|
+				finalLayout = finalLayout.add([smenu, align: \bottom]);
+			};
+			//output
+			[[outputLabel, align: \bottom], [outputMenu, align: \bottom]].do{|lay|
+				finalLayout = finalLayout.add(lay);
+			};
+			//satialisation interface
+			[[spaceTextLay, align: \bottom], [panKnob, align: \bottom]].do{|lay|
+				finalLayout = finalLayout.add(lay);
+			};
+			//slider and levelIndicators
+			[[hlay, align: \center], [thisLay, align: \center]].do{|lay|
+				finalLayout = finalLayout.add(lay);
+			};
+			//track names
+			finalLayout = finalLayout.add([trackLabel, align: \below]);
 
-~levelArr.do{|it| it.do{|item|
-	item.meterColor = Color.new255(78, 109, 38);
-item.warningColor = Color.new255(232, 90, 13);
-item.criticalColor = Color.new255(211, 14, 14);
-	item.drawsPeak = true;
-}
-};
-~levelFunc = {arg chan=0, db=[0.9, 0.6], peak=[1, 0.7];
-	db.do{|it, in|
-	~levelArr[chan][in].value = it;
-	};
-	peak.do{|it, in|
-		~levelArr[chan][in].peakLevel = it;
-	};
-	case
+			vlay = vlay.add(VLayout(*finalLayout) );
+		};
 
-	{peak.maxItem <= 0.9 } {~levelTextArr[chan].background_(Color.new255(78, 109, 38));}
-	{(peak.maxItem > 0.9).and(peak.maxItem <= 1) } {~levelTextArr[chan].background_(Color.new255(232, 90, 13));}
-	{peak.maxItem > 1} {~levelTextArr[chan].background_(Color.new255(211, 14, 14));};
-~levelTextArr[chan].string =peak.maxItem.asString;
-};
-~canvas.layout = HLayout(*~vlay);
-~scroll.canvas = ~canvas;
-~scroll.front;
-)
+		sliderTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
+		levelTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("-inf");  };
+		panKnobTextArr.flat.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
+		panSpec = \pan.asSpec;
+		panKnobArr.do{|item, index|
+			if(sysPan[index] == 0, {
+				item.value_(panSpec.unmap(0)).action_({|val| panKnobTextArr[index][0].string_(panSpec.map(val.value).round(0.01).asString) });
+			}, {
+				item.action_({|sl|
+					panKnobTextArr[index][0].string_(panSpec.map(sl.x).round(0.01).asString);
+					panKnobTextArr[index][1].string_(panSpec.map(sl.y).round(0.01).asString);
+				});
+				/*item.x_(0);
+				item.y_(0);*/
+				/*panSpec = [0,1].asSpec;*/
+			});
+		};
+		volSpec = [-inf, 6, \db, 0, -inf, " dB" ].asSpec;
+		sliderArr.do{|item, index| item.value_(volSpec.unmap(0) ).action_({|val| sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString) });  };
 
-(
-~levelArr.do{|item, index| if(item.size.postln == 1, {~levelFunc.(index, [0.8], [0.9]);}, { ~levelFunc.(index, [0.8, 0.6], [0.9, 0.7]);});  };
-~levelFunc.(4, [0.9, 0.8], [1.01, 0.91]);
-~levelFunc.(7, [0.8, 0.9], [0.9, 1.01]);
-~levelFunc.(10, [0.8, 0.6, 0.7, 0.3], [0.9, 0.7, 0.8, 0.4]);
-~levelFunc.(11, [0.8, 0.6, 0.7, 0.3].reverse, [0.9, 0.7, 0.8, 0.4].reverse);
-~panKnobArr.do{|item, index|
-	if(~sysPan[index][2] == 0, {
-	~panSpec = \pan.asSpec;
-		~rand = rrand(-1,1.0).round(0.01);
-		item.value_(~panSpec.unmap(~rand));
-		~panKnobTextArr[index][0].string_(~rand);
-	}, {
-		~randx = rrand(0,1.0).round(0.01);
-		~randy = rrand(0,1.0).round(0.01);
-		item.x_(~randx);
-		item.y_(~randx);
-		~panKnobTextArr[index][0].string_(~randx);
-		~panKnobTextArr[index][0].string_(~randy);
-	});
-  };
-)
+		levelArr.do{|it| it.do{|item|
+			item.meterColor = Color.new255(78, 109, 38);
+			item.warningColor = Color.new255(232, 90, 13);
+			item.criticalColor = Color.new255(211, 14, 14);
+			item.drawsPeak = true;
+		}
+		};
+		levelFunc = {arg chan=0, db=[0.9, 0.6], peak=[1, 0.7];
+			db.do{|it, in|
+				levelArr[chan][in].value = it;
+			};
+			peak.do{|it, in|
+				levelArr[chan][in].peakLevel = it;
+			};
+			case
 
+			{peak.maxItem <= 0.9 } {levelTextArr[chan].background_(Color.new255(78, 109, 38));}
+			{(peak.maxItem > 0.9).and(peak.maxItem <= 1) } {
+				levelTextArr[chan].background_(Color.new255(232, 90, 13));}
+			{peak.maxItem > 1} {levelTextArr[chan].background_(Color.new255(211, 14, 14));};
+			levelTextArr[chan].string =peak.maxItem.asString;
+		};
+		canvas.layout = HLayout(*vlay);
+		mixerWin.canvas = canvas;
+		mixerWin.front;
 
-~fxSlotArr[0][0].string = "ConvReverb";
-~fxSlotArr[0][1].string = "Chorus";
-~fxSlotArr[1][0].string = "EQ";
-~fxSlotArr[11][0].string = "EQ";
-~fxSlotArr[11][1].string = "Limiter";*/
+	}
 
 }

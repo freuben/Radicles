@@ -15,4 +15,6 @@
 	var source;
 	source = \in;
 	Balance2.ar(source[0], source[1], pan);
+} ], [ 'pan4', {arg panx = 0 , pany = 0 ;
+	Pan4.ar(\in, panx, pany);
 } ] ]
