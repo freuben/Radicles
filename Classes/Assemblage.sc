@@ -519,7 +519,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				server.sync;
 			});
 			numChan = Ndef(this.getBuses.flop[0][busNum-1][0]).numChannels;
-			busTag = ("bus" ++ busNum ++ "In").asSymbol;
+			busTag = ("busIn" ++ busNum).asSymbol;
 			if(busArr[busNum-1][0].isNil, {
 				busArr[busNum-1][0] = busTag;
 				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
@@ -573,7 +573,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	busMix {arg bus=1, slot=1, mix=0, lag;
 		var tag, volTag, ndefCS;
-		tag = ("bus" ++ bus ++ "In").asSymbol;
+		tag = ("busIn" ++ bus).asSymbol;
 		volTag = ("vol" ++ slot).asSymbol;
 		if(lag.notNil, {
 			ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
@@ -587,7 +587,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	busLag {arg bus=1, slot=1, lag=0;
 		var tag, volTag, ndefCS;
-		tag = ("bus" ++ bus ++ "In").asSymbol;
+		tag = ("busIn" ++ bus).asSymbol;
 		volTag = ("vol" ++ slot).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
 		ndefCS.radpost;
@@ -1109,13 +1109,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
-		sortTrackNames {arg trackNameArr;
+	sortTrackNames {arg trackNameArr;
 		var newSortArr = [[],[],[],[]];
-		trackNameArr.do{|item|
+		trackNameArr.do{|item, index|
+			var bol;
+			bol = true;
 			case
-			{(item.asString.find("track").notNil)} {newSortArr[0] = newSortArr[0].add(item) }
-			{(item.asString.find("bus").notNil)} {newSortArr[1] = newSortArr[1].add(item)}
-			{(item.asString.find("master").notNil)} {newSortArr[2] = newSortArr[2].add(item)};
+			{
+				(item.asString.find("track").notNil).or(item.asString.find("Track").notNil)
+			} {newSortArr[1] = newSortArr[1].add(trackNameArr[index]); bol = false}
+			{
+				(item.asString.find("bus").notNil).or(item.asString.find("Bus").notNil)
+			} {newSortArr[2] = newSortArr[2].add(trackNameArr[index]); bol = false}
+			{
+				(item.asString.find("master").notNil).or(item.asString.find("Master").notNil)
+			} {newSortArr[3] = newSortArr[3].add(trackNameArr[index]); bol = false};
+			if(bol, {
+				newSortArr[0] = newSortArr[0].add(trackNameArr[index]);
+			});
 		};
 		^newSortArr.flat;
 	}
@@ -1123,7 +1134,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	mixGUI {var sysChans, mixTrackNames, sysPan, sends, fxsNum, knobColors, winHeight, winWidth,
 		knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr, levelArr,
 		vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
-		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, volSpec;
+		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, volSpec, mixInputLabels,
+		trackInputSel, inputArray, numBuses, thisInputLabel;
 
 		mixTrackNames = this.sortTrackNames(trackNames);
 		sysChans = mixTrackNames.collect({|item| Ndef(item.asSymbol).numChannels});
@@ -1132,12 +1144,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var spatialType;
 			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++ item.asString.capitalise).asSymbol)];
 			if([\bal2, \pan2].includes(spatialType), {sysPan = sysPan.add(0); }, {sysPan = sysPan.add(1) });
-			 };
+		};
 
-		sysPan.postln;
-		/*sysPan = (0!(sysChans.size-2)) ++ (1!2); //type 0 is normal Knob, 1 is Slider2D*/
+		//getting input label data
+		inputArray = 	inputs.flop[0].collect{|item| item.asString.replace("space").toLower.asSymbol; };
+		mixTrackNames.do{|item|
+			if(inputArray.includes(item), {
+				thisInputLabel = inputs.flop[1][inputArray.indexOf(item)];
+				if(thisInputLabel.isArray, {thisInputLabel = thisInputLabel.collect{|item| item.key};
+				}, {
+					thisInputLabel = thisInputLabel.key;});
+				if(item != \master, {
+					trackInputSel = trackInputSel.add([mixTrackNames.indexOf(item),
+						thisInputLabel ]); });
+			});
+		};
+
 		sends = 2;
 		fxsNum = 2;
+
+		numBuses = 32;
 
 		knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353),
 			Color.white, Color.black, Color() ];
@@ -1151,19 +1177,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		canvas = View();
 		/*canvas.background_(Color.new255(29, 46, 73));*/
 		canvas.background_(Color.black);
-		/*panKnobTextArr = [];
-		sliderTextArr = [];
-		levelTextArr = [];
-		panKnobArr = [];
-		sliderArr = [];
-		levelArr = [];
-		vlay = [];
-		sendsMenuArr = [];
-		sendsKnobArr = [];
-		inputMenuArr = [];
-		outputMenuArr = [];
-		fxSlotArr = [];
-		trackLabelArr = [];*/
 
 		sysChans.do{|item, index|
 			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
@@ -1233,11 +1246,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
 			//output menu
 			outputMenu = PopUpMenu().maxHeight_(popupmenusize)
-			.minHeight_(popupmenusize).minWidth_(slotsSize);
-			outputMenu.items = [
-				"master", "bus1", "bus2", "bus3",
-				"bus4", "bus5", "bus6", "bus7", "bus8"
-			];
+			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
+			outputMenu.items = ["master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
 			outputMenu.background_(Color.black).stringColor_(Color.white)
 			.font_(Font("Monaco", 8)).action = { arg menu;
 				/*outputMenuInfo[index] =*/
@@ -1251,11 +1261,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
 			//sends menu
 			sends.do{var smenu, sknob;
-				smenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize);
-				smenu.items = [
-					"", "bus1", "bus2", "bus3", "bus4",
-					"bus5", "bus6", "bus7", "bus8"
-				];
+				smenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize)
+				.maxWidth_(slotsSize);
+				smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};
 				smenu.background_(Color.black).stringColor_(Color.white)
 				.font_(Font("Monaco", 8)).action = { arg menu;
 					[menu.value, menu.item].postln;
@@ -1278,6 +1286,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//fx buttons
 			fxsNum.do{var fxbutton;
 				fxbutton = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize).minWidth_(slotsSize);
+				fxbutton.canFocus = false;
 				fxbutton.states_([["", Color.white, Color.black]])
 				// fxbutton.background_(Color.black)
 				/*.stringColor_(Color.white)*/
@@ -1294,15 +1303,38 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			inputLabel.font = Font("Monaco", 8); inputLabel.string_("Input");
 			//input menu
-			inputMenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize).minWidth_(slotsSize);
-			inputMenu.items = [
-				"block1", "block2", "block3", "track1",
-				"track2", "track3", "track4", "bus1", "bus2", "bus3"
-			];
+			inputMenu = PopUpMenu().maxHeight_(popupmenusize)
+			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
+
+			if(mixTrackNames[index].asString.find("track").notNil, {
+			inputs.flop[1].flat.do({|item| if((item.key.asString.find("busIn").isNil)
+				.and(item.key.asString.find("track").isNil), {
+				mixInputLabels =	mixInputLabels.add(item.key);
+			});
+			});
+			inputMenu.items = [""] ++ this.sortTrackNames(mixInputLabels.rejectSame)
+			++ numBuses.collect{|item| "bus" ++ (item+1)};
+							//input names
+			if(trackInputSel.notNil, {
+			if(trackInputSel.flop[0].includes(index), {
+					thisInputLabel = trackInputSel.flop[1][index];
+					if(thisInputLabel.isArray, {
+						inputMenu.items = inputMenu.items.insert(1, thisInputLabel.asString);
+						inputMenu.value = 1;
+					}, {
+				inputMenu.value = inputMenu.items.indexOf(trackInputSel.flop[1][index]).postln;
+					});
+			});
+			});
+			}, {
+				inputMenu.items = [mixTrackNames[index].asString]
+			});
+
 			inputMenu.background_(Color.black).stringColor_(Color.white)
 			.font_(Font("Monaco", 8)).action = { arg menu;
 				[menu.value, menu.item].postln;
 			};
+
 			inputMenuArr = inputMenuArr.add(inputMenu);
 
 			sliderArr = sliderArr.add(slider);
@@ -1328,7 +1360,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				sendsLay = nil;
 				outputLabel.string_("");
 				outputMenu = nil;
-				inputMenu.items = ["master"];
+				/*inputMenu.items = ["master"];*/
 			});
 
 			//input
@@ -1349,7 +1381,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			[[outputLabel, align: \bottom], [outputMenu, align: \bottom]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
-			//satialisation interface
+			//spatialisation interface
 			[[spaceTextLay, align: \bottom], [panKnob, align: \bottom]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
@@ -1363,25 +1395,25 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			vlay = vlay.add(VLayout(*finalLayout) );
 		};
 
+		//setting interface
 		sliderTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
 		levelTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("-inf");  };
 		panKnobTextArr.flat.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
 		panSpec = \pan.asSpec;
 		panKnobArr.do{|item, index|
 			if(sysPan[index] == 0, {
-				item.value_(panSpec.unmap(0)).action_({|val| panKnobTextArr[index][0].string_(panSpec.map(val.value).round(0.01).asString) });
+				item.value_(panSpec.unmap(0)).action_({|val| panKnobTextArr[index][0]
+					.string_(panSpec.map(val.value).round(0.01).asString) });
 			}, {
 				item.action_({|sl|
 					panKnobTextArr[index][0].string_(panSpec.map(sl.x).round(0.01).asString);
 					panKnobTextArr[index][1].string_(panSpec.map(sl.y).round(0.01).asString);
 				});
-				/*item.x_(0);
-				item.y_(0);*/
-				/*panSpec = [0,1].asSpec;*/
 			});
 		};
 		volSpec = [-inf, 6, \db, 0, -inf, " dB" ].asSpec;
-		sliderArr.do{|item, index| item.value_(volSpec.unmap(0) ).action_({|val| sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString) });  };
+		sliderArr.do{|item, index| item.value_(volSpec.unmap(0) ).action_({|val|
+			sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString) });  };
 
 		levelArr.do{|it| it.do{|item|
 			item.meterColor = Color.new255(78, 109, 38);
