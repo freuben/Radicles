@@ -1,6 +1,6 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
-	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <mixerWin;
+	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <mixerWin, <mixTrackNdefs;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1131,14 +1131,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^newSortArr.flat;
 	}
 
-	mixGUI {var sysChans, mixTrackNames, sysPan, sends, fxsNum, knobColors, winHeight, winWidth,
-		knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr, levelArr,
-		vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
+	mixGUI {arg updateFreq=10;
+		var sysChans, mixTrackNames, sysPan, sends, fxsNum, knobColors, winHeight,
+		winWidth, knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
+		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
 		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, volSpec, mixInputLabels,
 		trackInputSel, inputArray, numBuses, thisInputLabel;
 
 		mixTrackNames = this.sortTrackNames(trackNames);
-		sysChans = mixTrackNames.collect({|item| Ndef(item.asSymbol).numChannels});
+		mixTrackNdefs = mixTrackNames.collect({|item| Ndef(item.asSymbol) });
+		sysChans = mixTrackNdefs.collect({|item| item.numChannels});
 
 		mixTrackNames.do{|item|
 			var spatialType;
@@ -1188,7 +1190,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.background_(Color.black).stringColor_(Color.white)
 			.minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
 			sliderTextArr = sliderTextArr.add(sliderText);
-			slider = Slider().minWidth_(20).maxWidth_(20).maxHeight_(160).minHeight_(160)
+			slider = Slider().minWidth_(20).maxWidth_(20).maxHeight_(180).minHeight_(180)
 			.focusColor_(Color.red(alpha:0.2))
 			.background_(Color.black);
 
@@ -1307,25 +1309,25 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
 
 			if(mixTrackNames[index].asString.find("track").notNil, {
-			inputs.flop[1].flat.do({|item| if((item.key.asString.find("busIn").isNil)
-				.and(item.key.asString.find("track").isNil), {
-				mixInputLabels =	mixInputLabels.add(item.key);
-			});
-			});
-			inputMenu.items = [""] ++ this.sortTrackNames(mixInputLabels.rejectSame)
-			++ numBuses.collect{|item| "bus" ++ (item+1)};
-							//input names
-			if(trackInputSel.notNil, {
-			if(trackInputSel.flop[0].includes(index), {
-					thisInputLabel = trackInputSel.flop[1][index];
-					if(thisInputLabel.isArray, {
-						inputMenu.items = inputMenu.items.insert(1, thisInputLabel.asString);
-						inputMenu.value = 1;
-					}, {
-				inputMenu.value = inputMenu.items.indexOf(trackInputSel.flop[1][index]).postln;
+				inputs.flop[1].flat.do({|item| if((item.key.asString.find("busIn").isNil)
+					.and(item.key.asString.find("track").isNil), {
+						mixInputLabels =	mixInputLabels.add(item.key);
+				});
+				});
+				inputMenu.items = [""] ++ this.sortTrackNames(mixInputLabels.rejectSame)
+				++ numBuses.collect{|item| "bus" ++ (item+1)};
+				//input names
+				if(trackInputSel.notNil, {
+					if(trackInputSel.flop[0].includes(index), {
+						thisInputLabel = trackInputSel.flop[1][index];
+						if(thisInputLabel.isArray, {
+							inputMenu.items = inputMenu.items.insert(1, thisInputLabel.asString);
+							inputMenu.value = 1;
+						}, {
+							inputMenu.value = inputMenu.items.indexOf(trackInputSel.flop[1][index]).postln;
+						});
 					});
-			});
-			});
+				});
 			}, {
 				inputMenu.items = [mixTrackNames[index].asString]
 			});
@@ -1440,6 +1442,35 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		canvas.layout = HLayout(*vlay);
 		mixerWin.canvas = canvas;
 		mixerWin.front;
+
+		Ndef("AssembladgeGUI", {
+			var in, imp;
+			in = mixTrackNdefs.collect({|item| item.ar }).flat;
+			/*in = masterNdefs.flop[1].flat.collect({|item| item.ar });*/
+			imp = Impulse.ar(updateFreq);
+			SendReply.ar(imp, "/AssembladgeGUI",
+				[
+					RunningSum.ar(in.squared, server.sampleRate / updateFreq),
+					Peak.ar(in, Delay1.ar(imp)).lag(0, 3)
+				].flop.flat
+			);
+		});
+
+		OSCdef(\AssembladgeGUI, {|msg, time, addr, recvPort|
+			var dBLow, array, numRMSSampsRecip, numRMSSamps;
+			numRMSSamps = server.sampleRate / updateFreq;
+			numRMSSampsRecip = 1 / numRMSSamps;
+			dBLow = -80;
+			{
+				msg.copyToEnd(3).pairsDo({|val, peak, i|
+					var meter;
+					i = i * 0.5;
+					meter = 	levelArr.flat[i];
+					meter.value = (val.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
+					meter.peakLevel = peak.ampdb.linlin(dBLow, 0, 0, 1);
+				});
+			}.defer;
+		}, \AssembladgeGUI);
 
 	}
 
