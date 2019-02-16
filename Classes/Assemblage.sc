@@ -348,6 +348,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^arr;
 	}
 
+	getSpec {arg trackName = \master, argument = \volume;
+		specs.do{|item|
+			item.do{|it| if(it[0] == trackName, {
+				it[1].do{|thisIt|
+					if(thisIt[0] == argument, { ^thisIt[1]; }); };
+			}); };
+		};
+	}
+
 	replaceFunc {arg name, function;
 		var array;
 		array = this.findTrackArr(name);
@@ -1135,7 +1144,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var sysChans, mixTrackNames, sysPan, sends, fxsNum, knobColors, winHeight,
 		winWidth, knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
-		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, volSpec, mixInputLabels,
+		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, mixInputLabels,
 		trackInputSel, inputArray, numBuses, thisInputLabel;
 
 		mixTrackNames = this.sortTrackNames(trackNames);
@@ -1170,14 +1179,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353),
 			Color.white, Color.black, Color() ];
 
-		winHeight = 458;
+		winHeight = 478;
 		winWidth = (43*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
 		mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
 		mixerWin.hasVerticalScroller = false;
 		/*mixerWin.fixedHeight = winHeight;*/
 		canvas = View();
-		/*canvas.background_(Color.new255(29, 46, 73));*/
 		canvas.background_(Color.black);
 
 		sysChans.do{|item, index|
@@ -1324,7 +1332,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							inputMenu.items = inputMenu.items.insert(1, thisInputLabel.asString);
 							inputMenu.value = 1;
 						}, {
-							inputMenu.value = inputMenu.items.indexOf(trackInputSel.flop[1][index]).postln;
+							inputMenu.value = inputMenu.items.indexOf(trackInputSel.flop[1][index]);
 						});
 					});
 				});
@@ -1398,7 +1406,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		};
 
 		//setting interface
-		sliderTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
+		sliderTextArr.do{|item, index| item.font = Font("Monaco", 8); item.string_(
+			mixTrackNdefs[index].getKeysValues.collect({|item|
+				if(item[0] == \volume, {item[1]});
+		})[0].round(0.1).asString);
+		};
 		levelTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("-inf");  };
 		panKnobTextArr.flat.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
 		panSpec = \pan.asSpec;
@@ -1413,9 +1425,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		};
-		volSpec = [-inf, 6, \db, 0, -inf, " dB" ].asSpec;
-		sliderArr.do{|item, index| item.value_(volSpec.unmap(0) ).action_({|val|
-			sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString) });  };
+
+		sliderArr.do{|item, index|
+			var volSpec;
+			volSpec = this.getSpec(mixTrackNames[index], \volume).asSpec;
+			item.value_(volSpec.unmap(
+				mixTrackNdefs[index].getKeysValues.collect({|item|
+					if(item[0] == \volume, {item[1]});
+				})[0];
+			) ).action_({|val|
+				sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString);
+				mixTrackNdefs[index].set(\volume, volSpec.map(val.value));
+		});  };
 
 		levelArr.do{|it| it.do{|item|
 			item.meterColor = Color.new255(78, 109, 38);
@@ -1457,18 +1478,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 
 		OSCdef(\AssembladgeGUI, {|msg, time, addr, recvPort|
-			var dBLow, array, numRMSSampsRecip, numRMSSamps;
+			var dBLow, array, numRMSSampsRecip, numRMSSamps, peakVal, peakArr;
 			numRMSSamps = server.sampleRate / updateFreq;
 			numRMSSampsRecip = 1 / numRMSSamps;
 			dBLow = -80;
 			{
+				peakArr = [];
 				msg.copyToEnd(3).pairsDo({|val, peak, i|
 					var meter;
 					i = i * 0.5;
 					meter = 	levelArr.flat[i];
 					meter.value = (val.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
-					meter.peakLevel = peak.ampdb.linlin(dBLow, 0, 0, 1);
+					peakVal = peak.ampdb;
+					meter.peakLevel = peakVal.linlin(dBLow, 0, 0, 1);
+					peakArr = peakArr.add(peakVal);
 				});
+
+				peakArr = peakArr.reshapeLike(levelArr);
+				peakArr.do{|item, index|
+					levelTextArr[index].string = item.maxItem.round(1).asString;
+				};
+
 			}.defer;
 		}, \AssembladgeGUI);
 
