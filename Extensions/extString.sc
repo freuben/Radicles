@@ -151,4 +151,9 @@
 		^this.replace("(", "[").replace(")", "]");
 	}
 
+	divNumStr {var nums;
+		nums = this.select{|item| (48..57).includes(item.ascii) };
+		^[this.replace(nums, ""), nums.interpret];
+	}
+
 }

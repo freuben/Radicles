@@ -1,6 +1,6 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
-	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <mixerWin, <mixTrackNdefs;
+	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <mixerWin, <mixTrackNdefs, <outputSettings;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -387,7 +387,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	input {arg ndefsIn, type=\track, num=1, respace=true, spaceType;
-		var trackArr, ndefCS, connect, inTag;
+		var trackArr, ndefCS, connect, inTag, newInIndex;
+		if([\track, \bus, \master].includes(type), {
 		trackArr = this.get(type)[num-1];
 		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
 		if(inputs.notNil, {
@@ -396,7 +397,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		});
 		inTag = ("space" ++ inTag.asString.capitalise).asSymbol;
+			if(inputs.notNil, {
+			if(inputs.flop[0].includes(inTag), {
+					newInIndex = inputs.flop[0].indexOf(inTag);
+				inputs[newInIndex.asInteger] = [inTag, ndefsIn];
+			}, {
+					inputs = inputs.add([inTag, ndefsIn]);
+				});
+			}, {
 		inputs = inputs.add([inTag, ndefsIn]);
+			});
 		inputs = ([ inputs[0] ] ++
 			inputs.copyRange(1, inputs.size-1).sort { arg a, b; a[0] <= b[0] };);
 		if(ndefsIn.numChannels.isNil, {ndefsIn.mold(1) });
@@ -426,6 +436,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {
 				"channel number input doesn't match track".warn;
 			});
+		});
+		}, {
+			"wrong track type".warn;
 		});
 	}
 
@@ -1259,10 +1272,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
 			outputMenu.items = ["master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
 			outputMenu.background_(Color.black).stringColor_(Color.white)
-			.font_(Font("Monaco", 8)).action = { arg menu;
-				/*outputMenuInfo[index] =*/
-				[menu.value, menu.item].postln;
-			};
+			.font_(Font("Monaco", 8));
 			outputMenuArr = outputMenuArr.add(outputMenu);
 
 			//sends
@@ -1453,7 +1463,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				levelArr[chan][in].peakLevel = it;
 			};
 			case
-
 			{peak.maxItem <= 0.9 } {levelTextArr[chan].background_(Color.new255(78, 109, 38));}
 			{(peak.maxItem > 0.9).and(peak.maxItem <= 1) } {
 				levelTextArr[chan].background_(Color.new255(232, 90, 13));}
@@ -1463,6 +1472,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		canvas.layout = HLayout(*vlay);
 		mixerWin.canvas = canvas;
 		mixerWin.front;
+
+		outputSettings = \master!outputMenuArr.size;
+		outputMenuArr.do{|it, ind|
+			it.action = { arg menu;
+				var arrayz, trackz;
+				outputSettings[ind] = menu.item.asSymbol;
+				arrayz = [];
+				outputSettings.do{|item, index|
+					if(item == outputSettings[ind], {
+						arrayz = arrayz.add(mixTrackNdefs[index])
+				}); };
+				trackz = menu.item.divNumStr;
+				if(trackz[1].isNil, {trackz[1] = 1;});
+				if(arrayz.size == 1, {
+					this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
+				}, {
+				this.input(arrayz, trackz[0].asSymbol, trackz[1]);
+				});
+			};
+		};
 
 		Ndef("AssembladgeGUI", {
 			var in, imp;
