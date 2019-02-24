@@ -1275,12 +1275,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
 			outputMenu.background_(Color.black).stringColor_(Color.white)
 			.font_(Font("Monaco", 8));
-
 			outputMenuArr = outputMenuArr.add(outputMenu);
-			/*});*/
 
 			//sends
-			/*if(index != (sysChans.size-1), {*/
 			sendsLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
@@ -1377,15 +1374,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			trackLabel.font = Font("Monaco", 8);
 			trackLabel.string_(mixTrackNames[index].asString.capitalise);
 			trackLabelArr = trackLabelArr.add(trackLabel);
-
-			//master fader omits sends and I/O
-			/*if(index == (sysChans.size-1), {
-				sendsLabel.string_("");
-				sendsLay = nil;
-				outputLabel.string_("");
-				outputMenu = nil;
-				/*inputMenu.items = ["master"];*/
-			});*/
 
 			//input
 			[[inputLabel, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
@@ -1533,7 +1521,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					});
 				});
 			};
-
 		};
 
 		Ndef("AssembladgeGUI", {
