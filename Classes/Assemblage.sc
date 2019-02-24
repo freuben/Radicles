@@ -1265,6 +1265,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			slotsSize = 68;
 
 			//output label
+			if(index != (sysChans.size-1), {
 			outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
@@ -1274,9 +1275,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
 			outputMenu.background_(Color.black).stringColor_(Color.white)
 			.font_(Font("Monaco", 8));
+
 			outputMenuArr = outputMenuArr.add(outputMenu);
+			/*});*/
 
 			//sends
+			/*if(index != (sysChans.size-1), {*/
 			sendsLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
@@ -1299,7 +1303,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			};
 			sendsMenuArr = sendsMenuArr.add(sendsMenu);
 			sendsKnobArr = sendsKnobArr.add(sendsKnobs);
-
+			});
 			//audio fxs
 			fxLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
@@ -1375,13 +1379,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			trackLabelArr = trackLabelArr.add(trackLabel);
 
 			//master fader omits sends and I/O
-			if(index == (sysChans.size-1), {
+			/*if(index == (sysChans.size-1), {
 				sendsLabel.string_("");
 				sendsLay = nil;
 				outputLabel.string_("");
 				outputMenu = nil;
 				/*inputMenu.items = ["master"];*/
-			});
+			});*/
 
 			//input
 			[[inputLabel, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
@@ -1477,7 +1481,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			outputSettings = \master!outputMenuArr.size;
 		});
 		outputMenuArr.do{|it, ind|
-			it.value = it.items.indexOfEqual(outputSettings[ind].asString).postln;
+			it.value = it.items.indexOfEqual(outputSettings[ind].asString);
 			it.action = { arg menu;
 				var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput;
 				oldTrack = outputSettings[ind].asSymbol;
@@ -1499,7 +1503,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						oldDest = oldTrack.asString.divNumStr;
 						if(oldDest[1].isNil, {oldDest[1] = 1;});
 						if(thisNewArr.notEmpty, {
+							if(thisNewArr.size == 1, {
+							this.input(thisNewArr[0], oldDest[0].asSymbol, oldDest[1]);
+							}, {
 							this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
+							});
 						}, {
 							("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++ ").source = nil").radpost.interpret;
 						});
