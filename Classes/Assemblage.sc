@@ -1474,7 +1474,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		//setting outputs
 		if(outputSettings.isNil, {
-		outputSettings = \master!outputMenuArr.size;
+			outputSettings = \master!outputMenuArr.size;
 		});
 		outputMenuArr.do{|it, ind|
 			it.value = it.items.indexOfEqual(outputSettings[ind].asString).postln;
@@ -1484,41 +1484,45 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				oldDest = mixTrackNdefs[ind];
 				//old destination off
 				if(oldTrack != "".asSymbol, {
-				inputs.flop[0].do{|item, index|
-					if(item.asString.find(oldTrack.asString.capitalise).notNil, {
-						oldInput = item;
-						thisInput =  inputs.flop[1][index]});
-				};
-				thisNewArr = [];
-				if(thisInput.isArray, {
-					thisInput.do{|item|
-						if(mixTrackNdefs[ind] != item, {
-							thisNewArr = thisNewArr.add(item);
-						});
+					inputs.flop[0].do{|item, index|
+						if(item.asString.find(oldTrack.asString.capitalise).notNil, {
+							oldInput = item;
+							thisInput =  inputs.flop[1][index]});
 					};
-					oldDest = oldTrack.asString.divNumStr;
-					if(oldDest[1].isNil, {oldDest[1] = 1;});
-					this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
-				}, {
-					/*Ndef(oldInput).source = nil;*/
+					thisNewArr = [];
+					if(thisInput.isArray, {
+						thisInput.do{|item|
+							if(mixTrackNdefs[ind] != item, {
+								thisNewArr = thisNewArr.add(item);
+							});
+						};
+						oldDest = oldTrack.asString.divNumStr;
+						if(oldDest[1].isNil, {oldDest[1] = 1;});
+						if(thisNewArr.notEmpty, {
+							this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
+						}, {
+							("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++ ").source = nil").radpost.interpret;
+						});
+					}, {
+						/*Ndef(oldInput).source = nil;*/
 						("Ndef(" ++ oldInput.cs ++ ").source = nil;").radpost.interpret;
-				});
+					});
 				});
 				//new destination
 				outputSettings[ind] = menu.item.asSymbol;
 				if(outputSettings[ind] != "".asSymbol, {
-				arrayz = [];
-				outputSettings.do{|item, index|
-					if(item == outputSettings[ind], {
-						arrayz = arrayz.add(mixTrackNdefs[index])
-				}); };
-				trackz = menu.item.divNumStr;
-				if(trackz[1].isNil, {trackz[1] = 1;});
-				if(arrayz.size == 1, {
-					this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
-				}, {
-					this.input(arrayz, trackz[0].asSymbol, trackz[1]);
-				});
+					arrayz = [];
+					outputSettings.do{|item, index|
+						if(item == outputSettings[ind], {
+							arrayz = arrayz.add(mixTrackNdefs[index])
+					}); };
+					trackz = menu.item.divNumStr;
+					if(trackz[1].isNil, {trackz[1] = 1;});
+					if(arrayz.size == 1, {
+						this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
+					}, {
+						this.input(arrayz, trackz[0].asSymbol, trackz[1]);
+					});
 				});
 			};
 
@@ -1564,7 +1568,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mixerWin.onClose = {
 			Ndef("AssembladgeGUI").clear;
 			OSCdef(\AssembladgeGUI).free;
-			Ndef.all[server.asSymbol].clean; //garbage collection
+			/*Ndef.all[server.asSymbol].clean; //garbage collection*/
 		};
 
 	}
