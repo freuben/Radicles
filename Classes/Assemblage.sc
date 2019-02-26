@@ -1563,7 +1563,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mixerWin.onClose = {
 			Ndef("AssembladgeGUI").clear;
 			OSCdef(\AssembladgeGUI).free;
-			/*Ndef.all[server.asSymbol].clean; //garbage collection*/
+			if(outputSettings.includes("".asSymbol).not, {
+			Ndef.all[server.asSymbol].clean; //garbage collection
+			});
 		};
 
 	}
