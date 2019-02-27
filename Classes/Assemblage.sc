@@ -1154,12 +1154,31 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^newSortArr.flat;
 	}
 
+	getBusInLabels {var busNdefs, busLabelArr, sameTracks, result;
+		busNdefs = inputs.select{|item| item[0].asString.find("busIn").notNil };
+		busNdefs.do{|item|
+			if(item[1].isArray, {
+				item[1].do{|it|
+					busLabelArr = busLabelArr.add([it.key, item[0]]);
+				};
+			}, {
+				busLabelArr = busLabelArr.add([item[1].key, item[0]]);
+			});
+		};
+		if(busLabelArr.notNil, {
+		sameTracks = busLabelArr.flop[0].rejectSame;
+ result = sameTracks.collect{|item| [item, busLabelArr.flop[1].atAll(
+	busLabelArr.flop[0].indicesOfEqual(item)) ] };
+		}, {result = nil});
+		^result;
+	}
+
 	mixGUI {arg updateFreq=10;
 		var sysChans, mixTrackNames, sysPan, sends, fxsNum, knobColors, winHeight,
 		winWidth, knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
 		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, mixInputLabels,
-		trackInputSel, inputArray, numBuses, thisInputLabel;
+		trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels, maxBusIn;
 
 		mixTrackNames = this.sortTrackNames(trackNames);
 		mixTrackNdefs = mixTrackNames.collect({|item| Ndef(item.asSymbol) });
@@ -1185,7 +1204,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 
+		busInLabels = this.getBusInLabels;
+		if(busInLabels.isNil, {
 		sends = 2;
+		}, {
+			maxBusIn = busInLabels.flop[1].collect{|item| item.size}.maxItem;
+			maxBusIn.postln;
+			if(maxBusIn > 2, {
+			sends = maxBusIn;
+			}, {
+			sends = 2;
+			});
+		});
+
 		fxsNum = 2;
 
 		numBuses = 32;
@@ -1193,7 +1224,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353),
 			Color.white, Color.black, Color() ];
 
-		winHeight = 478;
+		winHeight = 478 + ((sends-2)*15).postln;
 		winWidth = (43*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
 		mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
@@ -1266,40 +1297,40 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			//output label
 			if(index != (sysChans.size-1), {
-			outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
-			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-			outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
-			//output menu
-			outputMenu = PopUpMenu().maxHeight_(popupmenusize)
-			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
-			outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
-			outputMenu.background_(Color.black).stringColor_(Color.white)
-			.font_(Font("Monaco", 8));
-			outputMenuArr = outputMenuArr.add(outputMenu);
+				outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
+				.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+				outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
+				//output menu
+				outputMenu = PopUpMenu().maxHeight_(popupmenusize)
+				.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
+				outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
+				outputMenu.background_(Color.black).stringColor_(Color.white)
+				.font_(Font("Monaco", 8));
+				outputMenuArr = outputMenuArr.add(outputMenu);
 
-			//sends
-			sendsLabel = StaticText(canvas).align_(\center).background_(Color.black)
-			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-			sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
-			//sends menu
-			sends.do{var smenu, sknob;
-				smenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize)
-				.maxWidth_(slotsSize);
-				smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};
-				smenu.background_(Color.black).stringColor_(Color.white)
-				.font_(Font("Monaco", 8)).action = { arg menu;
-					[menu.value, menu.item].postln;
+				//sends
+				sendsLabel = StaticText(canvas).align_(\center).background_(Color.black)
+				.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+				sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
+				//sends menu
+				sends.do{var smenu, sknob;
+					smenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize)
+					.maxWidth_(slotsSize);
+					smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};
+					smenu.background_(Color.black).stringColor_(Color.white)
+					.font_(Font("Monaco", 8)).action = { arg menu;
+						[menu.value, menu.item].postln;
+					};
+					sknob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
+					.maxHeight_(popupmenusize).minHeight_(popupmenusize);
+					sknob.color = knobColors;
+
+					sendsMenu = sendsMenu.add(smenu);
+					sendsKnobs = sendsKnobs.add(sknob);
+					sendsLay = sendsLay.add(HLayout(smenu, sknob));
 				};
-				sknob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
-				.maxHeight_(popupmenusize).minHeight_(popupmenusize);
-				sknob.color = knobColors;
-
-				sendsMenu = sendsMenu.add(smenu);
-				sendsKnobs = sendsKnobs.add(sknob);
-				sendsLay = sendsLay.add(HLayout(smenu, sknob));
-			};
-			sendsMenuArr = sendsMenuArr.add(sendsMenu);
-			sendsKnobArr = sendsKnobArr.add(sendsKnobs);
+				sendsMenuArr = sendsMenuArr.add(sendsMenu);
+				sendsKnobArr = sendsKnobArr.add(sendsKnobs);
 			});
 			//audio fxs
 			fxLabel = StaticText(canvas).align_(\center).background_(Color.black)
@@ -1492,9 +1523,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						if(oldDest[1].isNil, {oldDest[1] = 1;});
 						if(thisNewArr.notEmpty, {
 							if(thisNewArr.size == 1, {
-							this.input(thisNewArr[0], oldDest[0].asSymbol, oldDest[1]);
+								this.input(thisNewArr[0], oldDest[0].asSymbol, oldDest[1]);
 							}, {
-							this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
+								this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
 							});
 						}, {
 							("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++ ").source = nil").radpost.interpret;
@@ -1564,7 +1595,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			Ndef("AssembladgeGUI").clear;
 			OSCdef(\AssembladgeGUI).free;
 			if(outputSettings.includes("".asSymbol).not, {
-			Ndef.all[server.asSymbol].clean; //garbage collection
+				Ndef.all[server.asSymbol].clean; //garbage collection
 			});
 		};
 
