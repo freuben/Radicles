@@ -1156,12 +1156,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	getBusInLabels {var busLabelArr, sameTracks, result;
 		busArr.do{|item|
+			if(item[1].notNil, {
 			if(item[1].isArray, {
 				item[1].do{|it|
 					busLabelArr = busLabelArr.add([it.key, item[0]]);
 				};
 			}, {
 				busLabelArr = busLabelArr.add([item[1].key, item[0]]);
+			});
 			});
 		};
 		if(busLabelArr.notNil, {
@@ -1506,10 +1508,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					var thisNdefVal, selArg;
 					if(item[1][ind].notNil, {
 						thisNdefVal = Ndef(item[1][ind]).getKeysValues;
-						thisNdefVal.postln;
 						selArg = ("vol" ++ (busArr.flop[1][busArr.flop[0].indexOf(item[1][ind])].collect{|keyVal|
-							keyVal.key}.indexOf(item[0]) + 1)).asSymbol.postln;
-						it.value = thisNdefVal.flop[1][thisNdefVal.flop[0].indexOf(selArg)].postln;
+							keyVal.key}.indexOf(item[0]) + 1)).asSymbol;
+						it.value = thisNdefVal.flop[1][thisNdefVal.flop[0].indexOf(selArg)];
 					});
 				};
 			};
