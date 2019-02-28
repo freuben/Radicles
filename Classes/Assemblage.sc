@@ -1154,9 +1154,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^newSortArr.flat;
 	}
 
-	getBusInLabels {var busNdefs, busLabelArr, sameTracks, result;
-		busNdefs = inputs.select{|item| item[0].asString.find("busIn").notNil };
-		busNdefs.do{|item|
+	getBusInLabels {var busLabelArr, sameTracks, result;
+		busArr.do{|item|
 			if(item[1].isArray, {
 				item[1].do{|it|
 					busLabelArr = busLabelArr.add([it.key, item[0]]);
@@ -1166,9 +1165,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 		if(busLabelArr.notNil, {
-		sameTracks = busLabelArr.flop[0].rejectSame;
- result = sameTracks.collect{|item| [item, busLabelArr.flop[1].atAll(
-	busLabelArr.flop[0].indicesOfEqual(item)) ] };
+			sameTracks = busLabelArr.flop[0].rejectSame;
+			result = sameTracks.collect{|item| [item, busLabelArr.flop[1].atAll(
+				busLabelArr.flop[0].indicesOfEqual(item)) ] };
 		}, {result = nil});
 		^result;
 	}
@@ -1206,14 +1205,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		busInLabels = this.getBusInLabels;
 		if(busInLabels.isNil, {
-		sends = 2;
+			sends = 2;
 		}, {
 			maxBusIn = busInLabels.flop[1].collect{|item| item.size}.maxItem;
 			maxBusIn.postln;
 			if(maxBusIn > 2, {
-			sends = maxBusIn;
+				sends = maxBusIn;
 			}, {
-			sends = 2;
+				sends = 2;
 			});
 		});
 
@@ -1494,6 +1493,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		canvas.layout = HLayout(*vlay);
 		mixerWin.canvas = canvas;
 		mixerWin.front;
+
+		//setting busIns
+		if(busInLabels.notNil, {
+			busInLabels.do{|item|
+				sendsMenuArr[mixTrackNames.indexOf(item[0])].do{|it, ind|
+					if(item[1][ind].notNil, {
+						it.value = item[1][ind].asString.divNumStr[1];
+					});
+				};
+				sendsKnobArr[mixTrackNames.indexOf(item[0])].do{|it, ind|
+					var thisNdefVal, selArg;
+					if(item[1][ind].notNil, {
+						thisNdefVal = Ndef(item[1][ind]).getKeysValues;
+						thisNdefVal.postln;
+						selArg = ("vol" ++ (busArr.flop[1][busArr.flop[0].indexOf(item[1][ind])].collect{|keyVal|
+							keyVal.key}.indexOf(item[0]) + 1)).asSymbol.postln;
+						it.value = thisNdefVal.flop[1][thisNdefVal.flop[0].indexOf(selArg)].postln;
+					});
+				};
+			};
+		});
 
 		//setting outputs
 		if(outputSettings.isNil, {
