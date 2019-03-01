@@ -1530,7 +1530,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		outputMenuArr.do{|it, ind|
 			it.value = it.items.indexOfEqual(outputSettings[ind].asString);
 			it.action = { arg menu;
-				var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput;
+				var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput, spaceInd, busInSpace;
 				oldTrack = outputSettings[ind].asSymbol;
 				oldDest = mixTrackNdefs[ind];
 				//old destination off
@@ -1560,7 +1560,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								").source = nil").radpost.interpret;
 						});
 					}, {
-						/*Ndef(oldInput).source = nil;*/
 						("Ndef(" ++ oldInput.cs ++ ").source = nil;").radpost.interpret;
 					});
 				});
@@ -1573,6 +1572,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							arrayz = arrayz.add(mixTrackNdefs[index])
 					}); };
 					trackz = menu.item.divNumStr;
+					spaceInd = inputs.flop[0].indexOf(("space" ++ menu.item.capitalise).asSymbol);
+					if(spaceInd.notNil, {
+						busInSpace = inputs.flop[1][spaceInd];
+						if(busInSpace.asString.find("busIn").notNil, {
+							arrayz = (arrayz ++ busInSpace).flat;
+						});
+					});
 					if(trackz[1].isNil, {trackz[1] = 1;});
 					if(arrayz.size == 1, {
 						this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
