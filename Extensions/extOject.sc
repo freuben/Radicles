@@ -148,4 +148,27 @@
 		});
 	}
 
+	radpostcont {arg type=\ln, postDoc=false, postWin=true, win=\ide;
+		var string, doc;
+		string = this.asString;
+		if(Radicles.reducePostControl, {
+			string = string.replace(",", "(").replace(").set").replace(");").split($().copyToEnd(1);
+		});
+		if(postDoc, {
+		doc = Radicles.postDoc;
+		if(Radicles.logCodeTime, {
+			string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
+		});
+		if(doc.isNil, {
+		string.postin(\ide, type);
+		}, {
+			string.postallin([\ide, \doc], type, doc);
+		});
+		}, {
+			if(postWin, {
+			string.postin(win, type);
+			});
+		});
+	}
+
 }

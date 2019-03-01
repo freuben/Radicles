@@ -1,6 +1,6 @@
 Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
-	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false;
+	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false;
 
 	*new {
 		^super.new.initRadicles;
