@@ -1,7 +1,8 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
-	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <mixerWin,
-	<outputSettings, <busInSettings;
+	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
+	<outputSettings, <setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
+	<sysChans, <sysPan;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -23,6 +24,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					chanBus = chanNum[1];
 					chanMaster = chanNum[2];
 				});
+				systemChanNum = chanNum;
 				if(spaceType.isArray.not, {
 					spaceMaster = spaceType;
 					spaceTrack = spaceType;
@@ -45,6 +47,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				this.input(masterInput, \master);
 				server.sync;
 				this.play;
+				this.updateMixInfo;
 			}.fork
 		}
 	}
@@ -168,9 +171,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
 	}
 
-	autoAddTrack {arg type=\track, chanNum=1, spaceType, trackSynth, trackSpecs;
+	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs;
 		var trackInfo, inArr, masterInput;
 		{
+			chanNum ?? {chanNum = systemChanNum};
 			trackInfo = this.addTrack(type, chanNum, spaceType, trackSynth, trackSpecs);
 			server.sync;
 			this.autoRoute(trackInfo);
@@ -178,6 +182,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			inArr = masterNdefs.flop[1];
 			masterInput = inArr.copyRange(1, inArr.size-1);
 			this.input(masterInput, \master);
+			server.sync;
+			if(mixerWin.notClosed, {
+				{this.refreshMixGUI;}.defer;
+			});
 		}.fork;
 	}
 
@@ -874,6 +882,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
+	//this is not working - work on removing tracks (and GUI update)
 	remove {arg track=1;
 		var trackIndex;
 		trackIndex = track - 1;
@@ -1209,23 +1218,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^result;
 	}
 
-	mixGUI {arg updateFreq=10;
-		var sysChans, mixTrackNames, sysPan, sends, fxsNum, knobColors, winHeight,
-		winWidth, knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
-		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
-		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, mixInputLabels,
-		trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels, maxBusIn, mixTrackNdefs, knobFunc;
-
+	updateMixInfo {
 		mixTrackNames = this.sortTrackNames(trackNames);
 		mixTrackNdefs = mixTrackNames.collect({|item| Ndef(item.asSymbol) });
 		sysChans = mixTrackNdefs.collect({|item| item.numChannels});
-
 		mixTrackNames.do{|item|
 			var spatialType;
 			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++ item.asString.capitalise).asSymbol)];
 			if([\bal2, \pan2].includes(spatialType), {sysPan = sysPan.add(0); }, {sysPan = sysPan.add(1) });
 		};
+	}
 
+	mixGUI {arg updateFreq=10;
+		var sends, fxsNum, knobColors, winHeight,
+		winWidth, knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
+		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
+		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, mixInputLabels,
+		trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels, maxBusIn,
+		knobFunc, busInSettings;
+
+		this.updateMixInfo;
 		//getting input label data
 		inputArray = 	inputs.flop[0].collect{|item| item.asString.replace("space").toLower.asSymbol; };
 		mixTrackNames.do{|item|
@@ -1262,8 +1274,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		winHeight = 478 + ((sends-2)*15);
 		winWidth = (43*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
+		if(mixerWin.isNil, {
 		mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
 		mixerWin.hasVerticalScroller = false;
+		});
+		if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
+		mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
+		});
 		/*mixerWin.fixedHeight = winHeight;*/
 		canvas = View();
 		canvas.background_(Color.black);
@@ -1272,7 +1289,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
 			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
 			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot,
-			trackLabel, trackColor;
+			trackLabel, trackColor, thisInputVal;
 			//volume slider
 			sliderText = StaticText(canvas).align_(\center)
 			.background_(Color.black).stringColor_(Color.white)
@@ -1406,11 +1423,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(trackInputSel.notNil, {
 					if(trackInputSel.flop[0].includes(index), {
 						thisInputLabel = trackInputSel.flop[1][index];
+						thisInputVal = inputMenu.items;
 						if(thisInputLabel.isArray, {
-							inputMenu.items = inputMenu.items.insert(1, thisInputLabel.asString);
+							inputMenu.items = thisInputVal.insert(1, thisInputLabel.asString);
 							inputMenu.value = 1;
 						}, {
-							inputMenu.value = inputMenu.items.indexOf(trackInputSel.flop[1][index]);
+							inputMenu.value = thisInputVal.indexOf(trackInputSel.flop[1][index]);
 						});
 					});
 				});
@@ -1507,6 +1525,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					volSpec.map(val.value) ++ ");").radpostcont.interpret;
 		});  };
 
+		setVolSlider = {|index, value|
+			var volSpec;
+			volSpec = this.getSpec(mixTrackNames[index], \volume).asSpec;
+			sliderArr[index].value = volSpec.unmap(value);
+			sliderTextArr[index].string_(value.round(0.1).asString);
+				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
+					value ++ ");").radpostcont.interpret;
+		 };
+
 		levelArr.do{|it| it.do{|item|
 			item.meterColor = Color.new255(78, 109, 38);
 			item.warningColor = Color.new255(232, 90, 13);
@@ -1531,7 +1558,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		canvas.layout = HLayout(*vlay);
 		mixerWin.canvas = canvas;
 		mixerWin.front;
-
 
 		//setting busIns
 		if(busInSettings.isNil, {
@@ -1706,8 +1732,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(outputSettings.includes("".asSymbol).not, {
 				/*Ndef.all[server.asSymbol].clean; //garbage collection*/
 			});
+			mixerWin = nil;
 		};
 
+	}
+
+	refreshMixGUI {
+		if(mixerWin.notNil, {
+		mixerWin.children.do { |child| child.remove };
+		});
+		this.mixGUI;
 	}
 
 }
