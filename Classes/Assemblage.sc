@@ -1,7 +1,7 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
-	<outputSettings, <setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
+	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
 	<sysChans, <sysPan;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
@@ -37,7 +37,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				this.addTrack(\master, chanMaster, spaceMaster, masterSynth);
 				this.addTracks(trackNum, \track, chanTrack, spaceTrack);
 				this.addTracks(busNum, \bus, chanBus, spaceBus);
-				busArr = nil!2!busNum;
+				/*busArr = nil!2!busNum;*/
 				tracks.do{|item|
 					this.autoRoute(item);
 				};
@@ -88,7 +88,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if([\track, \bus, \master].includes(type), {
 			/*{*/
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
-			trackSynth ?? {trackSynth = {arg volume=0; (\in * volume.dbamp )}; };
+			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0; (\in * volume.dbamp.lag(lagTime); )}; };
 			trackSpecs ?? trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ] ];
 			spaceSynth = SynthFile.read(\space, spaceType);
 			spaceSpecs = SpecFile.read(\space, spaceType);
@@ -100,6 +100,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			{type == \bus} {
 				trackTag = (type.asString ++ busCount).asSymbol;
 				busCount = busCount + 1;
+				busArr = busArr.add(nil!2);
 			}
 			{type == \master} {
 				trackTag = (type.asString).asSymbol;
@@ -183,8 +184,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			masterInput = inArr.copyRange(1, inArr.size-1);
 			this.input(masterInput, \master);
 			server.sync;
+			if(mixerWin.notNil, {
 			if(mixerWin.notClosed, {
 				{this.refreshMixGUI;}.defer;
+			});
 			});
 		}.fork;
 	}
@@ -546,6 +549,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{
 			numChan = Ndef(this.getBuses.flop[0][busNum-1][0]).numChannels;
 			busTag = ("busIn" ++ busNum).asSymbol;
+
 			if(busArr[busNum-1][0].isNil, {
 				busArr[busNum-1][0] = busTag;
 				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
@@ -1235,7 +1239,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
 		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, mixInputLabels,
 		trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels, maxBusIn,
-		knobFunc, busInSettings;
+		knobFunc, busInSettings, outputSettings;
 
 		this.updateMixInfo;
 		//getting input label data
@@ -1530,8 +1534,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			volSpec = this.getSpec(mixTrackNames[index], \volume).asSpec;
 			sliderArr[index].value = volSpec.unmap(value);
 			sliderTextArr[index].string_(value.round(0.1).asString);
-				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
-					value ++ ");").radpostcont.interpret;
 		 };
 
 		levelArr.do{|it| it.do{|item|
@@ -1742,6 +1744,32 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mixerWin.children.do { |child| child.remove };
 		});
 		this.mixGUI;
+	}
+
+	setVolume {arg trackType, trackNum, val, lag, db=true;
+		var trackIndex, value;
+		if(db.not, {
+			value = val.ampdb;
+		}, {
+			value = val;
+		});
+		trackIndex = mixTrackNames.indexOf((trackType ++ trackNum).asSymbol);
+		if(trackIndex.notNil, {
+				if(lag.isNil, {
+			(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
+					value ++ ");").radpostcont.interpret;
+				}, {
+				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
+						value ++ ", 'lagTime', " ++ lag ++ ");").radpostcont.interpret;
+				});
+			if(mixerWin.notNil, {
+				if(mixerWin.notClosed, {
+			setVolSlider.(trackIndex, val);
+				});
+			});
+		}, {
+			"track not found".warn;
+		});
 	}
 
 }
