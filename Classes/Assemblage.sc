@@ -2,7 +2,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
-	<sysChans, <sysPan, <setBusIns;
+	<sysChans, <sysPan, <setBusIns, <setKnobIns;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1608,10 +1608,12 @@ var thisMenu, thisString;
 			thisString = ("bus" ++ busInNum).asString;
 			});
 				thisMenu.valueAction = thisMenu.items.indexOfEqual(thisString);
-
-/*				knobFunc.(sendsKnobArr[trackInd][slotInd], slotInd, mixTrackNames[trackInd],
-				("busIn" ++ busInNum).asSymbol);*/
 			};
+
+		setKnobIns = {arg trackInd=0, slotInd=0, busInNum=1;
+var thisMenu, thisString;
+			thisMenu = sendsKnobArr[trackInd][slotInd];
+		};
 
 			// ~menu.valueAction = ~menu.items.indexOfEqual("bus3");
 
@@ -1639,13 +1641,19 @@ var thisMenu, thisString;
 					var thisBusItem, thisTrackLabel, thisBusNum;
 					thisBusItem = busInSettings[index][ind];
 					thisTrackLabel = mixTrackNames[index].asString.divNumStr;
+					busInSettings[index][ind] = menu.item;
+						if(busInSettings[index].select({|item, index| index != ind }).includesEqual(it.item), {
+						"This send insert is already assigned to this bus number".warn;
+						sendsKnobArr[index][ind].value = 0;
+						sendsKnobArr[index][ind].action = {};
+					}, {
+
 					if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
 						//remove
 						thisBusNum = thisBusItem.divNumStr[1];
 						this.removeBus(thisTrackLabel[1], thisBusNum, thisTrackLabel[0].asSymbol);
 					});
 
-					busInSettings[index][ind] = menu.item;
 					if(menu.item != "", {
 						thisBusNum = menu.item.divNumStr[1];
 						this.bus(thisTrackLabel[1], thisBusNum, -inf, thisTrackLabel[0].asSymbol, {
@@ -1659,13 +1667,7 @@ var thisMenu, thisString;
 						sendsKnobArr[index][ind].action = {};
 						if(ind == (sends-2), { this.refreshMixGUI; });
 					});
-					//when a busIn is already in use in the same track, try disconnecting it - no code evaluation - with an error message, also disconnect knob.
-/*					it.items.postln;
-					busInSettings[index].postln;*/
-					/*it.items = it.items.reject({|item|
-						(busInSettings[index].includesEqual(item)).and(item != it.item);
-					});*/
-
+					});
 				};
 			};
 		};
