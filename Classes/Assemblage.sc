@@ -185,9 +185,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			this.input(masterInput, \master);
 			server.sync;
 			if(mixerWin.notNil, {
-			if(mixerWin.notClosed, {
-				{this.refreshMixGUI;}.defer;
-			});
+				if(mixerWin.notClosed, {
+					{this.refreshMixGUI;}.defer;
+				});
 			});
 		}.fork;
 	}
@@ -1279,11 +1279,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		winWidth = (43*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
 		if(mixerWin.isNil, {
-		mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
-		mixerWin.hasVerticalScroller = false;
+			mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
+			mixerWin.hasVerticalScroller = false;
 		});
 		if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
-		mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
+			mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
 		});
 		/*mixerWin.fixedHeight = winHeight;*/
 		canvas = View();
@@ -1534,7 +1534,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			volSpec = this.getSpec(mixTrackNames[index], \volume).asSpec;
 			sliderArr[index].value = volSpec.unmap(value);
 			sliderTextArr[index].string_(value.round(0.1).asString);
-		 };
+		};
 
 		levelArr.do{|it| it.do{|item|
 			item.meterColor = Color.new255(78, 109, 38);
@@ -1600,40 +1600,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 
 		setBusIns = {arg trackInd=0, slotInd=0, busInNum=1;
-var thisMenu, thisString;
+			var thisMenu, thisString;
 			thisMenu = sendsMenuArr[trackInd][slotInd];
 			if(busInNum == 0, {
 				thisString = "";
 			}, {
-			thisString = ("bus" ++ busInNum).asString;
+				thisString = ("bus" ++ busInNum).asString;
 			});
-				thisMenu.valueAction = thisMenu.items.indexOfEqual(thisString);
-			};
-
-		setKnobIns = {arg trackInd=0, slotInd=0, busInNum=1;
-var thisMenu, thisString;
-			thisMenu = sendsKnobArr[trackInd][slotInd];
+			thisMenu.valueAction = thisMenu.items.indexOfEqual(thisString);
 		};
 
-			// ~menu.valueAction = ~menu.items.indexOfEqual("bus3");
-
-			/*arg trackType=\track, trackNum=1, slotNum=1, busNum=1, mix=0;*/
-//look at setVol as model
-		//arg trackType, trackNum, val, lag, db=true;
-			/*sendsKnobArr[trackInd].do{|it, ind|
-				if(insertInd == ind, {
-					knobFunc.(it, ind, label[0],  label[1][ind]);
-				});
-				};*/
-
-			/*trackIndex = mixTrackNames.indexOf((trackType ++ trackNum).asSymbol);*/
-
-			/*this.bus(trackNum, busNum, mix, trackType, {
-							{knobFunc.(sendsKnobArr[index][ind], ind, mixTrackNames[index],
-								("busIn" ++ thisBusNum).asSymbol);
-							if(ind == (sends-1), { this.refreshMixGUI; });
-							}.defer;
-						});*/
+		setKnobIns = {arg trackInd=0, slotInd=0, value=0;
+			var thisMenu, thisString, thisSpec;
+			thisMenu = sendsKnobArr[trackInd][slotInd];
+			thisSpec = this.getSpec(mixTrackNames[trackInd], \volume).asSpec;
+			thisMenu.valueAction = thisSpec.unmap(value);
+		};
 
 		sendsMenuArr.do{|item, index|
 			item.do{|it, ind|
@@ -1642,31 +1624,29 @@ var thisMenu, thisString;
 					thisBusItem = busInSettings[index][ind];
 					thisTrackLabel = mixTrackNames[index].asString.divNumStr;
 					busInSettings[index][ind] = menu.item;
-						if(busInSettings[index].select({|item, index| index != ind }).includesEqual(it.item), {
+					if(busInSettings[index].select({|item, index| index != ind }).includesEqual(it.item), {
 						"This send insert is already assigned to this bus number".warn;
 						sendsKnobArr[index][ind].value = 0;
 						sendsKnobArr[index][ind].action = {};
 					}, {
-
-					if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
-						//remove
-						thisBusNum = thisBusItem.divNumStr[1];
-						this.removeBus(thisTrackLabel[1], thisBusNum, thisTrackLabel[0].asSymbol);
-					});
-
-					if(menu.item != "", {
-						thisBusNum = menu.item.divNumStr[1];
-						this.bus(thisTrackLabel[1], thisBusNum, -inf, thisTrackLabel[0].asSymbol, {
-							{knobFunc.(sendsKnobArr[index][ind], ind, mixTrackNames[index],
-								("busIn" ++ thisBusNum).asSymbol);
-							if(ind == (sends-1), { this.refreshMixGUI; });
-							}.defer;
+						if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
+							//remove
+							thisBusNum = thisBusItem.divNumStr[1];
+							this.removeBus(thisTrackLabel[1], thisBusNum, thisTrackLabel[0].asSymbol);
 						});
-					}, {
-						sendsKnobArr[index][ind].value = 0;
-						sendsKnobArr[index][ind].action = {};
-						if(ind == (sends-2), { this.refreshMixGUI; });
-					});
+						if(menu.item != "", {
+							thisBusNum = menu.item.divNumStr[1];
+							this.bus(thisTrackLabel[1], thisBusNum, -inf, thisTrackLabel[0].asSymbol, {
+								{knobFunc.(sendsKnobArr[index][ind], ind, mixTrackNames[index],
+									("busIn" ++ thisBusNum).asSymbol);
+								if(ind == (sends-1), { this.refreshMixGUI; });
+								}.defer;
+							});
+						}, {
+							sendsKnobArr[index][ind].value = 0;
+							sendsKnobArr[index][ind].action = {};
+							if(ind == (sends-2), { this.refreshMixGUI; });
+						});
 					});
 				};
 			};
@@ -1788,7 +1768,7 @@ var thisMenu, thisString;
 
 	refreshMixGUI {
 		if(mixerWin.notNil, {
-		mixerWin.children.do { |child| child.remove };
+			mixerWin.children.do { |child| child.remove };
 		});
 		this.mixGUI;
 	}
@@ -1802,16 +1782,16 @@ var thisMenu, thisString;
 		});
 		trackIndex = mixTrackNames.indexOf((trackType ++ trackNum).asSymbol);
 		if(trackIndex.notNil, {
-				if(lag.isNil, {
-			(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
-					value ++ ");").radpostcont.interpret;
-				}, {
+			if(lag.isNil, {
 				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
-						value ++ ", 'lagTime', " ++ lag ++ ");").radpostcont.interpret;
-				});
+					value ++ ");").radpostcont.interpret;
+			}, {
+				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
+					value ++ ", 'lagTime', " ++ lag ++ ");").radpostcont.interpret;
+			});
 			if(mixerWin.notNil, {
 				if(mixerWin.notClosed, {
-			setVolSlider.(trackIndex, val);
+					setVolSlider.(trackIndex, val);
 				});
 			});
 		}, {
@@ -1819,9 +1799,16 @@ var thisMenu, thisString;
 		});
 	}
 
-	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, mix=0;
+	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1;
+		var trackIndex;
+		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
+		setBusIns.(trackIndex,(slotNum-1), busNum);
+	}
 
-
+	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0;
+		var trackIndex;
+		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
+		setKnobIns.(trackIndex, (slotNum-1), val);
 	}
 
 }
