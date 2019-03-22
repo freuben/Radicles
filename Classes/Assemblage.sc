@@ -2,7 +2,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
-	<sysChans, <sysPan;
+	<sysChans, <sysPan, <setBusIns;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1599,6 +1599,40 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			};
 		});
 
+		setBusIns = {arg trackInd=0, slotInd=0, busInNum=1;
+var thisMenu, thisString;
+			thisMenu = sendsMenuArr[trackInd][slotInd];
+			if(busInNum == 0, {
+				thisString = "";
+			}, {
+			thisString = ("bus" ++ busInNum).asString;
+			});
+				thisMenu.valueAction = thisMenu.items.indexOfEqual(thisString);
+
+/*				knobFunc.(sendsKnobArr[trackInd][slotInd], slotInd, mixTrackNames[trackInd],
+				("busIn" ++ busInNum).asSymbol);*/
+			};
+
+			// ~menu.valueAction = ~menu.items.indexOfEqual("bus3");
+
+			/*arg trackType=\track, trackNum=1, slotNum=1, busNum=1, mix=0;*/
+//look at setVol as model
+		//arg trackType, trackNum, val, lag, db=true;
+			/*sendsKnobArr[trackInd].do{|it, ind|
+				if(insertInd == ind, {
+					knobFunc.(it, ind, label[0],  label[1][ind]);
+				});
+				};*/
+
+			/*trackIndex = mixTrackNames.indexOf((trackType ++ trackNum).asSymbol);*/
+
+			/*this.bus(trackNum, busNum, mix, trackType, {
+							{knobFunc.(sendsKnobArr[index][ind], ind, mixTrackNames[index],
+								("busIn" ++ thisBusNum).asSymbol);
+							if(ind == (sends-1), { this.refreshMixGUI; });
+							}.defer;
+						});*/
+
 		sendsMenuArr.do{|item, index|
 			item.do{|it, ind|
 				it.action = {arg menu;
@@ -1617,9 +1651,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						this.bus(thisTrackLabel[1], thisBusNum, -inf, thisTrackLabel[0].asSymbol, {
 							{knobFunc.(sendsKnobArr[index][ind], ind, mixTrackNames[index],
 								("busIn" ++ thisBusNum).asSymbol);
+							if(ind == (sends-1), { this.refreshMixGUI; });
 							}.defer;
 						});
+					}, {
+						sendsKnobArr[index][ind].value = 0;
+						sendsKnobArr[index][ind].action = {};
+						if(ind == (sends-2), { this.refreshMixGUI; });
 					});
+					//when a busIn is already in use in the same track, try disconnecting it - no code evaluation - with an error message, also disconnect knob.
+/*					it.items.postln;
+					busInSettings[index].postln;*/
+					/*it.items = it.items.reject({|item|
+						(busInSettings[index].includesEqual(item)).and(item != it.item);
+					});*/
 
 				};
 			};
@@ -1770,6 +1815,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, {
 			"track not found".warn;
 		});
+	}
+
+	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, mix=0;
+
+
 	}
 
 }
