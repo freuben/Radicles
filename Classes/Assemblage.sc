@@ -1638,7 +1638,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							thisBusNum = menu.item.divNumStr[1];
 							this.bus(thisTrackLabel[1], thisBusNum, -inf,
 								thisTrackLabel[0].asSymbol, {
-									{knobFunc.(sendsKnobArr[index][ind], mixTrackNames[index],
+									{knobFunc.(sendsKnobArr[index][ind],
+										mixTrackNames[index],
 										("busIn" ++ thisBusNum).asSymbol);
 									if(ind == (sends-1), { this.refreshMixGUI; });
 									}.defer;
@@ -1815,12 +1816,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1;
-		var trackIndex;
-		/*		if(mixerWin.notNil, {
-		if(mixerWin.notClosed, {*/
-		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
-		setBusIns.(trackIndex,(slotNum-1), busNum);
-		/*}*/
+		var trackIndex, funcThis;
+
+		funcThis = {this.bus(trackNum, slotNum, -inf, trackType)}; //track, bus, mix, type
+		if(mixerWin.notNil, {
+			if(mixerWin.notClosed, {
+				trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
+				setBusIns.(trackIndex,(slotNum-1), busNum);
+			}, {
+				funcThis.();
+			});
+		}, {
+			funcThis.();
+		});
 	}
 
 	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, db=true;
