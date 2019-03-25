@@ -1,7 +1,7 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
-	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
+	<setVolSlider, <mixTrackNames, <>systemChanNum, <systemSpaceType, <mixTrackNdefs,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
@@ -37,7 +37,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				this.addTrack(\master, chanMaster, spaceMaster, masterSynth);
 				this.addTracks(trackNum, \track, chanTrack, spaceTrack);
 				this.addTracks(busNum, \bus, chanBus, spaceBus);
-				/*busArr = nil!2!busNum;*/
 				tracks.do{|item|
 					this.autoRoute(item);
 				};
@@ -86,7 +85,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	addTrack {arg type=\track, chanNum=1, spaceType, trackSynth, trackSpecs;
 		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth, spaceSpecs, thisTrackInfo;
 		if([\track, \bus, \master].includes(type), {
-			/*{*/
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
 			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0; (\in * volume.dbamp.lag(lagTime); )}; };
 			trackSpecs ?? trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ] ];
@@ -172,7 +170,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
 	}
 
-	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs;
+	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
 		var trackInfo, inArr, masterInput;
 		{
 			chanNum ?? {chanNum = systemChanNum};
@@ -189,6 +187,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					{this.refreshMixGUI;}.defer;
 				});
 			});
+			server.sync;
+			action.();
 		}.fork;
 	}
 
@@ -549,7 +549,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{
 			numChan = Ndef(this.getBuses.flop[0][busNum-1][0]).numChannels;
 			busTag = ("busIn" ++ busNum).asSymbol;
-
 			if(busArr[busNum-1][0].isNil, {
 				busArr[busNum-1][0] = busTag;
 				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
@@ -937,7 +936,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	clear {
 		Ndef.clear;
 		masterNdefs = [];
-
 		tracks = [];
 		specs = [];
 		trackNames = [];
@@ -1003,7 +1001,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		modSpec = thisSpec[1].specFactor(mul, add, min, val, warp);
 		thisVal = thisSpec[2].(modSpec.asSpec.map(arg2));
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
-
 	}
 
 	findFilterTag {arg type, arg1, arg2;
@@ -1070,7 +1067,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	modFilterTag {arg filterTag, argument, modType=\sin, spec=[-1,1], extraArgs,
 		func, mul=1, add=0, min, val, warp, lag;
 		var key, argArr, modMap;
-
 		if(argument.isNumber, {
 			key = this.getFilterKeys(filterTag, \args)[argument];
 		}, {
@@ -1124,9 +1120,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			mul, add, min, val, warp, lag);
 	}
 
-	savePresetFilter {arg filterTag;
+/*	savePresetFilter {arg filterTag;
 
-	}
+	}*/
 
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
 		action={|val| val.radpost}, chanIn, globBuf;
@@ -1398,8 +1394,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				fxbutton = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize).minWidth_(slotsSize);
 				fxbutton.canFocus = false;
 				fxbutton.states_([["", Color.white, Color.black]])
-				// fxbutton.background_(Color.black)
-				/*.stringColor_(Color.white)*/
 				.font_(Font("Monaco", 8)).action = { arg menu;
 					menu.postln;
 				};
@@ -1620,6 +1614,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			item.do{|it, ind|
 				it.action = {arg menu;
 					var thisBusItem, thisTrackLabel, thisBusNum;
+
+					 thisBusNum = menu.item.divNumStr[1];
+					thisTrackLabel = mixTrackNames[index].asString.divNumStr[0].asSymbol;
+
+					if(mixTrackNames.includesEqual(it.item.asSymbol).not, {
+						this.autoAddTrack(\bus, systemChanNum, action: {
+							{
+								this.setSend(thisTrackLabel, index+1, ind+1, thisBusNum);
+							}.defer;
+						});
+						"add new track".warn;
+					}, {
 					thisBusItem = busInSettings[index][ind];
 					thisTrackLabel = mixTrackNames[index].asString.divNumStr;
 					busInSettings[index][ind] = menu.item;
@@ -1649,6 +1655,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							sendsKnobArr[index][ind].action = {};
 							if(ind == (sends-2), { this.refreshMixGUI; });
 						});
+
+					});
+
 					});
 				};
 			};
@@ -1723,7 +1732,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		Ndef("AssembladgeGUI", {
 			var in, imp;
 			in = mixTrackNdefs.collect({|item| item.ar }).flat;
-			/*in = masterNdefs.flop[1].flat.collect({|item| item.ar });*/
 			imp = Impulse.ar(updateFreq);
 			SendReply.ar(imp, "/AssembladgeGUI",
 				[
@@ -1753,17 +1761,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				peakArr.do{|item, index|
 					levelTextArr[index].string = item.maxItem.round(1).asString;
 				};
-
 			}.defer;
 		}, \AssembladgeGUI);
 
 		mixerWin.onClose = {
 			Ndef("AssembladgeGUI").clear;
 			OSCdef(\AssembladgeGUI).free;
-			if(outputSettings.includes("".asSymbol).not, {
-				/*Ndef.all[server.asSymbol].clean; //garbage collection*/
-			});
 			mixerWin = nil;
+			/*if(outputSettings.includes("".asSymbol).not, {
+				Ndef.all[server.asSymbol].clean; //garbage collection
+			});*/
 		};
 
 	}
@@ -1817,7 +1824,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1;
 		var trackIndex, funcThis;
-
 		funcThis = {this.bus(trackNum, slotNum, -inf, trackType)}; //track, bus, mix, type
 		if(mixerWin.notNil, {
 			if(mixerWin.notClosed, {
