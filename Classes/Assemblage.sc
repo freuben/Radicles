@@ -2,7 +2,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
-	<sysChans, <sysPan, <setBusIns, <setKnobIns;
+	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -640,29 +640,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	busMix {arg bus=1, slot=1, mix=0, lag;
-		var tag, volTag, ndefCS;
-		tag = ("busIn" ++ bus).asSymbol;
-		volTag = ("vol" ++ slot).asSymbol;
-		if(lag.notNil, {
-			ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
-			ndefCS.radpost;
-			ndefCS.interpret;
-		});
-		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++volTag.cs ++ ", " ++ mix ++ ");";
-		ndefCS.radpost;
-		ndefCS.interpret;
-	}
-
-	busLag {arg bus=1, slot=1, lag=0;
-		var tag, volTag, ndefCS;
-		tag = ("busIn" ++ bus).asSymbol;
-		volTag = ("vol" ++ slot).asSymbol;
-		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
-		ndefCS.radpost;
-		ndefCS.interpret;
-	}
-
 	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs, buffer, data;
 		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
 		setTag, filterIndex, startNdefs, filterSpecs, trackTags, convString,
@@ -997,7 +974,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, {
 			thisSpec = 	specArr[specArr.flop[0].indexOf(arg1)];
 		});
-		/*thisSpec.postln;*/
+		thisSpec.postln;
 		modSpec = thisSpec[1].specFactor(mul, add, min, val, warp);
 		thisVal = thisSpec[2].(modSpec.asSpec.map(arg2));
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
@@ -1107,7 +1084,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			argIndex = argument;
 		});
 		thisSpec = 	specArr[specArr.flop[0].indexOf(argIndex)];
-		thisSpec.postln;
+		/*thisSpec.postln;*/
 		this.modFilterTag(filterTag, thisSpec[0], modType, thisSpec[1], extraArgs,
 			thisSpec[2], mul=1, add=0, min, val, warp, lag);
 	}
@@ -1371,9 +1348,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};
 					smenu.background_(Color.black).stringColor_(Color.white)
 					.font_(Font("Monaco", 8));
-					/*.action = { arg menu;
-					[menu.value, menu.item].postln;
-					};*/
 					sknob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
 					.maxHeight_(popupmenusize).minHeight_(popupmenusize);
 					sknob.color = knobColors;
@@ -1444,7 +1418,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			sliderArr = sliderArr.add(slider);
 			levelArr = levelArr.add(level);
 			ts = [slider] ++ level;
-			/*ts.postln;*/
 			thisLay = HLayout(*ts);
 
 			//track name label
@@ -1496,16 +1469,38 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		})[0].round(0.1).asString);
 		};
 		levelTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("-inf");  };
-		panKnobTextArr.flat.do{|item| item.font = Font("Monaco", 8); item.string_("0"); };
+		//panning
+		panKnobTextArr.flat.do{|item| item.font = Font("Monaco", 8);};
 		panSpec = \pan.asSpec;
 		panKnobArr.do{|item, index|
+			var panKey, panKeyValues, panValues;
+			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
+			panKeyValues = Ndef(panKey).controlKeysValues;
+			case
+			{panKeyValues.size == 0} {panValues = 0}
+			{panKeyValues.size == 2} {panValues = panKeyValues[1]}
+			{panKeyValues.size == 4} {panValues = [panKeyValues[1], panKeyValues[3]]};
 			if(sysPan[index] == 0, {
-				item.value_(panSpec.unmap(0)).action_({|val| panKnobTextArr[index][0]
-					.string_(panSpec.map(val.value).round(0.01).asString) });
+				item.value = panSpec.unmap(panValues);
+				panKnobTextArr[index][0].string_(panValues);
+				item.action = {|val|
+					var newPanVal;
+					newPanVal = panSpec.map(val.value).round(0.01);
+					panKnobTextArr[index][0].string_(newPanVal.asString);
+					("Ndef(" ++ panKey.cs ++ ").set('pan', " ++ newPanVal ++ ");").radpostcont.interpret;
+				};
 			}, {
+				item.setXY(panSpec.unmap(panValues[0]), panSpec.unmap(panValues[1]));
+				panKnobTextArr[index][0].string_(panValues[0]);
+				panKnobTextArr[index][1].string_(panValues[1]);
 				item.action_({|sl|
-					panKnobTextArr[index][0].string_(panSpec.map(sl.x).round(0.01).asString);
-					panKnobTextArr[index][1].string_(panSpec.map(sl.y).round(0.01).asString);
+					var newPanVal1, newPanVal2;
+					newPanVal1 = panSpec.map(sl.x).round(0.01);
+					newPanVal2 = panSpec.map(sl.y).round(0.01);
+					panKnobTextArr[index][0].string_(newPanVal1);
+					panKnobTextArr[index][1].string_(newPanVal2);
+					("Ndef(" ++ panKey.cs ++ ").set('panx', " ++ newPanVal1 ++ ");").radpostcont.interpret;
+					("Ndef(" ++ panKey.cs ++ ").set('pany', " ++ newPanVal2 ++ ");").radpostcont.interpret;
 				});
 			});
 		};
@@ -1528,6 +1523,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			volSpec = this.getSpec(mixTrackNames[index], \volume).asSpec;
 			sliderArr[index].value = volSpec.unmap(value);
 			sliderTextArr[index].string_(value.round(0.1).asString);
+		};
+
+		setPanKnob = {|index, value, indXY=0|
+			if(sysPan[index] == 0, {
+				panKnobArr[index].value = panSpec.unmap(value);
+				panKnobTextArr[index][0].string_(value);
+			}, {
+				if(indXY == 0, {
+					panKnobArr[index].x_(panSpec.unmap(value));
+				}, {
+					panKnobArr[index].y_(panSpec.unmap(value));
+				});
+				panKnobTextArr[index][indXY].string_(value);
+			});
 		};
 
 		levelArr.do{|it| it.do{|item|
@@ -1854,7 +1863,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(busArr.flop[1][busArr.flop[0].indexOf(thisBusKey)].includes(
 					Ndef((trackType ++ trackNum).asSymbol);
 				), {
-					"yey".postln;
 					thisResult = this.sendsFunc((trackType.asString ++ trackNum).asSymbol,
 						("busIn" ++ slotNum).asSymbol);
 					if(thisResult.notNil, {
@@ -1871,8 +1879,50 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {
 				"This bus doesn't exist in this track".warn;
 			});
-			});
-		}
+		});
+	}
 
-		}
-		
+	setPanLag {arg trackType=\track, trackNum=1, lag=0, panTag=\pan;
+		var tag, ndefCS;
+		tag = ("space" ++ trackType.asString.capitalise ++ trackNum).asSymbol;
+			ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++panTag.cs ++ ", " ++ lag ++ ");";
+			ndefCS.radpost;
+			ndefCS.interpret;
+	}
+
+	setPan {arg trackType=\track, trackNum=1, val=0, panTag=\pan;
+		var tag, ndefCS;
+		tag = ("space" ++ trackType.asString.capitalise ++ trackNum).asSymbol;
+		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++panTag.cs ++ ", " ++ val ++ ");";
+		ndefCS.radpost;
+		ndefCS.interpret;
+		if(mixerWin.notNil, {
+			if(mixerWin.notClosed, {
+				if(panTag == \pan, {
+					setPanKnob.(mixTrackNames.indexOfEqual((trackType ++ trackNum).asSymbol), val);
+				}, {
+					if(panTag == \panx, {
+						setPanKnob.(mixTrackNames.indexOfEqual((trackType ++ trackNum).asSymbol), val, 0);
+					}, {
+						setPanKnob.(mixTrackNames.indexOfEqual((trackType ++ trackNum).asSymbol), val, 1);
+					});
+				});
+			});
+		});
+	}
+
+	busMix {arg bus=1, slot=1, mix=0, lag;
+		var tag, volTag, ndefCS;
+		tag = ("busIn" ++ bus).asSymbol;
+		volTag = ("vol" ++ slot).asSymbol;
+		if(lag.notNil, {
+			ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
+			ndefCS.radpost;
+			ndefCS.interpret;
+		});
+		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++volTag.cs ++ ", " ++ mix ++ ");";
+		ndefCS.radpost;
+		ndefCS.interpret;
+	}
+
+}
