@@ -1,7 +1,7 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
-	<setVolSlider, <mixTrackNames, <>systemChanNum, <systemSpaceType, <mixTrackNdefs,
+	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
@@ -1120,7 +1120,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			mul, add, min, val, warp, lag);
 	}
 
-/*	savePresetFilter {arg filterTag;
+	/*	savePresetFilter {arg filterTag;
 
 	}*/
 
@@ -1615,7 +1615,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				it.action = {arg menu;
 					var thisBusItem, thisTrackLabel, thisBusNum;
 
-					 thisBusNum = menu.item.divNumStr[1];
+					thisBusNum = menu.item.divNumStr[1];
 					thisTrackLabel = mixTrackNames[index].asString.divNumStr[0].asSymbol;
 
 					if(mixTrackNames.includesEqual(it.item.asSymbol).not, {
@@ -1626,37 +1626,37 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 						"add new track".warn;
 					}, {
-					thisBusItem = busInSettings[index][ind];
-					thisTrackLabel = mixTrackNames[index].asString.divNumStr;
-					busInSettings[index][ind] = menu.item;
-					if(busInSettings[index].select({|item, index| index != ind}).includesEqual(it.item), {
-						"This send insert is already assigned to this bus number".warn;
-						sendsKnobArr[index][ind].value = 0;
-						sendsKnobArr[index][ind].action = {};
-					}, {
-						if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
-							//remove
-							thisBusNum = thisBusItem.divNumStr[1];
-							this.removeBus(thisTrackLabel[1], thisBusNum,
-								thisTrackLabel[0].asSymbol);
-						});
-						if(menu.item != "", {
-							thisBusNum = menu.item.divNumStr[1];
-							this.bus(thisTrackLabel[1], thisBusNum, -inf,
-								thisTrackLabel[0].asSymbol, {
-									{knobFunc.(sendsKnobArr[index][ind],
-										mixTrackNames[index],
-										("busIn" ++ thisBusNum).asSymbol);
-									if(ind == (sends-1), { this.refreshMixGUI; });
-									}.defer;
-							});
-						}, {
+						thisBusItem = busInSettings[index][ind];
+						thisTrackLabel = mixTrackNames[index].asString.divNumStr;
+						busInSettings[index][ind] = menu.item;
+						if(busInSettings[index].select({|item, index| index != ind}).includesEqual(it.item), {
+							"This send insert is already assigned to this bus number".warn;
 							sendsKnobArr[index][ind].value = 0;
 							sendsKnobArr[index][ind].action = {};
-							if(ind == (sends-2), { this.refreshMixGUI; });
-						});
+						}, {
+							if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
+								//remove
+								thisBusNum = thisBusItem.divNumStr[1];
+								this.removeBus(thisTrackLabel[1], thisBusNum,
+									thisTrackLabel[0].asSymbol);
+							});
+							if(menu.item != "", {
+								thisBusNum = menu.item.divNumStr[1];
+								this.bus(thisTrackLabel[1], thisBusNum, -inf,
+									thisTrackLabel[0].asSymbol, {
+										{knobFunc.(sendsKnobArr[index][ind],
+											mixTrackNames[index],
+											("busIn" ++ thisBusNum).asSymbol);
+										if(ind == (sends-1), { this.refreshMixGUI; });
+										}.defer;
+								});
+							}, {
+								sendsKnobArr[index][ind].value = 0;
+								sendsKnobArr[index][ind].action = {};
+								if(ind == (sends-2), { this.refreshMixGUI; });
+							});
 
-					});
+						});
 
 					});
 				};
@@ -1769,7 +1769,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			OSCdef(\AssembladgeGUI).free;
 			mixerWin = nil;
 			/*if(outputSettings.includes("".asSymbol).not, {
-				Ndef.all[server.asSymbol].clean; //garbage collection
+			Ndef.all[server.asSymbol].clean; //garbage collection
 			});*/
 		};
 
@@ -1809,14 +1809,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	sendsFunc {|trackLb, thisKey|
-		var thisSpec, selArg, thisNdefVal, thisFunc, thisSpecVal;
+		var thisSpec, selArg, lagArg, thisNdefVal, thisFunc, thisSpecVal, getBusInNum;
 		if(thisKey.notNil, {
 			thisNdefVal = Ndef(thisKey).getKeysValues;
-			selArg = ("vol" ++ (busArr.flop[1][busArr.flop[0].indexOf(thisKey)].collect{|keyVal|
-				keyVal.key}.indexOf(trackLb) + 1)).asSymbol;
-			thisFunc = {|val|
+			getBusInNum = (busArr.flop[1][busArr.flop[0].indexOf(thisKey)].collect{|keyVal|
+				keyVal.key}.indexOf(trackLb) + 1);
+			selArg = ("vol" ++ getBusInNum).asSymbol;
+			lagArg = ("lag" ++ getBusInNum).asSymbol;
+			thisFunc = {|vol, lag|
 				("Ndef(" ++ thisKey.cs ++ ").set(" ++ selArg.cs ++
-					", " ++ val.value ++ ");").radpostcont.interpret;
+					", " ++ vol ++ ", " ++ lagArg.cs ++ ", " ++ lag ++ ");").radpostcont.interpret;
 			};
 		});
 		^thisFunc;
@@ -1837,26 +1839,40 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, db=true;
-		var trackIndex, value, thisResult;
+	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, lagTime=0, db=true;
+		var trackIndex, value, thisResult, thisKey, thisBusKey;
 		if(db.not, {
 			value = val.ampdb;
 		}, {
 			value = val;
 		});
-		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
+		thisKey = (trackType.asString ++ trackNum).asSymbol;
+		trackIndex = mixTrackNames.indexOf(thisKey);
 		if(trackIndex.notNil, {
-			thisResult = this.sendsFunc((trackType.asString ++ trackNum).asSymbol,
-				("busIn" ++ slotNum).asSymbol);
-			if(thisResult.notNil, {
-				thisResult.(value);
-			});
-			if(mixerWin.notNil, {
-				if(mixerWin.notClosed, {
-					setKnobIns.(trackIndex, (slotNum-1), val);
+			thisBusKey = (\busIn ++ slotNum).asSymbol;
+			if(busArr.flop[0].select({|item| item.notNil}).includes(thisBusKey), {
+				if(busArr.flop[1][busArr.flop[0].indexOf(thisBusKey)].includes(
+					Ndef((trackType ++ trackNum).asSymbol);
+				), {
+					"yey".postln;
+					thisResult = this.sendsFunc((trackType.asString ++ trackNum).asSymbol,
+						("busIn" ++ slotNum).asSymbol);
+					if(thisResult.notNil, {
+						thisResult.(value, lagTime);
+					});
+					if(mixerWin.notNil, {
+						if(mixerWin.notClosed, {
+							setKnobIns.(trackIndex, (slotNum-1), val);
+						});
+					});
+				}, {
+					"No buses in this track".warn;
 				});
+			}, {
+				"This bus doesn't exist in this track".warn;
 			});
-		});
-	}
+			});
+		}
 
-}
+		}
+		
