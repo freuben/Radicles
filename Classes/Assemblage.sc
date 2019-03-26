@@ -1286,7 +1286,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					.drawsPeak_(true)
 					/*	.style_(\led)*/
 					.warning_(0.9)
-					.critical_(1.0)
+					.critical_(0.9999)
 					.minWidth_(10)
 					.maxWidth_(10)
 				);
@@ -1547,18 +1547,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}
 		};
 		levelFunc = {arg chan=0, db=[0.9, 0.6], peak=[1, 0.7];
-			db.do{|it, in|
+			/*db.do{|it, in|
 				levelArr[chan][in].value = it;
 			};
 			peak.do{|it, in|
 				levelArr[chan][in].peakLevel = it;
-			};
+			};*/
 			case
 			{peak.maxItem <= 0.9 } {levelTextArr[chan].background_(Color.new255(78, 109, 38));}
 			{(peak.maxItem > 0.9).and(peak.maxItem <= 1) } {
 				levelTextArr[chan].background_(Color.new255(232, 90, 13));}
 			{peak.maxItem > 1} {levelTextArr[chan].background_(Color.new255(211, 14, 14));};
-			levelTextArr[chan].string =peak.maxItem.asString;
+			/*levelTextArr[chan].string =peak.maxItem.asString;*/
 		};
 		canvas.layout = HLayout(*vlay);
 		mixerWin.canvas = canvas;
@@ -1758,17 +1758,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			{
 				peakArr = [];
 				msg.copyToEnd(3).pairsDo({|val, peak, i|
-					var meter;
+					var meter, thisPeakVal;
 					i = i * 0.5;
 					meter = 	levelArr.flat[i];
 					meter.value = (val.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
 					peakVal = peak.ampdb;
-					meter.peakLevel = peakVal.linlin(dBLow, 0, 0, 1);
-					peakArr = peakArr.add(peakVal);
+					peak.postln;
+					thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
+					meter.peakLevel = thisPeakVal;
+					peakArr = peakArr.add(thisPeakVal);
 				});
 				peakArr = peakArr.reshapeLike(levelArr);
 				peakArr.do{|item, index|
-					levelTextArr[index].string = item.maxItem.round(1).asString;
+					var peakDb;
+					peakDb = item.maxItem;
+					levelTextArr[index].string = peakDb.ampdb.round(0.1).asString;
+					case
+			{peakDb <= 0.9 } {levelTextArr[index].background_(Color.new255(78, 109, 38));}
+			{(peakDb > 0.9).and(peakDb < 1) } {
+				levelTextArr[index].background_(Color.new255(232, 90, 13));}
+			{peakDb == 1} {levelTextArr[index].background_(Color.new255(211, 14, 14));};
 				};
 			}.defer;
 		}, \AssembladgeGUI);
