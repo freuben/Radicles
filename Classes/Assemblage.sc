@@ -1210,7 +1210,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var sends, fxsNum, knobColors, winHeight,
 		winWidth, knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
-		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, mixInputLabels,
+		spaceTextLay, popupmenusize, slotsSize, panSpec, mixInputLabels,
 		trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels, maxBusIn,
 		knobFunc, busInSettings;
 
@@ -1278,7 +1278,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			//levelIndicator
 			levelText = StaticText(canvas).align_(\center)
-			.background_(Color.new255(39, 104, 59)).stringColor_(Color.white)
+			.background_(Color.new255(78, 109, 38)).stringColor_(Color.white)
 			.minWidth_(24).maxHeight_(10).minHeight_(10);
 			levelTextArr = levelTextArr.add(levelText);
 			item.do({
@@ -1365,11 +1365,36 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			fxLabel.font = Font("Monaco", 8); fxLabel.string_("Audio FX");
 			//fx buttons
 			fxsNum.do{var fxbutton;
-				fxbutton = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize).minWidth_(slotsSize);
+				fxbutton = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize)
+				.minWidth_(slotsSize).maxWidth_(slotsSize);
 				fxbutton.canFocus = false;
 				fxbutton.states_([["", Color.white, Color.black]])
 				.font_(Font("Monaco", 8)).action = { arg menu;
-					menu.postln;
+					var boundArr, thisBounds, thisArrBounds, thisWindow, thisitemArr, thisListView, screenBounds;
+					screenBounds = Window.screenBounds.bounds.asArray.last;
+					boundArr = fxbutton.bounds.asArray;
+					thisBounds = 	Rect(boundArr[0], (screenBounds-boundArr[1]-285), 140, 240);
+					thisArrBounds = thisBounds.asArray;
+					if(menu.string == "", {
+					thisWindow = Window.new("", thisBounds, border: false).front;
+					thisWindow.background_(Color.black);
+					thisitemArr = ([""] ++ SynthFile.read(\filter) );
+					thisListView = ListView(thisWindow,Rect(0,0,(thisArrBounds[2]),(thisArrBounds[3])))
+					.items_(thisitemArr)
+					.background_(Color.clear)
+					.font_(Font("Monaco", 10);)
+					.stringColor_(Color.white)
+					.hiliteColor_(Color.new255(78, 109, 38);)
+					.action_({ arg sbs;
+						/*~thisFilter = thisListView.items[sbs.value];*/
+						thisListView.items[sbs.value].postln;
+						menu.string = thisListView.items[sbs.value];
+						thisWindow.close;
+					});
+					}, {
+						"selected filter: ".post;
+						menu.string.postln;
+					});
 				};
 				fxSlot = fxSlot.add(fxbutton);
 			};
@@ -1546,20 +1571,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			item.drawsPeak = true;
 		}
 		};
-		levelFunc = {arg chan=0, db=[0.9, 0.6], peak=[1, 0.7];
-			/*db.do{|it, in|
-				levelArr[chan][in].value = it;
-			};
-			peak.do{|it, in|
-				levelArr[chan][in].peakLevel = it;
-			};*/
-			case
-			{peak.maxItem <= 0.9 } {levelTextArr[chan].background_(Color.new255(78, 109, 38));}
-			{(peak.maxItem > 0.9).and(peak.maxItem <= 1) } {
-				levelTextArr[chan].background_(Color.new255(232, 90, 13));}
-			{peak.maxItem > 1} {levelTextArr[chan].background_(Color.new255(211, 14, 14));};
-			/*levelTextArr[chan].string =peak.maxItem.asString;*/
-		};
+
 		canvas.layout = HLayout(*vlay);
 		mixerWin.canvas = canvas;
 		mixerWin.front;
@@ -1763,7 +1775,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					meter = 	levelArr.flat[i];
 					meter.value = (val.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
 					peakVal = peak.ampdb;
-					peak.postln;
 					thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
 					meter.peakLevel = thisPeakVal;
 					peakArr = peakArr.add(thisPeakVal);
@@ -1774,10 +1785,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					peakDb = item.maxItem;
 					levelTextArr[index].string = peakDb.ampdb.round(0.1).asString;
 					case
-			{peakDb <= 0.9 } {levelTextArr[index].background_(Color.new255(78, 109, 38));}
-			{(peakDb > 0.9).and(peakDb < 1) } {
-				levelTextArr[index].background_(Color.new255(232, 90, 13));}
-			{peakDb == 1} {levelTextArr[index].background_(Color.new255(211, 14, 14));};
+					{peakDb <= 0.9 } {levelTextArr[index].background_(Color.new255(78, 109, 38));}
+					{(peakDb > 0.9).and(peakDb < 1) } {
+						levelTextArr[index].background_(Color.new255(232, 90, 13));}
+					{peakDb == 1} {levelTextArr[index].background_(Color.new255(211, 14, 14));};
 				};
 			}.defer;
 		}, \AssembladgeGUI);
@@ -1903,13 +1914,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		thisBusKey = ("busIn" ++ busNum).asSymbol;
 		synthString = Ndef(thisBusKey).source.cs;
 		if(synthString.find("[").notNil, {
-		thisArr = synthString.copyRange(synthString.find("[")+1, synthString.find("]")-1;);
-		thisArr = thisArr.replace("),", ")%");
-		thisArr = thisArr.split($%);
-		thisString = thisArr.select({|item| item.find((trackType.asString ++ trackNum)).notNil })[0];
+			thisArr = synthString.copyRange(synthString.find("[")+1, synthString.find("]")-1;);
+			thisArr = thisArr.replace("),", ")%");
+			thisArr = thisArr.split($%);
+			thisString = thisArr.select({|item| item.find((trackType.asString ++ trackNum)).notNil })[0];
 		}, {
 			if(synthString.find((trackType.asString ++ trackNum)).notNil, {
-		thisString = 	synthString;
+				thisString = 	synthString;
 			});
 		});
 		if(thisString.notNil, {
@@ -1917,7 +1928,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			thisKey = thisString.copyRange(thisString.find(".lag(")+5, thisString.size-2).asSymbol.cs;
 			ndefCS = ("Ndef(" ++ thisBusKey.cs ++
 				").set(" ++ thisKey ++ ", " ++ lag ++ ");");
-		ndefCS.radpostcont.interpret;
+			ndefCS.radpostcont.interpret;
 		}, {
 			"wrong track or bus".warn;
 		});
