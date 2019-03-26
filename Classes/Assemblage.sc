@@ -1817,6 +1817,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
+	setVolumeLag {arg trackType=\track, trackNum=1, lag=0;
+		var ndefCS;
+		ndefCS = ("Ndef(" ++ (trackType ++ trackNum).asSymbol.cs ++
+			").set('lagTime', " ++ lag ++ ");");
+		ndefCS.radpostcont.interpret;
+	}
+
 	sendsFunc {|trackLb, thisKey|
 		var thisSpec, selArg, lagArg, thisNdefVal, thisFunc, thisSpecVal, getBusInNum;
 		if(thisKey.notNil, {
