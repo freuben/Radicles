@@ -2,7 +2,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
-	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob;
+	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1212,7 +1212,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
 		spaceTextLay, popupmenusize, slotsSize, levelFunc, panSpec, mixInputLabels,
 		trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels, maxBusIn,
-		knobFunc, busInSettings, outputSettings;
+		knobFunc, busInSettings;
 
 		this.updateMixInfo;
 		//getting input label data
@@ -1913,7 +1913,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			"wrong track or bus".warn;
 		});
 	}
-
 
 	setPanLag {arg trackType=\track, trackNum=1, lag=0, panTag=\pan;
 		var tag, ndefCS;
