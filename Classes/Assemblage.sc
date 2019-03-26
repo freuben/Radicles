@@ -1889,12 +1889,38 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
+	setSendVolLag {arg trackType=\track, trackNum=1, busNum=1, lag=0;
+		var ndefCS, synthString, thisArr, thisString, thisKey, thisBusKey;
+		thisBusKey = ("busIn" ++ busNum).asSymbol;
+		synthString = Ndef(thisBusKey).source.cs;
+		if(synthString.find("[").notNil, {
+		thisArr = synthString.copyRange(synthString.find("[")+1, synthString.find("]")-1;);
+		thisArr = thisArr.replace("),", ")%");
+		thisArr = thisArr.split($%);
+		thisString = thisArr.select({|item| item.find((trackType.asString ++ trackNum)).notNil })[0];
+		}, {
+			if(synthString.find((trackType.asString ++ trackNum)).notNil, {
+		thisString = 	synthString;
+			});
+		});
+		if(thisString.notNil, {
+			thisString = thisString.replace("; ", "").replace("}", "");
+			thisKey = thisString.copyRange(thisString.find(".lag(")+5, thisString.size-2).asSymbol.cs;
+			ndefCS = ("Ndef(" ++ thisBusKey.cs ++
+				").set(" ++ thisKey ++ ", " ++ lag ++ ");");
+		ndefCS.radpostcont.interpret;
+		}, {
+			"wrong track or bus".warn;
+		});
+	}
+
+
 	setPanLag {arg trackType=\track, trackNum=1, lag=0, panTag=\pan;
 		var tag, ndefCS;
 		tag = ("space" ++ trackType.asString.capitalise ++ trackNum).asSymbol;
-			ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++panTag.cs ++ ", " ++ lag ++ ");";
-			ndefCS.radpost;
-			ndefCS.interpret;
+		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++panTag.cs ++ ", " ++ lag ++ ");";
+		ndefCS.radpost;
+		ndefCS.interpret;
 	}
 
 	setPan {arg trackType=\track, trackNum=1, val=0, panTag=\pan;
