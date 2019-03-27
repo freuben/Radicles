@@ -1038,7 +1038,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	getFilterPairs {arg type, num, slot;
 		var filterTag;
 		filterTag = this.findFilterTag(type, num, slot);
-		^this.getFilterKeys(filterTag, \pairs);
+		if(filterTag.notNil, {
+			^this.getFilterKeys(filterTag, \pairs);
+		}, {^nil});
+	}
+
+	filterLags {arg filterNdefKey, lag=nil;
+		var ndefArgs, argValArr, newNdefArgs;
+		ndefArgs = Ndef(filterNdefKey).controlKeys;
+		if(lag	.isArray, {
+			argValArr = lag
+		}, {
+			argValArr = lag!ndefArgs.size;
+		});
+		newNdefArgs = ([ndefArgs.copyRange(0,argValArr.size-1)] ++ [argValArr]).flop.flat;
+		("Ndef('filterBus_1_1').lag(" ++ newNdefArgs.cs.asString
+			.replace("[", "").replace("]", "") ++ ");").radpost.interpret;
 	}
 
 	modFilterTag {arg filterTag, argument, modType=\sin, spec=[-1,1], extraArgs,
@@ -1370,34 +1385,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				fxbutton.canFocus = false;
 				fxbutton.states_([["", Color.white, Color.black]])
 				.font_(Font("Monaco", 8));
-				/*.mouseDownAction = { arg menu;
-					var boundArr, thisBounds, thisArrBounds, thisWindow, thisitemArr,
-					thisListView, screenBounds;
-					screenBounds = Window.screenBounds.bounds.asArray.last;
-					boundArr = fxbutton.bounds.asArray;
-					thisBounds = 	Rect(boundArr[0], (screenBounds-boundArr[1]-285), 140, 240);
-					thisArrBounds = thisBounds.asArray;
-					if(menu.string == "", {
-					thisWindow = Window.new("", thisBounds, border: false).front;
-					thisWindow.background_(Color.black);
-					thisitemArr = ([""] ++ SynthFile.read(\filter) );
-					thisListView = ListView(thisWindow,Rect(0,0,(thisArrBounds[2]),(thisArrBounds[3])))
-					.items_(thisitemArr)
-					.background_(Color.clear)
-					.font_(Font("Monaco", 10);)
-					.stringColor_(Color.white)
-					.hiliteColor_(Color.new255(78, 109, 38);)
-					.action_({ arg sbs;
-						/*~thisFilter = thisListView.items[sbs.value];*/
-						thisListView.items[sbs.value].postln;
-						menu.string = thisListView.items[sbs.value];
-						thisWindow.close;
-					});
-					}, {
-						"selected filter: ".post;
-						menu.string.postln;
-					});
-				};*/
 				fxSlot = fxSlot.add(fxbutton);
 			};
 			fxSlotArr = fxSlotArr.add(fxSlot);
@@ -1653,67 +1640,70 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						busInSettings[index][ind] = menu.item;
 						if(busInSettings[index].select({|item, index| index != ind})
 							.includesEqual(it.item), {
-							"This send insert is already assigned to this track".warn;
-							sendsMenuArr[index][ind].value = 0;
-							sendsKnobArr[index][ind].value = 0;
-							sendsKnobArr[index][ind].action = {};
-						}, {
-							if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
-								if(busInSettings[index].includesEqual(thisBusItem).not, {
-								//remove
-								thisBusNum = thisBusItem.divNumStr[1];
-								this.removeBus(thisTrackLabel[1], thisBusNum,
-									thisTrackLabel[0].asSymbol);
-									});
-							});
-							if(menu.item != "", {
-								thisBusNum = menu.item.divNumStr[1];
-								this.bus(thisTrackLabel[1], thisBusNum, -inf,
-									thisTrackLabel[0].asSymbol, {
-										{knobFunc.(sendsKnobArr[index][ind],
-											mixTrackNames[index],
-											("busIn" ++ thisBusNum).asSymbol);
-										if(ind == (sends-1), { this.refreshMixGUI; });
-										}.defer;
-								});
-							}, {
+								"This send insert is already assigned to this track".warn;
+								sendsMenuArr[index][ind].value = 0;
 								sendsKnobArr[index][ind].value = 0;
 								sendsKnobArr[index][ind].action = {};
-								if(ind == (sends-2), { this.refreshMixGUI; });
-							});
+							}, {
+								if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
+									if(busInSettings[index].includesEqual(thisBusItem).not, {
+										//remove
+										thisBusNum = thisBusItem.divNumStr[1];
+										this.removeBus(thisTrackLabel[1], thisBusNum,
+											thisTrackLabel[0].asSymbol);
+									});
+								});
+								if(menu.item != "", {
+									thisBusNum = menu.item.divNumStr[1];
+									this.bus(thisTrackLabel[1], thisBusNum, -inf,
+										thisTrackLabel[0].asSymbol, {
+											{knobFunc.(sendsKnobArr[index][ind],
+												mixTrackNames[index],
+												("busIn" ++ thisBusNum).asSymbol);
+											if(ind == (sends-1), { this.refreshMixGUI; });
+											}.defer;
+									});
+								}, {
+									sendsKnobArr[index][ind].value = 0;
+									sendsKnobArr[index][ind].action = {};
+									if(ind == (sends-2), { this.refreshMixGUI; });
+								});
 						});
 					});
 				};
 			};
 		};
-//fx UI settings
+		//fx UI settings
 		fxSlotArr.do{|item, index|
 			item.do{|it, ind|
 				it.mouseDownAction = { arg menu;
 					var boundArr, thisBounds, thisArrBounds, thisWindow, thisitemArr,
-					thisListView, screenBounds;
+					thisListView, screenBounds, trackInfoArr;
 					screenBounds = Window.screenBounds.bounds.asArray.last;
 					boundArr = it.bounds.asArray;
 					thisBounds = 	Rect(boundArr[0], (screenBounds-boundArr[1]-285), 140, 240);
 					thisArrBounds = thisBounds.asArray;
 					if(menu.string == "", {
-					thisWindow = Window.new("", thisBounds, border: false).front;
-					thisWindow.background_(Color.black);
-					thisitemArr = ([""] ++ SynthFile.read(\filter) );
-					thisListView = ListView(thisWindow,Rect(0,0,(thisArrBounds[2]),(thisArrBounds[3])))
-					.items_(thisitemArr)
-					.background_(Color.clear)
-					.font_(Font("Monaco", 10);)
-					.stringColor_(Color.white)
-					.hiliteColor_(Color.new255(78, 109, 38);)
-					.action_({ arg sbs;
-							var trackInfoArr;
+						thisWindow = Window.new("", thisBounds, border: false).front;
+						thisWindow.background_(Color.black);
+						thisitemArr = ([""] ++ SynthFile.read(\filter) );
+						thisListView = ListView(thisWindow,Rect(0,0,(thisArrBounds[2]),(thisArrBounds[3])))
+						.items_(thisitemArr)
+						.background_(Color.clear)
+						.font_(Font("Monaco", 10);)
+						.stringColor_(Color.white)
+						.hiliteColor_(Color.new255(78, 109, 38);)
+						.action_({ arg sbs;
+
 							trackInfoArr = mixTrackNames[index].asString.divNumStr;
 							this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1, thisListView.items[sbs.value]);
-						menu.string = thisListView.items[sbs.value];
-						thisWindow.close;
-					});
+							menu.string = thisListView.items[sbs.value];
+							thisWindow.close;
+						});
 					}, {
+						trackInfoArr = mixTrackNames[index].asString.divNumStr;
+						this.findFilterTag(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1).postln;
+						this.getFilterPairs(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1).postln;
 						"selected filter: ".post;
 						menu.string.postln;
 					});

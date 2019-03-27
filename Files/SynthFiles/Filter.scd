@@ -1,10 +1,11 @@
 [ [ 'pch', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
- , lag=5.0 , winSize=0.02 ;
-		PitchShift.ar(\in, winSize, pitchRatio.lag(lag), pitchDispertion, timeDispersion);
- } ], [ 'pch2', {arg centerpitch=440,bus=0, pitchDispertion=0.0, timeDispersion=0.0,
- lag=0.1, winSize=0.1; 
+ , winSize=0.02
+ ;
+		PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion);
+ } ], [ 'pch2', {arg centerpitch=440, pitchDispertion=0.0, timeDispersion=0.0,
+		lag=0.1, winSize=0.1, ndefKey=\track1, ndefChans=2; 
 	var freq, hasFreq; 
-	# freq, hasFreq = Pitch.kr(\in, ampThreshold: 0.0, median: 7);
+		# freq, hasFreq = Pitch.kr(Ndef.ar(ndefKey, ndefChans), ampThreshold: 0.0, median: 7);
 	PitchShift.ar(\in, winSize, (freq/centerpitch).lag(lag), pitchDispertion,
  timeDispersion) } ], [ 'pch3', {arg centerpitch=440, bus=0, adjvol=4, pitchDispertion=0.0,
  timeDispersion=0.0001, 
@@ -16,10 +17,9 @@
 	PitchShift.ar(\in, winSize, (freq/centerpitch).lag(lag), pitchDispertion,
  
 		timeDispersion)*(amp*adjvol) } ], [ 'pch4', {arg pitchRatio=1.0, amp=1,
- pitchDispertion=0.0, timeDispersion=0.0001, lag=0.01,
-	winSize=0.02, transp=1;
-	PitchShift.ar(\in, winSize, (pitchRatio*transp).lag(lag), pitchDispertion,
- timeDispersion)*amp} ], [ 'harm', {arg pitchRatio1=1.0, pitchRatio2=1.0,
+ pitchDispertion=0.0, timeDispersion=0.0001, winSize=0.02, transp=1;
+	PitchShift.ar(\in, winSize, (pitchRatio*transp), pitchDispertion,
+			timeDispersion)*amp} ], [ 'harm', {arg pitchRatio1=1.0, pitchRatio2=1.0,
  pitchRatio3=1.0,
  pitchRatio4=1.0, vol1=1.0, vol2=1.0,
 	vol3=1.0, vol4=1.0, pitchDispertion1=0.0, pitchDispertion2=0.0, pitchDispertion3=0.0,
