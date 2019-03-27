@@ -1369,8 +1369,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				.minWidth_(slotsSize).maxWidth_(slotsSize);
 				fxbutton.canFocus = false;
 				fxbutton.states_([["", Color.white, Color.black]])
-				.font_(Font("Monaco", 8)).action = { arg menu;
-					var boundArr, thisBounds, thisArrBounds, thisWindow, thisitemArr, thisListView, screenBounds;
+				.font_(Font("Monaco", 8));
+				/*.mouseDownAction = { arg menu;
+					var boundArr, thisBounds, thisArrBounds, thisWindow, thisitemArr,
+					thisListView, screenBounds;
 					screenBounds = Window.screenBounds.bounds.asArray.last;
 					boundArr = fxbutton.bounds.asArray;
 					thisBounds = 	Rect(boundArr[0], (screenBounds-boundArr[1]-285), 140, 240);
@@ -1395,7 +1397,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						"selected filter: ".post;
 						menu.string.postln;
 					});
-				};
+				};*/
 				fxSlot = fxSlot.add(fxbutton);
 			};
 			fxSlotArr = fxSlotArr.add(fxSlot);
@@ -1639,27 +1641,30 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					thisBusNum = menu.item.divNumStr[1];
 					thisTrackLabel = mixTrackNames[index].asString.divNumStr[0].asSymbol;
 
-					if(mixTrackNames.includesEqual(it.item.asSymbol).not, {
+					if(([''] ++ mixTrackNames).includesEqual(it.item.asSymbol).not, {
 						this.autoAddTrack(\bus, systemChanNum, action: {
 							{
 								this.setSend(thisTrackLabel, index+1, ind+1, thisBusNum);
 							}.defer;
 						});
-						"add new track".warn;
 					}, {
 						thisBusItem = busInSettings[index][ind];
 						thisTrackLabel = mixTrackNames[index].asString.divNumStr;
 						busInSettings[index][ind] = menu.item;
-						if(busInSettings[index].select({|item, index| index != ind}).includesEqual(it.item), {
-							"This send insert is already assigned to this bus number".warn;
+						if(busInSettings[index].select({|item, index| index != ind})
+							.includesEqual(it.item), {
+							"This send insert is already assigned to this track".warn;
+							sendsMenuArr[index][ind].value = 0;
 							sendsKnobArr[index][ind].value = 0;
 							sendsKnobArr[index][ind].action = {};
 						}, {
 							if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
+								if(busInSettings[index].includesEqual(thisBusItem).not, {
 								//remove
 								thisBusNum = thisBusItem.divNumStr[1];
 								this.removeBus(thisTrackLabel[1], thisBusNum,
 									thisTrackLabel[0].asSymbol);
+									});
 							});
 							if(menu.item != "", {
 								thisBusNum = menu.item.divNumStr[1];
@@ -1676,12 +1681,44 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								sendsKnobArr[index][ind].action = {};
 								if(ind == (sends-2), { this.refreshMixGUI; });
 							});
-
 						});
-
 					});
 				};
 			};
+		};
+//fx UI settings
+		fxSlotArr.do{|item, index|
+			item.do{|it, ind|
+				it.mouseDownAction = { arg menu;
+					var boundArr, thisBounds, thisArrBounds, thisWindow, thisitemArr,
+					thisListView, screenBounds;
+					screenBounds = Window.screenBounds.bounds.asArray.last;
+					boundArr = it.bounds.asArray;
+					thisBounds = 	Rect(boundArr[0], (screenBounds-boundArr[1]-285), 140, 240);
+					thisArrBounds = thisBounds.asArray;
+					if(menu.string == "", {
+					thisWindow = Window.new("", thisBounds, border: false).front;
+					thisWindow.background_(Color.black);
+					thisitemArr = ([""] ++ SynthFile.read(\filter) );
+					thisListView = ListView(thisWindow,Rect(0,0,(thisArrBounds[2]),(thisArrBounds[3])))
+					.items_(thisitemArr)
+					.background_(Color.clear)
+					.font_(Font("Monaco", 10);)
+					.stringColor_(Color.white)
+					.hiliteColor_(Color.new255(78, 109, 38);)
+					.action_({ arg sbs;
+							var trackInfoArr;
+							trackInfoArr = mixTrackNames[index].asString.divNumStr;
+							this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1, thisListView.items[sbs.value]);
+						menu.string = thisListView.items[sbs.value];
+						thisWindow.close;
+					});
+					}, {
+						"selected filter: ".post;
+						menu.string.postln;
+					});
+				};
+			}
 		};
 
 		//setting outputs
@@ -1943,20 +1980,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	setPan {arg trackType=\track, trackNum=1, val=0, panTag=\pan;
-		var tag, ndefCS;
+		var tag, ndefCS, trackKey;
 		tag = ("space" ++ trackType.asString.capitalise ++ trackNum).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++panTag.cs ++ ", " ++ val ++ ");";
 		ndefCS.radpost;
 		ndefCS.interpret;
 		if(mixerWin.notNil, {
 			if(mixerWin.notClosed, {
+				trackKey = (trackType ++ trackNum).asSymbol;
 				if(panTag == \pan, {
-					setPanKnob.(mixTrackNames.indexOfEqual((trackType ++ trackNum).asSymbol), val);
+					setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val);
 				}, {
 					if(panTag == \panx, {
-						setPanKnob.(mixTrackNames.indexOfEqual((trackType ++ trackNum).asSymbol), val, 0);
+						setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 0);
 					}, {
-						setPanKnob.(mixTrackNames.indexOfEqual((trackType ++ trackNum).asSymbol), val, 1);
+						setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 1);
 					});
 				});
 			});
