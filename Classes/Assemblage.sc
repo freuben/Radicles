@@ -2006,3 +2006,131 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 }
+
+
+//
+// (
+// ~panKnobTextArr = nil;
+// ~panKnobArr = nil;
+// ~labelTextArr = nil;
+// ~guiFunc = {arg winName="filterTrack_1_1", filterKey=\pch;
+// 	var mixerWin, canvas, panKnobTextArr, vlay, knobColors, winWidth,
+// 	winHeight, stringLengh, argArr, specArr, defaultArgArr, specBool;
+//
+// 	argArr = SynthFile.read(\filter, filterKey).argNames;
+// 	defaultArgArr = SynthFile.read(\filter, filterKey).defaultArgs;
+// 	specArr = SpecFile.read(\filter, filterKey);
+//
+// 	stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+//
+// 	~mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth, winHeight)) )
+// 	.name_(winName ++ " | " ++ filterKey.asString);
+// 	~mixerWin.hasHorizontalScroller = false;
+// 	winWidth = (250) + stringLengh + 7;
+// 	winHeight = ( ((argArr.size) * (15 + 7)) + 13 + 6 ).min(
+// 	Window.screenBounds.bounds.height-~mixerWin.bounds.top );
+//
+// 	~mixerWin.fixedHeight = winHeight;
+// 	~mixerWin.fixedWidth = winWidth;
+// 	canvas = View(bounds: (Rect(0, 0, winWidth, winHeight)));
+// 	canvas.background_(Color.black);
+//
+// 	argArr.do{|item, index|
+// 		var finalLayout, panKnob, panKnobText, spaceTextLay,
+// 		panKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc, thisResult;
+//
+// 		/*panKnob.color = knobColors;*/
+// 		panKnobText = StaticText(canvas).align_(\center)
+// 		.background_(Color.black)
+// 		.stringColor_(Color.white)
+// 		.font_(Font("Monaco", 8))
+// 		.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
+//
+// 		if(specArr.notNil, {
+// 			specBool = specArr[index].notNil;
+// 			}, {
+// 				specBool = false;
+// 		});
+//
+// 		if(specBool, {
+//
+// 			thisSpec = specArr[index][1].asSpec;
+// 			thisFunc = specArr[index][2];
+//
+// 			panKnob = Slider().minWidth_(180).maxWidth_(180)
+// 			.maxHeight_(15).minHeight_(15);
+// 			panKnob.orientation = \horizontal;
+//
+// 			panKnob.action = {
+// 				/*panKnob.value.postln;*/
+// 				if(thisFunc.notNil, {
+// 					thisResult = thisFunc.(thisSpec.map(panKnob.value));
+// 					}, {
+// 						thisResult = thisSpec.map(panKnob.value);
+// 				});
+// 				panKnobText.string = thisResult.asString.copyRange(0, 7);
+// 			};
+//
+// 			if(thisFunc.notNil, {
+// 				/*defaultArgArr[index].postln;*/
+// 				thisResult = thisSpec.unmap(thisFunc.(defaultArgArr[index]));
+// 				}, {
+// 					thisResult = thisSpec.unmap(defaultArgArr[index]);
+// 			});
+//
+// 			panKnob.value = thisResult;
+// 			panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+//
+// 			}, {
+//
+// 				panKnob = TextField().minWidth_(180).maxWidth_(180)
+// 				.font_(Font("Monaco", 8))
+// 				.maxHeight_(15).minHeight_(15);
+// 				defaultVal = defaultArgArr[index];
+// 				if(defaultVal.notNil, {
+// 					panKnob.string = defaultArgArr[index].asString;
+// 					panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+// 				});
+// 				panKnob.action = {arg field;
+// 					panKnobText.string = field.value;
+// 				};
+//
+// 				/*	panKnob = Slider().minWidth_(180).maxWidth_(180)
+// 				.maxHeight_(15).minHeight_(15);
+// 				panKnob.orientation = \horizontal;*/
+//
+// 		});
+//
+// 		labelString = item.asString;
+// 		/*if(labelString.size >= 7, { labelString = labelString.insert(7, "\r").asString});*/
+// 		labelText = StaticText(canvas).align_(\center)
+// 		.background_(Color.black)
+// 		.stringColor_(Color.white)
+// 		.font_(Font("Monaco", 8))
+// 		.string_(labelString)
+// 		.maxWidth_(stringLengh)
+// 		.minWidth_(stringLengh)
+// 		.minHeight_(10);
+//
+// 		~panKnobTextArr = ~panKnobTextArr.add(panKnobText);
+// 		~labelTextArr = ~labelTextArr.add(labelText);
+//
+// 		/*	spaceTextLay = HLayout(*panKnobText);*/
+//
+// 		~panKnobArr = ~panKnobArr.add(panKnob);
+//
+// 		[[labelText, align: \center], [panKnob, align: \center], [panKnobText, align: \center]].do{|lay|
+// 			finalLayout = finalLayout.add(lay);
+// 		};
+//
+// 		vlay = vlay.add(HLayout(*finalLayout) );
+// 		/*finalLayout.postln;*/
+// 	};
+//
+// 	canvas.layout = VLayout(*vlay);
+// 	~mixerWin.canvas = canvas;
+// 	~mixerWin.front;
+// };
+// )
+//
+// ~guiFunc.(\filterTrack_1_1, \harm);
