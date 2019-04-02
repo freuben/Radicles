@@ -2,7 +2,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
-	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings;
+	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings, <filtersWindow;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1269,7 +1269,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(mixerWin.isNil, {
 			mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
 			mixerWin.hasVerticalScroller = false;
-			mixerWin.mouseDownAction = {"click in window".postln;
+			mixerWin.mouseDownAction = {
 				fltMenuWindow.postln;
 				if(fltMenuWindow.notNil, {
 					if(fltMenuWindow.visible, {
@@ -1721,125 +1721,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}
 		};
 
-		guiFunc = {arg winName="filterTrack_1_1", filterKey=\pch, filterPairs, fltWinTop=0;
-			var filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth,
-			fltWinHeight, stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton;
-
-			argArr = filterPairs.flop[0];
-			defaultArgArr = filterPairs.flop[1];
-			specArr = SpecFile.read(\filter, filterKey, false);
-
-			stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
-
-			filtersWin = ScrollView()
-			.name_(winName ++ " | " ++ filterKey.asString);
-			filtersWin.hasHorizontalScroller = false;
-			fltWinWidth = (250) + stringLengh + 7;
-			fltWinWidth = (250) + stringLengh + 7;
-			fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(
-				Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinTop );
-			filtersWin.fixedHeight = fltWinHeight;
-			filtersWin.fixedWidth = fltWinWidth;
-			fltCanvas = View();
-			/*fltCanvas = View(bounds: (Rect(0, 0, fltWinWidth, fltWinHeight)));*/
-			fltCanvas.background_(Color.black);
-
-			argArr.do{|item, index|
-				var finalLayout, panKnob, panKnobText, spaceTextLay,
-				panKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc, thisResult, labelTextArr;
-
-				panKnobText = StaticText(fltCanvas).align_(\center)
-				.background_(Color.black)
-				.stringColor_(Color.white)
-				.font_(Font("Monaco", 8))
-				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
-
-				if(specArr.notNil, {
-					specBool = specArr[index].notNil;
-				}, {
-					specBool = false;
-				});
-
-				if(specBool, {
-					thisSpec = specArr[index][1].asSpec;
-					thisFunc = specArr[index][2];
-					panKnob = Slider().minWidth_(180).maxWidth_(180)
-					.maxHeight_(15).minHeight_(15);
-					panKnob.orientation = \horizontal;
-					panKnob.action = {
-						/*panKnob.value.postln;*/
-						if(thisFunc.notNil, {
-							thisResult = thisFunc.(thisSpec.map(panKnob.value));
-						}, {
-							thisResult = thisSpec.map(panKnob.value);
-						});
-						panKnobText.string = thisResult.asString.copyRange(0, 7);
-					};
-					if(thisFunc.notNil, {
-						/*defaultArgArr[index].postln;*/
-						thisResult = thisSpec.unmap(thisFunc.(defaultArgArr[index]));
-					}, {
-						thisResult = thisSpec.unmap(defaultArgArr[index]);
-					});
-					panKnob.value = thisResult;
-					panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
-				}, {
-					panKnob = TextField().minWidth_(180).maxWidth_(180)
-					.font_(Font("Monaco", 8))
-					.background_(Color.new255(246, 246, 246))
-					.maxHeight_(15).minHeight_(15);
-					defaultVal = defaultArgArr[index];
-					if(defaultVal.notNil, {
-						panKnob.string = defaultArgArr[index].asString;
-						panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
-					});
-					panKnob.action = {arg field;
-						panKnobText.string = field.value.postln;
-					};
-
-				});
-
-				labelString = item.asString;
-				/*if(labelString.size >= 7, { labelString = labelString.insert(7, "\r").asString});*/
-				labelText = StaticText(fltCanvas).align_(\center)
-				.background_(Color.black)
-				.stringColor_(Color.white)
-				.font_(Font("Monaco", 8))
-				.string_(labelString)
-				.maxWidth_(stringLengh)
-				.minWidth_(stringLengh)
-				.minHeight_(10);
-
-				panKnobTextArr = panKnobTextArr.add(panKnobText);
-				labelTextArr = labelTextArr.add(labelText);
-				panKnobArr = panKnobArr.add(panKnob);
-
-				[[labelText, align: \center], [panKnob, align: \center], [panKnobText, align: \center]].do{|lay|
-					finalLayout = finalLayout.add(lay);
-				};
-
-				fltVlay = fltVlay.add(HLayout(*finalLayout) );
-				/*finalLayout.postln;*/
-			};
-
-			removeButton = Button().maxHeight_(15).minHeight_(15)
-			.states_([["", Color.new255(211, 14, 14), Color.black]])
-			/*.background_(Color.black)
-			.stringColor_(Color.white)*/
-			.string_("R E M O V E   F I L T E R")
-			.font_(Font("Monaco", 8)).action = { arg menu;
-				menu.postln;
-			};
-			removeButton.canFocus = false;
-
-			fltVlay = [removeButton] ++ fltVlay;
-
-			fltCanvas.layout = VLayout(*fltVlay);
-			filtersWin.fltCanvas = fltCanvas;
-			filtersWin.bounds = Rect(0, fltWinTop, fltWinWidth, fltWinHeight);
-			/*filtersWin.bounds.postln;*/
-			filtersWin.front;
-		};
 		//setting outputs
 		if(outputSettings.isNil, {
 			outputSettings = \master!outputMenuArr.size;
@@ -2135,6 +2016,174 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++volTag.cs ++ ", " ++ mix ++ ");";
 		ndefCS.radpost;
 		ndefCS.interpret;
+	}
+
+	filterWinGUI {arg winName=\filterTrack_1_1, filterKey=\pch, filterPairs, fltWinDown=0, fltWinLeft=0;
+		var filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth,
+		fltWinHeight, stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop;
+
+		argArr = filterPairs.flop[0];
+		defaultArgArr = filterPairs.flop[1];
+		specArr = SpecFile.read(\filter, filterKey, false);
+
+		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+
+		filtersWin = ScrollView()
+		.name_(winName.asString ++ " | " ++ filterKey.asString);
+		filtersWin.hasHorizontalScroller = false;
+
+		fltWinWidth = (250) + stringLengh + 17;
+		fltWinTop = Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinDown;
+		fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
+		filtersWin.fixedHeight = fltWinHeight;
+		filtersWin.fixedWidth = fltWinWidth;
+		filtersWindow = filtersWindow.add(filtersWin);
+		filtersWin.onClose = {
+			filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
+		};
+		filtersWin.alwaysOnTop = true;
+		fltCanvas = View();
+		/*fltCanvas = View(bounds: (Rect(0, 0, fltWinWidth, fltWinHeight)));*/
+		fltCanvas.background_(Color.black);
+
+		argArr.do{|item, index|
+			var finalLayout, panKnob, panKnobText, spaceTextLay,
+			panKnobArr, labelText, labelString, defaultVal, thisSpec, thisResult, labelTextArr;
+
+			if(specArr.notNil, {
+				specBool = specArr[index].notNil;
+			}, {
+				specBool = false;
+			});
+
+			if(specBool, {
+				panKnobText = TextField(fltCanvas).align_(\center)
+				.background_(Color.black)
+				.stringColor_(Color.white)
+				.font_(Font("Monaco", 8))
+				.minWidth_(50).maxWidth_(50).maxHeight_(10).minHeight_(10);
+			}, {
+				panKnobText = StaticText(fltCanvas).align_(\center)
+				.background_(Color.black)
+				.stringColor_(Color.white)
+				.font_(Font("Monaco", 8))
+				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
+			});
+
+			if(specBool, {
+				thisSpec = specArr[index][1].asSpec;
+				panKnob = Slider().minWidth_(180).maxWidth_(180)
+				.maxHeight_(15).minHeight_(15);
+				panKnob.orientation = \horizontal;
+				panKnob.action = {
+					thisResult = thisSpec.map(panKnob.value);
+					panKnobText.string = thisResult.asString.copyRange(0, 7);
+					("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
+						++ thisResult ++ ");").radpostcont.interpret;
+				};
+				thisResult = thisSpec.unmap(defaultArgArr[index]);
+				panKnob.value = thisResult;
+				panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+				panKnobText.action = {arg field;
+					var newVal;
+					newVal = thisSpec.unmap(field.value.interpret);
+					panKnob.value = newVal;
+					("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
+						++ newVal ++ ");").radpostcont.interpret;
+				};
+			}, {
+				panKnob = TextField().minWidth_(180).maxWidth_(180)
+				.font_(Font("Monaco", 8))
+				.background_(Color.new255(246, 246, 246))
+				.maxHeight_(15).minHeight_(15);
+				defaultVal = defaultArgArr[index];
+				if(defaultVal.notNil, {
+					panKnob.string = defaultArgArr[index].asString;
+					panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+				});
+				panKnob.action = {arg field;
+					panKnobText.string = field.value;
+					("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
+						++ field.value ++ ");").radpostcont.interpret;
+				};
+
+			});
+
+			labelString = item.asString;
+			/*if(labelString.size >= 7, { labelString = labelString.insert(7, "\r").asString});*/
+			labelText = StaticText(fltCanvas).align_(\center)
+			.background_(Color.black)
+			.stringColor_(Color.white)
+			.font_(Font("Monaco", 8))
+			.string_(labelString)
+			.maxWidth_(stringLengh)
+			.minWidth_(stringLengh)
+			.minHeight_(10);
+
+			panKnobTextArr = panKnobTextArr.add(panKnobText);
+			labelTextArr = labelTextArr.add(labelText);
+			panKnobArr = panKnobArr.add(panKnob);
+
+			[[labelText, align: \center], [panKnob, align: \center], [panKnobText, align: \center]].do{|lay|
+				finalLayout = finalLayout.add(lay);
+			};
+
+			fltVlay = fltVlay.add(HLayout(*finalLayout) );
+			/*finalLayout.postln;*/
+		};
+
+		removeButton = Button().maxHeight_(15).minHeight_(15)
+		.states_([["", Color.new255(211, 14, 14), Color.black]])
+		/*.background_(Color.black)
+		.stringColor_(Color.white)*/
+		.string_("R E M O V E   F I L T E R")
+		.font_(Font("Monaco", 8)).action = { arg menu;
+			menu.postln;
+		};
+		removeButton.canFocus = false;
+
+		fltVlay = [removeButton] ++ fltVlay;
+
+		fltCanvas.layout = VLayout(*fltVlay);
+		filtersWin.canvas = fltCanvas;
+		filtersWin.bounds = Rect(fltWinLeft, fltWinDown, fltWinWidth, fltWinHeight);
+		/*filtersWin.bounds.postln;*/
+		filtersWin.front;
+	}
+
+	filterGUIIndex {arg index=0, topLeftArr;
+		var filterTag, filterKey, filterPairs, filterInfo, top, left, thisFilter, defaultPos;
+		if(filters.notNil, {
+			thisFilter = filters[index];
+			if(thisFilter.notNil, {
+				filterKey = thisFilter[1];
+				filterTag = thisFilter[0];
+				filterInfo = this.convFilterTag(filterTag);
+				filterPairs = this.getFilterPairs(filterInfo[0], filterInfo[1], filterInfo[2]);
+
+				if(topLeftArr.isNil, {
+					defaultPos = {top = 75; left = 75;};
+					if(filtersWindow.isNil, {
+						defaultPos.();
+					}, {
+						if(filtersWindow.isEmpty, {
+							defaultPos.();
+						}, {
+							top = filtersWindow.last.bounds.top + 10;
+							left = filtersWindow.last.bounds.top + 10;
+						});
+					});
+				}, {
+					top = topLeftArr[0];
+					left = topLeftArr[1];
+				});
+				this.filterWinGUI(filterTag, filterKey, filterPairs, top, left);
+			}, {
+				"filter not found".warn;
+			});
+		}, {
+			"no active filters".warn;
+		});
 	}
 
 }
