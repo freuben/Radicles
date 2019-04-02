@@ -2087,9 +2087,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				panKnobText.action = {arg field;
 					var newVal;
 					newVal = thisSpec.unmap(field.value.interpret);
-					panKnob.value = newVal;
-					("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
-						++ newVal ++ ");").radpostcont.interpret;
+					panKnob.valueAction = newVal;
+					/*("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
+					++ newVal ++ ");").radpostcont.interpret;*/
 				};
 			}, {
 				panKnob = TextField().minWidth_(180).maxWidth_(180)
@@ -2110,7 +2110,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 
 			labelString = item.asString;
-			/*if(labelString.size >= 7, { labelString = labelString.insert(7, "\r").asString});*/
 			labelText = StaticText(fltCanvas).align_(\center)
 			.background_(Color.black)
 			.stringColor_(Color.white)
@@ -2183,6 +2182,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		}, {
 			"no active filters".warn;
+		});
+	}
+
+	filterGUI {arg type=\track, num= 1, slot=1;
+		var filterTag, filterIndex;
+		if(filters.notNil, {
+			filterTag = this.findFilterTag(type, num, slot);
+			filterIndex = filters.flop[0].indexOf(filterTag);
+			if(filterIndex.notNil, {
+				this.filterGUIIndex(filterIndex);
+			});
+		}, {
+			"no filters active".warn;
 		});
 	}
 
