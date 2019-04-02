@@ -1004,7 +1004,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(varArr.size == 2, {
 			resultArr = [varArr[0].asSymbol, 1, varArr[1] ];
 		}, {
-			resultArr = [varArr[0].asSymbol, varArr[1], varArr[1] ];
+			resultArr = [varArr[0].asSymbol, varArr[1], varArr[2] ];
 		});
 		^resultArr;
 	}
@@ -2041,7 +2041,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		filtersWin.onClose = {
 			filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
 		};
-		filtersWin.alwaysOnTop = true;
+		/*filtersWin.alwaysOnTop = true;*/
 		fltCanvas = View();
 		/*fltCanvas = View(bounds: (Rect(0, 0, fltWinWidth, fltWinHeight)));*/
 		fltCanvas.background_(Color.black);
@@ -2157,8 +2157,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(thisFilter.notNil, {
 				filterKey = thisFilter[1];
 				filterTag = thisFilter[0];
+				filterTag.postln;
 				filterInfo = this.convFilterTag(filterTag);
+				filterInfo.postln;
 				filterPairs = this.getFilterPairs(filterInfo[0], filterInfo[1], filterInfo[2]);
+				filterPairs.postln;
 
 				if(topLeftArr.isNil, {
 					defaultPos = {top = 75; left = 75;};
@@ -2189,7 +2192,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var filterTag, filterIndex;
 		if(filters.notNil, {
 			filterTag = this.findFilterTag(type, num, slot);
-			filterIndex = filters.flop[0].indexOf(filterTag);
+			filterIndex = filters.flop[0].indexOfEqual(filterTag);
+			filterIndex.postln;
 			if(filterIndex.notNil, {
 				this.filterGUIIndex(filterIndex);
 			});

@@ -1,6 +1,6 @@
 [ [ 'pch', {arg pitchRatio=1.0 -> [ 0.5, 2, {|val| val.linlin(0,1,-12,12).round(0.4).midiratio}
- ], pitchDispertion=0.0 -> [ 0.01, 2.01, 'exp', {|val| val-0.01} ], timeDispersion=0.0001
- -> [ 0.01, 2.01, 'exp', {|val| val-0.01} ], winSize=0.02
+ ], pitchDispertion=0.0 -> [ 0, 2, {|val| (val+0.01).explin(0.01,2.01,0,1)} ], timeDispersion=0.0001
+ -> [ 0, 2, {|val| (val+0.01).explin(0.01,2.01,0,1)} ], winSize=0.02
  -> [ 0.01, 3 ];
 		PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion);
  } ], [ 'pch2', {arg centerpitch=440, pitchDispertion=0.0, timeDispersion=0.0,
