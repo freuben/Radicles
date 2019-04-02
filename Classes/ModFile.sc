@@ -44,7 +44,7 @@ ModFile : Radicles {var <filePath;
 		}, {^arr});
 	}
 
-	read {arg key;
+	read {arg key, warn=true;
 		var arr, index, sys, result;
 		if(key.isNil, {
 			result = this.keys;
@@ -55,7 +55,9 @@ ModFile : Radicles {var <filePath;
 				if(index.notNil, {
 					result = arr[index][1];
 				}, {
+					if(warn, {
 					"Key not found".warn;
+					});
 				});
 			}, {result = nil});
 		});
@@ -184,10 +186,10 @@ SpecFile : ModFile {classvar specArr;
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\filter, key;
+	* read {arg class=\filter, key, warn=true;
 		var synthFile;
 		synthFile = this.new(\spec, class);
-		^synthFile.read(key);
+		^synthFile.read(key, warn);
 	}
 
 	* post {arg class=\filter, key;

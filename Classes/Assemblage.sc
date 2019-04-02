@@ -2008,29 +2008,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 }
 
 
-
 /*(
 ~panKnobTextArr = nil;
 ~panKnobArr = nil;
 ~labelTextArr = nil;
 ~guiFunc = {arg winName="filterTrack_1_1", filterKey=\pch;
 	var mixerWin, canvas, panKnobTextArr, vlay, knobColors, winWidth, winTop,
-	winHeight, stringLengh, argArr, specArr, defaultArgArr, specBool;
+	winHeight, stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton;
 
 	argArr = SynthFile.read(\filter, filterKey).argNames;
 	defaultArgArr = SynthFile.read(\filter, filterKey).defaultArgs;
-	specArr = SpecFile.read(\filter, filterKey);
+	specArr = SpecFile.read(\filter, filterKey, false);
 
 	stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
 
-/*	~mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth, winHeight)) )*/
 	~mixerWin = ScrollView()
 	.name_(winName ++ " | " ++ filterKey.asString);
 	~mixerWin.hasHorizontalScroller = false;
 		winWidth = (250) + stringLengh + 7;
 winTop = 0;
 		winWidth = (250) + stringLengh + 7;
-	winHeight = ( ((argArr.size) * (15 + 7)) + 13 + 6 ).min(
+	winHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(
 		Window.screenBounds.bounds.height-~mixerWin.bounds.top-winTop );
 	~mixerWin.fixedHeight = winHeight;
 	~mixerWin.fixedWidth = winWidth;
@@ -2056,14 +2054,11 @@ winTop = 0;
 		});
 
 		if(specBool, {
-
 			thisSpec = specArr[index][1].asSpec;
 			thisFunc = specArr[index][2];
-
 			panKnob = Slider().minWidth_(180).maxWidth_(180)
 			.maxHeight_(15).minHeight_(15);
 			panKnob.orientation = \horizontal;
-
 			panKnob.action = {
 				/*panKnob.value.postln;*/
 				if(thisFunc.notNil, {
@@ -2073,21 +2068,18 @@ winTop = 0;
 				});
 				panKnobText.string = thisResult.asString.copyRange(0, 7);
 			};
-
 			if(thisFunc.notNil, {
 				/*defaultArgArr[index].postln;*/
 				thisResult = thisSpec.unmap(thisFunc.(defaultArgArr[index]));
 			}, {
 				thisResult = thisSpec.unmap(defaultArgArr[index]);
 			});
-
 			panKnob.value = thisResult;
 			panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
-
 		}, {
-
 			panKnob = TextField().minWidth_(180).maxWidth_(180)
 			.font_(Font("Monaco", 8))
+			.background_(Color.new255(246, 246, 246))
 			.maxHeight_(15).minHeight_(15);
 			defaultVal = defaultArgArr[index];
 			if(defaultVal.notNil, {
@@ -2095,12 +2087,8 @@ winTop = 0;
 				panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
 			});
 			panKnob.action = {arg field;
-				panKnobText.string = field.value;
+				panKnobText.string = field.value.postln;
 			};
-
-			/*	panKnob = Slider().minWidth_(180).maxWidth_(180)
-			.maxHeight_(15).minHeight_(15);
-			panKnob.orientation = \horizontal;*/
 
 		});
 
@@ -2117,9 +2105,6 @@ winTop = 0;
 
 		~panKnobTextArr = ~panKnobTextArr.add(panKnobText);
 		~labelTextArr = ~labelTextArr.add(labelText);
-
-		/*	spaceTextLay = HLayout(*panKnobText);*/
-
 		~panKnobArr = ~panKnobArr.add(panKnob);
 
 		[[labelText, align: \center], [panKnob, align: \center], [panKnobText, align: \center]].do{|lay|
@@ -2130,10 +2115,22 @@ winTop = 0;
 		/*finalLayout.postln;*/
 	};
 
+removeButton = Button().maxHeight_(15).minHeight_(15)
+	.states_([["", Color.new255(211, 14, 14), Color.black]])
+		/*.background_(Color.black)
+		.stringColor_(Color.white)*/
+	.string_("R E M O V E   F I L T E R")
+		.font_(Font("Monaco", 8)).action = { arg menu;
+			menu.postln;
+		};
+	removeButton.canFocus = false;
+
+	vlay = [removeButton] ++ vlay;
+
 	canvas.layout = VLayout(*vlay);
 	~mixerWin.canvas = canvas;
 		~mixerWin.bounds = Rect(0, winTop, winWidth, winHeight);
-	~mixerWin.bounds.postln;
+	/*~mixerWin.bounds.postln;*/
 	~mixerWin.front;
 };
 )
