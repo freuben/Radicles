@@ -1287,7 +1287,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353),
 			Color.white, Color.black, Color() ];
 
-		winHeight = 478 + ((sends-2)*15);
+		winHeight = 478 + ((sends-2)*15) + ((fxsNum-2)*15);
 		winWidth = (43*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
 		if(mixerWin.isNil, {
