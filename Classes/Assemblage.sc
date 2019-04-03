@@ -792,12 +792,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				masterNdefs[setArr[0]].removeAt(slot);
 				specs[setArr[0]].removeAt(slot);
 				{
+					/*server.sync;*/
 					fadeTime.wait;
+					if(filterBuff.notNil, {
+						if(filterBuff.notEmpty, {
 					bufArrInd = filterBuff.flop[0].indexOf(thisSlot[0]);
 					filterBuff.flop[1][bufArrInd].do{|item|
 						server.sync;
 						BStore.remove(item[0], item[1], item[2]);
 					};
+					});
+					});
 				}.fork;
 				filters = filters.reject({|item| item[0] == thisSlot[0] });
 				this.autoRoute(thisTrack);
@@ -2066,8 +2071,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				panKnob.orientation = \horizontal;
 				panKnob.action = {
 					if(thisFunc.notNil, {
-						panKnob.value.postln;
-						thisResult = thisFunc.(thisSpec.map(panKnob.value).postln);
+						thisResult = thisFunc.(thisSpec.map(panKnob.value));
 					}, {
 						thisResult = thisSpec.map(panKnob.value);
 					});
@@ -2118,7 +2122,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		.stringColor_(Color.white)*/
 		.string_("R E M O V E   F I L T E R")
 		.font_(Font("Monaco", 8)).action = { arg menu;
-			menu.postln;
+			var filterInfoArr;
+			filterInfoArr = this.convFilterTag(winName);
+			this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
+			filtersWin.close;
 		};
 		removeButton.canFocus = false;
 
@@ -2138,12 +2145,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(thisFilter.notNil, {
 				filterKey = thisFilter[1];
 				filterTag = thisFilter[0];
-				filterTag.postln;
 				filterInfo = this.convFilterTag(filterTag);
-				filterInfo.postln;
 				filterPairs = this.getFilterPairs(filterInfo[0], filterInfo[1], filterInfo[2]);
-				filterPairs.postln;
-
 				if(topLeftArr.isNil, {
 					defaultPos = {top = 75; left = 75;};
 					if(filtersWindow.isNil, {
@@ -2174,7 +2177,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(filters.notNil, {
 			filterTag = this.findFilterTag(type, num, slot);
 			filterIndex = filters.flop[0].indexOfEqual(filterTag);
-			filterIndex.postln;
 			if(filterIndex.notNil, {
 				this.filterGUIIndex(filterIndex);
 			});
