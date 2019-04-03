@@ -52,4 +52,16 @@ Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 		}); };
 	}
 
+	*specUnmap {arg unmapVal, thisSpec, thisFunc;
+		var specOptions, thisResult;
+		if(thisFunc.notNil, {
+			specOptions= (0..127).linlin(0,127,0,1.0).collect({|item|
+				thisFunc.(thisSpec.map(item.round(0.01))) });
+			thisResult = specOptions.indexIn(unmapVal).linlin(0,127,0,1);
+		}, {
+			thisResult = thisSpec.unmap(unmapVal);
+		});
+		^thisResult;
+	}
+
 }

@@ -2018,21 +2018,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		ndefCS.interpret;
 	}
 
-	filterWinGUI {arg winName=\filterTrack_1_1, filterKey=\pch, filterPairs, fltWinDown=0, fltWinLeft=0;
-		var filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth,
-		fltWinHeight, stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop;
-
+	filterWinGUI {arg winName=\filterTrack_1_1, filterKey=\pch, filterPairs,
+		fltWinDown=0, fltWinLeft=0;
+		var filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
+		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop;
 		argArr = filterPairs.flop[0];
 		defaultArgArr = filterPairs.flop[1];
 		specArr = SpecFile.read(\filter, filterKey, false);
-
 		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
-
 		filtersWin = ScrollView()
 		.name_(winName.asString ++ " | " ++ filterKey.asString);
 		filtersWin.hasHorizontalScroller = false;
-
-		fltWinWidth = (250) + stringLengh + 17;
+		fltWinWidth = (250) + stringLengh + 7;
 		fltWinTop = Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinDown;
 		fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
 		filtersWin.fixedHeight = fltWinHeight;
@@ -2045,52 +2042,40 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		fltCanvas = View();
 		/*fltCanvas = View(bounds: (Rect(0, 0, fltWinWidth, fltWinHeight)));*/
 		fltCanvas.background_(Color.black);
-
 		argArr.do{|item, index|
-			var finalLayout, panKnob, panKnobText, spaceTextLay,
-			panKnobArr, labelText, labelString, defaultVal, thisSpec, thisResult, labelTextArr;
-
+			var finalLayout, panKnob, panKnobText, spaceTextLay, specOptions,
+			panKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc,
+			thisResult, labelTextArr;
 			if(specArr.notNil, {
 				specBool = specArr[index].notNil;
 			}, {
 				specBool = false;
 			});
-
-			if(specBool, {
-				panKnobText = TextField(fltCanvas).align_(\center)
-				.background_(Color.black)
-				.stringColor_(Color.white)
-				.font_(Font("Monaco", 8))
-				.minWidth_(50).maxWidth_(50).maxHeight_(10).minHeight_(10);
-			}, {
-				panKnobText = StaticText(fltCanvas).align_(\center)
-				.background_(Color.black)
-				.stringColor_(Color.white)
-				.font_(Font("Monaco", 8))
-				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
-			});
-
+			panKnobText = StaticText(fltCanvas).align_(\center)
+			.background_(Color.black)
+			.stringColor_(Color.white)
+			.font_(Font("Monaco", 8))
+			.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
 			if(specBool, {
 				thisSpec = specArr[index][1].asSpec;
+				thisFunc = specArr[index][2];
 				panKnob = Slider().minWidth_(180).maxWidth_(180)
 				.maxHeight_(15).minHeight_(15);
 				panKnob.orientation = \horizontal;
 				panKnob.action = {
-					thisResult = thisSpec.map(panKnob.value);
+					if(thisFunc.notNil, {
+						panKnob.value.postln;
+						thisResult = thisFunc.(thisSpec.map(panKnob.value).postln);
+					}, {
+						thisResult = thisSpec.map(panKnob.value);
+					});
 					panKnobText.string = thisResult.asString.copyRange(0, 7);
 					("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
 						++ thisResult ++ ");").radpostcont.interpret;
 				};
-				thisResult = thisSpec.unmap(defaultArgArr[index]);
+				thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
 				panKnob.value = thisResult;
 				panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
-				panKnobText.action = {arg field;
-					var newVal;
-					newVal = thisSpec.unmap(field.value.interpret);
-					panKnob.valueAction = newVal;
-					/*("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
-					++ newVal ++ ");").radpostcont.interpret;*/
-				};
 			}, {
 				panKnob = TextField().minWidth_(180).maxWidth_(180)
 				.font_(Font("Monaco", 8))
@@ -2106,9 +2091,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
 						++ field.value ++ ");").radpostcont.interpret;
 				};
-
 			});
-
 			labelString = item.asString;
 			labelText = StaticText(fltCanvas).align_(\center)
 			.background_(Color.black)
@@ -2118,17 +2101,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.maxWidth_(stringLengh)
 			.minWidth_(stringLengh)
 			.minHeight_(10);
-
 			panKnobTextArr = panKnobTextArr.add(panKnobText);
 			labelTextArr = labelTextArr.add(labelText);
 			panKnobArr = panKnobArr.add(panKnob);
-
 			[[labelText, align: \center], [panKnob, align: \center], [panKnobText, align: \center]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
-
 			fltVlay = fltVlay.add(HLayout(*finalLayout) );
-			/*finalLayout.postln;*/
 		};
 
 		removeButton = Button().maxHeight_(15).minHeight_(15)
