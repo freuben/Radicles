@@ -778,25 +778,39 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	removeFilter {arg type=\track, num= 1, slot=1;
-		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd;
+		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd, thisFilterTag, thisFilterIndex;
 		thisTrack = this.get(type)[num-1];
 		if(thisTrack.size > 2, {
-			if(slot < (thisTrack.size-1), {
-				thisSlot = thisTrack[slot];
-				ndefCS = "Ndef(" ++ thisSlot[0].cs ++ ").clear(" ++ fadeTime ++ ");";
+
+			thisFilterTag = this.findFilterTag(type, num, slot);
+			thisSlot = this.findFilterTag(type, num, slot);
+			thisFilterIndex = thisTrack.flop[0].indexOf(thisSlot);
+
+/*			if(slot < (thisTrack.size-1), {
+				thisSlot = thisTrack[slot];*/
+
+			if(thisFilterIndex.notNil, {
+
+				ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 				ndefCS.radpost;
 				ndefCS.interpret;
-				thisTrack.removeAt(slot);
+				thisTrack.removeAt(thisFilterIndex);
+				if(type == \master, {num=""});
+				setArr = this.findTrackArr((type ++ num).asSymbol);
+				masterNdefs[setArr[0]].removeAt(thisFilterIndex);
+				specs[setArr[0]].removeAt(thisFilterIndex);
+
+/*				thisTrack.removeAt(slot);
 				if(type == \master, {num=""});
 				setArr = this.findTrackArr((type ++ num).asSymbol);
 				masterNdefs[setArr[0]].removeAt(slot);
-				specs[setArr[0]].removeAt(slot);
+				specs[setArr[0]].removeAt(slot);*/
 				{
 					/*server.sync;*/
 					fadeTime.wait;
 					if(filterBuff.notNil, {
 						if(filterBuff.notEmpty, {
-							bufArrInd = filterBuff.flop[0].indexOf(thisSlot[0]);
+							bufArrInd = filterBuff.flop[0].indexOf(thisSlot);
 							filterBuff.flop[1][bufArrInd].do{|item|
 								server.sync;
 								BStore.remove(item[0], item[1], item[2]);
@@ -804,7 +818,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					});
 				}.fork;
-				filters = filters.reject({|item| item[0] == thisSlot[0] });
+				filters = filters.reject({|item| item[0] == thisSlot });
 				this.autoRoute(thisTrack);
 			}, {
 				"Filter slot not found".warn;
@@ -979,7 +993,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, {
 			thisSpec = 	specArr[specArr.flop[0].indexOf(arg1)];
 		});
-		thisSpec.postln;
 		modSpec = thisSpec[1].specFactor(mul, add, min, val, warp);
 		thisVal = thisSpec[2].(modSpec.asSpec.map(arg2));
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
@@ -1262,6 +1275,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 
 		fxsNum = 2;
+		if(filters.notNil, {
+			if(filters.notEmpty, {
+				fxsNum = filters.flop[0].collect({|item|
+					item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
+			});
+		});
 
 		numBuses = trackNames.select{|item| item.asString.find("bus").notNil }.size+1;
 
@@ -1275,7 +1294,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
 			mixerWin.hasVerticalScroller = false;
 			mixerWin.mouseDownAction = {
-				fltMenuWindow.postln;
 				if(fltMenuWindow.notNil, {
 					if(fltMenuWindow.visible, {
 						fltMenuWindow.close;
@@ -1726,7 +1744,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							});
 						});
 						this.filterGUI(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
-							[menu.bounds.left, menu.bounds.top+68]);
+							[menu.bounds.left, menu.bounds.top+68], menu);
 					});
 				};
 			}
@@ -2030,7 +2048,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	filterWinGUI {arg winName=\filterTrack_1_1, filterKey=\pch, filterPairs,
-		fltWinLeft=0, fltWinDown=0;
+		fltWinLeft=0, fltWinDown=0, mixButton;
 		var filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
 		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop;
 		argArr = filterPairs.flop[0];
@@ -2130,6 +2148,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			filterInfoArr = this.convFilterTag(winName);
 			this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
 			filtersWin.close;
+			if(mixButton.notNil, {
+				mixButton.string = "";
+			});
 		};
 		removeButton.canFocus = false;
 
@@ -2142,7 +2163,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		filtersWin.front;
 	}
 
-	filterGUIIndex {arg index=0, topLeftArr;
+	filterGUIIndex {arg index=0, topLeftArr, mixButton;
 		var filterTag, filterKey, filterPairs, filterInfo, top, left, thisFilter, defaultPos;
 		if(filters.notNil, {
 			thisFilter = filters[index];
@@ -2167,7 +2188,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					left = topLeftArr[0];
 					top = topLeftArr[1];
 				});
-				this.filterWinGUI(filterTag, filterKey, filterPairs, left, top);
+				this.filterWinGUI(filterTag, filterKey, filterPairs, left, top, mixButton);
 			}, {
 				"filter not found".warn;
 			});
@@ -2176,14 +2197,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	filterGUI {arg type=\track, num= 1, slot=1, topLeftArr;
+	filterGUI {arg type=\track, num= 1, slot=1, topLeftArr, mixButton;
 		var filterTag, filterIndex;
 		if(filters.notNil, {
 			filterTag = this.findFilterTag(type, num, slot);
 			filterIndex = filters.flop[0].indexOfEqual(filterTag);
 			if(filterIndex.notNil, {
-				topLeftArr.postln;
-				this.filterGUIIndex(filterIndex, topLeftArr);
+				this.filterGUIIndex(filterIndex, topLeftArr, mixButton);
 			});
 		}, {
 			"no filters active".warn;
