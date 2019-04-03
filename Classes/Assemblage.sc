@@ -796,12 +796,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					fadeTime.wait;
 					if(filterBuff.notNil, {
 						if(filterBuff.notEmpty, {
-					bufArrInd = filterBuff.flop[0].indexOf(thisSlot[0]);
-					filterBuff.flop[1][bufArrInd].do{|item|
-						server.sync;
-						BStore.remove(item[0], item[1], item[2]);
-					};
-					});
+							bufArrInd = filterBuff.flop[0].indexOf(thisSlot[0]);
+							filterBuff.flop[1][bufArrInd].do{|item|
+								server.sync;
+								BStore.remove(item[0], item[1], item[2]);
+							};
+						});
 					});
 				}.fork;
 				filters = filters.reject({|item| item[0] == thisSlot[0] });
@@ -1692,7 +1692,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			item.do{|it, ind|
 				it.mouseDownAction = { arg menu;
 					var boundArr, thisBounds, thisArrBounds, thisitemArr,
-					thisListView, screenBounds, trackInfoArr;
+					thisListView, screenBounds, trackInfoArr, thisTagFlt;
 					screenBounds = Window.screenBounds.bounds.asArray.last;
 					boundArr = it.bounds.asArray;
 					thisBounds = 	Rect(boundArr[0], (screenBounds-boundArr[1]-285), 140, 240);
@@ -1709,7 +1709,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						.stringColor_(Color.white)
 						.hiliteColor_(Color.new255(78, 109, 38);)
 						.action_({ arg sbs;
-
 							trackInfoArr = mixTrackNames[index].asString.divNumStr;
 							this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
 								thisListView.items[sbs.value]);
@@ -1719,10 +1718,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					}, {
 						trackInfoArr = mixTrackNames[index].asString.divNumStr;
-						this.findFilterTag(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1).postln;
-						this.getFilterPairs(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1).postln;
-						"selected filter: ".post;
-						menu.string.postln;
+						if(trackInfoArr[1] == nil, {trackInfoArr[1] = 1});
+						if(filters.notNil, {
+							thisTagFlt = this.findFilterTag(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1);
+							if(filters.flop[0].includes(thisTagFlt).not, {
+								this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1, menu.string.asSymbol);
+							});
+						});
+						this.filterGUI(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
+							[menu.bounds.left, menu.bounds.top+68]);
 					});
 				};
 			}
@@ -2026,7 +2030,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	filterWinGUI {arg winName=\filterTrack_1_1, filterKey=\pch, filterPairs,
-		fltWinDown=0, fltWinLeft=0;
+		fltWinLeft=0, fltWinDown=0;
 		var filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
 		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop;
 		argArr = filterPairs.flop[0];
@@ -2160,10 +2164,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					});
 				}, {
-					top = topLeftArr[0];
-					left = topLeftArr[1];
+					left = topLeftArr[0];
+					top = topLeftArr[1];
 				});
-				this.filterWinGUI(filterTag, filterKey, filterPairs, top, left);
+				this.filterWinGUI(filterTag, filterKey, filterPairs, left, top);
 			}, {
 				"filter not found".warn;
 			});
@@ -2172,13 +2176,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	filterGUI {arg type=\track, num= 1, slot=1;
+	filterGUI {arg type=\track, num= 1, slot=1, topLeftArr;
 		var filterTag, filterIndex;
 		if(filters.notNil, {
 			filterTag = this.findFilterTag(type, num, slot);
 			filterIndex = filters.flop[0].indexOfEqual(filterTag);
 			if(filterIndex.notNil, {
-				this.filterGUIIndex(filterIndex);
+				topLeftArr.postln;
+				this.filterGUIIndex(filterIndex, topLeftArr);
 			});
 		}, {
 			"no filters active".warn;
