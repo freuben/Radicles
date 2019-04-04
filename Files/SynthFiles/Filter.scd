@@ -3,10 +3,10 @@
  ;
 		PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion);
  } ], [ 'pch2', {arg centerpitch=440, pitchDispertion=0.0, timeDispersion=0.0,
-		lag=0.1, winSize=0.1, ndefKey=\track1, ndefChans=2; 
+		lag=0.1, winSize=0.1;
 	var freq, hasFreq; 
-		# freq, hasFreq = Pitch.kr(Ndef.ar(ndefKey, ndefChans), ampThreshold: 0.0, median: 7);
-	PitchShift.ar(\in, winSize, (freq/centerpitch).lag(lag), pitchDispertion,
+		# freq, hasFreq = Pitch.kr(Ndef.ar(\bus1), ampThreshold: 0.0, median: 7);
+	PitchShift.ar(\in, winSize, (freq[0]/centerpitch).lag(lag), pitchDispertion,
  timeDispersion) } ], [ 'pch3', {arg centerpitch=440, bus=0, adjvol=4, pitchDispertion=0.0,
  timeDispersion=0.0001, 
 	lag=0.1, winSize=0.02; 

@@ -786,8 +786,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			thisSlot = this.findFilterTag(type, num, slot);
 			thisFilterIndex = thisTrack.flop[0].indexOf(thisSlot);
 
-/*			if(slot < (thisTrack.size-1), {
-				thisSlot = thisTrack[slot];*/
+			/*			if(slot < (thisTrack.size-1), {
+			thisSlot = thisTrack[slot];*/
 
 			if(thisFilterIndex.notNil, {
 
@@ -800,7 +800,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				masterNdefs[setArr[0]].removeAt(thisFilterIndex);
 				specs[setArr[0]].removeAt(thisFilterIndex);
 
-/*				thisTrack.removeAt(slot);
+				/*				thisTrack.removeAt(slot);
 				if(type == \master, {num=""});
 				setArr = this.findTrackArr((type ++ num).asSymbol);
 				masterNdefs[setArr[0]].removeAt(slot);
@@ -1708,9 +1708,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		//fx UI settings
 		fxSlotArr.do{|item, index|
 			item.do{|it, ind|
+				var trackInfoInt, trackInfoArr, thisFltInfo, tracksFlt, thisFltTags, fltTagArr, thisSlotInfo;
+
+				trackInfoArr = mixTrackNames[index].asString.divNumStr;
+				thisFltTags = filters.flop[0].collect({|item| this.convFilterTag(item) });
+				fltTagArr = thisFltTags.collect({|item| [item[0], item[1].asInt, item[2].asInt] });
+				thisFltInfo = thisFltTags.collect({|item| [item[0], item[1].asInt] });
+				tracksFlt = ([thisFltInfo.flop[0], thisFltInfo.flop[1]].flop);
+				trackInfoInt = [trackInfoArr[0].asSymbol, trackInfoArr[1]];
+				if(trackInfoInt[1].isNil, {trackInfoInt[1] = 1 });
+				if(tracksFlt.collect({ |item|
+					(item == trackInfoInt) }).includes(true), {
+					thisSlotInfo = [trackInfoInt, ind+1].flat;
+					if(fltTagArr.collect({|item| item == thisSlotInfo}).includes(true), {
+						it.string = filters[fltTagArr.indexOfEqual(thisSlotInfo)][1];
+					});
+				});
+
 				it.mouseDownAction = { arg menu;
 					var boundArr, thisBounds, thisArrBounds, thisitemArr,
-					thisListView, screenBounds, trackInfoArr, thisTagFlt;
+					thisListView, screenBounds, thisTagFlt;
+
 					screenBounds = Window.screenBounds.bounds.asArray.last;
 					boundArr = it.bounds.asArray;
 					thisBounds = 	Rect(boundArr[0], (screenBounds-boundArr[1]-285), 140, 240);
@@ -1727,7 +1745,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						.stringColor_(Color.white)
 						.hiliteColor_(Color.new255(78, 109, 38);)
 						.action_({ arg sbs;
-							trackInfoArr = mixTrackNames[index].asString.divNumStr;
 							this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
 								thisListView.items[sbs.value]);
 							menu.string = thisListView.items[sbs.value];
@@ -1735,7 +1752,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							fltMenuWindow = nil;
 						});
 					}, {
-						trackInfoArr = mixTrackNames[index].asString.divNumStr;
 						if(trackInfoArr[1] == nil, {trackInfoArr[1] = 1});
 						if(filters.notNil, {
 							thisTagFlt = this.findFilterTag(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1);
@@ -1863,9 +1879,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			Ndef("AssembladgeGUI").clear;
 			OSCdef(\AssembladgeGUI).free;
 			mixerWin = nil;
-			/*if(fltMenuWindow.visible, {
-			fltMenuWindow.close;
-			});*/
 			/*if(outputSettings.includes("".asSymbol).not, {
 			Ndef.all[server.asSymbol].clean; //garbage collection
 			});*/
@@ -2047,16 +2060,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		ndefCS.interpret;
 	}
 
-	filterWinGUI {arg winName=\filterTrack_1_1, filterKey=\pch, filterPairs,
+	filterWinGUI {arg filterTag=\filterTrack_1_1, filterKey=\pch, filterPairs,
 		fltWinLeft=0, fltWinDown=0, mixButton;
-		var filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
+		var winName, filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
 		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop;
 		argArr = filterPairs.flop[0];
 		defaultArgArr = filterPairs.flop[1];
 		specArr = SpecFile.read(\filter, filterKey, false);
 		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+		winName = filterTag.asString.split($_);
+		winName[0] = winName[0].asString.replace("filter", "Filter ");
+		if(winName.size == 3, {
+			winName = [winName[0] ++ winName[1], winName[2]]
+		});
+		winName = (winName[0] ++ ": " ++ winName[1]);
 		filtersWin = ScrollView()
-		.name_(winName.asString ++ " | " ++ filterKey.asString);
+		.name_(winName ++ " | " ++ filterKey.asString);
 		filtersWin.hasHorizontalScroller = false;
 		fltWinWidth = (250) + stringLengh + 7;
 		fltWinTop = Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinDown;
@@ -2098,7 +2117,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						thisResult = thisSpec.map(panKnob.value);
 					});
 					panKnobText.string = thisResult.asString.copyRange(0, 7);
-					("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
+					("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
 						++ thisResult ++ ");").radpostcont.interpret;
 				};
 				thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
@@ -2111,12 +2130,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				.maxHeight_(15).minHeight_(15);
 				defaultVal = defaultArgArr[index];
 				if(defaultVal.notNil, {
-					panKnob.string = defaultArgArr[index].asString;
-					panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+					panKnob.string = defaultArgArr[index].cs;
+					panKnobText.string = defaultArgArr[index].cs.copyRange(0, 7);
 				});
 				panKnob.action = {arg field;
 					panKnobText.string = field.value;
-					("Ndef(" ++ winName.cs ++ ").set(" ++ item.cs ++ ", "
+					("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
 						++ field.value ++ ");").radpostcont.interpret;
 				};
 			});
@@ -2145,7 +2164,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		.string_("R E M O V E   F I L T E R")
 		.font_(Font("Monaco", 8)).action = { arg menu;
 			var filterInfoArr;
-			filterInfoArr = this.convFilterTag(winName);
+			filterInfoArr = this.convFilterTag(filterTag);
 			this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
 			filtersWin.close;
 			if(mixButton.notNil, {
