@@ -2063,19 +2063,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	filterWinGUI {arg filterTag=\filterTrack_1_1, filterKey=\pch, filterPairs,
 		fltWinLeft=0, fltWinDown=0, mixButton;
 		var winName, filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
-		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop;
-		argArr = filterPairs.flop[0];
-		defaultArgArr = filterPairs.flop[1];
-		specArr = SpecFile.read(\filter, filterKey, false);
-		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop, winBool;
+
 		winName = filterTag.asString.split($_);
 		winName[0] = winName[0].asString.replace("filter", "Filter ");
 		if(winName.size == 3, {
 			winName = [winName[0] ++ winName[1], winName[2]]
 		});
-		winName = (winName[0] ++ ": " ++ winName[1]);
+		winName = (winName[0] ++ ": " ++ winName[1]) ++ " | " ++ filterKey.asString;
+		winBool = true;
+		if(filtersWindow.notNil, {
+			if(filtersWindow.collect({|item| item.name ==  winName}).includes(true), {
+				winBool = false;
+			});
+		});
+
+		if(winBool, {
+		argArr = filterPairs.flop[0];
+		defaultArgArr = filterPairs.flop[1];
+		specArr = SpecFile.read(\filter, filterKey, false);
+		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+
 		filtersWin = ScrollView()
-		.name_(winName ++ " | " ++ filterKey.asString);
+		.name_(winName);
 		filtersWin.hasHorizontalScroller = false;
 		fltWinWidth = (250) + stringLengh + 7;
 		fltWinTop = Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinDown;
@@ -2180,6 +2190,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		filtersWin.bounds = Rect(fltWinLeft, fltWinDown, fltWinWidth, fltWinHeight);
 		/*filtersWin.bounds.postln;*/
 		filtersWin.front;
+		}, {
+			filtersWin = filtersWindow.collect({|item|
+				item.name });
+			filtersWindow[filtersWin.indexOfEqual(winName)].front;
+		});
 	}
 
 	filterGUIIndex {arg index=0, topLeftArr, mixButton;
