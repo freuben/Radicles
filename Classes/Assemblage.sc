@@ -1711,6 +1711,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				var trackInfoInt, trackInfoArr, thisFltInfo, tracksFlt, thisFltTags, fltTagArr, thisSlotInfo;
 
 				trackInfoArr = mixTrackNames[index].asString.divNumStr;
+
+				if(filters.notNil, {
+					if(filters.notEmpty, {
 				thisFltTags = filters.flop[0].collect({|item| this.convFilterTag(item) });
 				fltTagArr = thisFltTags.collect({|item| [item[0], item[1].asInt, item[2].asInt] });
 				thisFltInfo = thisFltTags.collect({|item| [item[0], item[1].asInt] });
@@ -1722,6 +1725,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					thisSlotInfo = [trackInfoInt, ind+1].flat;
 					if(fltTagArr.collect({|item| item == thisSlotInfo}).includes(true), {
 						it.string = filters[fltTagArr.indexOfEqual(thisSlotInfo)][1];
+					});
+				});
 					});
 				});
 
@@ -1876,9 +1881,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, \AssembladgeGUI);
 
 		mixerWin.onClose = {
-			Ndef("AssembladgeGUI").clear;
 			OSCdef(\AssembladgeGUI).free;
+			Ndef("AssembladgeGUI").clear;
 			mixerWin = nil;
+			filtersWindow.do{|item| item.close; };
 			/*if(outputSettings.includes("".asSymbol).not, {
 			Ndef.all[server.asSymbol].clean; //garbage collection
 			});*/
