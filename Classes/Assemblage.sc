@@ -1755,6 +1755,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							menu.string = thisListView.items[sbs.value];
 							fltMenuWindow.close;
 							fltMenuWindow = nil;
+							if((ind+1) > (fxsNum-1), {
+								{server.sync; this.refreshMixGUI;}.fork(AppClock);
+							});
 						});
 					}, {
 						if(trackInfoArr[1] == nil, {trackInfoArr[1] = 1});
@@ -1885,6 +1888,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			Ndef("AssembladgeGUI").clear;
 			mixerWin = nil;
 			filtersWindow.do{|item| item.close; };
+			if(fltMenuWindow.notNil, {
+					if(fltMenuWindow.visible, {
+						fltMenuWindow.close;
+						fltMenuWindow = nil;
+					});
+				});
 			/*if(outputSettings.includes("".asSymbol).not, {
 			Ndef.all[server.asSymbol].clean; //garbage collection
 			});*/
