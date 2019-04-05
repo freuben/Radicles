@@ -1655,7 +1655,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		sendsMenuArr.do{|item, index|
 			item.do{|it, ind|
 				it.action = {arg menu;
-					var thisBusItem, thisTrackLabel, thisBusNum;
+					var thisBusItem, thisTrackLabel, thisBusNum, busInBool1, busInBool2;
 
 					thisBusNum = menu.item.divNumStr[1];
 					thisTrackLabel = mixTrackNames[index].asString.divNumStr[0].asSymbol;
@@ -1670,9 +1670,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						thisBusItem = busInSettings[index][ind];
 						thisTrackLabel = mixTrackNames[index].asString.divNumStr;
 						busInSettings[index][ind] = menu.item;
-						if(busInSettings[index].select({|item, index| index != ind})
-							.includesEqual(it.item), {
-								"This send insert is already assigned to this track".warn;
+						busInBool1 = busInSettings[index].select({|item, index| index != ind})
+							.includesEqual(it.item);
+						busInBool2 =  busInSettings[index].collect({|item|
+							if(item.notNil, {item.asSymbol}, {item});
+						}).includes(outputSettings[index]);
+						if((busInBool1).or(busInBool2), {
+								"This bus is already assigned to this track".warn;
 								sendsMenuArr[index][ind].value = 0;
 								sendsKnobArr[index][ind].value = 0;
 								sendsKnobArr[index][ind].action = {};
@@ -1781,7 +1785,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		outputMenuArr.do{|it, ind|
 			it.value = it.items.indexOfEqual(outputSettings[ind].asString);
 			it.action = { arg menu;
-				var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput, spaceInd, busInSpace;
+				var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
+				spaceInd, busInSpace, busInBool;
+
+			busInBool =  busInSettings[ind].collect({|item|
+							if(item.notNil, {item.asSymbol}, {item});
+						}).includes(menu.item.asSymbol);
+
+				if(busInBool, {
+					it.value = it.items.collect({|item| if(item != "", {item.asSymbol}, {item});
+					}).indexOf(outputSettings[ind]);
+					"This bus is already assigned to this track".warn;
+				}, {
 				oldTrack = outputSettings[ind].asSymbol;
 				oldDest = mixTrackNdefs[ind];
 				//old destination off
@@ -1837,7 +1852,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						this.input(arrayz, trackz[0].asSymbol, trackz[1]);
 					});
 				});
+
+						});
 			};
+
+
 		};
 
 		Ndef("AssembladgeGUI", {
