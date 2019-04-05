@@ -1301,6 +1301,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					});
 				});
 			};
+			mixerWin.onMove = {
+				if(fltMenuWindow.notNil, {
+					if(fltMenuWindow.visible, {
+						fltMenuWindow.close;
+						fltMenuWindow = nil;
+					});
+				});
+			};
 		});
 		if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
 			mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
@@ -1736,11 +1744,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 				it.mouseDownAction = { arg menu;
 					var boundArr, thisBounds, thisArrBounds, thisitemArr,
-					thisListView, screenBounds, thisTagFlt;
+					thisListView, screenBounds, thisTagFlt, scrollOrg;
 
 					screenBounds = Window.screenBounds.bounds.asArray.last;
 					boundArr = it.bounds.asArray;
-					thisBounds = 	Rect(boundArr[0], (screenBounds-boundArr[1]-285), 140, 240);
+					it.bounds.postln;
+					scrollOrg = mixerWin.visibleOrigin.asArray.postln;
+					thisBounds = 	Rect(boundArr[0]+mixerWin.bounds.left - scrollOrg[0],
+						(screenBounds-boundArr[1]-285)-(mixerWin.bounds.top-45),
+						140, 240);
 					thisArrBounds = thisBounds.asArray;
 					if(menu.string == "", {
 						fltMenuWindow = Window.new("", thisBounds, border: false).front;

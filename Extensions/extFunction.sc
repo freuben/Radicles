@@ -97,7 +97,7 @@
 						"Ndef.ar(" ++ item.key.cs ++ ", " ++ item.numChannels ++ ")";
 					});
 				}, {ndefout = ndefin});
-				out = funcCS.replace(string, ndefout.asString ++ ".sum" );
+				out = funcCS.replace(string, ndefout.cs.replace("\"", "") ++ ".sum" );
 			});
 		}, {
 			if(ndefin.isArray, {
