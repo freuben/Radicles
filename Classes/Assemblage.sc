@@ -10,8 +10,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
-		/*		server.options.numAudioBusChannels = 1024;
-		server.options.numControlBusChannels = 16384;*/
+		server.options.numWireBufs = 128;
+		server.options.numAudioBusChannels = 1024;
+		server.options.numControlBusChannels = 16384;
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0, lagTime=0; (\in * volume.dbamp.lag(lagTime); ).softclip};
@@ -1679,39 +1680,39 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						thisTrackLabel = mixTrackNames[index].asString.divNumStr;
 						busInSettings[index][ind] = menu.item;
 						busInBool1 = busInSettings[index].select({|item, index| index != ind})
-							.includesEqual(it.item);
+						.includesEqual(it.item);
 						busInBool2 =  busInSettings[index].collect({|item|
 							if(item.notNil, {item.asSymbol}, {item});
 						}).includes(outputSettings[index]);
 						if((busInBool1).or(busInBool2), {
-								"This bus is already assigned to this track".warn;
-								sendsMenuArr[index][ind].value = 0;
+							"This bus is already assigned to this track".warn;
+							sendsMenuArr[index][ind].value = 0;
+							sendsKnobArr[index][ind].value = 0;
+							sendsKnobArr[index][ind].action = {};
+						}, {
+							if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
+								if(busInSettings[index].includesEqual(thisBusItem).not, {
+									//remove
+									thisBusNum = thisBusItem.divNumStr[1];
+									this.removeBus(thisTrackLabel[1], thisBusNum,
+										thisTrackLabel[0].asSymbol);
+								});
+							});
+							if(menu.item != "", {
+								thisBusNum = menu.item.divNumStr[1];
+								this.bus(thisTrackLabel[1], thisBusNum, -inf,
+									thisTrackLabel[0].asSymbol, {
+										{knobFunc.(sendsKnobArr[index][ind],
+											mixTrackNames[index],
+											("busIn" ++ thisBusNum).asSymbol);
+										if(ind == (sends-1), { this.refreshMixGUI; });
+										}.defer;
+								});
+							}, {
 								sendsKnobArr[index][ind].value = 0;
 								sendsKnobArr[index][ind].action = {};
-							}, {
-								if(((thisBusItem.isNil).or(thisBusItem == "")).not, {
-									if(busInSettings[index].includesEqual(thisBusItem).not, {
-										//remove
-										thisBusNum = thisBusItem.divNumStr[1];
-										this.removeBus(thisTrackLabel[1], thisBusNum,
-											thisTrackLabel[0].asSymbol);
-									});
-								});
-								if(menu.item != "", {
-									thisBusNum = menu.item.divNumStr[1];
-									this.bus(thisTrackLabel[1], thisBusNum, -inf,
-										thisTrackLabel[0].asSymbol, {
-											{knobFunc.(sendsKnobArr[index][ind],
-												mixTrackNames[index],
-												("busIn" ++ thisBusNum).asSymbol);
-											if(ind == (sends-1), { this.refreshMixGUI; });
-											}.defer;
-									});
-								}, {
-									sendsKnobArr[index][ind].value = 0;
-									sendsKnobArr[index][ind].action = {};
-									if(ind == (sends-2), { this.refreshMixGUI; });
-								});
+								if(ind == (sends-2), { this.refreshMixGUI; });
+							});
 						});
 					});
 				};
@@ -1726,19 +1727,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 				if(filters.notNil, {
 					if(filters.notEmpty, {
-				thisFltTags = filters.flop[0].collect({|item| this.convFilterTag(item) });
-				fltTagArr = thisFltTags.collect({|item| [item[0], item[1].asInt, item[2].asInt] });
-				thisFltInfo = thisFltTags.collect({|item| [item[0], item[1].asInt] });
-				tracksFlt = ([thisFltInfo.flop[0], thisFltInfo.flop[1]].flop);
-				trackInfoInt = [trackInfoArr[0].asSymbol, trackInfoArr[1]];
-				if(trackInfoInt[1].isNil, {trackInfoInt[1] = 1 });
-				if(tracksFlt.collect({ |item|
-					(item == trackInfoInt) }).includes(true), {
-					thisSlotInfo = [trackInfoInt, ind+1].flat;
-					if(fltTagArr.collect({|item| item == thisSlotInfo}).includes(true), {
-						it.string = filters[fltTagArr.indexOfEqual(thisSlotInfo)][1];
-					});
-				});
+						thisFltTags = filters.flop[0].collect({|item| this.convFilterTag(item) });
+						fltTagArr = thisFltTags.collect({|item| [item[0], item[1].asInt, item[2].asInt] });
+						thisFltInfo = thisFltTags.collect({|item| [item[0], item[1].asInt] });
+						tracksFlt = ([thisFltInfo.flop[0], thisFltInfo.flop[1]].flop);
+						trackInfoInt = [trackInfoArr[0].asSymbol, trackInfoArr[1]];
+						if(trackInfoInt[1].isNil, {trackInfoInt[1] = 1 });
+						if(tracksFlt.collect({ |item|
+							(item == trackInfoInt) }).includes(true), {
+							thisSlotInfo = [trackInfoInt, ind+1].flat;
+							if(fltTagArr.collect({|item| item == thisSlotInfo}).includes(true), {
+								it.string = filters[fltTagArr.indexOfEqual(thisSlotInfo)][1];
+							});
+						});
 					});
 				});
 
@@ -1800,72 +1801,72 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
 				spaceInd, busInSpace, busInBool;
 
-			busInBool =  busInSettings[ind].collect({|item|
-							if(item.notNil, {item.asSymbol}, {item});
-						}).includes(menu.item.asSymbol);
+				busInBool =  busInSettings[ind].collect({|item|
+					if(item.notNil, {item.asSymbol}, {item});
+				}).includes(menu.item.asSymbol);
 
 				if(busInBool, {
 					it.value = it.items.collect({|item| if(item != "", {item.asSymbol}, {item});
 					}).indexOf(outputSettings[ind]);
 					"This bus is already assigned to this track".warn;
 				}, {
-				oldTrack = outputSettings[ind].asSymbol;
-				oldDest = mixTrackNdefs[ind];
-				//old destination off
-				if(oldTrack != "".asSymbol, {
-					inputs.flop[0].do{|item, index|
-						if(item.asString.find(oldTrack.asString.capitalise).notNil, {
-							oldInput = item;
-							thisInput =  inputs.flop[1][index]});
-					};
-					thisNewArr = [];
-					if(thisInput.isArray, {
-						thisInput.do{|item|
-							if(mixTrackNdefs[ind] != item, {
-								thisNewArr = thisNewArr.add(item);
-							});
+					oldTrack = outputSettings[ind].asSymbol;
+					oldDest = mixTrackNdefs[ind];
+					//old destination off
+					if(oldTrack != "".asSymbol, {
+						inputs.flop[0].do{|item, index|
+							if(item.asString.find(oldTrack.asString.capitalise).notNil, {
+								oldInput = item;
+								thisInput =  inputs.flop[1][index]});
 						};
-						oldDest = oldTrack.asString.divNumStr;
-						if(oldDest[1].isNil, {oldDest[1] = 1;});
-						if(thisNewArr.notEmpty, {
-							if(thisNewArr.size == 1, {
-								this.input(thisNewArr[0], oldDest[0].asSymbol, oldDest[1]);
+						thisNewArr = [];
+						if(thisInput.isArray, {
+							thisInput.do{|item|
+								if(mixTrackNdefs[ind] != item, {
+									thisNewArr = thisNewArr.add(item);
+								});
+							};
+							oldDest = oldTrack.asString.divNumStr;
+							if(oldDest[1].isNil, {oldDest[1] = 1;});
+							if(thisNewArr.notEmpty, {
+								if(thisNewArr.size == 1, {
+									this.input(thisNewArr[0], oldDest[0].asSymbol, oldDest[1]);
+								}, {
+									this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
+								});
 							}, {
-								this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
+								("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++
+									").source = nil").radpost.interpret;
 							});
 						}, {
-							("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++
-								").source = nil").radpost.interpret;
-						});
-					}, {
-						("Ndef(" ++ oldInput.cs ++ ").source = nil;").radpost.interpret;
-					});
-				});
-				//new destination
-				outputSettings[ind] = menu.item.asSymbol;
-				if(outputSettings[ind] != "".asSymbol, {
-					arrayz = [];
-					outputSettings.do{|item, index|
-						if(item == outputSettings[ind], {
-							arrayz = arrayz.add(mixTrackNdefs[index])
-					}); };
-					trackz = menu.item.divNumStr;
-					spaceInd = inputs.flop[0].indexOf(("space" ++ menu.item.capitalise).asSymbol);
-					if(spaceInd.notNil, {
-						busInSpace = inputs.flop[1][spaceInd];
-						if(busInSpace.asString.find("busIn").notNil, {
-							arrayz = (arrayz ++ busInSpace).flat;
+							("Ndef(" ++ oldInput.cs ++ ").source = nil;").radpost.interpret;
 						});
 					});
-					if(trackz[1].isNil, {trackz[1] = 1;});
-					if(arrayz.size == 1, {
-						this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
-					}, {
-						this.input(arrayz, trackz[0].asSymbol, trackz[1]);
+					//new destination
+					outputSettings[ind] = menu.item.asSymbol;
+					if(outputSettings[ind] != "".asSymbol, {
+						arrayz = [];
+						outputSettings.do{|item, index|
+							if(item == outputSettings[ind], {
+								arrayz = arrayz.add(mixTrackNdefs[index])
+						}); };
+						trackz = menu.item.divNumStr;
+						spaceInd = inputs.flop[0].indexOf(("space" ++ menu.item.capitalise).asSymbol);
+						if(spaceInd.notNil, {
+							busInSpace = inputs.flop[1][spaceInd];
+							if(busInSpace.asString.find("busIn").notNil, {
+								arrayz = (arrayz ++ busInSpace).flat;
+							});
+						});
+						if(trackz[1].isNil, {trackz[1] = 1;});
+						if(arrayz.size == 1, {
+							this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
+						}, {
+							this.input(arrayz, trackz[0].asSymbol, trackz[1]);
+						});
 					});
-				});
 
-						});
+				});
 			};
 
 
@@ -1901,30 +1902,35 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					peakArr = peakArr.add(thisPeakVal);
 				});
 				peakArr = peakArr.reshapeLike(levelArr);
-				peakArr.do{|item, index|
-					var peakDb;
-					peakDb = item.maxItem;
-					levelTextArr[index].string = peakDb.ampdb.round(0.1).asString;
-					case
-					{peakDb <= 0.9 } {levelTextArr[index].background_(Color.new255(78, 109, 38));}
-					{(peakDb > 0.9).and(peakDb < 1) } {
-						levelTextArr[index].background_(Color.new255(232, 90, 13));}
-					{peakDb == 1} {levelTextArr[index].background_(Color.new255(211, 14, 14));};
-				};
+				if(levelTextArr.notNil, {
+					peakArr.do{|item, index|
+						var peakDb;
+						peakDb = item.maxItem;
+						levelTextArr[index].string = peakDb.ampdb.round(0.1).asString;
+						case
+						{peakDb <= 0.9 } {levelTextArr[index].background_(Color.new255(78, 109, 38));}
+						{(peakDb > 0.9).and(peakDb < 1) } {
+							levelTextArr[index].background_(Color.new255(232, 90, 13));}
+						{peakDb == 1} {levelTextArr[index].background_(Color.new255(211, 14, 14));};
+					};
+				});
 			}.defer;
 		}, \AssembladgeGUI);
 
 		mixerWin.onClose = {
+			levelTextArr = nil;
+			mixerWin = nil;
+
 			OSCdef(\AssembladgeGUI).free;
 			Ndef("AssembladgeGUI").clear;
-			mixerWin = nil;
+
 			filtersWindow.do{|item| item.close; };
 			if(fltMenuWindow.notNil, {
-					if(fltMenuWindow.visible, {
-						fltMenuWindow.close;
-						fltMenuWindow = nil;
-					});
+				if(fltMenuWindow.visible, {
+					fltMenuWindow.close;
+					fltMenuWindow = nil;
 				});
+			});
 			/*if(outputSettings.includes("".asSymbol).not, {
 			Ndef.all[server.asSymbol].clean; //garbage collection
 			});*/
@@ -2125,117 +2131,117 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 
 		if(winBool, {
-		argArr = filterPairs.flop[0];
-		defaultArgArr = filterPairs.flop[1];
-		specArr = SpecFile.read(\filter, filterKey, false);
-		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+			argArr = filterPairs.flop[0];
+			defaultArgArr = filterPairs.flop[1];
+			specArr = SpecFile.read(\filter, filterKey, false);
+			stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
 
-		filtersWin = ScrollView()
-		.name_(winName);
-		filtersWin.hasHorizontalScroller = false;
-		fltWinWidth = (250) + stringLengh + 7;
-		fltWinTop = Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinDown;
-		fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
-		filtersWin.fixedHeight = fltWinHeight;
-		filtersWin.fixedWidth = fltWinWidth;
-		filtersWindow = filtersWindow.add(filtersWin);
-		filtersWin.onClose = {
-			filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
-		};
-		/*filtersWin.alwaysOnTop = true;*/
-		fltCanvas = View();
-		/*fltCanvas = View(bounds: (Rect(0, 0, fltWinWidth, fltWinHeight)));*/
-		fltCanvas.background_(Color.black);
-		argArr.do{|item, index|
-			var finalLayout, panKnob, panKnobText, spaceTextLay, specOptions,
-			panKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc,
-			thisResult, labelTextArr;
-			if(specArr.notNil, {
-				specBool = specArr[index].notNil;
-			}, {
-				specBool = false;
-			});
-			panKnobText = StaticText(fltCanvas).align_(\center)
-			.background_(Color.black)
-			.stringColor_(Color.white)
-			.font_(Font("Monaco", 8))
-			.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
-			if(specBool, {
-				thisSpec = specArr[index][1].asSpec;
-				thisFunc = specArr[index][2];
-				panKnob = Slider().minWidth_(180).maxWidth_(180)
-				.maxHeight_(15).minHeight_(15);
-				panKnob.orientation = \horizontal;
-				panKnob.action = {
-					if(thisFunc.notNil, {
-						thisResult = thisFunc.(thisSpec.map(panKnob.value));
-					}, {
-						thisResult = thisSpec.map(panKnob.value);
-					});
-					panKnobText.string = thisResult.asString.copyRange(0, 7);
-					("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
-						++ thisResult ++ ");").radpostcont.interpret;
-				};
-				thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
-				panKnob.value = thisResult;
-				panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
-			}, {
-				panKnob = TextField().minWidth_(180).maxWidth_(180)
-				.font_(Font("Monaco", 8))
-				.background_(Color.new255(246, 246, 246))
-				.maxHeight_(15).minHeight_(15);
-				defaultVal = defaultArgArr[index];
-				if(defaultVal.notNil, {
-					panKnob.string = defaultArgArr[index].cs;
-					panKnobText.string = defaultArgArr[index].cs.copyRange(0, 7);
-				});
-				panKnob.action = {arg field;
-					panKnobText.string = field.value;
-					("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
-						++ field.value ++ ");").radpostcont.interpret;
-				};
-			});
-			labelString = item.asString;
-			labelText = StaticText(fltCanvas).align_(\center)
-			.background_(Color.black)
-			.stringColor_(Color.white)
-			.font_(Font("Monaco", 8))
-			.string_(labelString)
-			.maxWidth_(stringLengh)
-			.minWidth_(stringLengh)
-			.minHeight_(10);
-			panKnobTextArr = panKnobTextArr.add(panKnobText);
-			labelTextArr = labelTextArr.add(labelText);
-			panKnobArr = panKnobArr.add(panKnob);
-			[[labelText, align: \center], [panKnob, align: \center], [panKnobText, align: \center]].do{|lay|
-				finalLayout = finalLayout.add(lay);
+			filtersWin = ScrollView()
+			.name_(winName);
+			filtersWin.hasHorizontalScroller = false;
+			fltWinWidth = (250) + stringLengh + 7;
+			fltWinTop = Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinDown;
+			fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
+			filtersWin.fixedHeight = fltWinHeight;
+			filtersWin.fixedWidth = fltWinWidth;
+			filtersWindow = filtersWindow.add(filtersWin);
+			filtersWin.onClose = {
+				filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
 			};
-			fltVlay = fltVlay.add(HLayout(*finalLayout) );
-		};
+			/*filtersWin.alwaysOnTop = true;*/
+			fltCanvas = View();
+			/*fltCanvas = View(bounds: (Rect(0, 0, fltWinWidth, fltWinHeight)));*/
+			fltCanvas.background_(Color.black);
+			argArr.do{|item, index|
+				var finalLayout, panKnob, panKnobText, spaceTextLay, specOptions,
+				panKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc,
+				thisResult, labelTextArr;
+				if(specArr.notNil, {
+					specBool = specArr[index].notNil;
+				}, {
+					specBool = false;
+				});
+				panKnobText = StaticText(fltCanvas).align_(\center)
+				.background_(Color.black)
+				.stringColor_(Color.white)
+				.font_(Font("Monaco", 8))
+				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
+				if(specBool, {
+					thisSpec = specArr[index][1].asSpec;
+					thisFunc = specArr[index][2];
+					panKnob = Slider().minWidth_(180).maxWidth_(180)
+					.maxHeight_(15).minHeight_(15);
+					panKnob.orientation = \horizontal;
+					panKnob.action = {
+						if(thisFunc.notNil, {
+							thisResult = thisFunc.(thisSpec.map(panKnob.value));
+						}, {
+							thisResult = thisSpec.map(panKnob.value);
+						});
+						panKnobText.string = thisResult.asString.copyRange(0, 7);
+						("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
+							++ thisResult ++ ");").radpostcont.interpret;
+					};
+					thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
+					panKnob.value = thisResult;
+					panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+				}, {
+					panKnob = TextField().minWidth_(180).maxWidth_(180)
+					.font_(Font("Monaco", 8))
+					.background_(Color.new255(246, 246, 246))
+					.maxHeight_(15).minHeight_(15);
+					defaultVal = defaultArgArr[index];
+					if(defaultVal.notNil, {
+						panKnob.string = defaultArgArr[index].cs;
+						panKnobText.string = defaultArgArr[index].cs.copyRange(0, 7);
+					});
+					panKnob.action = {arg field;
+						panKnobText.string = field.value;
+						("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
+							++ field.value ++ ");").radpostcont.interpret;
+					};
+				});
+				labelString = item.asString;
+				labelText = StaticText(fltCanvas).align_(\center)
+				.background_(Color.black)
+				.stringColor_(Color.white)
+				.font_(Font("Monaco", 8))
+				.string_(labelString)
+				.maxWidth_(stringLengh)
+				.minWidth_(stringLengh)
+				.minHeight_(10);
+				panKnobTextArr = panKnobTextArr.add(panKnobText);
+				labelTextArr = labelTextArr.add(labelText);
+				panKnobArr = panKnobArr.add(panKnob);
+				[[labelText, align: \center], [panKnob, align: \center], [panKnobText, align: \center]].do{|lay|
+					finalLayout = finalLayout.add(lay);
+				};
+				fltVlay = fltVlay.add(HLayout(*finalLayout) );
+			};
 
-		removeButton = Button().maxHeight_(15).minHeight_(15)
-		.states_([["", Color.new255(211, 14, 14), Color.black]])
-		/*.background_(Color.black)
-		.stringColor_(Color.white)*/
-		.string_("R E M O V E   F I L T E R")
-		.font_(Font("Monaco", 8)).action = { arg menu;
-			var filterInfoArr;
-			filterInfoArr = this.convFilterTag(filterTag);
-			this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
-			filtersWin.close;
-			if(mixButton.notNil, {
-				mixButton.string = "";
-			});
-		};
-		removeButton.canFocus = false;
+			removeButton = Button().maxHeight_(15).minHeight_(15)
+			.states_([["", Color.new255(211, 14, 14), Color.black]])
+			/*.background_(Color.black)
+			.stringColor_(Color.white)*/
+			.string_("R E M O V E   F I L T E R")
+			.font_(Font("Monaco", 8)).action = { arg menu;
+				var filterInfoArr;
+				filterInfoArr = this.convFilterTag(filterTag);
+				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
+				filtersWin.close;
+				if(mixButton.notNil, {
+					mixButton.string = "";
+				});
+			};
+			removeButton.canFocus = false;
 
-		fltVlay = [removeButton] ++ fltVlay;
+			fltVlay = [removeButton] ++ fltVlay;
 
-		fltCanvas.layout = VLayout(*fltVlay);
-		filtersWin.canvas = fltCanvas;
-		filtersWin.bounds = Rect(fltWinLeft, fltWinDown, fltWinWidth, fltWinHeight);
-		/*filtersWin.bounds.postln;*/
-		filtersWin.front;
+			fltCanvas.layout = VLayout(*fltVlay);
+			filtersWin.canvas = fltCanvas;
+			filtersWin.bounds = Rect(fltWinLeft, fltWinDown, fltWinWidth, fltWinHeight);
+			/*filtersWin.bounds.postln;*/
+			filtersWin.front;
 		}, {
 			filtersWin = filtersWindow.collect({|item|
 				item.name });
