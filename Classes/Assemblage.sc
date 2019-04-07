@@ -2,7 +2,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
-	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings, <filtersWindow;
+	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
+	<filtersWindow, <scrollPoint, <winRefresh=false;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -10,7 +11,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
-		server.options.numWireBufs = 128;
+		server.options.numWireBufs = 128*4;
 		server.options.numAudioBusChannels = 1024;
 		server.options.numControlBusChannels = 16384;
 		server.waitForBoot{
@@ -1241,12 +1242,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	mixGUI {arg updateFreq=10;
-		var sends, fxsNum, knobColors, winHeight,
-		winWidth, knobSize, canvas, panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
-		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr, fxSlotArr, trackLabelArr,
-		spaceTextLay, popupmenusize, slotsSize, panSpec, mixInputLabels,
-		trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels, maxBusIn,
-		knobFunc, busInSettings, guiFunc, fltMenuWindow;
+		var sends, fxsNum, knobColors, winHeight, winWidth, knobSize, canvas,
+		panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
+		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr,
+		muteButton, recButton, soloButton, spaceButton, muteButArr, recButArr, soloButArr,
+		spaceButArr, volButtons, buttonsLay1, buttonsLay2, oscDefFunc,
+		fxSlotArr, trackLabelArr, spaceTextLay, popupmenusize, slotsSize, panSpec,
+		mixInputLabels, trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels,
+		maxBusIn, knobFunc, busInSettings, guiFunc, fltMenuWindow, oldMixerWin;
 
 		this.updateMixInfo;
 		//getting input label data
@@ -1291,26 +1294,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		winHeight = 478 + ((sends-2)*15) + ((fxsNum-2)*15);
 		winWidth = (43*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
-		if(mixerWin.isNil, {
-			mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
-			mixerWin.hasVerticalScroller = false;
-			mixerWin.mouseDownAction = {
-				if(fltMenuWindow.notNil, {
-					if(fltMenuWindow.visible, {
-						fltMenuWindow.close;
-						fltMenuWindow = nil;
-					});
-				});
-			};
-			mixerWin.onMove = {
-				if(fltMenuWindow.notNil, {
-					if(fltMenuWindow.visible, {
-						fltMenuWindow.close;
-						fltMenuWindow = nil;
-					});
-				});
-			};
+		/*	if((mixerWin.isNil).or(winRefresh), {*/
+		if(winRefresh, {oldMixerWin=mixerWin; winRefresh = false;
+			{0.1.yield; oldMixerWin.close; 0.1.yield; oscDefFunc.()}.fork(AppClock);
 		});
+		mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
+		mixerWin.hasVerticalScroller = false;
+		mixerWin.mouseDownAction = {
+			if(fltMenuWindow.notNil, {
+				if(fltMenuWindow.visible, {
+					fltMenuWindow.close;
+					fltMenuWindow = nil;
+				});
+			});
+		};
+		mixerWin.onMove = {
+			if(fltMenuWindow.notNil, {
+				if(fltMenuWindow.visible, {
+					fltMenuWindow.close;
+					fltMenuWindow = nil;
+				});
+			});
+		};
+		/*});*/
 		if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
 			mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
 		});
@@ -1322,7 +1328,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
 			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
 			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot,
-			trackLabel, trackColor, thisInputVal;
+			trackLabel, trackColor, thisInputVal, butUIHeight, butUIWidth;
 			//volume slider
 			sliderText = StaticText(canvas).align_(\center)
 			.background_(Color.black).stringColor_(Color.white)
@@ -1375,6 +1381,48 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			panKnobTextArr = panKnobTextArr.add(panKnobText);
 			spaceTextLay = HLayout(*panKnobText);
 			panKnobArr = panKnobArr.add(panKnob);
+
+			butUIHeight = 12;
+			butUIWidth = 25;
+
+			soloButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
+			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
+			.focusColor_(Color.red(alpha:0.2))
+			.background_(Color.black);
+			soloButton.states = [["S", Color.white, Color.black],
+				["S", Color.white, Color.new255(232, 90, 13)]];
+			soloButton.font = Font("Monaco", 8);
+
+			recButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
+			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
+			.focusColor_(Color.red(alpha:0.2))
+			.background_(Color.black);
+			recButton.states = [["R", Color.white, Color.black],
+				["R", Color.white, Color.new255(211, 14, 14)]];
+			recButton.font = Font("Monaco", 8);
+
+			muteButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
+			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
+			.background_(Color.black);
+			muteButton.states = [["M", Color.white, Color.black],
+				["M", Color.white, Color.new255(58, 162, 175)]];
+			muteButton.font = Font("Monaco", 8);
+
+			spaceButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
+			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
+			.focusColor_(Color.red(alpha:0.2))
+			.background_(Color.black);
+			spaceButton.states = [["◯", Color.white, Color.black],
+				["◯", Color.white, Color.black]];
+			spaceButton.font = Font("Monaco", 8);
+
+			muteButArr = muteButArr.add(muteButton);
+			spaceButArr = spaceButArr.add(spaceButton);
+			soloButArr = soloButArr.add(muteButton);
+			recButArr = soloButArr.add(recButton);
+
+			buttonsLay1 = HLayout(*[muteButton, spaceButton]);
+			buttonsLay2 = HLayout(*[soloButton, recButton]);
 
 			popupmenusize = 14;
 
@@ -1512,6 +1560,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			[[hlay, align: \center], [thisLay, align: \center]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
+			//rec and space buttons
+			/*[[recbutton, align: \center], [spacebutton, align: \center]].do{|lay|
+				finalLayout = finalLayout.add(lay);
+			};*/
+			//mute and solo buttons
+			[[buttonsLay1, align: \center], [buttonsLay2, align: \center]].do{|lay|
+			finalLayout = finalLayout.add(lay);
+			};
 			//track names
 			finalLayout = finalLayout.add([trackLabel, align: \below]);
 			vlay = vlay.add(VLayout(*finalLayout) );
@@ -1605,6 +1661,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		canvas.layout = HLayout(*vlay);
 		mixerWin.canvas = canvas;
 		mixerWin.front;
+		if(scrollPoint.notNil, {
+			//check this bug hasn't been fixed in latest SC version, if so, remove .defer
+			{0.001.yield; mixerWin.visibleOrigin_(scrollPoint.postln);}.fork(AppClock);
+		});
 
 		//setting busIns
 		if(busInSettings.isNil, {
@@ -1665,6 +1725,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			item.do{|it, ind|
 				it.action = {arg menu;
 					var thisBusItem, thisTrackLabel, thisBusNum, busInBool1, busInBool2;
+
+					scrollPoint = mixerWin.visibleOrigin;
 
 					thisBusNum = menu.item.divNumStr[1];
 					thisTrackLabel = mixTrackNames[index].asString.divNumStr[0].asSymbol;
@@ -1749,8 +1811,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 					screenBounds = Window.screenBounds.bounds.asArray.last;
 					boundArr = it.bounds.asArray;
-					it.bounds.postln;
-					scrollOrg = mixerWin.visibleOrigin.asArray.postln;
+					scrollPoint = mixerWin.visibleOrigin;
+					scrollOrg = scrollPoint.asArray;
 					thisBounds = 	Rect(boundArr[0]+mixerWin.bounds.left - scrollOrg[0],
 						(screenBounds-boundArr[1]-285)-(mixerWin.bounds.top-45),
 						140, 240);
@@ -1884,6 +1946,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			);
 		});
 
+		oscDefFunc = {
 		OSCdef(\AssembladgeGUI, {|msg, time, addr, recvPort|
 			var dBLow, array, numRMSSampsRecip, numRMSSamps, peakVal, peakArr;
 			numRMSSamps = server.sampleRate / updateFreq;
@@ -1916,10 +1979,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			}.defer;
 		}, \AssembladgeGUI);
+		};
+
+		oscDefFunc.();
 
 		mixerWin.onClose = {
 			levelTextArr = nil;
-			mixerWin = nil;
+			/*mixerWin = nil;*/
 
 			OSCdef(\AssembladgeGUI).free;
 			Ndef("AssembladgeGUI").clear;
@@ -1941,6 +2007,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	refreshMixGUI {
 		if(mixerWin.notNil, {
 			mixerWin.children.do { |child| child.remove };
+			winRefresh = true;
 		});
 		this.mixGUI;
 	}
