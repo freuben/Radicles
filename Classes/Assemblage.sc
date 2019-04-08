@@ -3,7 +3,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
-	<filtersWindow, <scrollPoint, <winRefresh=false;
+	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1242,7 +1242,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	mixGUI {arg updateFreq=10;
-		var sends, fxsNum, knobColors, winHeight, winWidth, knobSize, canvas,
+		var sends, knobColors, winHeight, winWidth, knobSize, canvas,
 		panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr,
 		muteButton, recButton, soloButton, spaceButton, muteButArr, recButArr, soloButArr,
@@ -1560,11 +1560,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			};
 			//rec and space buttons
 			/*[[recbutton, align: \center], [spacebutton, align: \center]].do{|lay|
-				finalLayout = finalLayout.add(lay);
+			finalLayout = finalLayout.add(lay);
 			};*/
 			//mute and solo buttons
 			[[buttonsLay1, align: \center], [buttonsLay2, align: \center]].do{|lay|
-			finalLayout = finalLayout.add(lay);
+				finalLayout = finalLayout.add(lay);
 			};
 			//track names
 			finalLayout = finalLayout.add([trackLabel, align: \below]);
@@ -1945,38 +1945,38 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 
 		oscDefFunc = {
-		OSCdef(\AssembladgeGUI, {|msg, time, addr, recvPort|
-			var dBLow, array, numRMSSampsRecip, numRMSSamps, peakVal, peakArr;
-			numRMSSamps = server.sampleRate / updateFreq;
-			numRMSSampsRecip = 1 / numRMSSamps;
-			dBLow = -80;
-			{
-				peakArr = [];
-				msg.copyToEnd(3).pairsDo({|val, peak, i|
-					var meter, thisPeakVal;
-					i = i * 0.5;
-					meter = 	levelArr.flat[i];
-					meter.value = (val.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
-					peakVal = peak.ampdb;
-					thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
-					meter.peakLevel = thisPeakVal;
-					peakArr = peakArr.add(thisPeakVal);
-				});
-				peakArr = peakArr.reshapeLike(levelArr);
-				if(levelTextArr.notNil, {
-					peakArr.do{|item, index|
-						var peakDb;
-						peakDb = item.maxItem;
-						levelTextArr[index].string = peakDb.ampdb.round(0.1).asString;
-						case
-						{peakDb <= 0.9 } {levelTextArr[index].background_(Color.new255(78, 109, 38));}
-						{(peakDb > 0.9).and(peakDb < 1) } {
-							levelTextArr[index].background_(Color.new255(232, 90, 13));}
-						{peakDb == 1} {levelTextArr[index].background_(Color.new255(211, 14, 14));};
-					};
-				});
-			}.defer;
-		}, \AssembladgeGUI);
+			OSCdef(\AssembladgeGUI, {|msg, time, addr, recvPort|
+				var dBLow, array, numRMSSampsRecip, numRMSSamps, peakVal, peakArr;
+				numRMSSamps = server.sampleRate / updateFreq;
+				numRMSSampsRecip = 1 / numRMSSamps;
+				dBLow = -80;
+				{
+					peakArr = [];
+					msg.copyToEnd(3).pairsDo({|val, peak, i|
+						var meter, thisPeakVal;
+						i = i * 0.5;
+						meter = 	levelArr.flat[i];
+						meter.value = (val.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
+						peakVal = peak.ampdb;
+						thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
+						meter.peakLevel = thisPeakVal;
+						peakArr = peakArr.add(thisPeakVal);
+					});
+					peakArr = peakArr.reshapeLike(levelArr);
+					if(levelTextArr.notNil, {
+						peakArr.do{|item, index|
+							var peakDb;
+							peakDb = item.maxItem;
+							levelTextArr[index].string = peakDb.ampdb.round(0.1).asString;
+							case
+							{peakDb <= 0.9 } {levelTextArr[index].background_(Color.new255(78, 109, 38));}
+							{(peakDb > 0.9).and(peakDb < 1) } {
+								levelTextArr[index].background_(Color.new255(232, 90, 13));}
+							{peakDb == 1} {levelTextArr[index].background_(Color.new255(211, 14, 14));};
+						};
+					});
+				}.defer;
+			}, \AssembladgeGUI);
 		};
 
 		oscDefFunc.();
@@ -2290,13 +2290,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.stringColor_(Color.white)*/
 			.string_("R E M O V E   F I L T E R")
 			.font_(Font("Monaco", 8)).action = { arg menu;
-				var filterInfoArr;
+				var filterInfoArr, fxsNum2;
 				filterInfoArr = this.convFilterTag(filterTag);
 				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
 				filtersWin.close;
 				if(mixButton.notNil, {
 					mixButton.string = "";
 				});
+				if(filters.notNil, {
+					if(filters.notEmpty, {
+						fxsNum2 = filters.flop[0].collect({|item|
+							item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
+					});
+				});
+				[fxsNum2, fxsNum].postln;
+				if(fxsNum2 < fxsNum, {
+								{server.sync; this.refreshMixGUI;}.fork(AppClock);
+							});
+
 			};
 			removeButton.canFocus = false;
 
