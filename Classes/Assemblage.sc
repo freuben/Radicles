@@ -1291,10 +1291,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353),
 			Color.white, Color.black, Color() ];
 
-		winHeight = 478 + ((sends-2)*15) + ((fxsNum-2)*15);
+		winHeight = 504 + ((sends-2)*15) + ((fxsNum-2)*15);
 		winWidth = (43*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
-		/*	if((mixerWin.isNil).or(winRefresh), {*/
 		if(winRefresh, {oldMixerWin=mixerWin; winRefresh = false;
 			{0.1.yield; oldMixerWin.close; 0.1.yield; oscDefFunc.()}.fork(AppClock);
 		});
@@ -1316,7 +1315,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		};
-		/*});*/
 		if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
 			mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
 		});
@@ -1663,7 +1661,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mixerWin.front;
 		if(scrollPoint.notNil, {
 			//check this bug hasn't been fixed in latest SC version, if so, remove .defer
-			{0.001.yield; mixerWin.visibleOrigin_(scrollPoint.postln);}.fork(AppClock);
+			{0.001.yield; mixerWin.visibleOrigin_(scrollPoint);}.fork(AppClock);
 		});
 
 		//setting busIns
