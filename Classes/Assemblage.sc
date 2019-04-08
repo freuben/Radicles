@@ -1845,7 +1845,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							});
 						});
 						this.filterGUI(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
-							[menu.bounds.left, menu.bounds.top+68], menu);
+							[menu.bounds.left+mixerWin.bounds.left-scrollPoint.asArray[0],
+								(mixerWin.bounds.top-45)+menu.bounds.top+68], menu);
 					});
 				};
 			}
@@ -2205,6 +2206,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.name_(winName);
 			filtersWin.hasHorizontalScroller = false;
 			fltWinWidth = (250) + stringLengh + 7;
+
 			fltWinTop = Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinDown;
 			fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
 			filtersWin.fixedHeight = fltWinHeight;
