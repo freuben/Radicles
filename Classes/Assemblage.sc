@@ -1405,15 +1405,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				soloButton.font = Font("Monaco", 8);
 				soloButton.action = {|butt|
 					soloStates[index] = butt.value;
-					/*soloStates.do{|state, ind|*/
 					if(soloStates.includes(1), {
-						this.masterSoloFunc((soloStates).postln);
-						/*							("Ndef(" ++ mixTrackNames[ind].cs ++ ").set('solo', " ++ state ++ ");").radpostcont.interpret;*/
+						this.masterSoloFunc((soloStates));
 					}, {
-						this.masterSoloFunc((1!soloStates.size).postln;);
-						/*							("Ndef(" ++ mixTrackNames[ind].cs ++ ").set('solo', 1);").radpostcont.interpret;*/
+						this.masterSoloFunc((1!soloStates.size););
 					});
-					/*};*/
 				};
 			});
 
@@ -1433,7 +1429,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			muteButton.font = Font("Monaco", 8);
 			muteButton.action = {|butt|
 				("Ndef(" ++ mixTrackNames[index].cs ++ ").set('mute', " ++ butt.value
-					++ ");").radpostcont.interpret;
+					++ ");").radpost.interpret;
 			};
 
 			spaceButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
@@ -2409,7 +2405,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		newCS = inArr.collect {|item, index|  "Ndef.ar(" ++ item.key.cs ++
 			", " ++ item.numChannels ++ ") * "	++ buttstates[index] };
 		finalCS = cs.replace(cs.copyRange(startCS+2,endCS), newCS);
-		("Ndef('spaceMaster').source = " ++ finalCS).radpostcont.interpret;
+		("Ndef('spaceMaster').source = " ++ finalCS).radpost.interpret;
 	}
 
 }
