@@ -3,7 +3,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
-	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum;
+	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -16,7 +16,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		server.options.numControlBusChannels = 16384;
 		server.waitForBoot{
 			{
-				masterSynth = {arg volume=0, lagTime=0; (\in * volume.dbamp.lag(lagTime); ).softclip};
+				masterSynth = {arg volume=0, lagTime=0, mute=0;
+					(\in * volume.dbamp.lag(lagTime)*mute.range(1,0).lag(0.1)).softclip};
 				if(chanNum.isArray.not, {
 					chanMaster = chanNum;
 					chanTrack = chanNum;
@@ -88,7 +89,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth, spaceSpecs, thisTrackInfo;
 		if([\track, \bus, \master].includes(type), {
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
-			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0; (\in * volume.dbamp.lag(lagTime); )}; };
+			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
+				(\in * volume.dbamp.lag(lagTime)*mute.range(1,0).lag(0.1)*solo.lag(0.1) )}; };
 			trackSpecs ?? trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ] ];
 			spaceSynth = SynthFile.read(\space, spaceType);
 			spaceSpecs = SpecFile.read(\space, spaceType);
@@ -1286,6 +1288,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		});
 
+		if(soloStates.isNil, { soloStates = 0!(mixTrackNames.size-1) });
+
 		numBuses = trackNames.select{|item| item.asString.find("bus").notNil }.size+1;
 
 		knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353),
@@ -1383,13 +1387,35 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			butUIHeight = 12;
 			butUIWidth = 25;
 
-			soloButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
-			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
-			.focusColor_(Color.red(alpha:0.2))
-			.background_(Color.black);
-			soloButton.states = [["S", Color.white, Color.black],
-				["S", Color.white, Color.new255(232, 90, 13)]];
-			soloButton.font = Font("Monaco", 8);
+			if(index == (mixTrackNames.size-1), {
+				soloButton = StaticText(canvas).minWidth_(butUIWidth).maxWidth_(butUIWidth)
+				.maxHeight_(butUIHeight).minHeight_(butUIHeight)
+				// .focusColor_(Color.black)
+				.background_(Color.black);
+				soloButton.string= "     ";
+				// soloButton.states = [["", Color.black, Color.black]];
+				// soloButton.canFocus = false;
+			}, {
+				soloButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
+				.maxHeight_(butUIHeight).minHeight_(butUIHeight)
+				.focusColor_(Color.red(alpha:0.2))
+				.background_(Color.black);
+				soloButton.states = [["S", Color.white, Color.black],
+					["S", Color.white, Color.new255(232, 90, 13)]];
+				soloButton.font = Font("Monaco", 8);
+				soloButton.action = {|butt|
+					soloStates[index] = butt.value;
+					/*soloStates.do{|state, ind|*/
+					if(soloStates.includes(1), {
+						this.masterSoloFunc((soloStates).postln);
+						/*							("Ndef(" ++ mixTrackNames[ind].cs ++ ").set('solo', " ++ state ++ ");").radpostcont.interpret;*/
+					}, {
+						this.masterSoloFunc((1!soloStates.size).postln;);
+						/*							("Ndef(" ++ mixTrackNames[ind].cs ++ ").set('solo', 1);").radpostcont.interpret;*/
+					});
+					/*};*/
+				};
+			});
 
 			recButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
 			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
@@ -1405,6 +1431,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			muteButton.states = [["M", Color.white, Color.black],
 				["M", Color.white, Color.new255(58, 162, 175)]];
 			muteButton.font = Font("Monaco", 8);
+			muteButton.action = {|butt|
+				("Ndef(" ++ mixTrackNames[index].cs ++ ").set('mute', " ++ butt.value
+					++ ");").radpostcont.interpret;
+			};
 
 			spaceButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
 			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
@@ -1558,11 +1588,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			[[hlay, align: \center], [thisLay, align: \center]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
-			//rec and space buttons
-			/*[[recbutton, align: \center], [spacebutton, align: \center]].do{|lay|
-			finalLayout = finalLayout.add(lay);
-			};*/
-			//mute and solo buttons
+			//button UI solo,mute,rec,space
 			[[buttonsLay1, align: \center], [buttonsLay2, align: \center]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
@@ -2307,8 +2333,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 				[fxsNum2, fxsNum].postln;
 				if(fxsNum2 < fxsNum, {
-								{server.sync; this.refreshMixGUI;}.fork(AppClock);
-							});
+					{server.sync; this.refreshMixGUI;}.fork(AppClock);
+				});
 
 			};
 			removeButton.canFocus = false;
@@ -2372,6 +2398,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, {
 			"no filters active".warn;
 		});
+	}
+
+	masterSoloFunc {arg buttstates;
+		var inArr, newCS, startCS, endCS, finalCS, cs;
+		cs = Ndef(\spaceMaster).source.cs;
+		startCS = cs.find("= [");
+		endCS = cs.find("].sum");
+		inArr = inputs.flop[1][inputs.flop[0].indexOf(\spaceMaster);];
+		newCS = inArr.collect {|item, index|  "Ndef.ar(" ++ item.key.cs ++
+			", " ++ item.numChannels ++ ") * "	++ buttstates[index] };
+		finalCS = cs.replace(cs.copyRange(startCS+2,endCS), newCS);
+		("Ndef('spaceMaster').source = " ++ finalCS).radpostcont.interpret;
 	}
 
 }
