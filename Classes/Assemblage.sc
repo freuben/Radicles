@@ -1238,8 +1238,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		sysChans = mixTrackNdefs.collect({|item| item.numChannels});
 		mixTrackNames.do{|item|
 			var spatialType;
-			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++ item.asString.capitalise).asSymbol)];
-			if([\bal2, \pan2].includes(spatialType), {sysPan = sysPan.add(0); }, {sysPan = sysPan.add(1) });
+			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++
+				item.asString.capitalise).asSymbol)];
+			if([\bal2, \pan2].includes(spatialType), {
+				sysPan = sysPan.add(0);
+			}, {sysPan = sysPan.add(1)
+			});
 		};
 	}
 
@@ -1248,7 +1252,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr,
 		muteButton, recButton, soloButton, spaceButton, muteButArr, recButArr, soloButArr,
-		spaceButArr, volButtons, buttonsLay1, buttonsLay2, oscDefFunc,
+		spaceButArr, volButtons, buttonsLay1, buttonsLay2, oscDefFunc, levelSoloStates,
 		fxSlotArr, trackLabelArr, spaceTextLay, popupmenusize, slotsSize, panSpec,
 		mixInputLabels, trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels,
 		maxBusIn, knobFunc, busInSettings, guiFunc, fltMenuWindow, oldMixerWin;
@@ -1289,6 +1293,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 
 		if(soloStates.isNil, { soloStates = 0!(mixTrackNames.size-1) });
+		levelSoloStates = sysChans.collect({|item, index| 1!item }).flat;
 
 		numBuses = trackNames.select{|item| item.asString.find("bus").notNil }.size+1;
 
@@ -1407,8 +1412,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					soloStates[index] = butt.value;
 					if(soloStates.includes(1), {
 						this.masterSoloFunc((soloStates));
+						levelSoloStates = sysChans.collect({|item, index|
+							if(soloStates[index].isNil, {1!item}, {soloStates[index]!item }) }).flat;
 					}, {
 						this.masterSoloFunc((1!soloStates.size););
+						levelSoloStates = sysChans.collect({|item, index| 1!item }).flat;
 					});
 				};
 			});
@@ -1549,9 +1557,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			//track name label
 			case
-			{mixTrackNames[index].asString.find("track").notNil} {trackColor = Color.new255(58, 162, 175)}
-			{mixTrackNames[index].asString.find("bus").notNil} {trackColor = Color.new255(132, 124, 10)}
-			{mixTrackNames[index].asString.find("master").notNil} {trackColor = Color.new255(102, 57, 130)};
+			{mixTrackNames[index].asString.find("track").notNil} {
+				trackColor = Color.new255(58, 162, 175)}
+			{mixTrackNames[index].asString.find("bus").notNil} {
+				trackColor = Color.new255(132, 124, 10)}
+			{mixTrackNames[index].asString.find("master").notNil} {
+				trackColor = Color.new255(102, 57, 130)};
 			trackLabel = StaticText(canvas).align_(\center).background_(trackColor)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			trackLabel.font = Font("Monaco", 8);
@@ -1976,11 +1987,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				{
 					peakArr = [];
 					msg.copyToEnd(3).pairsDo({|val, peak, i|
-						var meter, thisPeakVal;
+						var meter, thisPeakVal, value;
 						i = i * 0.5;
 						meter = 	levelArr.flat[i];
-						meter.value = (val.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
-						peakVal = peak.ampdb;
+						value = val*levelSoloStates[i];
+						meter.value = (value.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
+						peakVal = (peak*levelSoloStates[i]).ampdb;
 						thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
 						meter.peakLevel = thisPeakVal;
 						peakArr = peakArr.add(thisPeakVal);
