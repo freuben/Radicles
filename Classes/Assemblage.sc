@@ -4,7 +4,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
-	<recStates;
+	<recStates, recBStoreArr;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -2435,6 +2435,59 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			", " ++ item.numChannels ++ ") * "	++ buttstates[index] };
 		finalCS = cs.replace(cs.copyRange(startCS+2,endCS), newCS);
 		("Ndef('spaceMaster').source = " ++ finalCS).radpost.interpret;
+	}
+
+	prepareRecording {arg headerFormat = "wav", sampleFormat = "int16";
+		var recPath, timestamp, recTracks;
+		recPath = Radicles.mainPath ++ "SoundFiles/Record/";
+		timestamp = Date.localtime;
+		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
+		recStates.do({|item, index|
+			if(item == 1, {
+				recTracks = recTracks.add(mixTrackNames[index]);
+			});
+		});
+		recBStoreArr = [];
+		recTracks.do{|item|
+			recBStoreArr = 	recBStoreArr.add([\alloc, ("alloc" ++ BStore.allocCount).asSymbol,
+				[server.sampleRate.nextPowerOfTwo, Ndef(item).numChannels]];);
+			BStore.allocCount = BStore.allocCount + 1;
+		};
+		"//prepare recording".radpost;
+		BStore.addAll(recBStoreArr, {|buf|
+			recBStoreArr.do{|it, in|
+				(BStore.buffStrByID(it) ++ ".write(" ++
+					(recPath ++ timestamp ++ " " ++ in ++ " " ++ recTracks[in].asString
+						++ ".wav").cs ++ ", " ++ headerFormat.cs ++ ", " ++ sampleFormat.cs
+					++ ", 0, 0, true);").radpost.interpret;
+			};
+		});
+	}
+
+	startRecording {var recTracks;
+		recStates.do({|item, index|
+			if(item == 1, {
+				recTracks = recTracks.add(mixTrackNames[index]);
+			});
+		});
+		recTracks.do{|item, index|
+			("//recording: " ++ recTracks[index]).postln;
+			("Ndef(" ++ ("record_" ++ index).asSymbol.cs ++ ", {
+DiskOut.ar(" ++BStore.buffStrByID(recBStoreArr[index]) ++ ", Ndef.ar(" ++ item.cs
+				++ ",  " ++ Ndef(item).numChannels ++ ") ) }); ").radpost.interpret;
+		};
+	}
+
+	stopRecording {
+		{
+			"//stop recording".radpost;
+			recBStoreArr.do{|item, index|
+				("Ndef(" ++ ("record_" ++ index).asSymbol.cs ++ ").free;").radpost.interpret;
+				server.sync;
+				(BStore.buffStrByID(item) ++ ".close;").radpost.interpret;
+				BStore.removeID(item);
+			};
+		}.fork;
 	}
 
 }
