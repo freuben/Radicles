@@ -3,7 +3,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
-	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates;
+	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
+	<recStates;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1295,6 +1296,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(soloStates.isNil, { soloStates = 0!(mixTrackNames.size-1) });
 		levelSoloStates = sysChans.collect({|item, index| 1!item }).flat;
 
+		if(muteStates.isNil, { muteStates = 0!mixTrackNames.size });
+
+		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
+
+
 		numBuses = trackNames.select{|item| item.asString.find("bus").notNil }.size+1;
 
 		knobColors = [ Color(0.91764705882353, 0.91764705882353, 0.91764705882353),
@@ -1419,6 +1425,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						levelSoloStates = sysChans.collect({|item, index| 1!item }).flat;
 					});
 				};
+				soloButton.value = soloStates[index];
 			});
 
 			recButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
@@ -1428,6 +1435,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			recButton.states = [["R", Color.white, Color.black],
 				["R", Color.white, Color.new255(211, 14, 14)]];
 			recButton.font = Font("Monaco", 8);
+			recButton.action = {|butt|
+				var thisVal;
+				thisVal = butt.value;
+				recStates[index] = thisVal;
+			};
+			recButton.value = recStates[index];
 
 			muteButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
 			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
@@ -1436,9 +1449,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				["M", Color.white, Color.new255(58, 162, 175)]];
 			muteButton.font = Font("Monaco", 8);
 			muteButton.action = {|butt|
-				("Ndef(" ++ mixTrackNames[index].cs ++ ").set('mute', " ++ butt.value
+				var thisVal;
+				thisVal = butt.value;
+				("Ndef(" ++ mixTrackNames[index].cs ++ ").set('mute', " ++ thisVal
 					++ ");").radpost.interpret;
+				muteStates[index] = thisVal;
 			};
+			muteButton.value = muteStates[index];
 
 			spaceButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
 			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
