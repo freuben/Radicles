@@ -176,10 +176,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
-		var trackInfo, inArr, masterInput;
+		var trackInfo, inArr, masterInput, insertInd;
 		{
+
+			if(soloStates.notNil, {
+				if(type == \track, {
+					insertInd = mixTrackNames.indexOf(\bus1);
+					soloStates.insert(insertInd, 0);
+				}, {
+					insertInd = mixTrackNames.indexOf(\master);
+					soloStates = soloStates.add(0);
+				});
+				muteStates.insert(insertInd, 0);
+				recStates.insert(insertInd, 0);
+			});
+
 			chanNum ?? {chanNum = systemChanNum};
 			trackInfo = this.addTrack(type, chanNum, spaceType, trackSynth, trackSpecs);
+
 			server.sync;
 			this.autoRoute(trackInfo);
 			server.sync;
@@ -1237,6 +1251,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mixTrackNames = this.sortTrackNames(trackNames);
 		mixTrackNdefs = mixTrackNames.collect({|item| Ndef(item.asSymbol) });
 		sysChans = mixTrackNdefs.collect({|item| item.numChannels});
+		/*soloStates=nil;
+		muteStates=nil;
+		recStates=nil;*/
+
 		mixTrackNames.do{|item|
 			var spatialType;
 			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++
@@ -1341,7 +1359,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
 			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
 			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot,
-			trackLabel, trackColor, thisInputVal, butUIHeight, butUIWidth;
+			trackLabel, trackColor, thisInputVal, butUIHeight, butUIWidth, sendsString;
 			//volume slider
 			sliderText = StaticText(canvas).align_(\center)
 			.background_(Color.black).stringColor_(Color.white)
@@ -1478,23 +1496,47 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			slotsSize = 68;
 
 			//output label
-			if(index != (sysChans.size-1), {
-				outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
-				.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-				outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
+			/*			if(index != (sysChans.size), {*/
+
+			outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
+			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+			outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
+
+			if( index == (sysChans.size-1), {
+				//master output button
+				outputMenu = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize)
+				.minWidth_(slotsSize).maxWidth_(slotsSize);
+				outputMenu.canFocus = false;
+				outputMenu.states_([["", Color.white, Color.black]])
+				.font_(Font("Monaco", 8));
+				outputMenu.string = "Outputs";
+				outputMenu.action = {
+					"map physical outputs".postln;
+				};
+			}, {
 				//output menu
 				outputMenu = PopUpMenu().maxHeight_(popupmenusize)
 				.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
 				outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
 				outputMenu.background_(Color.black).stringColor_(Color.white)
 				.font_(Font("Monaco", 8));
-				outputMenuArr = outputMenuArr.add(outputMenu);
 
-				//sends
-				sendsLabel = StaticText(canvas).align_(\center).background_(Color.black)
-				.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-				sendsLabel.font = Font("Monaco", 8); sendsLabel.string_("Sends");
-				//sends menu
+			});
+
+			outputMenuArr = outputMenuArr.add(outputMenu);
+
+			//sends label
+			if(index == (sysChans.size-1), {
+				sendsString = "Recording";
+			}, {
+				sendsString = "Sends";
+			});
+			sendsLabel = StaticText(canvas).align_(\center).background_(Color.black)
+			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+			sendsLabel.font = Font("Monaco", 8); sendsLabel.string_(sendsString);
+
+			//sends menu
+			if( index != (sysChans.size-1), {
 				sends.do{var smenu, sknob;
 					smenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize)
 					.maxWidth_(slotsSize);
@@ -1511,6 +1553,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 				sendsMenuArr = sendsMenuArr.add(sendsMenu);
 				sendsKnobArr = sendsKnobArr.add(sendsKnobs);
+				/*});*/
+
+			}, {
+				sends.do{|sendInd|
+					var smenu;
+					smenu = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize)
+					.minWidth_(slotsSize).maxWidth_(slotsSize);
+					smenu.canFocus = false;
+					smenu.states_([["", Color.white, Color.black]])
+					.font_(Font("Monaco", 8));
+					/*outputMenu.string = "Outputs";*/
+					smenu.action = {
+						"prepare record".postln;
+					};
+					if(sendInd < 2, {
+						sendsLay = sendsLay.add(smenu);
+					}, {
+						sendsLay = sendsLay.add(nil);
+					});
+				};
+
 			});
 			//audio fxs
 			fxLabel = StaticText(canvas).align_(\center).background_(Color.black)
@@ -1903,85 +1966,88 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		};
 
 		//setting outputs
+
 		if(outputSettings.isNil, {
-			outputSettings = \master!outputMenuArr.size;
+			outputSettings = \master!(outputMenuArr.size-1);
 		});
 		outputMenuArr.do{|it, ind|
-			it.value = it.items.indexOfEqual(outputSettings[ind].asString);
-			it.action = { arg menu;
-				var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
-				spaceInd, busInSpace, busInBool;
+			if(ind != (sysChans.size-1), {
+				it.value = it.items.indexOfEqual(outputSettings[ind].asString);
+				it.action = { arg menu;
+					var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
+					spaceInd, busInSpace, busInBool;
 
-				busInBool =  busInSettings[ind].collect({|item|
-					if(item.notNil, {item.asSymbol}, {item});
-				}).includes(menu.item.asSymbol);
+					busInBool =  busInSettings[ind].collect({|item|
+						if(item.notNil, {item.asSymbol}, {item});
+					}).includes(menu.item.asSymbol);
 
-				if(busInBool, {
-					it.value = it.items.collect({|item| if(item != "", {item.asSymbol}, {item});
-					}).indexOf(outputSettings[ind]);
-					"This bus is already assigned to this track".warn;
-				}, {
-					oldTrack = outputSettings[ind].asSymbol;
-					oldDest = mixTrackNdefs[ind];
-					//old destination off
-					if(oldTrack != "".asSymbol, {
-						inputs.flop[0].do{|item, index|
-							if(item.asString.find(oldTrack.asString.capitalise).notNil, {
-								oldInput = item;
-								thisInput =  inputs.flop[1][index]});
-						};
-						thisNewArr = [];
-						if(thisInput.isArray, {
-							thisInput.do{|item|
-								if(mixTrackNdefs[ind] != item, {
-									thisNewArr = thisNewArr.add(item);
-								});
+					if(busInBool, {
+						it.value = it.items.collect({|item| if(item != "", {item.asSymbol}, {item});
+						}).indexOf(outputSettings[ind]);
+						"This bus is already assigned to this track".warn;
+					}, {
+						oldTrack = outputSettings[ind].asSymbol;
+						oldDest = mixTrackNdefs[ind];
+						//old destination off
+						if(oldTrack != "".asSymbol, {
+							inputs.flop[0].do{|item, index|
+								if(item.asString.find(oldTrack.asString.capitalise).notNil, {
+									oldInput = item;
+									thisInput =  inputs.flop[1][index]});
 							};
-							oldDest = oldTrack.asString.divNumStr;
-							if(oldDest[1].isNil, {oldDest[1] = 1;});
-							if(thisNewArr.notEmpty, {
-								if(thisNewArr.size == 1, {
-									this.input(thisNewArr[0], oldDest[0].asSymbol, oldDest[1]);
+							thisNewArr = [];
+							if(thisInput.isArray, {
+								thisInput.do{|item|
+									if(mixTrackNdefs[ind] != item, {
+										thisNewArr = thisNewArr.add(item);
+									});
+								};
+								oldDest = oldTrack.asString.divNumStr;
+								if(oldDest[1].isNil, {oldDest[1] = 1;});
+								if(thisNewArr.notEmpty, {
+									if(thisNewArr.size == 1, {
+										this.input(thisNewArr[0], oldDest[0].asSymbol, oldDest[1]);
+									}, {
+										this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
+									});
 								}, {
-									this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
+									("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++
+										").source = nil").radpost.interpret;
 								});
 							}, {
-								("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++
-									").source = nil").radpost.interpret;
-							});
-						}, {
-							("Ndef(" ++ oldInput.cs ++ ").source = nil;").radpost.interpret;
-						});
-					});
-					//new destination
-					outputSettings[ind] = menu.item.asSymbol;
-					if(outputSettings[ind] != "".asSymbol, {
-						arrayz = [];
-						outputSettings.do{|item, index|
-							if(item == outputSettings[ind], {
-								arrayz = arrayz.add(mixTrackNdefs[index])
-						}); };
-						trackz = menu.item.divNumStr;
-						spaceInd = inputs.flop[0].indexOf(("space" ++ menu.item.capitalise).asSymbol);
-						if(spaceInd.notNil, {
-							busInSpace = inputs.flop[1][spaceInd];
-							if(busInSpace.asString.find("busIn").notNil, {
-								arrayz = (arrayz ++ busInSpace).flat;
+								("Ndef(" ++ oldInput.cs ++ ").source = nil;").radpost.interpret;
 							});
 						});
-						if(trackz[1].isNil, {trackz[1] = 1;});
-						if(arrayz.size == 1, {
-							this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
-						}, {
-							this.input(arrayz, trackz[0].asSymbol, trackz[1]);
+						//new destination
+						outputSettings[ind] = menu.item.asSymbol;
+						if(outputSettings[ind] != "".asSymbol, {
+							arrayz = [];
+							outputSettings.do{|item, index|
+								if(item == outputSettings[ind], {
+									arrayz = arrayz.add(mixTrackNdefs[index])
+							}); };
+							trackz = menu.item.divNumStr;
+							spaceInd = inputs.flop[0].indexOf(("space" ++ menu.item.capitalise).asSymbol);
+							if(spaceInd.notNil, {
+								busInSpace = inputs.flop[1][spaceInd];
+								if(busInSpace.asString.find("busIn").notNil, {
+									arrayz = (arrayz ++ busInSpace).flat;
+								});
+							});
+							if(trackz[1].isNil, {trackz[1] = 1;});
+							if(arrayz.size == 1, {
+								this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
+							}, {
+								this.input(arrayz, trackz[0].asSymbol, trackz[1]);
+							});
 						});
+
 					});
+				};
 
-				});
-			};
-
-
+			});
 		};
+
 
 		Ndef("AssembladgeGUI", {
 			var in, imp;
