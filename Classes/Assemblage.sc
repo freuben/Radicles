@@ -17,8 +17,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		server.options.numControlBusChannels = 16384;
 		server.waitForBoot{
 			{
-				masterSynth = {arg volume=0, lagTime=0, mute=0;
-					(\in * volume.dbamp.lag(lagTime)*mute.range(1,0).lag(0.1)).softclip};
+				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
+					(\in * volume.dbamp.lag(lagTime)
+						*mute.range(1,0).lag(0.1)
+				*off.range(1,0)
+				).softclip};
 				if(chanNum.isArray.not, {
 					chanMaster = chanNum;
 					chanTrack = chanNum;
@@ -45,8 +48,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					this.autoRoute(item);
 				};
 				server.sync;
-				inArr = masterNdefs.flop[1];
-				masterInput = inArr.copyRange(1, inArr.size-1);
+				/*inArr = masterNdefs.flop[1];*/
+				/*masterInput = inArr.copyRange(1, inArr.size-1);*/
+
+				masterInput = this.sortTrackNames(trackNames)
+				.select({|item| item != \master }).collect({|item| Ndef(item) });
+
 				this.input(masterInput, \master);
 				server.sync;
 				this.play;
@@ -91,7 +98,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if([\track, \bus, \master].includes(type), {
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
 			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
-				(\in * volume.dbamp.lag(lagTime)*mute.range(1,0).lag(0.1)*solo.lag(0.1) )}; };
+				(\in * volume.dbamp.lag(lagTime)
+					*mute.range(1,0).lag(0.1)*solo.lag(0.1) )}; };
 			trackSpecs ?? trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ] ];
 			spaceSynth = SynthFile.read(\space, spaceType);
 			spaceSpecs = SpecFile.read(\space, spaceType);
@@ -176,19 +184,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
-		var trackInfo, inArr, masterInput, insertInd;
+		var trackInfo, masterInput, insertInd;
 		{
 
 			if(soloStates.notNil, {
 				if(type == \track, {
 					insertInd = mixTrackNames.indexOf(\bus1);
-					/*soloStates.insert(insertInd, 0);
-					soloStates.postln;*/
 				}, {
 					insertInd = mixTrackNames.indexOf(\master);
-					/*soloStates = soloStates.add(0);*/
 				});
-				outputSettings.postln;
 				outputSettings.insert(insertInd, \master);
 				soloStates.insert(insertInd, 0);
 				muteStates.insert(insertInd, 0);
@@ -201,17 +205,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			server.sync;
 			this.autoRoute(trackInfo);
 			server.sync;
-			inArr = masterNdefs.flop[1];
-			masterInput = inArr.copyRange(1, inArr.size-1);
+
+			masterInput = this.sortTrackNames(trackNames)
+			.select({|item| item != \master }).collect({|item| Ndef(item) });
 
 			this.input(masterInput, \master);
-			if(soloStates.notNil, {
-			if(soloStates.includes(1), {
-						this.masterSoloFunc((soloStates));
-					}, {
-						this.masterSoloFunc((1!soloStates.size););
-					});
-			});
+
 			server.sync;
 			if(mixerWin.notNil, {
 				if(mixerWin.notClosed, {
@@ -422,7 +421,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			this.replaceFunc(trackName, func);
 			//test this
 			space[space.flop[0].indexOf(trackName)] = [trackName, spaceType];
-
 			/*space.do{|item| if(item[0] == trackName, {item[1] = chanNum; item[2] = spaceType }) };*/
 		}, {
 			"track name not found".warn;
@@ -466,9 +464,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 			if(connect, {
-				ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
-				ndefCS.radpost;
-				ndefCS.interpret;
+				if(type == \master, {
+					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
+					ndefCS.interpret;
+					if(soloStates.notNil, {
+						this.masterSoloFunc2;
+					}, {
+						ndefCS.radpost;
+					});
+				}, {
+					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
+					ndefCS.radpost;
+					ndefCS.interpret;
+				});
 			}, {
 				if(respace, {
 					this.respace(trackArr[0][0], ndefsIn, spaceType);
@@ -1379,7 +1387,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			//levelIndicator
 			levelText = StaticText(canvas).align_(\center)
-			.background_(Color.new255(78, 109, 38)).stringColor_(Color.white)
+			/*.background_(Color.new255(78, 109, 38)).stringColor_(Color.white)*/
+			.background_(Color.black).stringColor_(Color.white)
 			.minWidth_(24).maxHeight_(10).minHeight_(10);
 			levelTextArr = levelTextArr.add(levelText);
 			item.do({
@@ -1427,20 +1436,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(index == (mixTrackNames.size-1), {
 				soloButton = StaticText(canvas).minWidth_(butUIWidth).maxWidth_(butUIWidth)
 				.maxHeight_(butUIHeight).minHeight_(butUIHeight)
-				// .focusColor_(Color.black)
 				.background_(Color.black);
 				soloButton.string= "     ";
-				// soloButton.states = [["", Color.black, Color.black]];
-				// soloButton.canFocus = false;
 			}, {
 
-				soloButtonFunc = {
+				soloButtonFunc = {var mastChans;
 					if(soloStates.includes(1), {
 						levelSoloStates = sysChans.collect({|item, index|
 							if(soloStates[index].isNil, {1!item}, {soloStates[index]!item }) }).flat;
 					}, {
 						levelSoloStates = sysChans.collect({|item, index| 1!item }).flat;
 					});
+
+					mastChans = Ndef(\master).numChannels;
+					levelSoloStates = levelSoloStates.copyRange(0,
+						(levelSoloStates.size-1) - mastChans)
+					++ (1!mastChans);
 				};
 
 				soloButton = Button().minWidth_(butUIWidth).maxWidth_(butUIWidth)
@@ -1453,11 +1464,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				soloButton.action = {|butt|
 					soloStates[index] = butt.value;
 					soloButtonFunc.();
-					if(soloStates.includes(1), {
-						this.masterSoloFunc((soloStates));
+					this.masterSoloFunc2;
+					/*if(soloStates.includes(1), {
+					this.masterSoloFunc((soloStates));
 					}, {
-						this.masterSoloFunc((1!soloStates.size););
-					});
+					this.masterSoloFunc((1!soloStates.size););
+					});*/
 				};
 				soloButton.value = soloStates[index];
 				soloButtonFunc.();
@@ -1715,10 +1727,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var panKey, panKeyValues, panValues;
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			panKeyValues = Ndef(panKey).controlKeysValues;
+			/*case
+			{panKeyValues.size == 0} {panValues = 0}
+			{panKeyValues.size == 4} {panValues = panKeyValues[1]}
+			{panKeyValues.size == 6} {panValues = [panKeyValues[1], panKeyValues[3]]};*/
 			case
 			{panKeyValues.size == 0} {panValues = 0}
-			{panKeyValues.size == 2} {panValues = panKeyValues[1]}
-			{panKeyValues.size == 4} {panValues = [panKeyValues[1], panKeyValues[3]]};
+			{panKeyValues.includes(\pan)} {
+				panValues = panKeyValues[panKeyValues.indexOf(\pan)+1]}
+			{panKeyValues.includes(\panx)} {
+				panValues = [panKeyValues[panKeyValues.indexOf(\panx)+1],
+					panKeyValues[panKeyValues.indexOf(\pany)+1]
+			]};
 			if(sysPan[index] == 0, {
 				item.value = panSpec.unmap(panValues);
 				panKnobTextArr[index][0].string_(panValues);
@@ -2027,6 +2047,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 									}, {
 										this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
 									});
+									/*if(soloStates.notNil, {
+									if(soloStates.includes(1), {
+									this.masterSoloFunc((soloStates));
+									}, {
+									this.masterSoloFunc((1!soloStates.size););
+									});
+									});*/
 								}, {
 									("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++
 										").source = nil").radpost.interpret;
@@ -2095,32 +2122,33 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						peakVal = (peak*levelSoloStates[i]).ampdb;
 						thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
 						meter.peakLevel = thisPeakVal;
-						peakArr = peakArr.add(thisPeakVal);
+						peakArr = peakArr.add(peakVal);
 					});
 					peakArr = peakArr.reshapeLike(levelArr);
 					if(levelTextArr.notNil, {
 						peakArr.do{|item, index|
 							var peakDb;
 							peakDb = item.maxItem;
+							if(peakDb < dBLow, {peakDb = -inf });
 							if(levelTextArr[index].notNil, {
-							levelTextArr[index].string = peakDb.ampdb.round(0.1).asString;
+								levelTextArr[index].string = peakDb.round(0.1).asString;
 							});
-							case
+							/*case
 							{peakDb <= 0.9 } {
-								if(levelTextArr[index].notNil, {
-								levelTextArr[index].background_(Color.new255(78, 109, 38));
-								});
+							if(levelTextArr[index].notNil, {
+							levelTextArr[index].background_(Color.new255(78, 109, 38));
+							});
 							}
 							{(peakDb > 0.9).and(peakDb < 1) } {
-								if(levelTextArr[index].notNil, {
-								levelTextArr[index].background_(Color.new255(232, 90, 13));
-								});
-								}
+							if(levelTextArr[index].notNil, {
+							levelTextArr[index].background_(Color.new255(232, 90, 13));
+							});
+							}
 							{peakDb == 1} {
-								if(levelTextArr[index].notNil, {
-								levelTextArr[index].background_(Color.new255(211, 14, 14));
-								});
-								};
+							if(levelTextArr[index].notNil, {
+							levelTextArr[index].background_(Color.new255(211, 14, 14));
+							});
+							};*/
 						};
 					});
 				}.defer;
@@ -2452,7 +2480,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
 					});
 				});
-				[fxsNum2, fxsNum].postln;
+				/*[fxsNum2, fxsNum].postln;*/
 				if(fxsNum2 < fxsNum, {
 					{server.sync; this.refreshMixGUI;}.fork(AppClock);
 				});
@@ -2533,6 +2561,25 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		("Ndef('spaceMaster').source = " ++ finalCS).radpost.interpret;
 	}
 
+	masterSoloFunc2 {var newStates;
+		soloStates.do({|item, index|
+			if(outputSettings[index] == \master, {
+				newStates = newStates.add(item);
+			});
+		});
+		if(soloStates.includes(1), {
+			if(newStates.includes(1), {
+			this.masterSoloFunc((newStates));
+			Ndef('master').set('off', 0);
+			}, {
+			Ndef('master').set('off', 1);
+			});
+		}, {
+			Ndef('master').set('off', 0);
+			this.masterSoloFunc((1!newStates.size););
+		});
+	}
+
 	prepareRecording {arg headerFormat = "wav", sampleFormat = "int16";
 		var recPath, timestamp, recTracks;
 		recPath = Radicles.mainPath ++ "SoundFiles/Record/";
@@ -2585,5 +2632,7 @@ DiskOut.ar(" ++BStore.buffStrByID(recBStoreArr[index]) ++ ", Ndef.ar(" ++ item.c
 			};
 		}.fork;
 	}
+
+
 
 }
