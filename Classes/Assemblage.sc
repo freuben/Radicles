@@ -1465,11 +1465,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					soloStates[index] = butt.value;
 					soloButtonFunc.();
 					this.masterSoloFunc2;
-					/*if(soloStates.includes(1), {
-					this.masterSoloFunc((soloStates));
-					}, {
-					this.masterSoloFunc((1!soloStates.size););
-					});*/
 				};
 				soloButton.value = soloStates[index];
 				soloButtonFunc.();
@@ -1582,7 +1577,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 				sendsMenuArr = sendsMenuArr.add(sendsMenu);
 				sendsKnobArr = sendsKnobArr.add(sendsKnobs);
-				/*});*/
 
 			}, {
 				sends.do{|sendInd|
@@ -1590,12 +1584,33 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					smenu = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize)
 					.minWidth_(slotsSize).maxWidth_(slotsSize);
 					smenu.canFocus = false;
-					smenu.states_([["", Color.white, Color.black]])
-					.font_(Font("Monaco", 8));
-					/*outputMenu.string = "Outputs";*/
-					smenu.action = {
+					if(sendInd == 0, {
+					smenu.states_([["prepare rec", Color.red, Color.black], ["record", Color.white, Color.red]
+							, ["stop record", Color.red, Color.white]]);
+						smenu.action = {|butt|
+							var value;
+							value = butt.value;
+							value.postln;
+							case
+							{value == 1} {
+								this.prepareRecording;
+							}
+							{value == 2} {
+								this.startRecording;
+							}
+							{value == 0} {
+								this.stopRecording;
+							};
+					};
+					}, {
+						smenu.states_([["direct rec", Color.white, Color.black]]);
+						smenu.action = {
 						"prepare record".postln;
 					};
+					});
+					smenu.font_(Font("Monaco", 8));
+					/*outputMenu.string = "Outputs";*/
+
 					if(sendInd < 2, {
 						sendsLay = sendsLay.add(smenu);
 					}, {
