@@ -1453,7 +1453,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				soloButtonFunc = {var mastChans;
 					if(soloStates.includes(1), {
 						levelSoloStates = sysChans.collect({|item, index|
-							if(soloStates[index].isNil, {1!item}, {soloStates[index]!item }) }).flat;
+							if(soloStates[index].isNil, {
+								1!item;
+						}, {
+								soloStates[index]!item;
+							});
+						}).flat;
 					}, {
 						levelSoloStates = sysChans.collect({|item, index| 1!item }).flat;
 					});
@@ -1595,8 +1600,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					.minWidth_(slotsSize).maxWidth_(slotsSize);
 					smenu.canFocus = false;
 					if(sendInd == 0, {
-						smenu.states_([["prepare rec", Color.red, Color.black], ["record", Color.white, Color.red]
-							, ["stop record", Color.red, Color.white]]);
+						smenu.states_([["prepare rec", Color.red, Color.black],
+							["record", Color.white, Color.red],
+							["stop record", Color.red, Color.white]]);
 						smenu.action = {|butt|
 							var value;
 							value = butt.value;
@@ -1960,7 +1966,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(filters.notNil, {
 					if(filters.notEmpty, {
 						thisFltTags = filters.flop[0].collect({|item| this.convFilterTag(item) });
-						fltTagArr = thisFltTags.collect({|item| [item[0], item[1].asInt, item[2].asInt] });
+						fltTagArr = thisFltTags.collect({|item|
+							[item[0], item[1].asInt, item[2].asInt] });
 						thisFltInfo = thisFltTags.collect({|item| [item[0], item[1].asInt] });
 						tracksFlt = ([thisFltInfo.flop[0], thisFltInfo.flop[1]].flop);
 						trackInfoInt = [trackInfoArr[0].asSymbol, trackInfoArr[1]];
@@ -2010,9 +2017,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					}, {
 						if(trackInfoArr[1] == nil, {trackInfoArr[1] = 1});
 						if(filters.notNil, {
-							thisTagFlt = this.findFilterTag(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1);
+							thisTagFlt = this.findFilterTag(trackInfoArr[0].asSymbol,
+								trackInfoArr[1], ind+1);
 							if(filters.flop[0].includes(thisTagFlt).not, {
-								this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1, menu.string.asSymbol);
+								this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1],
+									ind+1, menu.string.asSymbol);
 							});
 						});
 						this.filterGUI(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
@@ -2064,23 +2073,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								if(oldDest[1].isNil, {oldDest[1] = 1;});
 								if(thisNewArr.notEmpty, {
 									if(thisNewArr.size == 1, {
-										this.input(thisNewArr[0], oldDest[0].asSymbol, oldDest[1]);
+										this.input(thisNewArr[0],
+											oldDest[0].asSymbol, oldDest[1]);
 									}, {
-										this.input(thisNewArr, oldDest[0].asSymbol, oldDest[1]);
+										this.input(thisNewArr,
+											oldDest[0].asSymbol, oldDest[1]);
 									});
-									/*if(soloStates.notNil, {
-									if(soloStates.includes(1), {
-									this.masterSoloFunc((soloStates));
-									}, {
-									this.masterSoloFunc((1!soloStates.size););
-									});
-									});*/
 								}, {
-									("Ndef(" ++ ("space" ++ oldDest[0].capitalise).asSymbol.cs ++
+									("Ndef(" ++ ("space" ++
+										oldDest[0].capitalise).asSymbol.cs ++
 										").source = nil").radpost.interpret;
 								});
 							}, {
-								("Ndef(" ++ oldInput.cs ++ ").source = nil;").radpost.interpret;
+								("Ndef(" ++ oldInput.cs ++
+									").source = nil;").radpost.interpret;
 							});
 						});
 						//new destination
@@ -2092,7 +2098,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 									arrayz = arrayz.add(mixTrackNdefs[index])
 							}); };
 							trackz = menu.item.divNumStr;
-							spaceInd = inputs.flop[0].indexOf(("space" ++ menu.item.capitalise).asSymbol);
+							spaceInd = inputs.flop[0].indexOf(("space" ++
+								menu.item.capitalise).asSymbol);
 							if(spaceInd.notNil, {
 								busInSpace = inputs.flop[1][spaceInd];
 								if(busInSpace.asString.find("busIn").notNil, {
@@ -2139,7 +2146,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						i = i * 0.5;
 						meter = 	levelArr.flat[i];
 						value = val*levelSoloStates[i];
-						meter.value = (value.max(0.0) * numRMSSampsRecip).sqrt.ampdb.linlin(dBLow, 0, 0, 1);
+						meter.value = (value.max(0.0) * numRMSSampsRecip)
+						.sqrt.ampdb.linlin(dBLow, 0, 0, 1);
 						peakVal = (peak*levelSoloStates[i]).ampdb;
 						thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
 						meter.peakLevel = thisPeakVal;
@@ -2482,11 +2490,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 				fltVlay = fltVlay.add(HLayout(*finalLayout) );
 			};
-
 			removeButton = Button().maxHeight_(15).minHeight_(15)
 			.states_([["", Color.new255(211, 14, 14), Color.black]])
-			/*.background_(Color.black)
-			.stringColor_(Color.white)*/
 			.string_("R E M O V E   F I L T E R")
 			.font_(Font("Monaco", 8)).action = { arg menu;
 				var filterInfoArr, fxsNum2;
@@ -2502,20 +2507,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
 					});
 				});
-				/*[fxsNum2, fxsNum].postln;*/
 				if(fxsNum2 < fxsNum, {
 					{server.sync; this.refreshMixGUI;}.fork(AppClock);
 				});
-
 			};
 			removeButton.canFocus = false;
-
 			fltVlay = [removeButton] ++ fltVlay;
-
 			fltCanvas.layout = VLayout(*fltVlay);
 			filtersWin.canvas = fltCanvas;
 			filtersWin.bounds = Rect(fltWinLeft, fltWinDown, fltWinWidth, fltWinHeight);
-			/*filtersWin.bounds.postln;*/
 			filtersWin.front;
 		}, {
 			filtersWin = filtersWindow.collect({|item|
