@@ -4,7 +4,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
-	<recStates, recBStoreArr;
+	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -20,7 +20,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
 					(\in * volume.dbamp.lag(lagTime)
 						*mute.range(1,0).lag(0.1)
-				*off.range(1,0)
+						*off.range(1,0)
 				).softclip};
 				if(chanNum.isArray.not, {
 					chanMaster = chanNum;
@@ -58,8 +58,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				server.sync;
 				this.play;
 				this.updateMixInfo;
+				oiIns = Ndef(\master).numChannels;
+				oiOuts = server.options.numOutputBusChannels;
 			}.fork
-		}
+		};
+		screenBounds = Window.screenBounds.bounds;
 	}
 
 	get {arg trackType = \track;
@@ -1293,6 +1296,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		maxBusIn, knobFunc, busInSettings, guiFunc, fltMenuWindow, oldMixerWin;
 
 		this.updateMixInfo;
+
 		//getting input label data
 		inputArray = 	inputs.flop[0].collect{|item| item.asString.replace("space").toLower.asSymbol; };
 		mixTrackNames.do{|item|
@@ -1353,6 +1357,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(fltMenuWindow.visible, {
 					fltMenuWindow.close;
 					fltMenuWindow = nil;
+				});
+			});
+			if(mastOutWin.notNil, {
+				if(mastOutWin.visible, {
+					mastOutWin.close;
+					mastOutWin = nil;
 				});
 			});
 		};
@@ -1520,8 +1530,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			slotsSize = 68;
 
 			//output label
-			/*			if(index != (sysChans.size), {*/
-
 			outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
@@ -1534,8 +1542,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				outputMenu.states_([["", Color.white, Color.black]])
 				.font_(Font("Monaco", 8));
 				outputMenu.string = "Outputs";
-				outputMenu.action = {
-					"map physical outputs".postln;
+				outputMenu.action = {|it|
+					var boundArr, scrollPoint, scrollOrg;
+					boundArr = it.bounds.asArray;
+					scrollPoint = mixerWin.visibleOrigin;
+					scrollOrg = scrollPoint.asArray;
+					this.mastOutGUI(boundArr, scrollOrg);
 				};
 			}, {
 				//output menu
@@ -1546,7 +1558,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				.font_(Font("Monaco", 8));
 
 			});
-
 			outputMenuArr = outputMenuArr.add(outputMenu);
 
 			//sends label
@@ -1577,7 +1588,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 				sendsMenuArr = sendsMenuArr.add(sendsMenu);
 				sendsKnobArr = sendsKnobArr.add(sendsKnobs);
-
 			}, {
 				sends.do{|sendInd|
 					var smenu;
@@ -1585,7 +1595,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					.minWidth_(slotsSize).maxWidth_(slotsSize);
 					smenu.canFocus = false;
 					if(sendInd == 0, {
-					smenu.states_([["prepare rec", Color.red, Color.black], ["record", Color.white, Color.red]
+						smenu.states_([["prepare rec", Color.red, Color.black], ["record", Color.white, Color.red]
 							, ["stop record", Color.red, Color.white]]);
 						smenu.action = {|butt|
 							var value;
@@ -1601,23 +1611,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							{value == 0} {
 								this.stopRecording;
 							};
-					};
+						};
 					}, {
-						smenu.states_([["direct rec", Color.white, Color.black]]);
+						smenu.states_([["dir in rec", Color.white, Color.black]]);
 						smenu.action = {
-						"prepare record".postln;
-					};
+							"prepare record".postln;
+						};
 					});
 					smenu.font_(Font("Monaco", 8));
-					/*outputMenu.string = "Outputs";*/
-
 					if(sendInd < 2, {
 						sendsLay = sendsLay.add(smenu);
 					}, {
 						sendsLay = sendsLay.add(nil);
 					});
 				};
-
 			});
 			//audio fxs
 			fxLabel = StaticText(canvas).align_(\center).background_(Color.black)
@@ -1970,14 +1977,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 				it.mouseDownAction = { arg menu;
 					var boundArr, thisBounds, thisArrBounds, thisitemArr,
-					thisListView, screenBounds, thisTagFlt, scrollOrg;
+					thisListView, thisTagFlt, scrollOrg;
 
-					screenBounds = Window.screenBounds.bounds.asArray.last;
 					boundArr = it.bounds.asArray;
 					scrollPoint = mixerWin.visibleOrigin;
 					scrollOrg = scrollPoint.asArray;
 					thisBounds = 	Rect(boundArr[0]+mixerWin.bounds.left - scrollOrg[0],
-						(screenBounds-boundArr[1]-285)-(mixerWin.bounds.top-45),
+						(screenBounds.height-boundArr[1]-285)-(mixerWin.bounds.top-45),
 						140, 240);
 					thisArrBounds = thisBounds.asArray;
 					if(menu.string == "", {
@@ -2397,7 +2403,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			filtersWin.hasHorizontalScroller = false;
 			fltWinWidth = (250) + stringLengh + 7;
 
-			fltWinTop = Window.screenBounds.bounds.height-filtersWin.bounds.top-fltWinDown;
+			fltWinTop = screenBounds.height-filtersWin.bounds.top-fltWinDown;
 			fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
 			filtersWin.fixedHeight = fltWinHeight;
 			filtersWin.fixedWidth = fltWinWidth;
@@ -2470,7 +2476,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				panKnobTextArr = panKnobTextArr.add(panKnobText);
 				labelTextArr = labelTextArr.add(labelText);
 				panKnobArr = panKnobArr.add(panKnob);
-				[[labelText, align: \center], [panKnob, align: \center], [panKnobText, align: \center]].do{|lay|
+				[[labelText, align: \center], [panKnob, align: \center],
+					[panKnobText, align: \center]].do{|lay|
 					finalLayout = finalLayout.add(lay);
 				};
 				fltVlay = fltVlay.add(HLayout(*finalLayout) );
@@ -2584,10 +2591,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 		if(soloStates.includes(1), {
 			if(newStates.includes(1), {
-			this.masterSoloFunc((newStates));
-			Ndef('master').set('off', 0);
+				this.masterSoloFunc((newStates));
+				Ndef('master').set('off', 0);
 			}, {
-			Ndef('master').set('off', 1);
+				Ndef('master').set('off', 1);
 			});
 		}, {
 			Ndef('master').set('off', 0);
@@ -2648,6 +2655,109 @@ DiskOut.ar(" ++BStore.buffStrByID(recBStoreArr[index]) ++ ", Ndef.ar(" ++ item.c
 		}.fork;
 	}
 
+	mastOutSynth	{
+		var arr2, arr3, selArr;
+		if(mastOutArr.flat.includes(1), {
+			arr2 = mastOutArr.flop.collect({|item| item.collect({|it, in|
+				if(it != 0, {it = "out[" ++ in ++ "]" }, {it =  it}); }); });
+			arr2 = arr2.collect{|item| item.select({|it| it != 0 }) };
+			arr2.do{|item, index| if(item.isEmpty.not, {selArr = selArr.add(index)}) };
+			arr2 = arr2.copyRange(0, selArr.last);
+			arr3 = arr2.collect{|item|
+				if(item.size == 1, {
+					item = item[0].asString;
+				}, {
+					if(item.isEmpty, {
+						item = "DC.ar(0)";
+					}, {
+						item =  (item.asString ++ ".sum";)
+					});
+			}); };
+		}, {
+			arr3 = "DC.ar(0)"!Ndef(\master).numChannels ;
+		});
+		("Ndef('masterOut', {var out;
+out = Ndef.ar('master', " ++
+			Ndef(\master).numChannels ++ ");
+" ++	arr3.asString ++ ";
+});").radpost.interpret;
+	}
 
+	mastOutGUI {arg boundArr, scrollOrg;
+		var butt, oi1, oi2, selButt, oiArr, funcSource, thisBounds;
+		thisBounds = 	Rect(boundArr[0]+mixerWin.bounds.left - scrollOrg[0],
+			(screenBounds.height-boundArr[1]-((oiOuts * 25+10)+45))-(mixerWin.bounds.top-45),
+			(oiIns*25+10), (oiOuts * 25+10));
+		mastOutWin = Window("", thisBounds, border:false);
+		mastOutWin.background_(Color.black);
+		butt = { {Button(mastOutWin).maxWidth_(15).maxHeight_(15)
+			.states_([["", Color.white, Color.black], ["", Color.white, Color.new255(102, 57, 130)] ]);
+		} ! oiOuts } ! oiIns ;
+		butt.flat.do{|item| item.canFocus = false };
+		oiOuts.do{|ind|
+			oi1 = oi1.add( StaticText(mastOutWin).string_(ind+1) );
+		};
+		oi1.do{|item| item.font = Font("Monaco", 8);
+			item.stringColor_(Color.white);
+			item.maxWidth_(15).maxHeight_(15).align_(\center);
+		};
+		oi2 = [oi1] ++ butt;
+		oi2 = oi2.collect({|item, ind| [StaticText(mastOutWin)] ++ item });
+		oi2.do{|item, index|
+			item[0].font = Font("Monaco", 8);
+			if(index == 0, {
+				item[0].string_("O/S");
+			}, {
+				item[0].string_(index);
+				item[0].align_(\center);
+			});
+			item[0].maxWidth_(15).maxHeight_(15).minWidth_(15).minHeight_(15);
+			item[0].stringColor_(Color.white);
+		};
+		selButt = Button(mastOutWin).maxHeight_(15).font_(Font("Monaco", 8))
+		.states_([["S E L E C T", Color.white, Color.black]]);
+		selButt.action = {
+				mastOutArr = butt.collect({|item|  item.collect({|it| it.value }) });
+				this.mapOutFunc;
+				mastOutWin.close;
+		};
+		selButt.canFocus = false;
+		if(mastOutArr.isNil, {
+			mastOutArr = {0!oiOuts} ! oiIns;
+			oiIns.collect{|item| item }.do{|it, ind| mastOutArr[ind][it] = 1 };
+		});
+		butt.flat.do{|item, index| item.value = mastOutArr.flat[index] };
+		mastOutWin.layout = VLayout(*[HLayout(*oi2.collect { |x| VLayout(* x) }), selButt]);
+		mastOutWin.front;
+	}
+
+	mapOutFunc {var mastOutArr2, funcSource;
+			{mastOutArr2 = {0!oiOuts} ! oiIns;
+			oiIns.collect{|item| item }.do{|it, ind| mastOutArr2[ind][it] = 1 };
+		if(Ndef(\masterOut).source.isNil, {
+					if(mastOutArr != mastOutArr2, {
+						funcSource = Ndef(\master).source;
+						"Ndef('master').clear;".radpost.interpret;
+						Ndef(\master).fadeTime.yield;
+						server.sync;
+						("Ndef('master', " ++ funcSource.cs ++ ");").radpost.interpret;
+						"Ndef('masterOut').play;".radpost.interpret;
+						"Ndef('masterOut').reshaping = 'elastic';".radpost.interpret;
+						this.mastOutSynth;
+					});
+				}, {
+					this.mastOutSynth;
+				});
+		}.fork(AppClock);
+	}
+
+	mapOuts {arg outArr = [1,2];
+		var thisOutArr, outs;
+		outs = outArr - 1;
+		thisOutArr = {0!oiOuts} ! oiIns;
+		thisOutArr.do{|item, index| item[outs[index] ] = 1 };
+		mastOutArr = thisOutArr;
+		this.mapOutFunc;
+	}
 
 }
