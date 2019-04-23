@@ -165,6 +165,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	autoRoute {arg trackInfo, replace=false;
 		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
+		{
 		newArr = trackInfo.reverse;
 		ndefArr = newArr.flop[0];
 		synthArr = newArr.flop[1];
@@ -185,7 +186,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 			intArr = intArr.add(ndefCS);
 		};
-		{intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
+		intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
 	}
 
 	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
@@ -714,7 +715,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					};
 				});
 			}, {
-				bufFunc = {};
+				bufFunc = {
+				};
 			});
 
 			ndefArr = this.get(type)[num-1];
@@ -726,8 +728,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				ndefCS = "Ndef(" ++ filterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";";
 				ndefCS.radpost;
 				ndefCS.interpret;
+				server.sync;
 			};
-
 			if(filters.isNil, {
 				startNdefs.();
 			}, {
@@ -735,7 +737,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					startNdefs.();
 				});
 			});
-
 			filterInfo = [filterTag, SynthFile.read(\filter, filter);];
 			filterSpecs = [filterTag, SpecFile.read(\filter, \pch)];
 			cond = Condition(false);
@@ -814,7 +815,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					filterSpecs;
 				});
 			};
-
 			this.autoRoute(arr1, true);
 			server.sync;
 			bufFunc.();
@@ -2666,7 +2666,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 			("//recording: " ++ recTracks[index]).radpost;
 			("Ndef(" ++ ("record_" ++ index).asSymbol.cs ++ ", {\n\tDiskOut.ar("
-				++BStore.buffStrByID(recBStoreArr[index]) ++ ", " ++ recBus ++ " ) }); ").radpost.interpret;
+				++ BStore.buffStrByID(recBStoreArr[index]) ++ ", " ++ recBus ++ " ) }); ")
+			.radpost.interpret;
 		};
 	}
 
@@ -2787,20 +2788,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	dirInRec {arg boundArr, scrollOrg;
 		var states, view, butt, thisBounds;
-
 		thisBounds = 	Rect(boundArr[0]+mixerWin.bounds.left - scrollOrg[0],
 			(screenBounds.height-boundArr[1]-285)-(mixerWin.bounds.top-45),
 			140, 240);
-
 		(1..server.options.numInputBusChannels).pairsDo{|it1, it2|
 			states = states.add(("Inputs " ++ it1 ++ "-" ++ it2))};
-
 		if(recInputArr.isNil, {
 			recInputArr = states.atAll([0]);
 		});
-		winDirRec = Window("rec", thisBounds, border: false);
+		winDirRec = Window("", thisBounds, border: false);
 		winDirRec.background_(Color.black);
-
 		view = ListView(winDirRec,Rect(10,10,120,70))
 		.items_(states)
 		.background_(Color.clear)
@@ -2810,18 +2807,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		.selectionMode_(\multi);
 		view.selection = recInputArr.collect({|item|
 			states.indicesOfEqual(item) }).flat;
-
 		butt = Button().maxHeight_(15).minHeight_(15)
 		.states_([["", Color.white, Color.black]])
 		.string_("S E L E C T")
-		.font_(Font("Monaco", 8))
+		.font_(basicFont)
 		.action = {
 			recInputArr = states.atAll(view.selection);
 			winDirRec.close;
 		};
 		winDirRec.layout = VLayout(view, butt);
-		winDirRec.front
-
+		winDirRec.front;
 	}
 
 }
