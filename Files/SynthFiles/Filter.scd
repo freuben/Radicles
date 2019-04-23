@@ -77,4 +77,8 @@
 	input = \in * Line.kr(0,1,0.1);
 	output = \convrev;
 	(output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
-} ] ]
+} ], [ 'pch_test', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+	PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion)*SinOsc.ar();
+ } ] ]

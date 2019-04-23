@@ -1,10 +1,11 @@
 Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<trackCount=1, <busCount=1, <space, <masterNdefs, <>masterSynth,
 	<trackNames, <>masterInput, <busArr, <filters, <filterBuff , <>mixerWin,
-	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs,
+	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs, <basicFont,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
-	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts;
+	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
+	<recInputArr, <winDirRec;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -60,6 +61,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				this.updateMixInfo;
 				oiIns = Ndef(\master).numChannels;
 				oiOuts = server.options.numOutputBusChannels;
+				basicFont = Font("Monaco", 8);
 			}.fork
 		};
 		screenBounds = Window.screenBounds.bounds;
@@ -1295,7 +1297,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mixInputLabels, trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels,
 		maxBusIn, knobFunc, busInSettings, guiFunc, fltMenuWindow, oldMixerWin;
 
-		this.updateMixInfo;
+		Ndef.all[server.asSymbol].clean; //garbage collection
+		this.updateMixInfo; //update info
 
 		//getting input label data
 		inputArray = 	inputs.flop[0].collect{|item| item.asString.replace("space").toLower.asSymbol; };
@@ -1363,6 +1366,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(mastOutWin.visible, {
 					mastOutWin.close;
 					mastOutWin = nil;
+				});
+			});
+			if(winDirRec.notNil, {
+				if(winDirRec.visible, {
+					winDirRec.close;
+					winDirRec = nil;
 				});
 			});
 		};
@@ -1455,7 +1464,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						levelSoloStates = sysChans.collect({|item, index|
 							if(soloStates[index].isNil, {
 								1!item;
-						}, {
+							}, {
 								soloStates[index]!item;
 							});
 						}).flat;
@@ -1475,7 +1484,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				.background_(Color.black);
 				soloButton.states = [["S", Color.white, Color.black],
 					["S", Color.white, Color.new255(232, 90, 13)]];
-				soloButton.font = Font("Monaco", 8);
+				soloButton.font = basicFont;
 				soloButton.action = {|butt|
 					soloStates[index] = butt.value;
 					soloButtonFunc.();
@@ -1491,7 +1500,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.background_(Color.black);
 			recButton.states = [["R", Color.white, Color.black],
 				["R", Color.white, Color.new255(211, 14, 14)]];
-			recButton.font = Font("Monaco", 8);
+			recButton.font = basicFont;
 			recButton.action = {|butt|
 				var thisVal;
 				thisVal = butt.value;
@@ -1504,7 +1513,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.background_(Color.black);
 			muteButton.states = [["M", Color.white, Color.black],
 				["M", Color.white, Color.new255(58, 162, 175)]];
-			muteButton.font = Font("Monaco", 8);
+			muteButton.font = basicFont;
 			muteButton.action = {|butt|
 				var thisVal;
 				thisVal = butt.value;
@@ -1520,7 +1529,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.background_(Color.black);
 			spaceButton.states = [["◯", Color.white, Color.black],
 				["◯", Color.white, Color.black]];
-			spaceButton.font = Font("Monaco", 8);
+			spaceButton.font = basicFont;
 
 			muteButArr = muteButArr.add(muteButton);
 			spaceButArr = spaceButArr.add(spaceButton);
@@ -1537,7 +1546,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//output label
 			outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-			outputLabel.font = Font("Monaco", 8); outputLabel.string_("Output");
+			outputLabel.font = basicFont; outputLabel.string_("Output");
 
 			if( index == (sysChans.size-1), {
 				//master output button
@@ -1545,7 +1554,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				.minWidth_(slotsSize).maxWidth_(slotsSize);
 				outputMenu.canFocus = false;
 				outputMenu.states_([["", Color.white, Color.black]])
-				.font_(Font("Monaco", 8));
+				.font_(basicFont);
 				outputMenu.string = "Outputs";
 				outputMenu.action = {|it|
 					var boundArr, scrollPoint, scrollOrg;
@@ -1560,7 +1569,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
 				outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
 				outputMenu.background_(Color.black).stringColor_(Color.white)
-				.font_(Font("Monaco", 8));
+				.font_(basicFont);
 
 			});
 			outputMenuArr = outputMenuArr.add(outputMenu);
@@ -1573,7 +1582,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 			sendsLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-			sendsLabel.font = Font("Monaco", 8); sendsLabel.string_(sendsString);
+			sendsLabel.font = basicFont; sendsLabel.string_(sendsString);
 
 			//sends menu
 			if( index != (sysChans.size-1), {
@@ -1582,7 +1591,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					.maxWidth_(slotsSize);
 					smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};
 					smenu.background_(Color.black).stringColor_(Color.white)
-					.font_(Font("Monaco", 8));
+					.font_(basicFont);
 					sknob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
 					.maxHeight_(popupmenusize).minHeight_(popupmenusize);
 					sknob.color = knobColors;
@@ -1606,7 +1615,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						smenu.action = {|butt|
 							var value;
 							value = butt.value;
-							value.postln;
 							case
 							{value == 1} {
 								this.prepareRecording;
@@ -1620,11 +1628,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						};
 					}, {
 						smenu.states_([["dir in rec", Color.white, Color.black]]);
-						smenu.action = {
-							"prepare record".postln;
+						smenu.action = {|it|
+							var boundArr, scrollPoint, scrollOrg;
+							boundArr = it.bounds.asArray;
+							scrollPoint = mixerWin.visibleOrigin;
+							scrollOrg = scrollPoint.asArray;
+							this.dirInRec(boundArr, scrollOrg);
 						};
 					});
-					smenu.font_(Font("Monaco", 8));
+					smenu.font_(basicFont);
 					if(sendInd < 2, {
 						sendsLay = sendsLay.add(smenu);
 					}, {
@@ -1635,14 +1647,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//audio fxs
 			fxLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-			fxLabel.font = Font("Monaco", 8); fxLabel.string_("Audio FX");
+			fxLabel.font = basicFont; fxLabel.string_("Audio FX");
 			//fx buttons
 			fxsNum.do{var fxbutton;
 				fxbutton = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize)
 				.minWidth_(slotsSize).maxWidth_(slotsSize);
 				fxbutton.canFocus = false;
 				fxbutton.states_([["", Color.white, Color.black]])
-				.font_(Font("Monaco", 8));
+				.font_(basicFont);
 				fxSlot = fxSlot.add(fxbutton);
 			};
 			fxSlotArr = fxSlotArr.add(fxSlot);
@@ -1650,7 +1662,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//input label
 			inputLabel = StaticText(canvas).align_(\center).background_(Color.black)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-			inputLabel.font = Font("Monaco", 8); inputLabel.string_("Input");
+			inputLabel.font = basicFont; inputLabel.string_("Input");
 			//input menu
 			inputMenu = PopUpMenu().maxHeight_(popupmenusize)
 			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
@@ -1681,7 +1693,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 
 			inputMenu.background_(Color.black).stringColor_(Color.white)
-			.font_(Font("Monaco", 8)).action = { arg menu;
+			.font_(basicFont).action = { arg menu;
 				[menu.value, menu.item].postln;
 			};
 
@@ -1702,7 +1714,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				trackColor = Color.new255(102, 57, 130)};
 			trackLabel = StaticText(canvas).align_(\center).background_(trackColor)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
-			trackLabel.font = Font("Monaco", 8);
+			trackLabel.font = basicFont;
 			trackLabel.string_(mixTrackNames[index].asString.capitalise);
 			trackLabelArr = trackLabelArr.add(trackLabel);
 
@@ -1742,14 +1754,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		};
 
 		//setting interface
-		sliderTextArr.do{|item, index| item.font = Font("Monaco", 8); item.string_(
+		sliderTextArr.do{|item, index| item.font = basicFont; item.string_(
 			mixTrackNdefs[index].getKeysValues.collect({|item|
 				if(item[0] == \volume, {item[1]});
 		})[0].round(0.1).asString);
 		};
-		levelTextArr.do{|item| item.font = Font("Monaco", 8); item.string_("-inf");  };
+		levelTextArr.do{|item| item.font = basicFont; item.string_("-inf");  };
 		//panning
-		panKnobTextArr.flat.do{|item| item.font = Font("Monaco", 8);};
+		panKnobTextArr.flat.do{|item| item.font = basicFont;};
 		panSpec = \pan.asSpec;
 		panKnobArr.do{|item, index|
 			var panKey, panKeyValues, panValues;
@@ -1786,8 +1798,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					newPanVal2 = panSpec.map(sl.y).round(0.01);
 					panKnobTextArr[index][0].string_(newPanVal1);
 					panKnobTextArr[index][1].string_(newPanVal2);
-					("Ndef(" ++ panKey.cs ++ ").set('panx', " ++ newPanVal1 ++ ");").radpostcont.interpret;
-					("Ndef(" ++ panKey.cs ++ ").set('pany', " ++ newPanVal2 ++ ");").radpostcont.interpret;
+					("Ndef(" ++ panKey.cs ++ ").set('panx', " ++
+						newPanVal1 ++ ");").radpostcont.interpret;
+					("Ndef(" ++ panKey.cs ++ ").set('pany', " ++
+						newPanVal2 ++ ");").radpostcont.interpret;
 				});
 			});
 		};
@@ -2082,7 +2096,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								}, {
 									("Ndef(" ++ ("space" ++
 										oldDest[0].capitalise).asSymbol.cs ++
-										").source = nil").radpost.interpret;
+									").source = nil").radpost.interpret;
 								});
 							}, {
 								("Ndef(" ++ oldInput.cs ++
@@ -2200,9 +2214,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					fltMenuWindow = nil;
 				});
 			});
-			/*if(outputSettings.includes("".asSymbol).not, {
-			Ndef.all[server.asSymbol].clean; //garbage collection
-			});*/
 		};
 
 	}
@@ -2399,18 +2410,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				winBool = false;
 			});
 		});
-
 		if(winBool, {
 			argArr = filterPairs.flop[0];
 			defaultArgArr = filterPairs.flop[1];
 			specArr = SpecFile.read(\filter, filterKey, false);
 			stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
-
 			filtersWin = ScrollView()
 			.name_(winName);
 			filtersWin.hasHorizontalScroller = false;
 			fltWinWidth = (250) + stringLengh + 7;
-
 			fltWinTop = screenBounds.height-filtersWin.bounds.top-fltWinDown;
 			fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
 			filtersWin.fixedHeight = fltWinHeight;
@@ -2421,7 +2429,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			};
 			/*filtersWin.alwaysOnTop = true;*/
 			fltCanvas = View();
-			/*fltCanvas = View(bounds: (Rect(0, 0, fltWinWidth, fltWinHeight)));*/
 			fltCanvas.background_(Color.black);
 			argArr.do{|item, index|
 				var finalLayout, panKnob, panKnobText, spaceTextLay, specOptions,
@@ -2435,7 +2442,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				panKnobText = StaticText(fltCanvas).align_(\center)
 				.background_(Color.black)
 				.stringColor_(Color.white)
-				.font_(Font("Monaco", 8))
+				.font_(basicFont)
 				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
 				if(specBool, {
 					thisSpec = specArr[index][1].asSpec;
@@ -2458,7 +2465,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
 				}, {
 					panKnob = TextField().minWidth_(180).maxWidth_(180)
-					.font_(Font("Monaco", 8))
+					.font_(basicFont)
 					.background_(Color.new255(246, 246, 246))
 					.maxHeight_(15).minHeight_(15);
 					defaultVal = defaultArgArr[index];
@@ -2476,7 +2483,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				labelText = StaticText(fltCanvas).align_(\center)
 				.background_(Color.black)
 				.stringColor_(Color.white)
-				.font_(Font("Monaco", 8))
+				.font_(basicFont)
 				.string_(labelString)
 				.maxWidth_(stringLengh)
 				.minWidth_(stringLengh)
@@ -2493,7 +2500,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			removeButton = Button().maxHeight_(15).minHeight_(15)
 			.states_([["", Color.new255(211, 14, 14), Color.black]])
 			.string_("R E M O V E   F I L T E R")
-			.font_(Font("Monaco", 8)).action = { arg menu;
+			.font_(basicFont).action = { arg menu;
 				var filterInfoArr, fxsNum2;
 				filterInfoArr = this.convFilterTag(filterTag);
 				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
@@ -2613,9 +2620,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		});
 		recBStoreArr = [];
+		if(recInputArr.isNil, {
+			recInputArr = [ "Inputs 1-2" ];
+		});
+		recTracks = recTracks ++ recInputArr;
 		recTracks.do{|item|
+			var recNumChans;
+			if(item.asString.find("Inputs").isNil, {
+				recNumChans = Ndef(item).numChannels;
+			}, {
+				recNumChans = 2;
+			});
 			recBStoreArr = 	recBStoreArr.add([\alloc, ("alloc" ++ BStore.allocCount).asSymbol,
-				[server.sampleRate.nextPowerOfTwo, Ndef(item).numChannels]];);
+				[server.sampleRate.nextPowerOfTwo, recNumChans]];);
 			BStore.allocCount = BStore.allocCount + 1;
 		};
 		"//prepare recording".radpost;
@@ -2635,11 +2652,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				recTracks = recTracks.add(mixTrackNames[index]);
 			});
 		});
+		if(recInputArr.isNil, {
+			recInputArr = [ "Inputs 1-2" ];
+		});
+		recTracks = recTracks ++ recInputArr;
 		recTracks.do{|item, index|
-			("//recording: " ++ recTracks[index]).postln;
-			("Ndef(" ++ ("record_" ++ index).asSymbol.cs ++ ", {
-DiskOut.ar(" ++BStore.buffStrByID(recBStoreArr[index]) ++ ", Ndef.ar(" ++ item.cs
-				++ ",  " ++ Ndef(item).numChannels ++ ") ) }); ").radpost.interpret;
+			var recBus, busArr;
+			if(item.asString.find("Inputs").isNil, {
+				recBus = ("Ndef.ar(" ++ item.cs ++ ",  " ++ Ndef(item).numChannels ++ ")");
+			}, {
+				busArr = item.split($ )[1].split($-).asString.interpret;
+				recBus = ("SoundIn.ar(" ++ (busArr-1) ++ ")");
+			});
+			("//recording: " ++ recTracks[index]).radpost;
+			("Ndef(" ++ ("record_" ++ index).asSymbol.cs ++ ", {\n\tDiskOut.ar("
+				++BStore.buffStrByID(recBStoreArr[index]) ++ ", " ++ recBus ++ " ) }); ").radpost.interpret;
 		};
 	}
 
@@ -2676,11 +2703,9 @@ DiskOut.ar(" ++BStore.buffStrByID(recBStoreArr[index]) ++ ", Ndef.ar(" ++ item.c
 		}, {
 			arr3 = "DC.ar(0)"!Ndef(\master).numChannels ;
 		});
-		("Ndef('masterOut', {var out;
-out = Ndef.ar('master', " ++
-			Ndef(\master).numChannels ++ ");
-" ++	arr3.asString ++ ";
-});").radpost.interpret;
+		("Ndef('masterOut', {var out; \nout = Ndef.ar('master', " ++
+			Ndef(\master).numChannels ++ ");\n\t" ++	arr3.asString ++ ";\n\t});")
+		.radpost.interpret;
 	}
 
 	mastOutGUI {arg boundArr, scrollOrg;
@@ -2697,14 +2722,14 @@ out = Ndef.ar('master', " ++
 		oiOuts.do{|ind|
 			oi1 = oi1.add( StaticText(mastOutWin).string_(ind+1) );
 		};
-		oi1.do{|item| item.font = Font("Monaco", 8);
+		oi1.do{|item| item.font = basicFont;
 			item.stringColor_(Color.white);
 			item.maxWidth_(15).maxHeight_(15).align_(\center);
 		};
 		oi2 = [oi1] ++ butt;
 		oi2 = oi2.collect({|item, ind| [StaticText(mastOutWin)] ++ item });
 		oi2.do{|item, index|
-			item[0].font = Font("Monaco", 8);
+			item[0].font = basicFont;
 			if(index == 0, {
 				item[0].string_("O/S");
 			}, {
@@ -2714,12 +2739,12 @@ out = Ndef.ar('master', " ++
 			item[0].maxWidth_(15).maxHeight_(15).minWidth_(15).minHeight_(15);
 			item[0].stringColor_(Color.white);
 		};
-		selButt = Button(mastOutWin).maxHeight_(15).font_(Font("Monaco", 8))
+		selButt = Button(mastOutWin).maxHeight_(15).font_(basicFont)
 		.states_([["S E L E C T", Color.white, Color.black]]);
 		selButt.action = {
-				mastOutArr = butt.collect({|item|  item.collect({|it| it.value }) });
-				this.mapOutFunc;
-				mastOutWin.close;
+			mastOutArr = butt.collect({|item|  item.collect({|it| it.value }) });
+			this.mapOutFunc;
+			mastOutWin.close;
 		};
 		selButt.canFocus = false;
 		if(mastOutArr.isNil, {
@@ -2732,22 +2757,22 @@ out = Ndef.ar('master', " ++
 	}
 
 	mapOutFunc {var mastOutArr2, funcSource;
-			{mastOutArr2 = {0!oiOuts} ! oiIns;
+		{mastOutArr2 = {0!oiOuts} ! oiIns;
 			oiIns.collect{|item| item }.do{|it, ind| mastOutArr2[ind][it] = 1 };
-		if(Ndef(\masterOut).source.isNil, {
-					if(mastOutArr != mastOutArr2, {
-						funcSource = Ndef(\master).source;
-						"Ndef('master').clear;".radpost.interpret;
-						Ndef(\master).fadeTime.yield;
-						server.sync;
-						("Ndef('master', " ++ funcSource.cs ++ ");").radpost.interpret;
-						"Ndef('masterOut').play;".radpost.interpret;
-						"Ndef('masterOut').reshaping = 'elastic';".radpost.interpret;
-						this.mastOutSynth;
-					});
-				}, {
+			if(Ndef(\masterOut).source.isNil, {
+				if(mastOutArr != mastOutArr2, {
+					funcSource = Ndef(\master).source;
+					"Ndef('master').clear;".radpost.interpret;
+					Ndef(\master).fadeTime.yield;
+					server.sync;
+					("Ndef('master', " ++ funcSource.cs ++ ");").radpost.interpret;
+					"Ndef('masterOut').play;".radpost.interpret;
+					"Ndef('masterOut').reshaping = 'elastic';".radpost.interpret;
 					this.mastOutSynth;
 				});
+			}, {
+				this.mastOutSynth;
+			});
 		}.fork(AppClock);
 	}
 
@@ -2758,6 +2783,45 @@ out = Ndef.ar('master', " ++
 		thisOutArr.do{|item, index| item[outs[index] ] = 1 };
 		mastOutArr = thisOutArr;
 		this.mapOutFunc;
+	}
+
+	dirInRec {arg boundArr, scrollOrg;
+		var states, view, butt, thisBounds;
+
+		thisBounds = 	Rect(boundArr[0]+mixerWin.bounds.left - scrollOrg[0],
+			(screenBounds.height-boundArr[1]-285)-(mixerWin.bounds.top-45),
+			140, 240);
+
+		(1..server.options.numInputBusChannels).pairsDo{|it1, it2|
+			states = states.add(("Inputs " ++ it1 ++ "-" ++ it2))};
+
+		if(recInputArr.isNil, {
+			recInputArr = states.atAll([0]);
+		});
+		winDirRec = Window("rec", thisBounds, border: false);
+		winDirRec.background_(Color.black);
+
+		view = ListView(winDirRec,Rect(10,10,120,70))
+		.items_(states)
+		.background_(Color.clear)
+		.font_(Font("Monaco", 10);)
+		.stringColor_(Color.white)
+		.hiliteColor_(Color.new255(78, 109, 38);)
+		.selectionMode_(\multi);
+		view.selection = recInputArr.collect({|item|
+			states.indicesOfEqual(item) }).flat;
+
+		butt = Button().maxHeight_(15).minHeight_(15)
+		.states_([["", Color.white, Color.black]])
+		.string_("S E L E C T")
+		.font_(Font("Monaco", 8))
+		.action = {
+			recInputArr = states.atAll(view.selection);
+			winDirRec.close;
+		};
+		winDirRec.layout = VLayout(view, butt);
+		winDirRec.front
+
 	}
 
 }
