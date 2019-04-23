@@ -166,27 +166,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	autoRoute {arg trackInfo, replace=false;
 		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
 		{
-		newArr = trackInfo.reverse;
-		ndefArr = newArr.flop[0];
-		synthArr = newArr.flop[1];
-		(newArr.size-1).do{|index|
-			var synthFunc, dest;
-			dest = Ndef(ndefArr[index+1]);
-			if(synthArr[index].isFunction, {
-				if(synthArr[index].isArray, {
-					thisSynthFunc = synthArr[index];
-					synthFunc = thisSynthFunc[0].filterFunc([dest] ++
-						thisSynthFunc.copyRange(1, thisSynthFunc.size-1); );
+			newArr = trackInfo.reverse;
+			ndefArr = newArr.flop[0];
+			synthArr = newArr.flop[1];
+			(newArr.size-1).do{|index|
+				var synthFunc, dest;
+				dest = Ndef(ndefArr[index+1]);
+				if(synthArr[index].isFunction, {
+					if(synthArr[index].isArray, {
+						thisSynthFunc = synthArr[index];
+						synthFunc = thisSynthFunc[0].filterFunc([dest] ++
+							thisSynthFunc.copyRange(1, thisSynthFunc.size-1); );
+					}, {
+						synthFunc = synthArr[index].filterFunc(dest);
+					});
+					ndefCS = this.ndefPrepare(Ndef(ndefArr[index]), synthFunc);
 				}, {
-					synthFunc = synthArr[index].filterFunc(dest);
+					synthArr[index].radpost;
 				});
-				ndefCS = this.ndefPrepare(Ndef(ndefArr[index]), synthFunc);
-			}, {
-				synthArr[index].radpost;
-			});
-			intArr = intArr.add(ndefCS);
-		};
-		intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
+				intArr = intArr.add(ndefCS);
+			};
+			intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
 	}
 
 	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
@@ -815,6 +815,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					filterSpecs;
 				});
 			};
+
 			this.autoRoute(arr1, true);
 			server.sync;
 			bufFunc.();
@@ -844,13 +845,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				masterNdefs[setArr[0]].removeAt(thisFilterIndex);
 				specs[setArr[0]].removeAt(thisFilterIndex);
 
-				/*				thisTrack.removeAt(slot);
-				if(type == \master, {num=""});
-				setArr = this.findTrackArr((type ++ num).asSymbol);
-				masterNdefs[setArr[0]].removeAt(slot);
-				specs[setArr[0]].removeAt(slot);*/
 				{
-					/*server.sync;*/
+					this.autoRoute(thisTrack);
 					fadeTime.wait;
 					if(filterBuff.notNil, {
 						if(filterBuff.notEmpty, {
@@ -861,9 +857,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							};
 						});
 					});
-				}.fork;
+
 				filters = filters.reject({|item| item[0] == thisSlot });
-				this.autoRoute(thisTrack);
+					/*server.sync;*/
+				/*this.autoRoute(thisTrack);*/
+					}.fork;
 			}, {
 				"Filter slot not found".warn;
 			});
@@ -2019,14 +2017,34 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						.stringColor_(Color.white)
 						.hiliteColor_(Color.new255(78, 109, 38);)
 						.action_({ arg sbs;
-							this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
-								thisListView.items[sbs.value]);
-							menu.string = thisListView.items[sbs.value];
-							fltMenuWindow.close;
-							fltMenuWindow = nil;
-							if((ind+1) > (fxsNum-1), {
-								{server.sync; this.refreshMixGUI;}.fork(AppClock);
-							});
+							var labelKey, irItems;
+							{
+								labelKey = thisListView.items[sbs.value];
+								if(['convrev1', 'convrev2'].includes(labelKey).not, {
+									this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
+										labelKey);
+									menu.string = labelKey;
+									fltMenuWindow.close;
+									fltMenuWindow = nil;
+									if((ind+1) > (fxsNum-1), {
+										server.sync; this.refreshMixGUI;
+									});
+								}, {
+									menu.string = labelKey;
+									irItems = PathName(mainPath ++ "SoundFiles/IR/").entries
+										.collect({|item| item.fileNameWithoutExtension });
+										thisListView.items = [""] ++ irItems;
+									thisListView.action = {|sbs|
+										this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
+											labelKey, data: [\convrev, sbs.item.asSymbol, 2048]);
+
+										fltMenuWindow.close;
+										fltMenuWindow = nil;
+									};
+
+								});
+
+							}.fork(AppClock);
 						});
 					}, {
 						if(trackInfoArr[1] == nil, {trackInfoArr[1] = 1});
@@ -2502,6 +2520,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.string_("R E M O V E   F I L T E R")
 			.font_(basicFont).action = { arg menu;
 				var filterInfoArr, fxsNum2;
+				{
 				filterInfoArr = this.convFilterTag(filterTag);
 				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
 				filtersWin.close;
@@ -2515,8 +2534,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					});
 				});
 				if(fxsNum2 < fxsNum, {
-					{server.sync; this.refreshMixGUI;}.fork(AppClock);
+					server.sync; this.refreshMixGUI;
 				});
+				}.fork(AppClock);
 			};
 			removeButton.canFocus = false;
 			fltVlay = [removeButton] ++ fltVlay;
