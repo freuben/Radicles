@@ -1335,7 +1335,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		});
 
-		if(soloStates.isNil, { soloStates = 0!(mixTrackNames.size) });
+		if(soloStates.isNil, { soloStates = 0!mixTrackNames.size });
 		levelSoloStates = sysChans.collect({|item, index| 1!item }).flat;
 
 		if(muteStates.isNil, { muteStates = 0!mixTrackNames.size });
@@ -1538,8 +1538,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			muteButArr = muteButArr.add(muteButton);
 			spaceButArr = spaceButArr.add(spaceButton);
-			soloButArr = soloButArr.add(muteButton);
-			recButArr = soloButArr.add(recButton);
+			soloButArr = soloButArr.add(soloButton);
+			recButArr = recButArr.add(recButton);
 
 			buttonsLay1 = HLayout(*[muteButton, spaceButton]);
 			buttonsLay2 = HLayout(*[soloButton, recButton]);
@@ -2460,6 +2460,70 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			}, {
 				muteStates = 0!mixTrackNames.size;
+				noUIFunc.();
+			});
+		}, {
+			"track not found".warn;
+		});
+	}
+
+	setRec {arg trackType=\track, num=1, value=1;
+		var noUIFunc, trackInd;
+		trackInd = this.getMixTrackIndex(trackType, num);
+		if(trackInd.notNil, {
+			noUIFunc = {recStates[trackInd] = value;};
+			if(mixerWin.notNil, {
+				if(mixerWin.visible.notNil, {
+					this.recButArr[trackInd].valueAction = value;
+				}, {
+					noUIFunc.();
+				});
+			}, {
+				recStates = 0!mixTrackNames.size;
+				noUIFunc.();
+			});
+		}, {
+			"track not found".warn;
+		});
+	}
+
+	setSolo {arg trackType=\track, num=1, value=1;
+		var noUIFunc, trackInd;
+		if(trackType != 'master', {
+		trackInd = this.getMixTrackIndex(trackType, num);
+			if(trackInd.notNil, {
+			noUIFunc = {soloStates[trackInd] = value;};
+			if(mixerWin.notNil, {
+				if(mixerWin.visible.notNil, {
+					this.soloButArr[trackInd].valueAction = value;
+				}, {
+					noUIFunc.();
+				});
+			}, {
+				soloStates = 0!mixTrackNames.size;
+				noUIFunc.();
+			});
+		}, {
+			"track not found".warn;
+		});
+		}, {
+			"master track can\'t be soloed".warn;
+		});
+	}
+
+	setSpace {arg trackType=\track, num=1, value=1;
+		var noUIFunc, trackInd;
+		trackInd = this.getMixTrackIndex(trackType, num);
+		if(trackInd.notNil, {
+			noUIFunc = {recStates[trackInd] = value;};
+			if(mixerWin.notNil, {
+				if(mixerWin.visible.notNil, {
+					this.recStates[trackInd].valueAction = value;
+				}, {
+					noUIFunc.();
+				});
+			}, {
+				recStates = 0!mixTrackNames.size;
 				noUIFunc.();
 			});
 		}, {
