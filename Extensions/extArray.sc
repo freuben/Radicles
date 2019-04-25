@@ -142,7 +142,7 @@
 		}, {
 		extraArgs  = this[2];
 		result = ("Ndef(" ++ key.cs ++ ", " ++ source.cs ++ ");" ++ 10.asAscii ++
-			"Ndef(" ++ key.cs ++ ").xset" ++ extraArgs.cs.squareToRound);
+				"Ndef(" ++ key.cs ++ ").set" ++ extraArgs.cs.squareToRound) ++ ";";
 		});
 		^result;
 	}
