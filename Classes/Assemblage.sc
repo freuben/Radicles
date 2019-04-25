@@ -5,7 +5,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
-	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr;
+	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
+	<recordingButton, <recordingValBut;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1535,6 +1536,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			spaceButton.states = [["◯", Color.white, Color.black],
 				["◯", Color.white, Color.black]];
 			spaceButton.font = basicFont;
+			spaceButton.action = {|butt|
+				"space is the place".postln;
+			};
 
 			muteButArr = muteButArr.add(muteButton);
 			spaceButArr = spaceButArr.add(spaceButton);
@@ -1617,6 +1621,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						smenu.states_([["prepare rec", Color.red, Color.black],
 							["record", Color.white, Color.red],
 							["stop record", Color.red, Color.white]]);
+						recordingButton = smenu;
 						smenu.action = {|butt|
 							var value;
 							value = butt.value;
@@ -1630,7 +1635,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							{value == 0} {
 								this.stopRecording;
 							};
+							recordingValBut = (value+1)%3;
 						};
+						if(recordingValBut.notNil, {
+							recordingButton.value = (recordingValBut-1)%3;
+						});
 					}, {
 						smenu.states_([["dir in rec", Color.white, Color.black]]);
 						smenu.action = {|it|
@@ -2490,22 +2499,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	setSolo {arg trackType=\track, num=1, value=1;
 		var noUIFunc, trackInd;
 		if(trackType != 'master', {
-		trackInd = this.getMixTrackIndex(trackType, num);
+			trackInd = this.getMixTrackIndex(trackType, num);
 			if(trackInd.notNil, {
-			noUIFunc = {soloStates[trackInd] = value;};
-			if(mixerWin.notNil, {
-				if(mixerWin.visible.notNil, {
-					this.soloButArr[trackInd].valueAction = value;
+				noUIFunc = {soloStates[trackInd] = value;};
+				if(mixerWin.notNil, {
+					if(mixerWin.visible.notNil, {
+						this.soloButArr[trackInd].valueAction = value;
+					}, {
+						noUIFunc.();
+					});
 				}, {
+					soloStates = 0!mixTrackNames.size;
 					noUIFunc.();
 				});
 			}, {
-				soloStates = 0!mixTrackNames.size;
-				noUIFunc.();
+				"track not found".warn;
 			});
-		}, {
-			"track not found".warn;
-		});
 		}, {
 			"master track can\'t be soloed".warn;
 		});
@@ -2515,15 +2524,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var noUIFunc, trackInd;
 		trackInd = this.getMixTrackIndex(trackType, num);
 		if(trackInd.notNil, {
-			noUIFunc = {recStates[trackInd] = value;};
+			noUIFunc = {"this space thing";};
 			if(mixerWin.notNil, {
 				if(mixerWin.visible.notNil, {
-					this.recStates[trackInd].valueAction = value;
+					this.spaceButArr[trackInd].valueAction = value;
 				}, {
 					noUIFunc.();
 				});
 			}, {
-				recStates = 0!mixTrackNames.size;
+				/*recStates = 0!mixTrackNames.size;*/
 				noUIFunc.();
 			});
 		}, {
@@ -2960,6 +2969,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		};
 		winDirRec.layout = VLayout(view, butt);
 		winDirRec.front;
+	}
+
+	setDirInRec {arg stereoInIndices = [0];
+		var inputs;
+		(1..server.options.numInputBusChannels).pairsDo{|it1, it2|
+			inputs = inputs.add(("Inputs " ++ it1 ++ "-" ++ it2))};
+		recInputArr = inputs.atAll(stereoInIndices);
+		^recInputArr;
+	}
+
+	setRecording {
+		var noUIFunc;
+		if(recordingValBut.isNil, {recordingValBut = 1});
+			case
+			{recordingValBut == 1} {this.prepareRecording}
+			{recordingValBut == 2} {this.startRecording}
+			{recordingValBut == 0} {this.stopRecording};
+		if(mixerWin.notNil, {
+			if(mixerWin.visible.notNil, {
+				recordingButton.value = recordingValBut;
+			});
+		});
+		recordingValBut = (recordingValBut+1)%3;
 	}
 
 	/*	fadeTime {arg newFadeTime=3;
