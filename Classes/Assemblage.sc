@@ -5,7 +5,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
-	<recInputArr, <winDirRec;
+	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -846,7 +846,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				setArr = this.findTrackArr((type ++ num).asSymbol);
 				masterNdefs[setArr[0]].removeAt(thisFilterIndex);
 				specs[setArr[0]].removeAt(thisFilterIndex);
-			{
+				{
 					server.sync;
 					fadeTime.wait;
 					if(filterBuff.notNil, {
@@ -861,7 +861,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				}.fork;
 				filters = filters.reject({|item| item[0] == thisSlot });
 				{
-				this.autoRoute(thisTrack);
+					this.autoRoute(thisTrack);
 					server.sync;
 					action.();
 				}.fork(AppClock);
@@ -1292,11 +1292,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var sends, knobColors, winHeight, winWidth, knobSize, canvas,
 		panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr,
-		muteButton, recButton, soloButton, spaceButton, muteButArr, recButArr, soloButArr,
-		spaceButArr, volButtons, buttonsLay1, buttonsLay2, oscDefFunc, levelSoloStates,
-		fxSlotArr, trackLabelArr, spaceTextLay, popupmenusize, slotsSize, panSpec,
-		mixInputLabels, trackInputSel, inputArray, numBuses, thisInputLabel, busInLabels,
-		maxBusIn, knobFunc, busInSettings, guiFunc, fltMenuWindow, oldMixerWin;
+		muteButton, recButton, soloButton, spaceButton, volButtons, buttonsLay1,
+		buttonsLay2, oscDefFunc, levelSoloStates, fxSlotArr, trackLabelArr, spaceTextLay,
+		popupmenusize, slotsSize, panSpec, mixInputLabels, trackInputSel, inputArray,
+		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
+		guiFunc, fltMenuWindow, oldMixerWin;
 
 		Ndef.all[server.asSymbol].clean; //garbage collection
 		this.updateMixInfo; //update info
@@ -1342,6 +1342,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
 
+		muteButArr = [];
+		soloButArr = [];
+		recButArr = [];
+		spaceButArr = [];
 
 		numBuses = trackNames.select{|item| item.asString.find("bus").notNil }.size+1;
 
@@ -2035,8 +2039,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								}, {
 									menu.string = labelKey;
 									irItems = PathName(mainPath ++ "SoundFiles/IR/").entries
-										.collect({|item| item.fileNameWithoutExtension });
-										thisListView.items = [""] ++ irItems;
+									.collect({|item| item.fileNameWithoutExtension });
+									thisListView.items = [""] ++ irItems;
 									thisListView.action = {|sbs|
 										this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
 											labelKey, data: [\convrev, sbs.item.asSymbol, 2048]);
@@ -2414,24 +2418,53 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		ndefCS.interpret;
 	}
 
-	setFx {arg track=\track, num=1, slot=1, filter=\pch, extraArgs, buffer, data, remove=false;
+	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer, data, remove=false;
 		var refreshFunc;
 		refreshFunc = {
 			if(mixerWin.notNil, {
 				if(mixerWin.visible, {
-				"refresh".postln;
-				this.refreshMixGUI;
+					"refresh".postln;
+					this.refreshMixGUI;
+				});
+			});
+		};
+		if(remove, {
+			this.removeFilter(trackType, num, slot, {refreshFunc.()} );
+		}, {
+			this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
+				{refreshFunc.()}.defer;
 			});
 		});
-		};
+	}
 
-		if(remove, {
-			this.removeFilter(track, num, slot, {refreshFunc.()} );
+	getMixTrackIndex {arg trackType=\track, num=1;
+		var trackInd;
+		if(trackType == \master, {
+			trackInd = mixTrackNames.indexOf((trackType).asSymbol);
 		}, {
-			this.filter(track, num, slot, filter, extraArgs, buffer, data, { {refreshFunc.()}.defer});
+			trackInd = mixTrackNames.indexOf((trackType ++ num).asSymbol);
 		});
+		^trackInd;
+	}
 
-
+	setMute {arg trackType=\track, num=1, value=1;
+		var noUIFunc, trackInd;
+		trackInd = this.getMixTrackIndex(trackType, num);
+		if(trackInd.notNil, {
+			noUIFunc = {muteStates[trackInd] = value;};
+			if(mixerWin.notNil, {
+				if(mixerWin.visible.notNil, {
+					this.muteButArr[trackInd].valueAction = value;
+				}, {
+					noUIFunc.();
+				});
+			}, {
+				muteStates = 0!mixTrackNames.size;
+				noUIFunc.();
+			});
+		}, {
+			"track not found".warn;
+		});
 	}
 
 	filterWinGUI {arg filterTag=\filterTrack_1_1, filterKey=\pch, filterPairs,
@@ -2554,11 +2587,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						fxsNum2 = filters.flop[0].collect({|item|
 							item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
 
-					{
-				if(fxsNum2 < fxsNum, {
-					server.sync; this.refreshMixGUI;
-				});
-					}.fork(AppClock);
+						{
+							if(fxsNum2 < fxsNum, {
+								server.sync; this.refreshMixGUI;
+							});
+						}.fork(AppClock);
 
 					});
 				});
@@ -2865,8 +2898,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		winDirRec.front;
 	}
 
-/*	fadeTime {arg newFadeTime=3;
-		masterNdefs.flat.do{|item| item.fadeTime = newFadeTime};
+	/*	fadeTime {arg newFadeTime=3;
+	masterNdefs.flat.do{|item| item.fadeTime = newFadeTime};
 	}*/
 
 	globFadeTime {
