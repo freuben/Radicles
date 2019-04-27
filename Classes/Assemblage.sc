@@ -95,7 +95,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		case
 		{chanNum == 1} {spaceType = \pan2}
 		{chanNum == 2} {spaceType = \bal2}
-		{chanNum == 4} {spaceType = \pan4};
+		{chanNum == 3} {spaceType = \panAz3}
+		{chanNum == 4} {spaceType = \pan4}
+		{chanNum == 5} {spaceType = \panAz5}
+		{chanNum == 6} {spaceType = \panAz6};
 		^spaceType;
 	}
 
@@ -1295,9 +1298,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr,
 		muteButton, recButton, soloButton, spaceButton, volButtons, buttonsLay1,
 		buttonsLay2, oscDefFunc, levelSoloStates, fxSlotArr, trackLabelArr, spaceTextLay,
-		popupmenusize, slotsSize, panSpec, mixInputLabels, trackInputSel, inputArray,
+		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
-		guiFunc, fltMenuWindow, oldMixerWin;
+		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap;
 
 		Ndef.all[server.asSymbol].clean; //garbage collection
 		this.updateMixInfo; //update info
@@ -1354,7 +1357,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			Color.white, Color.black, Color() ];
 
 		winHeight = 504 + ((sends-2)*15) + ((fxsNum-2)*15);
-		winWidth = (43*(sysChans.sum));
+		winWidth = (42*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
 		if(winRefresh, {oldMixerWin=mixerWin; winRefresh = false;
 			{0.1.yield; oldMixerWin.close; 0.1.yield; oscDefFunc.()}.fork(AppClock);
@@ -1397,7 +1400,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		canvas.background_(Color.black);
 
 		sysChans.do{|item, index|
-			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout,
+			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout, slotsSize,
 			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
 			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot,
 			trackLabel, trackColor, thisInputVal, butUIHeight, butUIWidth, sendsString, soloButtonFunc;
@@ -1550,7 +1553,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			popupmenusize = 14;
 
-			slotsSize = 68;
+			if((1..3).includes(item), {
+				slotsSize = 68;
+			}, {
+				 slotsSize = 68+(16*(item-3));
+			});
+
+			slotsSizeArr = slotsSizeArr.add(slotsSize);
 
 			//output label
 			outputLabel = StaticText(canvas).align_(\center).background_(Color.black)
@@ -1597,7 +1606,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if( index != (sysChans.size-1), {
 				sends.do{var smenu, sknob;
 					smenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize)
-					.maxWidth_(slotsSize);
+					.maxWidth_(slotsSize-popupmenusize);
 					smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};
 					smenu.background_(Color.black).stringColor_(Color.white)
 					.font_(basicFont);
@@ -1717,7 +1726,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			levelArr = levelArr.add(level);
 			ts = [slider] ++ level;
 			thisLay = HLayout(*ts);
-
 			//track name label
 			case
 			{mixTrackNames[index].asString.find("track").notNil} {
@@ -1730,7 +1738,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			trackLabel.font = basicFont;
 			trackLabel.string_(mixTrackNames[index].asString.capitalise);
+			trackLabel.minWidth_(slotsSize).maxWidth_(slotsSize);
 			trackLabelArr = trackLabelArr.add(trackLabel);
+
+			trackLabel.mouseDownAction = {|it| it.bounds.postln };
 
 			//input
 			[[inputLabel, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
@@ -1864,6 +1875,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		canvas.layout = HLayout(*vlay);
 		mixerWin.canvas = canvas;
+		spaceGap = sysChans.collect({|item|
+			if((1..3).includes(item), {
+				item =7;
+		}, {
+				item = 6;
+			});
+		});
+		spaceGap.postln;
+		sumWidth = 9 + slotsSizeArr.sum + spaceGap.sum + (9-spaceGap.last+2);
+		slotsSizeArr.postln;
+		sumWidth.postln;
+		mixerWin.maxWidth_(sumWidth).minWidth_(sumWidth);
 		mixerWin.front;
 		if(scrollPoint.notNil, {
 			//check this bug hasn't been fixed in latest SC version, if so, remove .defer
