@@ -1179,10 +1179,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			mul, add, min, val, warp, lag);
 	}
 
-	/*	savePresetFilter {arg filterTag;
-
-	}*/
-
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
 		action={|val| val.radpost}, chanIn, globBuf;
 		var path, buffArr, file, numChan, irbuffer, irArr, bufsize, numtag,
@@ -1285,7 +1281,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var spatialType;
 			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++
 				item.asString.capitalise).asSymbol)];
-			if([\bal2, \pan2].includes(spatialType), {
+			if([\pan4, \pan6].includes(spatialType).not, {
 				sysPan = sysPan.add(0);
 			}, {sysPan = sysPan.add(1)
 			});
@@ -1300,7 +1296,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		buttonsLay2, oscDefFunc, levelSoloStates, fxSlotArr, trackLabelArr, spaceTextLay,
 		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
-		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap;
+		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap, sumHeight,
+		gapHeight;
 
 		Ndef.all[server.asSymbol].clean; //garbage collection
 		this.updateMixInfo; //update info
@@ -1362,7 +1359,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(winRefresh, {oldMixerWin=mixerWin; winRefresh = false;
 			{0.1.yield; oldMixerWin.close; 0.1.yield; oscDefFunc.()}.fork(AppClock);
 		});
-		mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");
+		/*mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");*/
+		mixerWin = ScrollView().name_("Assemblage");
 		mixerWin.hasVerticalScroller = false;
 		mixerWin.mouseDownAction = {
 			if(fltMenuWindow.notNil, {
@@ -1556,7 +1554,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if((1..3).includes(item), {
 				slotsSize = 68;
 			}, {
-				 slotsSize = 68+(16*(item-3));
+				slotsSize = 68+(16*(item-3));
 			});
 
 			slotsSizeArr = slotsSizeArr.add(slotsSize);
@@ -1741,8 +1739,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			trackLabel.minWidth_(slotsSize).maxWidth_(slotsSize);
 			trackLabelArr = trackLabelArr.add(trackLabel);
 
-			trackLabel.mouseDownAction = {|it| it.bounds.postln };
-
 			//input
 			[[inputLabel, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
 				finalLayout = finalLayout.add(lay);
@@ -1878,15 +1874,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		spaceGap = sysChans.collect({|item|
 			if((1..3).includes(item), {
 				item =7;
-		}, {
+			}, {
 				item = 6;
 			});
 		});
-		spaceGap.postln;
+
+		gapHeight = 6;
+		sumHeight = panKnobArr.collect{|item| item.bounds.height }.maxItem + gapHeight;
+		sumHeight = 45 + 9 + sumHeight + (7 * (10+gapHeight)) + (2 * (12+gapHeight)) +
+		(180+gapHeight) + (sendsMenuArr[0].size*(14+gapHeight)) +
+		(fxSlotArr[0].size*(14+gapHeight));
+
 		sumWidth = 9 + slotsSizeArr.sum + spaceGap.sum + (9-spaceGap.last+2);
-		slotsSizeArr.postln;
-		sumWidth.postln;
 		mixerWin.maxWidth_(sumWidth).minWidth_(sumWidth);
+		mixerWin.maxHeight_(sumHeight).minHeight_(sumHeight);
 		mixerWin.front;
 		if(scrollPoint.notNil, {
 			//check this bug hasn't been fixed in latest SC version, if so, remove .defer
@@ -2191,7 +2192,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 
-
 		Ndef("AssembladgeGUI", {
 			var in, imp;
 			in = mixTrackNdefs.collect({|item| item.ar }).flat;
@@ -2455,7 +2455,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		refreshFunc = {
 			if(mixerWin.notNil, {
 				if(mixerWin.visible, {
-					"refresh".postln;
+					/*"refresh".postln;*/
 					this.refreshMixGUI;
 				});
 			});
@@ -2682,16 +2682,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					if(filters.notEmpty, {
 						fxsNum2 = filters.flop[0].collect({|item|
 							item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
-
 						{
 							if(fxsNum2 < fxsNum, {
 								server.sync; this.refreshMixGUI;
 							});
 						}.fork(AppClock);
-
 					});
 				});
-
 			};
 			removeButton.canFocus = false;
 			fltVlay = [removeButton] ++ fltVlay;
@@ -3005,10 +3002,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	setRecording {
 		var noUIFunc;
 		if(recordingValBut.isNil, {recordingValBut = 1});
-			case
-			{recordingValBut == 1} {this.prepareRecording}
-			{recordingValBut == 2} {this.startRecording}
-			{recordingValBut == 0} {this.stopRecording};
+		case
+		{recordingValBut == 1} {this.prepareRecording}
+		{recordingValBut == 2} {this.startRecording}
+		{recordingValBut == 0} {this.stopRecording};
 		if(mixerWin.notNil, {
 			if(mixerWin.visible.notNil, {
 				recordingButton.value = recordingValBut;
@@ -3017,11 +3014,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		recordingValBut = (recordingValBut+1)%3;
 	}
 
-	/*	fadeTime {arg newFadeTime=3;
-	masterNdefs.flat.do{|item| item.fadeTime = newFadeTime};
-	}*/
-
 	globFadeTime {
 		masterNdefs.flat.do{|item| item.fadeTime = fadeTime};
+	}
+
+	fadeTime {arg secs;
+		{
+			Radicles.fadeTime = secs;
+			server.sync;
+			this.globFadeTime;
+		}.fork;
 	}
 }
