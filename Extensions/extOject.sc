@@ -133,6 +133,7 @@
 
 	radpost {arg type=\ln;
 		var string, doc;
+		if(Radicles.ignorePost.not, {
 		string = this.asString.lineFormat(Radicles.lineSize);
 		doc = Radicles.postDoc;
 		if(string.includesString(10.asAscii), {
@@ -146,10 +147,12 @@
 		}, {
 			string.postallin([\ide, \doc], type, doc);
 		});
+		});
 	}
 
 	radpostcont {arg type=\ln, postDoc=false, postWin=true, win=\ide;
 		var string, doc;
+		if(Radicles.ignorePostcont.not, {
 		string = this.asString;
 		if(Radicles.reducePostControl, {
 			string = string.replace(",", "(").replace(").set").replace(");").split($().copyToEnd(1);
@@ -168,6 +171,7 @@
 			if(postWin, {
 			string.postin(win, type);
 			});
+		});
 		});
 	}
 
