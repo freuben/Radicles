@@ -1179,6 +1179,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			mul, add, min, val, warp, lag);
 	}
 
+	/*	savePresetFilter {arg filterTag;
+
+	}*/
+
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
 		action={|val| val.radpost}, chanIn, globBuf;
 		var path, buffArr, file, numChan, irbuffer, irArr, bufsize, numtag,
@@ -1299,7 +1303,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap, sumHeight,
 		gapHeight;
 
-		Ndef.all[server.asSymbol].clean; //garbage collection
 		this.updateMixInfo; //update info
 
 		//getting input label data
@@ -1390,9 +1393,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		};
-		if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
+		/*if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
 			mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
-		});
+		});*/
 		/*mixerWin.fixedHeight = winHeight;*/
 		canvas = View();
 		canvas.background_(Color.black);
@@ -2455,7 +2458,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		refreshFunc = {
 			if(mixerWin.notNil, {
 				if(mixerWin.visible, {
-					/*"refresh".postln;*/
+					"refresh".postln;
 					this.refreshMixGUI;
 				});
 			});
@@ -2682,13 +2685,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					if(filters.notEmpty, {
 						fxsNum2 = filters.flop[0].collect({|item|
 							item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
+
 						{
 							if(fxsNum2 < fxsNum, {
 								server.sync; this.refreshMixGUI;
 							});
 						}.fork(AppClock);
+
 					});
 				});
+
 			};
 			removeButton.canFocus = false;
 			fltVlay = [removeButton] ++ fltVlay;
@@ -3024,5 +3030,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			server.sync;
 			this.globFadeTime;
 		}.fork;
+	}
+
+	garbage {
+			Ndef.all[server.asSymbol].clean; //garbage collection
 	}
 }
