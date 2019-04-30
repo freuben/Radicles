@@ -856,10 +856,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					if(filterBuff.notNil, {
 						if(filterBuff.notEmpty, {
 							bufArrInd = filterBuff.flop[0].indexOf(thisSlot);
+							if(bufArrInd.notNil, {
 							filterBuff.flop[1][bufArrInd].do{|item|
-								server.sync;
 								BStore.remove(item[0], item[1], item[2]);
+								server.sync;
 							};
+							filterBuff.removeAt(bufArrInd);
+							});
 						});
 					});
 				}.fork;
@@ -2061,10 +2064,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						.hiliteColor_(Color.new255(78, 109, 38);)
 						.action_({ arg sbs;
 							var labelKey, irItems;
-							/*{*/
 								labelKey = thisListView.items[sbs.value];
 							if(labelKey.asString.find("convrev").isNil, {
-								/*if(['convrev1', 'convrev2'].includes(labelKey).not, {*/
 									this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
 										labelKey, action: {
 											{
@@ -2076,7 +2077,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 									});
 											}.fork(AppClock);
 									});
-
 								}, {
 									menu.string = labelKey;
 									irItems = PathName(mainPath ++ "SoundFiles/IR/").entries
@@ -2095,7 +2095,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 										});
 									};
 								});
-							/*}.fork(AppClock);*/
 						});
 					}, {
 						if(trackInfoArr[1] == nil, {trackInfoArr[1] = 1});
@@ -2681,10 +2680,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			removeButton = Button().maxHeight_(15).minHeight_(15)
 			.states_([["", Color.new255(211, 14, 14), Color.black]])
 			.string_("R E M O V E   F I L T E R")
-			.font_(basicFont).action = { arg menu;
+			.font_(basicFont)
+			.action = { arg menu;
 				var filterInfoArr, fxsNum2;
 				filterInfoArr = this.convFilterTag(filterTag);
-				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt);
+				filterInfoArr.postln;
+				filterInfoArr.cs.postln;
+				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt, {
 				filtersWin.close;
 				if(mixButton.notNil, {
 					mixButton.string = "";
@@ -2693,17 +2695,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					if(filters.notEmpty, {
 						fxsNum2 = filters.flop[0].collect({|item|
 							item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
-
 						{
 							if(fxsNum2 < fxsNum, {
 								server.sync; this.refreshMixGUI;
 							});
 						}.fork(AppClock);
-
 					});
+				});
 				});
 
 			};
+
 			removeButton.canFocus = false;
 			fltVlay = [removeButton] ++ fltVlay;
 			fltCanvas.layout = VLayout(*fltVlay);
