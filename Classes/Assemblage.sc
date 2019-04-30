@@ -1394,7 +1394,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 		/*if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
-			mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
+		mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
 		});*/
 		/*mixerWin.fixedHeight = winHeight;*/
 		canvas = View();
@@ -2061,17 +2061,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						.hiliteColor_(Color.new255(78, 109, 38);)
 						.action_({ arg sbs;
 							var labelKey, irItems;
-							{
+							/*{*/
 								labelKey = thisListView.items[sbs.value];
-								if(['convrev1', 'convrev2'].includes(labelKey).not, {
+							if(labelKey.asString.find("convrev").isNil, {
+								/*if(['convrev1', 'convrev2'].includes(labelKey).not, {*/
 									this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
-										labelKey);
-									menu.string = labelKey;
-									fltMenuWindow.close;
+										labelKey, action: {
+											{
+										menu.string = labelKey;
+										fltMenuWindow.close;
 									fltMenuWindow = nil;
 									if((ind+1) > (fxsNum-1), {
-										server.sync; this.refreshMixGUI;
+												server.sync; this.refreshMixGUI;
 									});
+											}.fork(AppClock);
+									});
+
 								}, {
 									menu.string = labelKey;
 									irItems = PathName(mainPath ++ "SoundFiles/IR/").entries
@@ -2079,15 +2084,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 									thisListView.items = [""] ++ irItems;
 									thisListView.action = {|sbs|
 										this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
-											labelKey, data: [\convrev, sbs.item.asSymbol, 2048]);
-
-										fltMenuWindow.close;
-										fltMenuWindow = nil;
+											labelKey, data: [\convrev, sbs.item.asSymbol, 2048], action: {
+												{
+													fltMenuWindow.close;
+													fltMenuWindow = nil;
+													if((ind+1) > (fxsNum-1), {
+														server.sync; this.refreshMixGUI
+													});
+												}.fork(AppClock);
+										});
 									};
-
 								});
-
-							}.fork(AppClock);
+							/*}.fork(AppClock);*/
 						});
 					}, {
 						if(trackInfoArr[1] == nil, {trackInfoArr[1] = 1});
@@ -3033,6 +3041,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	garbage {
-			Ndef.all[server.asSymbol].clean; //garbage collection
+		Ndef.all[server.asSymbol].clean; //garbage collection
 	}
 }
