@@ -696,18 +696,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		//still some work to do with buffer alloc
 		{
-			/*if(type == \master, {
-				filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ slot).asSymbol;
-				num = 1;
-			}, {
-				filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ num ++ "_" ++ slot).asSymbol;
-			});*/
-
 			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ num ++ "_" ++ slot).asSymbol;
-
 			if(filterBuff.notNil, {
 				bufIndex = filterBuff.flop[0].indicesOfEqual(filterTag);
-
 				if(bufIndex.notNil, {
 					bufFunc = {
 						(nodeTime+fadeTime).yield;
@@ -809,8 +800,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {
 				setTag = (type ++ num).asSymbol;
 			});
-
-			/*setTag = (type ++ num).asSymbol;*/
 
 			setArr = this.findTrackArr(setTag);
 			tracks[setArr[0]] = arr1;
@@ -1017,11 +1006,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{filterInfo.isSymbol} {
 			filterTag = filterInfo;}
 		{filterInfo.isArray} {
-			/*if(filterInfo.size > 2, {
-				filterTag = this.findFilterTag(filterInfo[0], filterInfo[1], filterInfo[2]);
-			}, {
-				filterTag = this.findFilterTag(filterInfo[0], filterInfo[1]);
-			});*/
 			filterTag = this.findFilterTag(filterInfo[0], filterInfo[1], filterInfo[2]);
 		};
 		^filterTag;
@@ -1058,14 +1042,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	findFilterTag {arg type, arg1, arg2;
 		var tagString, tagIndex;
-		/*if(type == \master, {
-			tagString = "filter" ++ type.asString.capitalise ++ "_" ++ arg1;
-		}, {
-			tagString = "filter" ++ type.asString.capitalise ++ "_" ++ arg1 ++ "_" ++ arg2;
-		});*/
-
 		tagString = "filter" ++ type.asString.capitalise ++ "_" ++ arg1 ++ "_" ++ arg2;
-
 		tagString = tagString.asSymbol;
 		tagIndex = filters.flop[0].indexOf(tagString);
 		if(tagIndex.notNil, {
@@ -1080,11 +1057,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var keyString, resultArr, varArr;
 		keyString = filterTag.asString.replace("filter").toLower;
 		varArr =  keyString.asString.split($_);
-		/*if(varArr.size == 2, {
-			resultArr = [varArr[0].asSymbol, 1, varArr[1] ];
-		}, {
-			resultArr = [varArr[0].asSymbol, varArr[1], varArr[2] ];
-		});*/
 		resultArr = [varArr[0].asSymbol, varArr[1], varArr[2] ];
 		^resultArr;
 	}
@@ -2077,8 +2049,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							var labelKey, irItems;
 								labelKey = thisListView.items[sbs.value];
 							if(labelKey.asString.find("convrev").isNil, {
-								"bug".postln;
-								trackInfoArr.postln;
 									this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
 										labelKey, action: {
 											{
@@ -2111,21 +2081,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					}, {
 
-
-						/*if(trackInfoArr[0].asSymbol == \master, {
-							fltUIArr = [trackInfoArr[0].asSymbol, ind+1, 1];
-						}, {
-							fltUIArr = [trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1];
-						});*/
-
 						fltUIArr = [trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1];
 
 						if(filters.notNil, {
 							thisTagFlt = this.findFilterTag(fltUIArr[0],
 								fltUIArr[1], fltUIArr[2]);
 							if(filters.flop[0].includes(thisTagFlt).not, {
-								this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1],
-									ind+1, menu.string.asSymbol);
+								this.filter(fltUIArr[0], fltUIArr[1], fltUIArr[2], menu.string.asSymbol);
 							});
 						});
 
@@ -2706,10 +2668,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.font_(basicFont)
 			.action = { arg menu;
 				var filterInfoArr, fxsNum2;
-				filterTag.postln;
 				filterInfoArr = this.convFilterTag(filterTag);
-				filterInfoArr.postln;
-				filterInfoArr.cs.postln;
 				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt, {
 				filtersWin.close;
 				if(mixButton.notNil, {
@@ -2750,9 +2709,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				filterKey = thisFilter[1];
 				filterTag = thisFilter[0];
 				filterInfo = this.convFilterTag(filterTag);
-				filterInfo.postln;
 				filterPairs = this.getFilterPairs(filterInfo[0], filterInfo[1], filterInfo[2]);
-				filterPairs.postln;
 				if(topLeftArr.isNil, {
 					defaultPos = {top = 75; left = 75;};
 					if(filtersWindow.isNil, {
@@ -2769,7 +2726,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					left = topLeftArr[0];
 					top = topLeftArr[1];
 				});
-				filterTag.postln;
 				this.filterWinGUI(filterTag, filterKey, filterPairs, left, top, mixButton);
 			}, {
 				"filter not found".warn;
