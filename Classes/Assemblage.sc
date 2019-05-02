@@ -851,11 +851,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						if(filterBuff.notEmpty, {
 							bufArrInd = filterBuff.flop[0].indexOf(thisSlot);
 							if(bufArrInd.notNil, {
-							filterBuff.flop[1][bufArrInd].do{|item|
-								BStore.remove(item[0], item[1], item[2]);
-								server.sync;
-							};
-							filterBuff.removeAt(bufArrInd);
+								filterBuff.flop[1][bufArrInd].do{|item|
+									BStore.remove(item[0], item[1], item[2]);
+									server.sync;
+								};
+								filterBuff.removeAt(bufArrInd);
 							});
 						});
 					});
@@ -1999,7 +1999,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		//fx UI settings
 		fxSlotArr.do{|item, index|
 			item.do{|it, ind|
-				var trackInfoInt, trackInfoArr, thisFltInfo, tracksFlt, thisFltTags, fltTagArr, thisSlotInfo;
+				var trackInfoInt, trackInfoArr, thisFltInfo, tracksFlt, thisFltTags, fltTagArr, thisSlotInfo,
+				fltWinFunc1, fltWinFunc2;
 
 				trackInfoArr = mixTrackNames[index].asString.divNumStr;
 				if(trackInfoArr[1] == nil, {trackInfoArr[1] = 1});
@@ -2022,6 +2023,35 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					});
 				});
+
+				fltWinFunc1 = {arg menu, labelKey;
+					{menu.string = labelKey;
+						fltMenuWindow.close;
+						fltMenuWindow = nil;
+						if((ind+1) > (fxsNum-1), {
+							server.sync; this.refreshMixGUI;
+						});
+					}.fork(AppClock);
+				};
+
+				fltWinFunc2 = {arg menu, thisListView, irItems, labelKey;
+					menu.string = labelKey;
+					irItems = PathName(mainPath ++ "SoundFiles/IR/").entries
+					.collect({|item| item.fileNameWithoutExtension });
+					thisListView.items = [""] ++ irItems;
+					thisListView.action = {|sbs|
+						this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
+							labelKey, data: [\convrev, sbs.item.asSymbol, 2048], action: {
+								{
+								fltMenuWindow.close;
+								fltMenuWindow = nil;
+								if((ind+1) > (fxsNum-1), {
+									server.sync; this.refreshMixGUI
+								});
+							}.fork(AppClock);
+						});
+					};
+				};
 
 				it.mouseDownAction = { arg menu;
 					var boundArr, thisBounds, thisArrBounds, thisitemArr,
@@ -2047,50 +2077,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						.hiliteColor_(Color.new255(78, 109, 38);)
 						.action_({ arg sbs;
 							var labelKey, irItems;
-								labelKey = thisListView.items[sbs.value];
+							labelKey = thisListView.items[sbs.value];
 							if(labelKey.asString.find("convrev").isNil, {
-									this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
-										labelKey, action: {
-											{
-										menu.string = labelKey;
-										fltMenuWindow.close;
-									fltMenuWindow = nil;
-									if((ind+1) > (fxsNum-1), {
-												server.sync; this.refreshMixGUI;
-									});
-											}.fork(AppClock);
-									});
-								}, {
-									menu.string = labelKey;
-									irItems = PathName(mainPath ++ "SoundFiles/IR/").entries
-									.collect({|item| item.fileNameWithoutExtension });
-									thisListView.items = [""] ++ irItems;
-									thisListView.action = {|sbs|
-										this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
-											labelKey, data: [\convrev, sbs.item.asSymbol, 2048], action: {
-												{
-													fltMenuWindow.close;
-													fltMenuWindow = nil;
-													if((ind+1) > (fxsNum-1), {
-														server.sync; this.refreshMixGUI
-													});
-												}.fork(AppClock);
-										});
-									};
+								this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
+									labelKey, action: {
+										fltWinFunc1.(menu, labelKey);
 								});
+							}, {
+								fltWinFunc2.(menu, thisListView, irItems, labelKey);
+							});
 						});
 					}, {
-
 						fltUIArr = [trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1];
-
 						if(filters.notNil, {
 							thisTagFlt = this.findFilterTag(fltUIArr[0],
 								fltUIArr[1], fltUIArr[2]);
 							if(filters.flop[0].includes(thisTagFlt).not, {
-								this.filter(fltUIArr[0], fltUIArr[1], fltUIArr[2], menu.string.asSymbol);
+								this.filter(fltUIArr[0], fltUIArr[1], fltUIArr[2],
+									menu.string.asSymbol);
 							});
 						});
-
 						this.filterGUI(fltUIArr[0], fltUIArr[1], fltUIArr[2],
 							[menu.bounds.left+mixerWin.bounds.left-scrollPoint.asArray[0],
 								(mixerWin.bounds.top-45)+menu.bounds.top+68], menu);
@@ -2384,7 +2390,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			thisArr = synthString.copyRange(synthString.find("[")+1, synthString.find("]")-1;);
 			thisArr = thisArr.replace("),", ")%");
 			thisArr = thisArr.split($%);
-			thisString = thisArr.select({|item| item.find((trackType.asString ++ trackNum)).notNil })[0];
+			thisString = thisArr.select({|item|
+				item.find((trackType.asString ++ trackNum)).notNil;
+			})[0];
 		}, {
 			if(synthString.find((trackType.asString ++ trackNum)).notNil, {
 				thisString = 	synthString;
@@ -2445,7 +2453,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		ndefCS.interpret;
 	}
 
-	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer, data, remove=false;
+	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
+		data, remove=false;
 		var refreshFunc;
 		refreshFunc = {
 			if(mixerWin.notNil, {
@@ -2670,21 +2679,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				var filterInfoArr, fxsNum2;
 				filterInfoArr = this.convFilterTag(filterTag);
 				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt, {
-				filtersWin.close;
-				if(mixButton.notNil, {
-					mixButton.string = "";
-				});
-				if(filters.notNil, {
-					if(filters.notEmpty, {
-						fxsNum2 = filters.flop[0].collect({|item|
-							item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
-						{
-							if(fxsNum2 < fxsNum, {
-								server.sync; this.refreshMixGUI;
-							});
-						}.fork(AppClock);
+					filtersWin.close;
+					if(mixButton.notNil, {
+						mixButton.string = "";
 					});
-				});
+					if(filters.notNil, {
+						if(filters.notEmpty, {
+							fxsNum2 = filters.flop[0].collect({|item|
+								item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
+							{
+								if(fxsNum2 < fxsNum, {
+									server.sync; this.refreshMixGUI;
+								});
+							}.fork(AppClock);
+						});
+					});
 				});
 			};
 
