@@ -81,4 +81,54 @@
  -> [ 0.01, 2.01, \exp, {|val| (val-0.01)} ], winSize=0.02
  -> [ 0.01, 3 ];
 	PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion)*SinOsc.ar();
- } ] ]
+ } ], [ 'frz2', {arg thresh=0 -> [0,1], adjVol=1, lagTime=0.1,pan=0;
+var freeze, chain, frameSize=2048, sig;
+chain = FFT(LocalBuf(frameSize), Mix.new(\in));
+freeze = Onsets.kr(chain, thresh).lag(lagTime);
+chain = PV_MagFreeze(chain, freeze); 
+	Pan2.ar(adjVol * IFFT(chain);, pan);} ], [ 'gdy1', {arg mix=0 -> [0,1], maxMul=1, ampdist=2, durDist=3, adParam=1, ddParam=1, ampScale=0.5, durScale=0.0, kNum=40, transp=1; 
+	var freq, hasFreq, amp, minFreq, sig;
+#freq, hasFreq = Pitch.kr(\in, minFreq: 20, ampThreshold: 0.0, median: 7);
+amp = Amplitude.kr(\in, 0.05, 0.05).lag(0.1);
+minFreq = ((freq[0] * transp).fold2(1000)).abs.max(20);
+sig = Gendy1.ar(ampdist.max(0).min(6), durDist, adParam, ddParam, minFreq,(minFreq*maxMul).min(1000),ampScale,durScale,50,kNum)*amp;
+((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
+} ], [ 'cct1', {arg mix=0 -> [0,1], match=0.3 -> [0,0.5], lffreq=0.1 -> [0.01,1.0], sinadd = 300;
+var concat, control;
+control= SinOsc.ar(0.5)*Saw.ar(SinOsc.kr(LFNoise0.kr(lffreq,3,4.5),0,50,sinadd));
+concat= Concat2.ar(control,\in,4.0,4.0,4.0,match,0,0.5,1.0,0.5,0.0);
+((concat*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
+} ], [ 'fds1', {arg mix=0 -> [0,1], alpha= -0.001 -> [-0.1,0.1], adjVol=1; 
+var kernel, kernel2, signal, signal2, signal3, freq, hasFreq;
+signal = \in;
+#freq, hasFreq = Pitch.kr(signal);
+kernel= WeaklyNonlinear.ar(signal,0,1,1,freq*2,0,0,alpha,3,0,0);
+kernel2= WeaklyNonlinear2.ar(signal,0,1,1,freq*2,0,0,alpha,3,0,0);
+signal2 = Convolution.ar(kernel+signal,kernel2, 2048, 0.0005) * EnvGen.kr(Env.asr(0.01, 1.0, 0.01), Amplitude.kr(signal));
+signal3 = Limiter.ar(signal2*adjVol);
+	adjVol * ((signal3*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'fds2', {arg mix=0 -> [0,1], num=64 -> [64,1], adjVol=1; 
+var kernel, signal, signal2, signal3;
+kernel = LPCError.ar(\in, \in.linlin(-1,1,num,1));
+signal = Convolution.ar(\in,kernel, 2048);
+signal2 = LPCError.ar(signal, \in.linlin(-1,1,1,num));
+signal3 = ((signal2+(\in.clip2(0.05)*0.05))).clip2(1.0);
+	adjVol * ((signal3*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'mga', {arg thresh=0 -> [0,40], adjVol=1, pan=0;
+var chain, frameSize=2048;
+chain = FFT(LocalBuf(frameSize), Mix.new(\in));
+chain = PV_MagAbove(chain, thresh); 
+	Pan2.ar(adjVol * IFFT(chain), pan);} ], [ 'mrk1', {arg mix=0 -> [0,1], rec=1, table=2, time=2; 
+	var sig;
+	sig = MarkovSynth.ar(\in, rec, time, table);
+	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))} ], [ 'chr1', {arg mix=0, depth=0.1, predelay=0.08, speed=0.05, ph_diff=0.5, lagTime=0.1;
+var input, sig, modulators, numDelays = 12;
+input = \in * numDelays.reciprocal;
+modulators = Array.fill(numDelays, {arg i;
+LFPar.kr(speed * rrand(0.94, 1.06), ph_diff * i, depth.lag(lagTime), predelay.lag(lagTime));}); 
+sig = DelayC.ar(input, 2.0, modulators);
+sig = sig.sum;
+sig = sig * 3;
+((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
+} ], [ 'dl2', {arg mix=0 -> [0,1], mul=1, freq=0.25, lag=0.1, decayTime=0, lag2=1; var sig;
+	sig = CombL.ar(\in,12,LFNoise1.kr(freq.lag(lag), 1*(mul.lag(lag2)/2), 0+(mul.lag(lag2)/2)).lag(lag),decayTime);
+((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))	
+} ] ]
