@@ -50,12 +50,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					this.autoRoute(item);
 				};
 				server.sync;
-				/*inArr = masterNdefs.flop[1];*/
-				/*masterInput = inArr.copyRange(1, inArr.size-1);*/
-
 				masterInput = this.sortTrackNames(trackNames)
 				.select({|item| item != \master }).collect({|item| Ndef(item) });
-
 				this.input(masterInput, \master);
 				server.sync;
 				this.play;
@@ -69,8 +65,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	get {arg trackType = \track;
+		/*^tracks.select{|item|
+			item.last[0].asString.find(trackType.asString).notNil; };*/
 		^tracks.select{|item|
-			item.last[0].asString.find(trackType.asString).notNil; };
+			item[item.size-2][0].asString.find(trackType.asString).notNil; };
 	}
 
 	getMaster {
@@ -86,7 +84,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	play {var ndefCS;
-		ndefCS = "Ndef('master').play;";
+		ndefCS = "Ndef('spaceMaster').play;";
 		ndefCS.radpost.interpret;
 	}
 
@@ -102,16 +100,23 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^spaceType;
 	}
 
-	addTrack {arg type=\track, chanNum=1, spaceType, trackSynth, trackSpecs;
-		var trackTag,spaceTag, ndefCS1, ndefCS2, spaceSynth, spaceSpecs, thisTrackInfo;
+	addTrack {arg type=\track, chanNum=1, spaceType;
+		var trackInTag, trackTag, spaceTag, ndefCS, ndefCS1, ndefCS2, trackInSynth,
+		trackSynth, spaceSynth, trackInSpecs, spaceSpecs, trackSpecs, thisTrackInfo;
 		if([\track, \bus, \master].includes(type), {
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
-			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
+
+			trackInSynth = {arg trim=0, lagTime=0;
+				(\in * trim.dbamp.lag(lagTime) )};
+			trackInSpecs = [ ['trim', [-23, 23] ], ['lagTime', [0, 10] ] ];
+			trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
 				(\in * volume.dbamp.lag(lagTime)
-					*mute.range(1,0).lag(0.1)*solo.lag(0.1) )}; };
-			trackSpecs ?? trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ] ];
+					*mute.range(1,0).lag(0.1)*solo.lag(0.1) )};
+			trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ], ['lagTime', [0, 10] ],
+				['mute', [0, 1] ], ['solo', [0,1] ] ];
 			spaceSynth = SynthFile.read(\space, spaceType);
 			spaceSpecs = SpecFile.read(\space, spaceType);
+
 			case
 			{type == \track} {
 				trackTag = (type.asString ++ trackCount).asSymbol;
@@ -125,6 +130,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			{type == \master} {
 				trackTag = (type.asString).asSymbol;
 			};
+
+			trackInTag = ("in" ++ trackTag.asString.capitalise).asSymbol;
+			ndefCS = "Ndef.ar(" ++ trackInTag.cs ++ ", ";
+			ndefCS = (ndefCS ++ chanNum.cs ++ ");");
+			ndefCS.radpost.interpret;
+			ndefCS = ("Ndef(" ++ trackInTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
+			ndefCS.radpost;
+			ndefCS.interpret;
+			server.sync;
 			ndefCS1 = "Ndef.ar(" ++ trackTag.cs ++ ", ";
 			ndefCS1 = (ndefCS1 ++ chanNum.cs ++ ");");
 			ndefCS1.radpost;
@@ -142,10 +156,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			ndefCS2.radpost;
 			ndefCS2.interpret;
 			server.sync;
-			thisTrackInfo = [ [spaceTag, spaceSynth], [trackTag, trackSynth] ];
-			tracks = tracks.add([ [spaceTag, spaceSynth], [trackTag, trackSynth] ]);
-			specs = specs.add([ [spaceTag, spaceSpecs], [trackTag, trackSpecs] ]);
-			masterNdefs = masterNdefs.add([Ndef(spaceTag), Ndef(trackTag)]);
+			//this will fuck things up in other places - check them!:
+			thisTrackInfo = [[trackInTag, trackInSynth], [trackTag, trackSynth],
+				[spaceTag, spaceSynth] ];
+			tracks = tracks.add([[trackInTag, trackInSynth], [trackTag, trackSynth],
+				[spaceTag, spaceSynth] ]);
+			specs = specs.add([ [trackInTag, trackInSpecs], [trackTag, trackSpecs],
+				[spaceTag, spaceSpecs] ]);
+			masterNdefs = masterNdefs.add([Ndef(trackInTag), Ndef(trackTag),
+				Ndef(spaceTag)]);
 			trackNames = trackNames.add(trackTag);
 			space = space.add([spaceTag, spaceType]);
 			^thisTrackInfo;
@@ -447,7 +466,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					inputs.removeAt(inputs.flop[0].indexOf(inTag));
 				});
 			});
-			inTag = ("space" ++ inTag.asString.capitalise).asSymbol;
+			inTag = ("in" ++ inTag.asString.capitalise).asSymbol;
 			if(inputs.notNil, {
 				if(inputs.flop[0].includes(inTag), {
 					newInIndex = inputs.flop[0].indexOf(inTag);
