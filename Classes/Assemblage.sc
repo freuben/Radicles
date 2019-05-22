@@ -44,14 +44,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					spaceMaster = spaceType[2];
 				});
 				this.addTrack(\master, chanMaster, spaceMaster, masterSynth);
+				if(trackNum != 0, {
 				this.addTracks(trackNum, \track, chanTrack, spaceTrack);
+				});
+				if(busNum != 0, {
 				this.addTracks(busNum, \bus, chanBus, spaceBus);
+				});
 				tracks.do{|item|
 					this.autoRoute(item);
 				};
 				server.sync;
 				masterInput = this.sortTrackNames(trackNames)
-				.select({|item| item != \master }).collect({|item| Ndef(item) });
+				.select({|item| item != \master }).collect({|item| Ndef(("space" ++ item.asString.capitalise).asSymbol) });
+				masterInput.postln;
 				this.input(masterInput, \master);
 				server.sync;
 				this.play;
@@ -98,6 +103,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{chanNum == 5} {spaceType = \panAz5}
 		{chanNum == 6} {spaceType = \panAz6};
 		^spaceType;
+	}
+
+		spaceTypeToChanOut {arg spaceType=1;
+		var chanNum;
+		case
+		{spaceType == \pan2} {chanNum = 2}
+		{spaceType == \bal2} {chanNum = 2}
+		{spaceType == \panAz3} {chanNum = 3}
+		{spaceType == \pan4} {chanNum = 4}
+		{spaceType == \panAz5} {chanNum = 5}
+		{spaceType == \panAz6} {chanNum = 6};
+		^chanNum;
 	}
 
 	addTrack {arg type=\track, chanNum=1, spaceType;
@@ -149,7 +166,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			server.sync;
 			spaceTag = ("space" ++ trackTag.asString.capitalise).asSymbol;
 			ndefCS1 = "Ndef.ar(" ++ spaceTag.cs ++ ", ";
-			ndefCS1 = (ndefCS1 ++ chanNum.cs ++ ");");
+			ndefCS1 = (ndefCS1 ++ this.spaceTypeToChanOut(spaceType).cs ++ ");");
 			ndefCS1.radpost;
 			ndefCS1.interpret;
 			ndefCS2 = ("Ndef(" ++ spaceTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
@@ -510,7 +527,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(respace, {
 					//this needs more work
 					/*if(spaceType.isNil, {spaceType = this.findSpaceType(sysChans.last)});*/
-					this.respace(trackArr[0][0], ndefsIn, spaceType);
+
+/*					this.respace(trackArr[0][0], ndefsIn, spaceType);*/
+
+					trackArr.postln;
 					trackArr = this.get(type)[num-1];
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
 					ndefCS.radpost;
