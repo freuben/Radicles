@@ -21,8 +21,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			{
 				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
 					(\in * volume.dbamp.lag(lagTime)
-						*mute.range(1,0).lag(0.1)
-						*off.range(1,0)
+						*mute.linlin(0,1,1,0).lag(0.1)
+						*off.linlin(0,1,1,0)
 				).softclip};
 				if(chanNum.isArray.not, {
 					chanMaster = chanNum;
@@ -45,10 +45,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 				this.addTrack(\master, chanMaster, spaceMaster, masterSynth);
 				if(trackNum != 0, {
-				this.addTracks(trackNum, \track, chanTrack, spaceTrack);
+					this.addTracks(trackNum, \track, chanTrack, spaceTrack);
 				});
 				if(busNum != 0, {
-				this.addTracks(busNum, \bus, chanBus, spaceBus);
+					this.addTracks(busNum, \bus, chanBus, spaceBus);
 				});
 				tracks.do{|item|
 					this.autoRoute(item);
@@ -71,7 +71,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	get {arg trackType = \track;
 		/*^tracks.select{|item|
-			item.last[0].asString.find(trackType.asString).notNil; };*/
+		item.last[0].asString.find(trackType.asString).notNil; };*/
 		^tracks.select{|item|
 			item[item.size-2][0].asString.find(trackType.asString).notNil; };
 	}
@@ -105,7 +105,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^spaceType;
 	}
 
-		spaceTypeToChanOut {arg spaceType=1;
+	spaceTypeToChanOut {arg spaceType=1;
 		var chanNum;
 		case
 		{spaceType == \pan2} {chanNum = 2}
@@ -128,7 +128,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			trackInSpecs = [ ['trim', [-23, 23] ], ['lagTime', [0, 10] ] ];
 			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
 				(\in * volume.dbamp.lag(lagTime)
-					*mute.range(1,0).lag(0.1)*solo.lag(0.1) )} };
+					*mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )} };
 			trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ], ['lagTime', [0, 10] ],
 				['mute', [0, 1] ], ['solo', [0,1] ] ];
 			spaceSynth = SynthFile.read(\space, spaceType);
@@ -520,7 +520,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(respace, {
 					//this needs more work
 					/*if(spaceType.isNil, {spaceType = this.findSpaceType(sysChans.last)});*/
-/*					this.respace(trackArr[0][0], ndefsIn, spaceType);*/
+					/*					this.respace(trackArr[0][0], ndefsIn, spaceType);*/
 
 					trackArr = this.get(type)[num-1];
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
@@ -1296,10 +1296,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mixTrackNames = this.sortTrackNames(trackNames);
 		mixTrackNdefs = mixTrackNames.collect({|item| Ndef(item.asSymbol) });
 		sysChans = mixTrackNdefs.collect({|item| item.numChannels});
-		this.getInputs(\track).collect{|item| item.numChannels}
+		/*this.getInputs(\track).collect{|item| item.numChannels}
 		.do{|item, index|
-			sysChans[index] = item;
-		};
+		sysChans[index] = item;
+		};*/
 		mixTrackNames.do{|item|
 			var spatialType;
 			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++
@@ -1309,6 +1309,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {sysPan = sysPan.add(1)
 			});
 		};
+
+		sysChans[mixTrackNdefs.size-1] = Ndef(("space" ++
+			mixTrackNames.last.asString.capitalise).asSymbol).numChannels;
+
 	}
 
 	mixGUI {arg updateFreq=10;
@@ -1717,8 +1721,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 				});
 				if(mixInputLabels.notNil, {
-				inputMenu.items = [""] ++ this.sortTrackNames(mixInputLabels.rejectSame)
-				++ numBuses.collect{|item| "bus" ++ (item+1)};
+					inputMenu.items = [""] ++ this.sortTrackNames(mixInputLabels.rejectSame)
+					++ numBuses.collect{|item| "bus" ++ (item+1)};
 				});
 				//input names
 				if(trackInputSel.notNil, {
@@ -2231,13 +2235,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		Ndef("AssembladgeGUI", {
 			var in, imp;
-			in = sysChans.collect({|item, index|
-				if(item == mixTrackNdefs[index].numChannels, {
-					mixTrackNdefs[index].ar;
-				}, {
-					Mix(mixTrackNdefs[index].ar);
-				})
-			}).flat;
+			/*in = sysChans.collect({|item, index|
+			if(item == mixTrackNdefs[index].numChannels, {
+			mixTrackNdefs[index].ar;
+			}, {
+			Mix(mixTrackNdefs[index].ar);
+			})
+			}).flat;*/
+			in = sysChans.copyRange(0, sysChans.size-2).collect({|item, index|
+				mixTrackNdefs[index].ar });
+			in = (in ++ Ndef(\spaceMaster).ar).flat;
 			imp = Impulse.ar(10);
 			SendReply.ar(imp, "/AssembladgeGUI",
 				[
@@ -2267,7 +2274,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						meter.peakLevel = thisPeakVal;
 						peakArr = peakArr.add(peakVal);
 					});
+
 					peakArr = peakArr.reshapeLike(levelArr);
+
 					if(levelTextArr.notNil, {
 						peakArr.do{|item, index|
 							var peakDb;
@@ -2526,7 +2535,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		trackInd = this.getMixTrackIndex(trackType, num);
 		if(trackInd.notNil, {
 			noUIFunc = {muteStates[trackInd] = value;
-					("Ndef(" ++ mixTrackNames[trackInd].cs ++ ").set('mute', "
+				("Ndef(" ++ mixTrackNames[trackInd].cs ++ ").set('mute', "
 					++ value ++ ");").radpost.interpret;
 			};
 			if(mixerWin.notNil, {
@@ -2537,7 +2546,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			}, {
 				if(muteStates.isNil, {
-				muteStates = 0!mixTrackNames.size;
+					muteStates = 0!mixTrackNames.size;
 				});
 				noUIFunc.();
 			});
@@ -2559,7 +2568,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			}, {
 				if(recStates.isNil, {
-				recStates = 0!mixTrackNames.size;
+					recStates = 0!mixTrackNames.size;
 				});
 				noUIFunc.();
 			});
@@ -2584,7 +2593,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					});
 				}, {
 					if(soloStates.isNil, {
-					soloStates = 0!mixTrackNames.size;
+						soloStates = 0!mixTrackNames.size;
 					});
 					noUIFunc.();
 				});
@@ -2609,8 +2618,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			}, {
 				/*if(soloStates.isNil, {
-					soloStates = 0!mixTrackNames.size;
-					});
+				soloStates = 0!mixTrackNames.size;
+				});
 				*/
 				noUIFunc.();
 			});
