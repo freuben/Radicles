@@ -23,7 +23,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					(\in * volume.dbamp.lag(lagTime)
 						*mute.linlin(0,1,1,0).lag(0.1)
 						*off.linlin(0,1,1,0)
-				).softclip};
+				)};
 				if(chanNum.isArray.not, {
 					chanMaster = chanNum;
 					chanTrack = chanNum;
@@ -88,9 +88,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^this.get(\track);
 	}
 
-	play {var ndefCS;
-		ndefCS = "Ndef('spaceMaster').play;";
-		ndefCS.radpost.interpret;
+	play {
+		{
+			"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).softclip};".radpost.interpret;
+			server.sync;
+			"Ndef('spaceMaster').play;".radpost.interpret;
+		}.fork;
 	}
 
 	findSpaceType {arg chanNum=1;
@@ -1324,7 +1327,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
 		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap, sumHeight,
-		gapHeight;
+		gapHeight, peakMax;
 
 		this.updateMixInfo; //update info
 
@@ -1808,7 +1811,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(item[0] == \volume, {item[1]});
 		})[0].round(0.1).asString);
 		};
-		levelTextArr.do{|item| item.font = basicFont; item.string_("-inf");  };
+		levelTextArr.do{|item, index| item.font = basicFont; item.string_("-inf");
+			item.mouseDownAction_({peakMax[index] = -inf});
+			/*item.background_(Color.new255(78, 109, 38)); */
+		};
+		peakMax = -inf!levelTextArr.size;
 		//panning
 		panKnobTextArr.flat.do{|item| item.font = basicFont;};
 		panSpec = \pan.asSpec;
@@ -2235,13 +2242,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		Ndef("AssembladgeGUI", {
 			var in, imp;
-			/*in = sysChans.collect({|item, index|
-			if(item == mixTrackNdefs[index].numChannels, {
-			mixTrackNdefs[index].ar;
-			}, {
-			Mix(mixTrackNdefs[index].ar);
-			})
-			}).flat;*/
 			in = sysChans.copyRange(0, sysChans.size-2).collect({|item, index|
 				mixTrackNdefs[index].ar });
 			in = (in ++ Ndef(\spaceMaster).ar).flat;
@@ -2256,7 +2256,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		oscDefFunc = {
 			OSCdef(\AssembladgeGUI, {|msg, time, addr, recvPort|
-				var dBLow, array, numRMSSampsRecip, numRMSSamps, peakVal, peakArr;
+				var dBLow, array, numRMSSampsRecip, numRMSSamps, peakVal, peakAmp, peakArr;
 				numRMSSamps = server.sampleRate / updateFreq;
 				numRMSSampsRecip = 1 / numRMSSamps;
 				dBLow = -80;
@@ -2274,33 +2274,31 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						meter.peakLevel = thisPeakVal;
 						peakArr = peakArr.add(peakVal);
 					});
-
 					peakArr = peakArr.reshapeLike(levelArr);
-
 					if(levelTextArr.notNil, {
 						peakArr.do{|item, index|
 							var peakDb;
 							peakDb = item.maxItem;
 							if(peakDb < dBLow, {peakDb = -inf });
 							if(levelTextArr[index].notNil, {
-								levelTextArr[index].string = peakDb.round(0.1).asString;
+								if(peakMax[index] < peakDb, {
+									peakAmp = peakDb.linlin(dBLow, 0, 0, 1);
+									if(peakAmp >= 0.9999, {
+										if(levelTextArr[index].notNil, {
+											/*levelTextArr[index].background_(Color.new255(211, 14, 14));*/
+											levelTextArr[index].stringColor_(Color.new255(211, 14, 14));
+										});
+									}, {
+										if(levelTextArr[index].notNil, {
+											/*levelTextArr[index].background_(Color.black);*/
+											levelTextArr[index].stringColor_(Color.white);
+										});
+									});
+									levelTextArr[index].string = peakDb.round(0.1).asString;
+									peakMax[index] = peakDb;
+								});
 							});
-							/*case
-							{peakDb <= 0.9 } {
-							if(levelTextArr[index].notNil, {
-							levelTextArr[index].background_(Color.new255(78, 109, 38));
-							});
-							}
-							{(peakDb > 0.9).and(peakDb < 1) } {
-							if(levelTextArr[index].notNil, {
-							levelTextArr[index].background_(Color.new255(232, 90, 13));
-							});
-							}
-							{peakDb == 1} {
-							if(levelTextArr[index].notNil, {
-							levelTextArr[index].background_(Color.new255(211, 14, 14));
-							});
-							};*/
+
 						};
 					});
 				}.defer;
@@ -2820,14 +2818,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	masterSoloFunc {arg buttstates;
 		var inArr, newCS, startCS, endCS, finalCS, cs;
-		cs = Ndef(\spaceMaster).source.cs;
-		startCS = cs.find("= [");
+		cs = Ndef(\inMaster).source.cs;
+		startCS = cs.find("([");
 		endCS = cs.find("].sum");
-		inArr = inputs.flop[1][inputs.flop[0].indexOf(\spaceMaster);];
+		inArr = inputs.flop[1][inputs.flop[0].indexOf(\inMaster);];
 		newCS = inArr.collect {|item, index|  "Ndef.ar(" ++ item.key.cs ++
 			", " ++ item.numChannels ++ ") * "	++ buttstates[index] };
-		finalCS = cs.replace(cs.copyRange(startCS+2,endCS), newCS);
-		("Ndef('spaceMaster').source = " ++ finalCS).radpost.interpret;
+		finalCS = cs.replace(cs.copyRange(startCS+1,endCS), newCS);
+		("Ndef('inMaster').source = " ++ finalCS).radpost.interpret;
 	}
 
 	masterSoloFunc2 {var newStates;
@@ -3014,6 +3012,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					Ndef(\spaceMaster).fadeTime.yield;
 					server.sync;
 					("Ndef('spaceMaster', " ++ funcSource.cs ++ ");").radpost.interpret;
+					"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).softclip};".radpost.interpret;
 					"Ndef('masterOut').play;".radpost.interpret;
 					"Ndef('masterOut').reshaping = 'elastic';".radpost.interpret;
 					this.mastOutSynth;
