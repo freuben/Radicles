@@ -55,13 +55,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 				server.sync;
 				masterInput = this.sortTrackNames(trackNames)
-				.select({|item| item != \master }).collect({|item| Ndef(("space" ++ item.asString.capitalise).asSymbol) });
-				masterInput.postln;
+				.select({|item| item != \master }).collect({|item|
+					Ndef(("space" ++ item.asString.capitalise).asSymbol) });
 				this.input(masterInput, \master);
 				server.sync;
 				this.play;
 				this.updateMixInfo;
-				oiIns = Ndef(\master).numChannels;
+				oiIns = Ndef(\spaceMaster).numChannels;
 				oiOuts = server.options.numOutputBusChannels;
 				basicFont = Font("Monaco", 8);
 			}.fork
@@ -117,18 +117,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^chanNum;
 	}
 
-	addTrack {arg type=\track, chanNum=1, spaceType;
+	addTrack {arg type=\track, chanNum=1, spaceType, trackSynth;
 		var trackInTag, trackTag, spaceTag, ndefCS, ndefCS1, ndefCS2, trackInSynth,
-		trackSynth, spaceSynth, trackInSpecs, spaceSpecs, trackSpecs, thisTrackInfo;
+		spaceSynth, trackInSpecs, spaceSpecs, trackSpecs, thisTrackInfo;
 		if([\track, \bus, \master].includes(type), {
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
 
 			trackInSynth = {arg trim=0, lagTime=0;
 				(\in * trim.dbamp.lag(lagTime) )};
 			trackInSpecs = [ ['trim', [-23, 23] ], ['lagTime', [0, 10] ] ];
-			trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
+			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
 				(\in * volume.dbamp.lag(lagTime)
-					*mute.range(1,0).lag(0.1)*solo.lag(0.1) )};
+					*mute.range(1,0).lag(0.1)*solo.lag(0.1) )} };
 			trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ], ['lagTime', [0, 10] ],
 				['mute', [0, 1] ], ['solo', [0,1] ] ];
 			spaceSynth = SynthFile.read(\space, spaceType);
@@ -153,27 +153,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			ndefCS = (ndefCS ++ chanNum.cs ++ ");");
 			ndefCS.radpost.interpret;
 			ndefCS = ("Ndef(" ++ trackInTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS.radpost;
-			ndefCS.interpret;
+			ndefCS.radpost.interpret;
 			server.sync;
 			ndefCS1 = "Ndef.ar(" ++ trackTag.cs ++ ", ";
 			ndefCS1 = (ndefCS1 ++ chanNum.cs ++ ");");
-			ndefCS1.radpost;
-			ndefCS1.interpret;
+			ndefCS1.radpost.interpret;
 			ndefCS2 = ("Ndef(" ++ trackTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS2.radpost;
-			ndefCS2.interpret;
+			ndefCS2.radpost.interpret;
 			server.sync;
 			spaceTag = ("space" ++ trackTag.asString.capitalise).asSymbol;
 			ndefCS1 = "Ndef.ar(" ++ spaceTag.cs ++ ", ";
 			ndefCS1 = (ndefCS1 ++ this.spaceTypeToChanOut(spaceType).cs ++ ");");
-			ndefCS1.radpost;
-			ndefCS1.interpret;
+			ndefCS1.radpost.interpret;
 			ndefCS2 = ("Ndef(" ++ spaceTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS2.radpost;
-			ndefCS2.interpret;
+			ndefCS2.radpost.interpret;
 			server.sync;
-			//this will fuck things up in other places - check them!:
 			thisTrackInfo = [[trackInTag, trackInSynth], [trackTag, trackSynth],
 				[spaceTag, spaceSynth] ];
 			tracks = tracks.add([[trackInTag, trackInSynth], [trackTag, trackSynth],
@@ -226,7 +220,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 				intArr = intArr.add(ndefCS);
 			};
-			intArr.reverse.do{|item| item.radpost; item.interpret; server.sync }; }.fork;
+			intArr.reverse.do{|item| item.radpost.interpret; server.sync }; }.fork;
 	}
 
 	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
@@ -520,21 +514,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					});
 				}, {
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
-					ndefCS.radpost;
-					ndefCS.interpret;
+					ndefCS.radpost.interpret;
 				});
 			}, {
 				if(respace, {
 					//this needs more work
 					/*if(spaceType.isNil, {spaceType = this.findSpaceType(sysChans.last)});*/
-
 /*					this.respace(trackArr[0][0], ndefsIn, spaceType);*/
 
-					trackArr.postln;
 					trackArr = this.get(type)[num-1];
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
-					ndefCS.radpost;
-					ndefCS.interpret;
+					ndefCS.radpost.interpret;
 				}, {
 					"channel number input doesn't match track".warn;
 				});
@@ -642,11 +632,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(busArr[busNum-1][0].isNil, {
 				busArr[busNum-1][0] = busTag;
 				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
-				ndefCS1.radpost;
-				ndefCS1.interpret;
+				ndefCS1.radpost.interpret;
 				ndefCS1 = ("Ndef(" ++ busTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-				ndefCS1.radpost;
-				ndefCS1.interpret;
+				ndefCS1.radpost.interpret;
 				server.sync;
 				this.input(Ndef(busTag), \bus, busNum);
 			});
@@ -673,14 +661,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			funcBus = busArr[busNum-1][1].busFunc;
 			ndefCS2 = this.ndefPrepare(Ndef(busTag), funcBus);
 			server.sync;
-			ndefCS2.radpost;
-			ndefCS2.interpret;
+			ndefCS2.radpost.interpret;
 			server.sync;
 			argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));
 			ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set('vol" ++ (argIndex+1)
 			++ "', " ++ mix ++ ");";
-			ndefCS3.radpost;
-			ndefCS3.interpret;
+			ndefCS3.radpost.interpret;
 			action.();
 		}.fork;
 	}
@@ -732,8 +718,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs, buffer, data, action;
 		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
-		setTag, filterIndex, startNdefs, filterSpecs, trackTags, convString,
-		replaceString, cond, bufIndex, bufFunc, ndefNumChan;
+		setTag, filterIndex, startNdefs, filterSpecs, trackTags, convString, routArr1,
+		replaceString, cond, bufIndex, bufFunc, ndefNumChan, ndefSpace;
 
 		//still some work to do with buffer alloc
 		{
@@ -758,14 +744,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 
 			ndefArr = this.get(type)[num-1];
+			ndefSpace = ndefArr.last;
+			ndefArr = ndefArr.copyRange(0, ndefArr.size-2);
+
 			ndefNumChan = Ndef(ndefArr[0][0]).numChannels;
 			startNdefs = {
 				ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefNumChan ++ ");";
-				ndefCS.radpost;
-				ndefCS.interpret;
+				ndefCS.radpost.interpret;
 				ndefCS = "Ndef(" ++ filterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";";
-				ndefCS.radpost;
-				ndefCS.interpret;
+				ndefCS.radpost.interpret;
 				server.sync;
 			};
 			if(filters.isNil, {
@@ -842,10 +829,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				setTag = (type ++ num).asSymbol;
 			});
 
+			routArr1 = arr1;
+			arr1 = arr1 ++ [ndefSpace];
+
 			setArr = this.findTrackArr(setTag);
 			tracks[setArr[0]] = arr1;
 			masterNdefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
-
 			trackTags = specs[setArr[0]].flop[0];
 			specs[setArr[0]] = arr1.flop[0].collect{|item|
 				if(trackTags.includes(item), {
@@ -854,7 +843,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					filterSpecs;
 				});
 			};
-			this.autoRoute(arr1, true);
+
+			this.autoRoute(routArr1, true);
 			server.sync;
 			bufFunc.();
 			server.sync;
@@ -878,8 +868,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(thisFilterIndex.notNil, {
 
 				ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
-				ndefCS.radpost;
-				ndefCS.interpret;
+				ndefCS.radpost.interpret;
 				thisTrack.removeAt(thisFilterIndex);
 				if(type == \master, {num=""});
 				setArr = this.findTrackArr((type ++ num).asSymbol);
@@ -923,8 +912,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			arr2 = thisTrack.copyRange(1, thisTrack.size-2);
 			arr2.do{|item|
 				ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
-				ndefCS.radpost;
-				ndefCS.interpret;
+				ndefCS.radpost.interpret;
 				thisTrack.remove(item);
 				if(type == \master, {num=""});
 				setArr = this.findTrackArr((type ++ num).asSymbol);
@@ -2467,16 +2455,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var tag, ndefCS;
 		tag = ("space" ++ trackType.asString.capitalise ++ trackNum).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++panTag.cs ++ ", " ++ lag ++ ");";
-		ndefCS.radpost;
-		ndefCS.interpret;
+		ndefCS.radpost.interpret;
 	}
 
 	setPan {arg trackType=\track, trackNum=1, val=0, panTag=\pan;
 		var tag, ndefCS, trackKey;
 		tag = ("space" ++ trackType.asString.capitalise ++ trackNum).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++panTag.cs ++ ", " ++ val ++ ");";
-		ndefCS.radpost;
-		ndefCS.interpret;
+		ndefCS.radpost.interpret;
 		if(mixerWin.notNil, {
 			if(mixerWin.notClosed, {
 				trackKey = (trackType ++ trackNum).asSymbol;
@@ -2499,12 +2485,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		volTag = ("vol" ++ slot).asSymbol;
 		if(lag.notNil, {
 			ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
-			ndefCS.radpost;
-			ndefCS.interpret;
+			ndefCS.radpost.interpret;
 		});
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++volTag.cs ++ ", " ++ mix ++ ");";
-		ndefCS.radpost;
-		ndefCS.interpret;
+		ndefCS.radpost.interpret;
 	}
 
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
@@ -2868,7 +2852,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
 		recStates.do({|item, index|
 			if(item == 1, {
-				recTracks = recTracks.add(mixTrackNames[index]);
+				recTracks = recTracks.add(("space" ++
+					mixTrackNames[index].asString.capitalise).asSymbol);
 			});
 		});
 		recBStoreArr = [];
@@ -2901,7 +2886,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	startRecording {var recTracks;
 		recStates.do({|item, index|
 			if(item == 1, {
-				recTracks = recTracks.add(mixTrackNames[index]);
+				recTracks = recTracks.add(("space" ++
+					mixTrackNames[index].asString.capitalise).asSymbol);
 			});
 		});
 		if(recInputArr.isNil, {
@@ -2956,8 +2942,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, {
 			arr3 = "DC.ar(0)"!Ndef(\master).numChannels ;
 		});
-		("Ndef('masterOut', {var out; \nout = Ndef.ar('master', " ++
-			Ndef(\master).numChannels ++ ");\n\t" ++	arr3.asString ++ ";\n\t});")
+		("Ndef('masterOut', {var out; \nout = Ndef.ar('spaceMaster', " ++
+			Ndef(\spaceMaster).numChannels ++ ");\n\t" ++	arr3.asString ++ ";\n\t});")
 		.radpost.interpret;
 	}
 
@@ -3014,11 +3000,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			oiIns.collect{|item| item }.do{|it, ind| mastOutArr2[ind][it] = 1 };
 			if(Ndef(\masterOut).source.isNil, {
 				if(mastOutArr != mastOutArr2, {
-					funcSource = Ndef(\master).source;
-					"Ndef('master').clear;".radpost.interpret;
-					Ndef(\master).fadeTime.yield;
+					funcSource = Ndef(\spaceMaster).source;
+					"Ndef('spaceMaster').clear;".radpost.interpret;
+					Ndef(\spaceMaster).fadeTime.yield;
 					server.sync;
-					("Ndef('master', " ++ funcSource.cs ++ ");").radpost.interpret;
+					("Ndef('spaceMaster', " ++ funcSource.cs ++ ");").radpost.interpret;
 					"Ndef('masterOut').play;".radpost.interpret;
 					"Ndef('masterOut').reshaping = 'elastic';".radpost.interpret;
 					this.mastOutSynth;
