@@ -43,7 +43,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					spaceBus = spaceType[1];
 					spaceMaster = spaceType[2];
 				});
-				this.addTrack(\master, chanMaster, spaceMaster, masterSynth);
+				this.addTrack(\master, chanMaster.max(2), spaceMaster, masterSynth);
 				if(trackNum != 0, {
 					this.addTracks(trackNum, \track, chanTrack, spaceTrack);
 				});
@@ -90,7 +90,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	play {
 		{
-			"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).softclip};".radpost.interpret;
+			"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radpost.interpret;
 			server.sync;
 			"Ndef('spaceMaster').play;".radpost.interpret;
 		}.fork;
@@ -250,7 +250,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			server.sync;
 
 			masterInput = this.sortTrackNames(trackNames)
-			.select({|item| item != \master }).collect({|item| Ndef(item) });
+			.select({|item| item != \master }).collect({|item|
+				Ndef(("space" ++ item.asString.capitalise).asSymbol) });
 
 			this.input(masterInput, \master);
 
@@ -1184,7 +1185,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			argIndex = argument;
 		});
 		thisSpec = 	specArr[specArr.flop[0].indexOf(argIndex)];
-		/*thisSpec.postln;*/
 		this.modFilterTag(filterTag, thisSpec[0], modType, thisSpec[1], extraArgs,
 			thisSpec[2], mul=1, add=0, min, val, warp, lag);
 	}
@@ -2242,9 +2242,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		Ndef("AssembladgeGUI", {
 			var in, imp;
-			in = sysChans.copyRange(0, sysChans.size-2).collect({|item, index|
-				mixTrackNdefs[index].ar });
-			in = (in ++ Ndef(\spaceMaster).ar).flat;
+			in = sysChans.collect({|item, index|
+				if(item == 1, {
+					ArrayMax.ar(Ndef(("space" ++ mixTrackNames[index].asString.capitalise)
+						.asSymbol).ar)[0];
+				}, {
+					Ndef(("space" ++ mixTrackNames[index].asString.capitalise).asSymbol).ar;
+				});
+			});
+			in = in.flat;
+			/*			in = sysChans.copyRange(0, sysChans.size-2).collect({|item, index|
+			mixTrackNdefs[index].ar });
+			in = (in ++ Ndef(\spaceMaster).ar).flat;*/
 			imp = Impulse.ar(10);
 			SendReply.ar(imp, "/AssembladgeGUI",
 				[
@@ -2829,7 +2838,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	masterSoloFunc2 {var newStates;
-		soloStates.postln;
 		if(outputSettings.isNil, {
 			outputSettings = \master!(mixTrackNames.size-1);
 		});
@@ -2838,7 +2846,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				newStates = newStates.add(item);
 			});
 		});
-		newStates.postln;
 		if(soloStates.includes(1), {
 			if(newStates.includes(1), {
 				this.masterSoloFunc((newStates));
@@ -3012,7 +3019,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					Ndef(\spaceMaster).fadeTime.yield;
 					server.sync;
 					("Ndef('spaceMaster', " ++ funcSource.cs ++ ");").radpost.interpret;
-					"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).softclip};".radpost.interpret;
+					"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radpost.interpret;
 					"Ndef('masterOut').play;".radpost.interpret;
 					"Ndef('masterOut').reshaping = 'elastic';".radpost.interpret;
 					this.mastOutSynth;
