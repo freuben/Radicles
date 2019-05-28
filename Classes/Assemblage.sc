@@ -54,10 +54,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					this.autoRoute(item);
 				};
 				server.sync;
-				masterInput = this.sortTrackNames(trackNames)
-				.select({|item| item != \master }).collect({|item|
-					Ndef(("space" ++ item.asString.capitalise).asSymbol) });
-				this.input(masterInput, \master);
+				this.inputMaster;
 				server.sync;
 				this.play;
 				this.updateMixInfo;
@@ -94,6 +91,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			server.sync;
 			"Ndef('spaceMaster').play;".radpost.interpret;
 		}.fork;
+	}
+
+	inputMaster {var masterInput;
+		masterInput = this.sortTrackNames(trackNames)
+		.select({|item| item != \master }).collect({|item|
+			Ndef(("space" ++ item.asString.capitalise).asSymbol) });
+		this.input(masterInput, \master);
 	}
 
 	findSpaceType {arg chanNum=1;
@@ -227,9 +231,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
-		var trackInfo, masterInput, insertInd;
+		var trackInfo, insertInd;
 		{
-
 			if(soloStates.notNil, {
 				if(type == \track, {
 					insertInd = mixTrackNames.indexOf(\bus1);
@@ -241,20 +244,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				muteStates.insert(insertInd, 0);
 				recStates.insert(insertInd, 0);
 			});
-
 			chanNum ?? {chanNum = systemChanNum};
 			trackInfo = this.addTrack(type, chanNum, spaceType, trackSynth, trackSpecs);
-
 			server.sync;
 			this.autoRoute(trackInfo);
 			server.sync;
-
-			masterInput = this.sortTrackNames(trackNames)
-			.select({|item| item != \master }).collect({|item|
-				Ndef(("space" ++ item.asString.capitalise).asSymbol) });
-
-			this.input(masterInput, \master);
-
+			this.inputMaster;
 			server.sync;
 			if(mixerWin.notNil, {
 				if(mixerWin.notClosed, {
@@ -1716,32 +1711,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//input menu
 			inputMenu = PopUpMenu().maxHeight_(popupmenusize)
 			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
-
 			if(mixTrackNames[index].asString.find("track").notNil, {
-				inputs.flop[1].flat.do({|item| if((item.key.asString.find("busIn").isNil)
-					.and(item.key.asString.find("track").isNil), {
-						mixInputLabels =	mixInputLabels.add(item.key);
-				});
-				});
-				if(mixInputLabels.notNil, {
-					inputMenu.items = [""] ++ this.sortTrackNames(mixInputLabels.rejectSame)
-					++ numBuses.collect{|item| "bus" ++ (item+1)};
-				});
-				//input names
-				if(trackInputSel.notNil, {
-					if(trackInputSel.flop[0].includes(index), {
-						thisInputLabel = trackInputSel.flop[1][index];
-						thisInputVal = inputMenu.items;
-						if(thisInputLabel.isArray, {
-							inputMenu.items = thisInputVal.insert(1, thisInputLabel.asString);
-							inputMenu.value = 1;
-						}, {
-							inputMenu.value = thisInputVal.indexOf(trackInputSel.flop[1][index]);
-						});
+				mixInputLabels = (("in" ++
+					mixTrackNames[index].asString.capitalise).asSymbol);
+				if(inputs.flop[0].includes(mixInputLabels), {
+					mixInputLabels = inputs.flop[1][inputs.flop[0].indexOfEqual(mixInputLabels)];
+					mixInputLabels.postln;
+					if(mixInputLabels.isArray, {
+						mixInputLabels = mixInputLabels.collect({|item| item.key });
+					}, {
+						mixInputLabels = mixInputLabels.key;
 					});
+					inputMenu.items = [mixInputLabels.asString];
 				});
 			}, {
-				inputMenu.items = [mixTrackNames[index].asString]
+				inputMenu.items = [mixTrackNames[index]];
 			});
 
 			inputMenu.background_(Color.black).stringColor_(Color.white)
