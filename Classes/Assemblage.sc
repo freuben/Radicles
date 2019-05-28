@@ -1424,8 +1424,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		sysChans.do{|item, index|
 			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout, slotsSize,
 			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
-			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, fxLabel, fxSlot,
-			trackLabel, trackColor, thisInputVal, butUIHeight, butUIWidth, sendsString, soloButtonFunc;
+			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel,
+			mixInputLabelArr, fxLabel, fxSlot, trackLabel, trackColor, thisInputVal,
+			butUIHeight, butUIWidth, sendsString, soloButtonFunc;
 			//volume slider
 			sliderText = StaticText(canvas).align_(\center)
 			.background_(Color.black).stringColor_(Color.white)
@@ -1716,13 +1717,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					mixTrackNames[index].asString.capitalise).asSymbol);
 				if(inputs.flop[0].includes(mixInputLabels), {
 					mixInputLabels = inputs.flop[1][inputs.flop[0].indexOfEqual(mixInputLabels)];
-					mixInputLabels.postln;
 					if(mixInputLabels.isArray, {
 						mixInputLabels = mixInputLabels.collect({|item| item.key });
 					}, {
 						mixInputLabels = mixInputLabels.key;
 					});
-					inputMenu.items = [mixInputLabels.asString];
+					mixInputLabelArr = [mixInputLabels.asString]
+					++ Block.ndefs.collect({|item| item.key.asString});
+					mixInputLabelArr = mixInputLabelArr.rejectSame.sort;
+					inputMenu.items = mixInputLabelArr;
+					mixInputLabelArr.cs.postln; mixInputLabels.cs.postln;
+					inputMenu.value = mixInputLabelArr.indexOfEqual(mixInputLabels.asString);
 				});
 			}, {
 				inputMenu.items = [mixTrackNames[index]];
