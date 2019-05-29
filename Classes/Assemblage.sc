@@ -1316,13 +1316,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	mixGUI {arg updateFreq=10;
 		var sends, knobColors, winHeight, winWidth, knobSize, canvas,
 		panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
-		levelArr, vlay, sendsMenuArr, sendsKnobArr, inputMenuArr, outputMenuArr,
+		levelArr, vlay, sendsMenuArr, sendsKnobArr, outputMenuArr,
 		muteButton, recButton, soloButton, spaceButton, volButtons, buttonsLay1,
 		buttonsLay2, oscDefFunc, levelSoloStates, fxSlotArr, trackLabelArr, spaceTextLay,
 		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
-		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap, sumHeight,
-		gapHeight, peakMax;
+		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap,
+		sumHeight, inKnob, gapHeight, peakMax;
 
 		this.updateMixInfo; //update info
 
@@ -1425,8 +1425,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout, slotsSize,
 			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
 			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel,
-			mixInputLabelArr, fxLabel, fxSlot, trackLabel, trackColor, thisInputVal,
-			butUIHeight, butUIWidth, sendsString, soloButtonFunc;
+			inputLabelArr, mixInputLabelArr, fxLabel, fxSlot, trackLabel, trackColor,
+			thisInputVal, butUIHeight, butUIWidth, sendsString, soloButtonFunc;
 			//volume slider
 			sliderText = StaticText(canvas).align_(\center)
 			.background_(Color.black).stringColor_(Color.white)
@@ -1706,9 +1706,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			};
 			fxSlotArr = fxSlotArr.add(fxSlot);
 			//input label
-			inputLabel = StaticText(canvas).align_(\center).background_(Color.black)
-			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
+			inputLabel = StaticText(canvas).align_(\right).background_(Color.black)
+			.stringColor_(Color.white).maxHeight_(10).minHeight_(10)
+			.maxWidth_(46).minWidth_(46);
 			inputLabel.font = basicFont; inputLabel.string_("Input");
+			//trim knob
+						inKnob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
+					.maxHeight_(popupmenusize).minHeight_(popupmenusize);
+					inKnob.color = knobColors;
+			inKnob.centered_(true).action = {|knob| var thisKey, thisSpec;
+				thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
+				thisSpec = this.getSpec(thisKey, \trim).asSpec;
+				("Ndef(" ++ thisKey.cs ++ ").set('trim', " ++
+					thisSpec.map(knob.value) ++ ");").radpostcont.interpret;
+			};
+			inKnob.value = 0.5;
+			inputLabelArr = HLayout(*[ [inputLabel, align: \right], [inKnob, align: \right] ]);
 			//input menu
 			inputMenu = PopUpMenu().maxHeight_(popupmenusize)
 			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
@@ -1732,20 +1745,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {
 				inputMenu.items = [mixTrackNames[index]];
 			});
-
 			inputMenu.background_(Color.black).stringColor_(Color.white)
 			.font_(basicFont).action = { arg menu; var arr, trackInInf;
 				[menu.value, menu.item].postln;
 				trackInInf = 	mixTrackNames[index].asString.divNumStr;
 				if(menu.item.includesString("["), {
 					arr = menu.item.replace("[", "").replace("]", "").replace(" ", "").split($,);
-					arr.do{|it| this.input(Ndef(it.asSymbol), trackInInf[0].asSymbol, trackInInf[1]);};
+					arr = arr.collect{|it| Ndef(it.asSymbol) };
+					this.input(arr, trackInInf[0].asSymbol, trackInInf[1]);
 				}, {
 					this.input(Ndef(menu.item.asSymbol), trackInInf[0].asSymbol, trackInInf[1]);
 				});
 			};
-
-			inputMenuArr = inputMenuArr.add(inputMenu);
 
 			sliderArr = sliderArr.add(slider);
 			levelArr = levelArr.add(level);
@@ -1767,7 +1778,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			trackLabelArr = trackLabelArr.add(trackLabel);
 
 			//input
-			[[inputLabel, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
+			[[inputLabelArr, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
 			//audio fx
