@@ -1734,8 +1734,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 
 			inputMenu.background_(Color.black).stringColor_(Color.white)
-			.font_(basicFont).action = { arg menu;
+			.font_(basicFont).action = { arg menu; var arr, trackInInf;
 				[menu.value, menu.item].postln;
+				trackInInf = 	mixTrackNames[index].asString.divNumStr;
+				if(menu.item.includesString("["), {
+					arr = menu.item.replace("[", "").replace("]", "").replace(" ", "").split($,);
+					arr.do{|it| this.input(Ndef(it.asSymbol), trackInInf[0].asSymbol, trackInInf[1]);};
+				}, {
+					this.input(Ndef(menu.item.asSymbol), trackInInf[0].asSymbol, trackInInf[1]);
+				});
 			};
 
 			inputMenuArr = inputMenuArr.add(inputMenu);
