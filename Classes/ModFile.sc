@@ -441,12 +441,16 @@ SynthDefFile : ModFile {
 	* write {arg class=\filter, key, dataArr, desc;
 		var synthFile;
 		synthFile = this.new(\synthdef, class);
+		if(dataArr.specArr.notNil, {
 		^synthFile.write(key, dataArr, true, {
 			SynthFile.write(class, key, dataArr.specFunc, false);
 			SpecFile.write(class, key, dataArr.specArr, false);
 			if(desc.notNil, {
 				DescriptionFile.write(class, key, desc, false);
 			});
+		});
+		}, {
+			"You need to provide at least one argument and spec".warn;
 		});
 	}
 

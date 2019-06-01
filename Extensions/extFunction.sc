@@ -35,6 +35,7 @@
 		var indecesClose, cuts, stringSpecs, specArr, newString, indecesArgs;
 		argNames = this.argNames;
 		string = this.cs;
+		if(string.includesString("->"), {
 		stringFunc = string.replace("-> [", "->[");
 		indecesFind = stringFunc.findAll("->[");
 		indecesArgs = argNames.collect{|item| stringFunc.find(item.asString); };
@@ -70,7 +71,10 @@
 			newString = 	stringFunc;
 			specArr = [];
 		});
-		^[newString.interpret, specArr]
+		^[newString.interpret, specArr];
+		}, {
+			^[this, nil];
+		});
 	}
 
 	specFunc {

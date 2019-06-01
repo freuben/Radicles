@@ -131,4 +131,6 @@ sig = sig * 3;
 } ], [ 'dl2', {arg mix=0 -> [0,1], mul=1, freq=0.25, lag=0.1, decayTime=0, lag2=1; var sig;
 	sig = CombL.ar(\in,12,LFNoise1.kr(freq.lag(lag), 1*(mul.lag(lag2)/2), 0+(mul.lag(lag2)/2)).lag(lag),decayTime);
 ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))	
-} ] ]
+} ], [ 'sclip', {arg vol=0 -> [-inf, 6, \db, 0, -inf, " dB" ];
+	(\in*vol.dbamp).softclip;
+ } ] ]

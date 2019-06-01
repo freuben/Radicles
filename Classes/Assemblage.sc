@@ -6,7 +6,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
-	<recordingButton, <recordingValBut;
+	<recordingButton, <recordingValBut, <setOutputMenu, <getOutputMenu, <setOutputMenuVal;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -239,10 +239,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				}, {
 					insertInd = mixTrackNames.indexOf(\master);
 				});
-				outputSettings.insert(insertInd, \master);
-				soloStates.insert(insertInd, 0);
-				muteStates.insert(insertInd, 0);
-				recStates.insert(insertInd, 0);
+				outputSettings = outputSettings.insert(insertInd, \master);
+				soloStates = soloStates.insert(insertInd, 0);
+				muteStates = muteStates.insert(insertInd, 0);
+				recStates = recStates.insert(insertInd, 0);
 			});
 			chanNum ?? {chanNum = systemChanNum};
 			trackInfo = this.addTrack(type, chanNum, spaceType, trackSynth, trackSpecs);
@@ -1711,9 +1711,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.maxWidth_(46).minWidth_(46);
 			inputLabel.font = basicFont; inputLabel.string_("Input");
 			//trim knob
-						inKnob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
-					.maxHeight_(popupmenusize).minHeight_(popupmenusize);
-					inKnob.color = knobColors;
+			inKnob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
+			.maxHeight_(popupmenusize).minHeight_(popupmenusize);
+			inKnob.color = knobColors;
 			inKnob.centered_(true).action = {|knob| var thisKey, thisSpec;
 				thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 				thisSpec = this.getSpec(thisKey, \trim).asSpec;
@@ -1739,7 +1739,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					++ Block.ndefs.collect({|item| item.key.asString});
 					mixInputLabelArr = mixInputLabelArr.rejectSame.sort;
 					inputMenu.items = mixInputLabelArr;
-					mixInputLabelArr.cs.postln; mixInputLabels.cs.postln;
 					inputMenu.value = mixInputLabelArr.indexOfEqual(mixInputLabels.asString);
 				});
 			}, {
@@ -1747,7 +1746,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 			inputMenu.background_(Color.black).stringColor_(Color.white)
 			.font_(basicFont).action = { arg menu; var arr, trackInInf;
-				[menu.value, menu.item].postln;
 				trackInInf = 	mixTrackNames[index].asString.divNumStr;
 				if(menu.item.includesString("["), {
 					arr = menu.item.replace("[", "").replace("]", "").replace(" ", "").split($,);
@@ -1819,7 +1817,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		})[0].round(0.1).asString);
 		};
 		levelTextArr.do{|item, index| item.font = basicFont; item.string_("-inf");
-			item.mouseDownAction_({peakMax[index] = -inf});
+			item.mouseDownAction_({
+				peakMax[index] = -inf;
+				item.string_("-inf");
+			});
 			/*item.background_(Color.new255(78, 109, 38)); */
 		};
 		peakMax = -inf!levelTextArr.size;
@@ -2164,24 +2165,23 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(outputSettings.isNil, {
 			outputSettings = \master!(outputMenuArr.size);
 		});
+
+			setOutputMenuVal = {arg index, value;
+			outputMenuArr[index].value = value;
+		};
+
 		outputMenuArr.do{|it, ind|
+			var trackIds;
 			if(ind != (sysChans.size-1), {
 				it.value = it.items.indexOfEqual(outputSettings[ind].asString);
-				it.action = { arg menu;
+				it.action = {arg menu;
 					var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
-					spaceInd, busInSpace, busInBool;
+					spaceInd, busInSpace, busInBool, outMenuFunc, thisMenuItem, thisMenuItems;
 
-					busInBool =  busInSettings[ind].collect({|item|
-						if(item.notNil, {item.asSymbol}, {item});
-					}).includes(menu.item.asSymbol);
-
-					if(busInBool, {
-						it.value = it.items.collect({|item| if(item != "", {item.asSymbol}, {item});
-						}).indexOf(outputSettings[ind]);
-						"This bus is already assigned to this track".warn;
-					}, {
+					outMenuFunc = {arg menuItem;
 						oldTrack = outputSettings[ind].asSymbol;
-						oldDest = mixTrackNdefs[ind];
+						oldDest = Ndef(("space" ++
+							mixTrackNdefs[ind].key.asString.capitalise).asSymbol);
 						//old destination off
 						if(oldTrack != "".asSymbol, {
 							inputs.flop[0].do{|item, index|
@@ -2192,7 +2192,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							thisNewArr = [];
 							if(thisInput.isArray, {
 								thisInput.do{|item|
-									if(mixTrackNdefs[ind] != item, {
+									if(Ndef(("space" ++ mixTrackNdefs[ind].key.asString.capitalise)
+										.asSymbol) != item, {
 										thisNewArr = thisNewArr.add(item);
 									});
 								};
@@ -2217,16 +2218,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							});
 						});
 						//new destination
-						outputSettings[ind] = menu.item.asSymbol;
+						outputSettings[ind] = menuItem.asSymbol;
 						if(outputSettings[ind] != "".asSymbol, {
 							arrayz = [];
 							outputSettings.do{|item, index|
 								if(item == outputSettings[ind], {
-									arrayz = arrayz.add(mixTrackNdefs[index])
+									if(mixTrackNames[index] != 'master', {
+										arrayz = arrayz.add(
+											Ndef(("space" ++
+												mixTrackNames[index].asString.capitalise).asSymbol);)
+									});
 							}); };
-							trackz = menu.item.divNumStr;
+							trackz = menuItem.divNumStr;
 							spaceInd = inputs.flop[0].indexOf(("space" ++
-								menu.item.capitalise).asSymbol);
+								menuItem.capitalise).asSymbol);
 							if(spaceInd.notNil, {
 								busInSpace = inputs.flop[1][spaceInd];
 								if(busInSpace.asString.find("busIn").notNil, {
@@ -2240,11 +2245,40 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								this.input(arrayz, trackz[0].asSymbol, trackz[1]);
 							});
 						});
-
+					};
+					thisMenuItem = menu.item;
+					thisMenuItems = menu.items;
+					if(thisMenuItem == thisMenuItems.last, {
+						trackIds = thisMenuItem.divNumStr;
+						this.autoAddTrack(trackIds[0].asSymbol, mixTrackNdefs[ind].numChannels, action: {
+							{
+								setOutputMenuVal.(ind, thisMenuItems.indexOfEqual(thisMenuItem));
+								server.sync;
+							outMenuFunc.(thisMenuItem);
+								}.fork(AppClock);
+						});
+					}, {
+						busInBool =  busInSettings[ind].collect({|item|
+							if(item.notNil, {item.asSymbol}, {item});
+						}).includes(thisMenuItem.asSymbol);
+						if(busInBool, {
+							it.value = it.items.collect({|item| if(item != "", {item.asSymbol}, {item});
+							}).indexOf(outputSettings[ind]);
+							"This bus is already assigned to this track".warn;
+						}, {
+							outMenuFunc.(menu.item);
+						});
 					});
 				};
-
 			});
+		};
+
+		setOutputMenu = {arg index, value;
+			outputMenuArr[index].valueAction = value;
+		};
+
+		getOutputMenu = {arg index=0;
+			outputMenuArr[index].items.radpost;
 		};
 
 		Ndef("AssembladgeGUI", {
