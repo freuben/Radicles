@@ -1322,7 +1322,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
 		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap,
-		sumHeight, inKnob, gapHeight, peakMax;
+		sumHeight, inKnob, gapHeight, peakMax, inKnobArr;
 
 		this.updateMixInfo; //update info
 
@@ -1612,7 +1612,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
 				outputMenu.background_(Color.black).stringColor_(Color.white)
 				.font_(basicFont);
-
 			});
 			outputMenuArr = outputMenuArr.add(outputMenu);
 
@@ -1720,7 +1719,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				("Ndef(" ++ thisKey.cs ++ ").set('trim', " ++
 					thisSpec.map(knob.value) ++ ");").radpostcont.interpret;
 			};
-			inKnob.value = 0.5;
+			inKnobArr = inKnobArr.add(inKnob);
+
 			inputLabelArr = HLayout(*[ [inputLabel, align: \right], [inKnob, align: \right] ]);
 			//input menu
 			inputMenu = PopUpMenu().maxHeight_(popupmenusize)
@@ -1974,6 +1974,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			};
 		});
 
+		inKnobArr.do{|item, index| var thisKey, trimKeys, thisSpec;
+			thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
+			trimKeys = Ndef(thisKey).controlKeysValues;
+			thisSpec = this.getSpec(thisKey, \trim).asSpec;
+			if(trimKeys.notEmpty, {
+				item.value = thisSpec.unmap( trimKeys[trimKeys.indexOf(\trim)+1]; );
+			}, {
+				item.value = 0.5;
+			});
+		};
+
 		setBusIns = {arg trackInd=0, slotInd=0, busInNum=1;
 			var thisMenu, thisString;
 			thisMenu = sendsMenuArr[trackInd][slotInd];
@@ -2166,7 +2177,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			outputSettings = \master!(outputMenuArr.size);
 		});
 
-			setOutputMenuVal = {arg index, value;
+		setOutputMenuVal = {arg index, value;
 			outputMenuArr[index].value = value;
 		};
 
@@ -2254,8 +2265,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							{
 								setOutputMenuVal.(ind, thisMenuItems.indexOfEqual(thisMenuItem));
 								server.sync;
-							outMenuFunc.(thisMenuItem);
-								}.fork(AppClock);
+								outMenuFunc.(thisMenuItem);
+							}.fork(AppClock);
 						});
 					}, {
 						busInBool =  busInSettings[ind].collect({|item|
@@ -2331,21 +2342,28 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							peakDb = item.maxItem;
 							if(peakDb < dBLow, {peakDb = -inf });
 							if(levelTextArr[index].notNil, {
-								if(peakMax[index] < peakDb, {
-									peakAmp = peakDb.linlin(dBLow, 0, 0, 1);
-									if(peakAmp >= 0.9999, {
-										if(levelTextArr[index].notNil, {
-											/*levelTextArr[index].background_(Color.new255(211, 14, 14));*/
-											levelTextArr[index].stringColor_(Color.new255(211, 14, 14));
+								if((levelSoloStates.atAll((sysChans.integrate - sysChans[0]))[index] == 0).or(
+									muteStates[index] == 1;
+								), {
+									levelTextArr[index].string = "-inf";
+									peakMax[index] = -inf;
+								}, {
+									if(peakMax[index] < peakDb, {
+										peakAmp = peakDb.linlin(dBLow, 0, 0, 1);
+										if(peakAmp >= 0.9999, {
+											if(levelTextArr[index].notNil, {
+												/*levelTextArr[index].background_(Color.new255(211, 14, 14));*/
+												levelTextArr[index].stringColor_(Color.new255(211, 14, 14));
+											});
+										}, {
+											if(levelTextArr[index].notNil, {
+												/*levelTextArr[index].background_(Color.black);*/
+												levelTextArr[index].stringColor_(Color.white);
+											});
 										});
-									}, {
-										if(levelTextArr[index].notNil, {
-											/*levelTextArr[index].background_(Color.black);*/
-											levelTextArr[index].stringColor_(Color.white);
-										});
+										levelTextArr[index].string = peakDb.round(0.1).asString;
+										peakMax[index] = peakDb;
 									});
-									levelTextArr[index].string = peakDb.round(0.1).asString;
-									peakMax[index] = peakDb;
 								});
 							});
 
