@@ -6,7 +6,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
-	<recordingButton, <recordingValBut, <setOutputMenu, <getOutputMenu, <setOutputMenuVal;
+	<recordingButton, <recordingValBut, <setOutputMenu, <getOutputMenu,
+	<getOutputMenuItem, <setInputMenu;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1322,7 +1323,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
 		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap,
-		sumHeight, inKnob, gapHeight, peakMax, inKnobArr;
+		sumHeight, inKnob, gapHeight, peakMax, inKnobArr, setOutputMenuVal, inputMenuArr;
 
 		this.updateMixInfo; //update info
 
@@ -1725,35 +1726,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//input menu
 			inputMenu = PopUpMenu().maxHeight_(popupmenusize)
 			.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
-			if(mixTrackNames[index].asString.find("track").notNil, {
-				mixInputLabels = (("in" ++
-					mixTrackNames[index].asString.capitalise).asSymbol);
-				if(inputs.flop[0].includes(mixInputLabels), {
-					mixInputLabels = inputs.flop[1][inputs.flop[0].indexOfEqual(mixInputLabels)];
-					if(mixInputLabels.isArray, {
-						mixInputLabels = mixInputLabels.collect({|item| item.key });
-					}, {
-						mixInputLabels = mixInputLabels.key;
-					});
-					mixInputLabelArr = [mixInputLabels.asString]
-					++ Block.ndefs.collect({|item| item.key.asString});
-					mixInputLabelArr = mixInputLabelArr.rejectSame.sort;
-					inputMenu.items = mixInputLabelArr;
-					inputMenu.value = mixInputLabelArr.indexOfEqual(mixInputLabels.asString);
-				});
-			}, {
-				inputMenu.items = [mixTrackNames[index]];
-			});
+
+			this.inputLablesFunc(index, mixTrackNames, inputMenu);
+
 			inputMenu.background_(Color.black).stringColor_(Color.white)
 			.font_(basicFont).action = { arg menu; var arr, trackInInf;
 				trackInInf = 	mixTrackNames[index].asString.divNumStr;
-				if(menu.item.includesString("["), {
-					arr = menu.item.replace("[", "").replace("]", "").replace(" ", "").split($,);
-					arr = arr.collect{|it| Ndef(it.asSymbol) };
-					this.input(arr, trackInInf[0].asSymbol, trackInInf[1]);
-				}, {
-					this.input(Ndef(menu.item.asSymbol), trackInInf[0].asSymbol, trackInInf[1]);
-				});
+
+				this.labelsToInFunc(trackInInf, menu.item);
+
+			};
+
+			inputMenuArr = inputMenuArr.add(inputMenu);
+
+			setInputMenu = {|indMenu, valMenu|
+				inputMenuArr[indMenu].value = valMenu;
 			};
 
 			sliderArr = sliderArr.add(slider);
@@ -2292,6 +2279,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			outputMenuArr[index].items.radpost;
 		};
 
+		getOutputMenuItem = {arg index=0;
+			outputMenuArr[index].item.radpost;
+		};
+
 		Ndef("AssembladgeGUI", {
 			var in, imp;
 			in = sysChans.collect({|item, index|
@@ -2399,6 +2390,96 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			winRefresh = true;
 		});
 		this.mixGUI;
+	}
+
+	inputLablesFunc {arg ind, thisTrackNames, thisInputMenu;
+		var mixInputLabelArr, mixInputLabels, outputFunc;
+
+		if(thisTrackNames[ind].asString.find("track").notNil, {
+			mixInputLabels = (("in" ++
+				thisTrackNames[ind].asString.capitalise).asSymbol);
+			if(inputs.flop[0].includes(mixInputLabels), {
+				mixInputLabels = inputs.flop[1][inputs.flop[0].indexOfEqual(mixInputLabels)];
+				if(mixInputLabels.isArray, {
+					mixInputLabels = mixInputLabels.collect({|item| item.key });
+				}, {
+					mixInputLabels = mixInputLabels.key;
+				});
+				mixInputLabelArr = [mixInputLabels.asString]
+				++ Block.ndefs.collect({|item| item.key.asString});
+				mixInputLabelArr = mixInputLabelArr.rejectSame.sort;
+				if(thisInputMenu.notNil, {
+					thisInputMenu.items = mixInputLabelArr;
+					thisInputMenu.value = mixInputLabelArr.indexOfEqual(mixInputLabels.asString);
+				});
+				outputFunc = [mixInputLabelArr, mixInputLabelArr.indexOfEqual(mixInputLabels.asString)];
+
+			});
+		}, {
+			if(thisInputMenu.notNil, {
+				thisInputMenu.items = [thisTrackNames[ind]];
+			});
+			outputFunc = [thisTrackNames[ind]];
+		});
+		^outputFunc;
+	}
+
+	labelsToInFunc {arg trackInInf, menuItem;
+		var arr;
+		if(menuItem.includesString("["), {
+			arr = menuItem.replace("[", "").replace("]", "").replace(" ", "").split($,);
+			arr = arr.collect{|it| Ndef(it.asSymbol) };
+			this.input(arr, trackInInf[0].asSymbol, trackInInf[1]);
+		}, {
+			this.input(Ndef(menuItem.asSymbol), trackInInf[0].asSymbol, trackInInf[1]);
+		});
+	}
+
+	setTrackIn {arg trackNum, inIndex;
+		var label, mixTrackIndex;
+		mixTrackIndex = mixTrackNames.indexOfEqual( (\track ++ trackNum).asSymbol );
+		label = this.inputLablesFunc(mixTrackIndex, mixTrackNames);
+		if(mixTrackIndex.notNil, {
+			this.labelsToInFunc([\track, trackNum], label[0][inIndex]);
+			if(mixerWin.notNil, {
+				if(mixerWin.notClosed, {
+					setInputMenu.(mixTrackIndex, inIndex);
+				});
+			});
+		}, {
+			"track not found".warn;
+		});
+	}
+
+	getTrackInMenu {arg trackNum;
+		var mixTrackIndex;
+		mixTrackIndex = mixTrackNames.indexOfEqual( (\track ++ trackNum).asSymbol );
+		if(mixTrackIndex.notNil, {
+			this.inputLablesFunc(mixTrackIndex, mixTrackNames)[0].radpost;
+		}, {
+			"track not found".warn;
+		});
+	}
+
+	getTrackInIndex {arg trackNum;
+		var mixTrackIndex;
+		mixTrackIndex = mixTrackNames.indexOfEqual( (\track ++ trackNum).asSymbol );
+		if(mixTrackIndex.notNil, {
+			this.inputLablesFunc(mixTrackIndex, mixTrackNames)[1].radpost;
+		}, {
+			"track not found".warn;
+		});
+	}
+
+	getTrackInItem {arg trackNum;
+		var mixTrackIndex, label;
+		mixTrackIndex = mixTrackNames.indexOfEqual( (\track ++ trackNum).asSymbol );
+		if(mixTrackIndex.notNil, {
+			label = this.inputLablesFunc(mixTrackIndex, mixTrackNames);
+			label[0][label[1]].radpost;
+		}, {
+			"track not found".warn;
+		});
 	}
 
 	setVolume {arg trackType, trackNum, val, lag, db=true;
