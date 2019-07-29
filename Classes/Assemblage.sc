@@ -7,7 +7,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <getOutputMenu,
-	<getOutputMenuItem, <setInputMenu;
+	<getOutputMenuItem, <setInputMenu, <thisOutputFunc;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -1610,7 +1610,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				//output menu
 				outputMenu = PopUpMenu().maxHeight_(popupmenusize)
 				.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
-				outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};
+
+				outputMenu.items = (["", "master"] ++numBuses.collect{|item|
+					"bus" ++ (item+1)}).reject({|it| it == mixTrackNames[index].asString });
+				/*outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};*/
+
 				outputMenu.background_(Color.black).stringColor_(Color.white)
 				.font_(basicFont);
 			});
@@ -2168,111 +2172,121 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			outputMenuArr[index].value = value;
 		};
 
-		outputMenuArr.do{|it, ind|
-			var trackIds;
-			if(ind != (sysChans.size-1), {
-				it.value = it.items.indexOfEqual(outputSettings[ind].asString);
-				it.action = {arg menu;
-					var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
-					spaceInd, busInSpace, busInBool, outMenuFunc, thisMenuItem, thisMenuItems;
+		thisOutputFunc = {arg ind, menuItem, menuItems, thisBusInSettings;
+			var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
+			spaceInd, busInSpace, busInBool, outMenuFunc, thisMenuItem, thisMenuItems, trackIds;
 
-					outMenuFunc = {arg menuItem;
-						oldTrack = outputSettings[ind].asSymbol;
-						oldDest = Ndef(("space" ++
-							mixTrackNdefs[ind].key.asString.capitalise).asSymbol);
-						//old destination off
-						if(oldTrack != "".asSymbol, {
-							inputs.flop[0].do{|item, index|
-								if(item.asString.find(oldTrack.asString.capitalise).notNil, {
-									oldInput = item;
-									thisInput =  inputs.flop[1][index]});
-							};
-							thisNewArr = [];
-							if(thisInput.isArray, {
-								thisInput.do{|item|
-									if(Ndef(("space" ++ mixTrackNdefs[ind].key.asString.capitalise)
-										.asSymbol) != item, {
-										thisNewArr = thisNewArr.add(item);
-									});
-								};
-								oldDest = oldTrack.asString.divNumStr;
-								if(oldDest[1].isNil, {oldDest[1] = 1;});
-								if(thisNewArr.notEmpty, {
-									if(thisNewArr.size == 1, {
-										this.input(thisNewArr[0],
-											oldDest[0].asSymbol, oldDest[1]);
-									}, {
-										this.input(thisNewArr,
-											oldDest[0].asSymbol, oldDest[1]);
-									});
-								}, {
-									("Ndef(" ++ ("space" ++
-										oldDest[0].capitalise).asSymbol.cs ++
-									").source = nil").radpost.interpret;
-								});
-							}, {
-								("Ndef(" ++ oldInput.cs ++
-									").source = nil;").radpost.interpret;
-							});
-						});
-						//new destination
-						outputSettings[ind] = menuItem.asSymbol;
-						if(outputSettings[ind] != "".asSymbol, {
-							arrayz = [];
-							outputSettings.do{|item, index|
-								if(item == outputSettings[ind], {
-									if(mixTrackNames[index] != 'master', {
-										arrayz = arrayz.add(
-											Ndef(("space" ++
-												mixTrackNames[index].asString.capitalise).asSymbol);)
-									});
-							}); };
-							trackz = menuItem.divNumStr;
-							spaceInd = inputs.flop[0].indexOf(("space" ++
-								menuItem.capitalise).asSymbol);
-							if(spaceInd.notNil, {
-								busInSpace = inputs.flop[1][spaceInd];
-								if(busInSpace.asString.find("busIn").notNil, {
-									arrayz = (arrayz ++ busInSpace).flat;
-								});
-							});
-							if(trackz[1].isNil, {trackz[1] = 1;});
-							if(arrayz.size == 1, {
-								this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
-							}, {
-								this.input(arrayz, trackz[0].asSymbol, trackz[1]);
-							});
-						});
+			thisBusInSettings.postln;
+			thisBusInSettings[ind].postln;
+
+			outMenuFunc = {arg inMenuItem;
+				oldTrack = outputSettings[ind].asSymbol;
+				oldDest = Ndef(("space" ++
+					mixTrackNdefs[ind].key.asString.capitalise).asSymbol);
+				//old destination off
+				if(oldTrack != "".asSymbol, {
+					inputs.flop[0].do{|item, index|
+						if(item.asString.find(oldTrack.asString.capitalise).notNil, {
+							oldInput = item;
+							thisInput =  inputs.flop[1][index]});
 					};
-					thisMenuItem = menu.item;
-					thisMenuItems = menu.items;
-					if(thisMenuItem == thisMenuItems.last, {
-						trackIds = thisMenuItem.divNumStr;
-						this.autoAddTrack(trackIds[0].asSymbol, mixTrackNdefs[ind].numChannels, action: {
-							{
-								setOutputMenuVal.(ind, thisMenuItems.indexOfEqual(thisMenuItem));
-								server.sync;
-								outMenuFunc.(thisMenuItem);
-							}.fork(AppClock);
+					thisNewArr = [];
+					if(thisInput.isArray, {
+						thisInput.do{|item|
+							if(Ndef(("space" ++ mixTrackNdefs[ind].key.asString.capitalise)
+								.asSymbol) != item, {
+								thisNewArr = thisNewArr.add(item);
+							});
+						};
+						oldDest = oldTrack.asString.divNumStr;
+						if(oldDest[1].isNil, {oldDest[1] = 1;});
+						if(thisNewArr.notEmpty, {
+							if(thisNewArr.size == 1, {
+								this.input(thisNewArr[0],
+									oldDest[0].asSymbol, oldDest[1]);
+							}, {
+								this.input(thisNewArr,
+									oldDest[0].asSymbol, oldDest[1]);
+							});
+						}, {
+							("Ndef(" ++ ("space" ++
+								oldDest[0].capitalise).asSymbol.cs ++
+							").source = nil").radpost.interpret;
 						});
 					}, {
-						busInBool =  busInSettings[ind].collect({|item|
-							if(item.notNil, {item.asSymbol}, {item});
-						}).includes(thisMenuItem.asSymbol);
-						if(busInBool, {
-							it.value = it.items.collect({|item| if(item != "", {item.asSymbol}, {item});
-							}).indexOf(outputSettings[ind]);
-							"This bus is already assigned to this track".warn;
-						}, {
-							outMenuFunc.(menu.item);
+						("Ndef(" ++ oldInput.cs ++
+							").source = nil;").radpost.interpret;
+					});
+				});
+				//new destination
+				outputSettings[ind] = inMenuItem.asSymbol;
+				if(outputSettings[ind] != "".asSymbol, {
+					arrayz = [];
+					outputSettings.do{|item, index|
+						if(item == outputSettings[ind], {
+							if(mixTrackNames[index] != 'master', {
+								arrayz = arrayz.add(
+									Ndef(("space" ++
+										mixTrackNames[index].asString.capitalise).asSymbol);)
+							});
+					}); };
+					trackz = inMenuItem.divNumStr;
+					spaceInd = inputs.flop[0].indexOf(("space" ++
+						inMenuItem.capitalise).asSymbol);
+					if(spaceInd.notNil, {
+						busInSpace = inputs.flop[1][spaceInd];
+						if(busInSpace.asString.find("busIn").notNil, {
+							arrayz = (arrayz ++ busInSpace).flat;
 						});
 					});
+					if(trackz[1].isNil, {trackz[1] = 1;});
+					if(arrayz.size == 1, {
+						this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
+					}, {
+						this.input(arrayz, trackz[0].asSymbol, trackz[1]);
+					});
+				});
+			};
+			thisMenuItem = menuItem;
+			thisMenuItems = menuItems;
+			if(thisMenuItem == thisMenuItems.last, {
+				trackIds = thisMenuItem.divNumStr;
+				this.autoAddTrack(trackIds[0].asSymbol, mixTrackNdefs[ind].numChannels, action: {
+					{
+						setOutputMenuVal.(ind, thisMenuItems.indexOfEqual(thisMenuItem));
+						server.sync;
+						outMenuFunc.(thisMenuItem);
+					}.fork(AppClock);
+				});
+			}, {
+				busInBool = false;
+				busInBool =  thisBusInSettings[ind].collect({|item|
+					if(item.notNil, {item.asSymbol}, {item});
+				}).includes(thisMenuItem.asSymbol);
+				if(busInBool, {
+					/*menu.value = menuItems.collect({|item| if(item != "", {item.asSymbol}, {item});
+					}).indexOf(outputSettings[ind]);*/
+					"This bus is already assigned to this track".warn;
+				}, {
+					outMenuFunc.(menuItem);
+				});
+			});
+		};
+
+		outputMenuArr.do{|it, ind|
+			if(ind != (sysChans.size-1), {
+
+				it.value = it.items.indexOfEqual(outputSettings[ind].asString);
+
+				it.action  = {arg menu;
+					thisOutputFunc.(ind, menu.item, menu.items, busInSettings);
 				};
+				///////
 			});
 		};
 
 		setOutputMenu = {arg index, value;
-			outputMenuArr[index].valueAction = value;
+			outputMenuArr[index].value = value;
 		};
 
 		getOutputMenu = {arg index=0;
