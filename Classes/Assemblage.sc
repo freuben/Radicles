@@ -671,11 +671,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
-	removeBus {arg trackNum= 1, busNum=1, trackType=\track;
+removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 		var oldLabel, newBusInd, newLabelArr, spaceBusNum, spaceBusLabel,
 		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel;
 		oldLabel = ("busIn" ++ busNum).asSymbol;
-		spaceBusLabel = ("spaceBus" ++ busNum).asSymbol;
+		spaceBusLabel = ("inBus" ++ busNum).asSymbol;
 		spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
 		if(spaceInInd.notNil, {
 			newBusInd = busArr.flop[0].indexOf(oldLabel);
@@ -1611,8 +1611,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				outputMenu = PopUpMenu().maxHeight_(popupmenusize)
 				.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
 
-				outputMenu.items = (["", "master"] ++numBuses.collect{|item|
-					"bus" ++ (item+1)}).reject({|it| it == mixTrackNames[index].asString });
+				outputMenu.items = ["", "master"];
 				/*outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};*/
 
 				outputMenu.background_(Color.black).stringColor_(Color.white)
@@ -1924,7 +1923,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mixerWin.maxHeight_(sumHeight).minHeight_(sumHeight);
 		mixerWin.front;
 		if(scrollPoint.notNil, {
-			//check this bug hasn't been fixed in latest SC version, if so, remove .defer
+			//check this bug hasn't been fixed in latest SC version, if so, remove fork
 			{0.001.yield; mixerWin.visibleOrigin_(scrollPoint);}.fork(AppClock);
 		});
 
@@ -2012,6 +2011,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					}, {
 						thisBusItem = busInSettings[index][ind];
+						thisBusItem.postln;
 						thisTrackLabel = mixTrackNames[index].asString.divNumStr;
 						busInSettings[index][ind] = menu.item;
 						busInBool1 = busInSettings[index].select({|item, index| index != ind})
@@ -2029,6 +2029,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								if(busInSettings[index].includesEqual(thisBusItem).not, {
 									//remove
 									thisBusNum = thisBusItem.divNumStr[1];
+									[thisTrackLabel[1], thisBusNum,
+										thisTrackLabel[0].asSymbol].postln;
 									this.removeBus(thisTrackLabel[1], thisBusNum,
 										thisTrackLabel[0].asSymbol);
 								});
@@ -2168,22 +2170,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			outputSettings = \master!(outputMenuArr.size);
 		});
 
-		setOutputMenuVal = {arg index, value;
+/*		setOutputMenuVal = {arg index, value;
 			outputMenuArr[index].value = value;
-		};
+		};*/
 
 		thisOutputFunc = {arg ind, menuItem, menuItems, thisBusInSettings;
 			var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
 			spaceInd, busInSpace, busInBool, outMenuFunc, thisMenuItem, thisMenuItems, trackIds;
 
-			thisBusInSettings.postln;
-			thisBusInSettings[ind].postln;
-
-			outMenuFunc = {arg inMenuItem;
+			outMenuFunc = {arg inMenuItem, ignoreOff=false;
 				oldTrack = outputSettings[ind].asSymbol;
 				oldDest = Ndef(("space" ++
 					mixTrackNdefs[ind].key.asString.capitalise).asSymbol);
 				//old destination off
+				if(ignoreOff.not, {
 				if(oldTrack != "".asSymbol, {
 					inputs.flop[0].do{|item, index|
 						if(item.asString.find(oldTrack.asString.capitalise).notNil, {
@@ -2218,6 +2218,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							").source = nil;").radpost.interpret;
 					});
 				});
+				});
 				//new destination
 				outputSettings[ind] = inMenuItem.asSymbol;
 				if(outputSettings[ind] != "".asSymbol, {
@@ -2240,6 +2241,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					});
 					if(trackz[1].isNil, {trackz[1] = 1;});
+
 					if(arrayz.size == 1, {
 						this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
 					}, {
@@ -2251,15 +2253,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			thisMenuItems = menuItems;
 			if(thisMenuItem == thisMenuItems.last, {
 				trackIds = thisMenuItem.divNumStr;
+				"here".postln; trackIds.postln; mixTrackNdefs[ind].numChannels.postln;
 				this.autoAddTrack(trackIds[0].asSymbol, mixTrackNdefs[ind].numChannels, action: {
+					"action".postln;
 					{
-						setOutputMenuVal.(ind, thisMenuItems.indexOfEqual(thisMenuItem));
+						[ind, thisMenuItems.indexOfEqual(thisMenuItem)].postln;
+						setOutputMenu.(ind, thisMenuItems.indexOfEqual(thisMenuItem));
 						server.sync;
-						outMenuFunc.(thisMenuItem);
+						outMenuFunc.(thisMenuItem, true);
 					}.fork(AppClock);
 				});
 			}, {
-				busInBool = false;
 				busInBool =  thisBusInSettings[ind].collect({|item|
 					if(item.notNil, {item.asSymbol}, {item});
 				}).includes(thisMenuItem.asSymbol);
@@ -2273,7 +2277,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 
-		outputMenuArr.do{|it, ind|
+/*		outputMenuArr.do{|it, ind|
 			if(ind != (sysChans.size-1), {
 
 				it.value = it.items.indexOfEqual(outputSettings[ind].asString);
@@ -2283,7 +2287,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 				///////
 			});
-		};
+		};*/
 
 		setOutputMenu = {arg index, value;
 			outputMenuArr[index].value = value;
