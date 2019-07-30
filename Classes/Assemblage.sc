@@ -1312,6 +1312,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		sysChans[mixTrackNdefs.size-1] = Ndef(("space" ++
 			mixTrackNames.last.asString.capitalise).asSymbol).numChannels;
 
+		if(outputSettings.isNil, {
+			outputSettings = \master!(mixTrackNames.size-1);
+		});
 		if(soloStates.isNil, { soloStates = 0!mixTrackNames.size });
 		if(muteStates.isNil, { muteStates = 0!mixTrackNames.size });
 		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
@@ -1612,7 +1615,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 				outputMenu.items = ["", "master"];
 				/*outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};*/
-
+				if(outputSettings[index] == 'master', {
+					outputMenu.value = 1;
+				}, {
+					outputMenu.value = 0;
+				});
 				outputMenu.background_(Color.black).stringColor_(Color.white)
 				.font_(basicFont);
 			});
@@ -2162,10 +2169,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		//setting outputs
 
-		if(outputSettings.isNil, {
-			outputSettings = \master!(outputMenuArr.size);
-		});
-
 		thisOutputFunc = {arg ind, menuItem, menuItems, thisBusInSettings;
 			var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
 			spaceInd, busInSpace, busInBool, outMenuFunc, thisMenuItem, thisMenuItems, trackIds;
@@ -2269,17 +2272,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 
-		/*		outputMenuArr.do{|it, ind|
+		outputMenuArr.do{|it, ind|
 		if(ind != (sysChans.size-1), {
 
-		it.value = it.items.indexOfEqual(outputSettings[ind].asString);
+		/*it.value = it.items.indexOfEqual(outputSettings[ind].asString);*/
 
 		it.action  = {arg menu;
-		thisOutputFunc.(ind, menu.item, menu.items, busInSettings);
+		/*thisOutputFunc.(ind, menu.item, menu.items, busInSettings);*/
+					outputSettings[ind] = menu.item.asSymbol;
 		};
 		///////
 		});
-		};*/
+		};
 
 		setOutputMenu = {arg index, value;
 			outputMenuArr[index].value = value;
