@@ -671,7 +671,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
-removeBus {arg trackNum= 1, busNum=1, trackType=\track;
+	removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 		var oldLabel, newBusInd, newLabelArr, spaceBusNum, spaceBusLabel,
 		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel;
 		oldLabel = ("busIn" ++ busNum).asSymbol;
@@ -1312,6 +1312,10 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 		sysChans[mixTrackNdefs.size-1] = Ndef(("space" ++
 			mixTrackNames.last.asString.capitalise).asSymbol).numChannels;
 
+		if(soloStates.isNil, { soloStates = 0!mixTrackNames.size });
+		if(muteStates.isNil, { muteStates = 0!mixTrackNames.size });
+		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
+
 	}
 
 	mixGUI {arg updateFreq=10;
@@ -1323,7 +1327,7 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
 		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap,
-		sumHeight, inKnob, gapHeight, peakMax, inKnobArr, setOutputMenuVal, inputMenuArr;
+		sumHeight, inKnob, gapHeight, peakMax, inKnobArr, inputMenuArr;
 
 		this.updateMixInfo; //update info
 
@@ -1361,12 +1365,7 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 			});
 		});
 
-		if(soloStates.isNil, { soloStates = 0!mixTrackNames.size });
 		levelSoloStates = sysChans.collect({|item, index| 1!item }).flat;
-
-		if(muteStates.isNil, { muteStates = 0!mixTrackNames.size });
-
-		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
 
 		muteButArr = [];
 		soloButArr = [];
@@ -2011,7 +2010,6 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 						});
 					}, {
 						thisBusItem = busInSettings[index][ind];
-						thisBusItem.postln;
 						thisTrackLabel = mixTrackNames[index].asString.divNumStr;
 						busInSettings[index][ind] = menu.item;
 						busInBool1 = busInSettings[index].select({|item, index| index != ind})
@@ -2029,8 +2027,6 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 								if(busInSettings[index].includesEqual(thisBusItem).not, {
 									//remove
 									thisBusNum = thisBusItem.divNumStr[1];
-									[thisTrackLabel[1], thisBusNum,
-										thisTrackLabel[0].asSymbol].postln;
 									this.removeBus(thisTrackLabel[1], thisBusNum,
 										thisTrackLabel[0].asSymbol);
 								});
@@ -2170,10 +2166,6 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 			outputSettings = \master!(outputMenuArr.size);
 		});
 
-/*		setOutputMenuVal = {arg index, value;
-			outputMenuArr[index].value = value;
-		};*/
-
 		thisOutputFunc = {arg ind, menuItem, menuItems, thisBusInSettings;
 			var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
 			spaceInd, busInSpace, busInBool, outMenuFunc, thisMenuItem, thisMenuItems, trackIds;
@@ -2184,40 +2176,40 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 					mixTrackNdefs[ind].key.asString.capitalise).asSymbol);
 				//old destination off
 				if(ignoreOff.not, {
-				if(oldTrack != "".asSymbol, {
-					inputs.flop[0].do{|item, index|
-						if(item.asString.find(oldTrack.asString.capitalise).notNil, {
-							oldInput = item;
-							thisInput =  inputs.flop[1][index]});
-					};
-					thisNewArr = [];
-					if(thisInput.isArray, {
-						thisInput.do{|item|
-							if(Ndef(("space" ++ mixTrackNdefs[ind].key.asString.capitalise)
-								.asSymbol) != item, {
-								thisNewArr = thisNewArr.add(item);
-							});
+					if(oldTrack != "".asSymbol, {
+						inputs.flop[0].do{|item, index|
+							if(item.asString.find(oldTrack.asString.capitalise).notNil, {
+								oldInput = item;
+								thisInput =  inputs.flop[1][index]});
 						};
-						oldDest = oldTrack.asString.divNumStr;
-						if(oldDest[1].isNil, {oldDest[1] = 1;});
-						if(thisNewArr.notEmpty, {
-							if(thisNewArr.size == 1, {
-								this.input(thisNewArr[0],
-									oldDest[0].asSymbol, oldDest[1]);
+						thisNewArr = [];
+						if(thisInput.isArray, {
+							thisInput.do{|item|
+								if(Ndef(("space" ++ mixTrackNdefs[ind].key.asString.capitalise)
+									.asSymbol) != item, {
+									thisNewArr = thisNewArr.add(item);
+								});
+							};
+							oldDest = oldTrack.asString.divNumStr;
+							if(oldDest[1].isNil, {oldDest[1] = 1;});
+							if(thisNewArr.notEmpty, {
+								if(thisNewArr.size == 1, {
+									this.input(thisNewArr[0],
+										oldDest[0].asSymbol, oldDest[1]);
+								}, {
+									this.input(thisNewArr,
+										oldDest[0].asSymbol, oldDest[1]);
+								});
 							}, {
-								this.input(thisNewArr,
-									oldDest[0].asSymbol, oldDest[1]);
+								("Ndef(" ++ ("space" ++
+									oldDest[0].capitalise).asSymbol.cs ++
+								").source = nil").radpost.interpret;
 							});
 						}, {
-							("Ndef(" ++ ("space" ++
-								oldDest[0].capitalise).asSymbol.cs ++
-							").source = nil").radpost.interpret;
+							("Ndef(" ++ oldInput.cs ++
+								").source = nil;").radpost.interpret;
 						});
-					}, {
-						("Ndef(" ++ oldInput.cs ++
-							").source = nil;").radpost.interpret;
 					});
-				});
 				});
 				//new destination
 				outputSettings[ind] = inMenuItem.asSymbol;
@@ -2277,16 +2269,16 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 			});
 		};
 
-/*		outputMenuArr.do{|it, ind|
-			if(ind != (sysChans.size-1), {
+		/*		outputMenuArr.do{|it, ind|
+		if(ind != (sysChans.size-1), {
 
-				it.value = it.items.indexOfEqual(outputSettings[ind].asString);
+		it.value = it.items.indexOfEqual(outputSettings[ind].asString);
 
-				it.action  = {arg menu;
-					thisOutputFunc.(ind, menu.item, menu.items, busInSettings);
-				};
-				///////
-			});
+		it.action  = {arg menu;
+		thisOutputFunc.(ind, menu.item, menu.items, busInSettings);
+		};
+		///////
+		});
 		};*/
 
 		setOutputMenu = {arg index, value;
@@ -2549,13 +2541,25 @@ removeBus {arg trackNum= 1, busNum=1, trackType=\track;
 		^thisFunc;
 	}
 
-	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1;
+	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf;
 		var trackIndex, funcThis;
-		funcThis = {this.bus(trackNum, slotNum, -inf, trackType)}; //track, bus, mix, type
+		funcThis = {
+			if(busNum == 0, {
+				this.removeBus(trackNum, slotNum, trackType);
+			}, {
+			this.bus(trackNum, slotNum, val, trackType);
+			});
+		}; //track, bus, mix, type
 		if(mixerWin.notNil, {
 			if(mixerWin.notClosed, {
 				trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
-				setBusIns.(trackIndex,(slotNum-1), busNum);
+				{
+					setBusIns.(trackIndex,(slotNum-1), busNum);
+					if(val != inf, {
+						nodeTime.yield;
+						this.setSendKnob(trackType, trackNum, slotNum, val);
+					});
+				}.fork(AppClock);
 			}, {
 				funcThis.();
 			});
