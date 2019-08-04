@@ -2400,31 +2400,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	setTrackOut {arg trackType=\track, trackNum=1, inIndex=0;
 		var mixTrackIndex, label;
 		mixTrackIndex = mixTrackNames.indexOfEqual( (trackType ++ trackNum).asSymbol );
-
 		if(inIndex == 0, {
 			label = '';
 		}, {
 			label = 'master';
 			inIndex = 1;
 		});
-
 		if(mixTrackIndex.notNil, {
-
 			outputSettings[mixTrackIndex] = label;
 			this.outputMasterFunc;
-
 			if(mixerWin.notNil, {
 				if(mixerWin.notClosed, {
 					setOutputMenu.(mixTrackIndex, inIndex);
 				});
 			});
-
 		}, {
 			"track not found".warn;
 		});
 	}
 
-	getTrackOutIndex {arg  trackType=\track, trackNum=1;
+	getTrackOutIndex {arg trackType=\track, trackNum=1;
 		var mixTrackIndex, outIndex;
 		mixTrackIndex = mixTrackNames.indexOfEqual( (trackType ++ trackNum).asSymbol );
 		if(mixTrackIndex.notNil, {
@@ -2439,7 +2434,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	getTrackOutItem {arg  trackType=\track, trackNum=1;
+	getTrackOutItem {arg trackType=\track, trackNum=1;
 		var mixTrackIndex, outItem;
 		mixTrackIndex = mixTrackNames.indexOfEqual( (trackType ++ trackNum).asSymbol );
 		if(mixTrackIndex.notNil, {
@@ -2498,8 +2493,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^thisFunc;
 	}
 
-	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf;
+	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf, dirMaster=true;
 		var trackIndex, funcThis;
+		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
+		if(trackIndex.notNil, {
 		funcThis = {
 			if(busNum == 0, {
 				this.removeBus(trackNum, slotNum, trackType);
@@ -2509,12 +2506,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}; //track, bus, mix, type
 		if(mixerWin.notNil, {
 			if(mixerWin.notClosed, {
-				trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
 				{
 					setBusIns.(trackIndex,(slotNum-1), busNum);
 					if(val != inf, {
+							if(busNum != 0, {
 						nodeTime.yield;
 						this.setSendKnob(trackType, trackNum, slotNum, val);
+							});
 					});
 				}.fork(AppClock);
 			}, {
@@ -2522,6 +2520,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		}, {
 			funcThis.();
+		});
+			if(dirMaster, {
+				if(outputSettings[trackIndex].postln == '', {
+				this.setTrackOut(trackType, trackNum, 1);
+				});
+			}, {
+				if(outputSettings[trackIndex].postln == 'master', {
+				this.setTrackOut(trackType, trackNum, 0);
+				});
+			});
+		}, {
+			"track not found".warn;
 		});
 	}
 
@@ -2969,9 +2979,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(newStates.includes(1), {
 				this.masterSoloFunc((newStates));
 				if(Ndef('master').getKeysValues.collect{|item| item == [\off, 1] }.includes(true), {
-					"Ndef('master').set('off', 0)".radpost;
-				});
+					{
+					Ndef(\master).fadeTime.yield;
+					"Ndef('master').set('off', 0)".radpost.interpret;
+					}.fork;
+				}, {
 				Ndef('master').set('off', 0);
+				});
 			}, {
 				"Ndef('master').set('off', 1)".radpost.interpret;
 			});
