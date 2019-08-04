@@ -7,7 +7,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <getOutputMenu,
-	<getOutputMenuItem, <setInputMenu, <thisOutputFunc;
+	<getOutputMenuItem, <setInputMenu;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -2167,204 +2167,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}
 		};
 
-		//setting outputs
-
-		/*		thisOutputFunc = {arg ind, menuItem, menuItems, thisBusInSettings;
-		var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
-		spaceInd, busInSpace, busInBool, outMenuFunc, thisMenuItem, thisMenuItems, trackIds;
-
-		outMenuFunc = {arg inMenuItem, ignoreOff=false;
-		oldTrack = outputSettings[ind].asSymbol;
-		oldDest = Ndef(("space" ++
-		mixTrackNdefs[ind].key.asString.capitalise).asSymbol);
-		//old destination off
-		if(ignoreOff.not, {
-		if(oldTrack != "".asSymbol, {
-		inputs.flop[0].do{|item, index|
-		if(item.asString.find(oldTrack.asString.capitalise).notNil, {
-		oldInput = item;
-		thisInput =  inputs.flop[1][index]});
-		};
-		thisNewArr = [];
-		if(thisInput.isArray, {
-		thisInput.do{|item|
-		if(Ndef(("space" ++ mixTrackNdefs[ind].key.asString.capitalise)
-		.asSymbol) != item, {
-		thisNewArr = thisNewArr.add(item);
-		});
-		};
-		oldDest = oldTrack.asString.divNumStr;
-		if(oldDest[1].isNil, {oldDest[1] = 1;});
-		if(thisNewArr.notEmpty, {
-		if(thisNewArr.size == 1, {
-		this.input(thisNewArr[0],
-		oldDest[0].asSymbol, oldDest[1]);
-		}, {
-		this.input(thisNewArr,
-		oldDest[0].asSymbol, oldDest[1]);
-		});
-		}, {
-		("Ndef(" ++ ("space" ++
-		oldDest[0].capitalise).asSymbol.cs ++
-		").source = nil").radpost.interpret;
-		});
-		}, {
-		("Ndef(" ++ oldInput.cs ++
-		").source = nil;").radpost.interpret;
-		});
-		});
-		});
-		//new destination
-		outputSettings[ind] = inMenuItem.asSymbol;
-		if(outputSettings[ind] != "".asSymbol, {
-		arrayz = [];
-		outputSettings.do{|item, index|
-		if(item == outputSettings[ind], {
-		if(mixTrackNames[index] != 'master', {
-		arrayz = arrayz.add(
-		Ndef(("space" ++
-		mixTrackNames[index].asString.capitalise).asSymbol);)
-		});
-		}); };
-		trackz = inMenuItem.divNumStr;
-		spaceInd = inputs.flop[0].indexOf(("space" ++
-		inMenuItem.capitalise).asSymbol);
-		if(spaceInd.notNil, {
-		busInSpace = inputs.flop[1][spaceInd];
-		if(busInSpace.asString.find("busIn").notNil, {
-		arrayz = (arrayz ++ busInSpace).flat;
-		});
-		});
-		if(trackz[1].isNil, {trackz[1] = 1;});
-
-		if(arrayz.size == 1, {
-		this.input(arrayz[0], trackz[0].asSymbol, trackz[1]);
-		}, {
-		this.input(arrayz, trackz[0].asSymbol, trackz[1]);
-		});
-		});
-		};
-		thisMenuItem = menuItem;
-		thisMenuItems = menuItems;
-		if(thisMenuItem == thisMenuItems.last, {
-		trackIds = thisMenuItem.divNumStr;
-		"here".postln; trackIds.postln; mixTrackNdefs[ind].numChannels.postln;
-		this.autoAddTrack(trackIds[0].asSymbol, mixTrackNdefs[ind].numChannels, action: {
-		"action".postln;
-		{
-		[ind, thisMenuItems.indexOfEqual(thisMenuItem)].postln;
-		setOutputMenu.(ind, thisMenuItems.indexOfEqual(thisMenuItem));
-		server.sync;
-		outMenuFunc.(thisMenuItem, true);
-		}.fork(AppClock);
-		});
-		}, {
-		busInBool =  thisBusInSettings[ind].collect({|item|
-		if(item.notNil, {item.asSymbol}, {item});
-		}).includes(thisMenuItem.asSymbol);
-		if(busInBool, {
-		/*menu.value = menuItems.collect({|item| if(item != "", {item.asSymbol}, {item});
-		}).indexOf(outputSettings[ind]);*/
-		"This bus is already assigned to this track".warn;
-		}, {
-		outMenuFunc.(menuItem);
-		});
-		});
-		};*/
-
-/*		thisOutputFunc = {arg ind, menuItem, menuItems;
-			var arrayz, trackz, oldTrack, thisInput, thisNewArr, oldDest, oldInput,
-			spaceInd, busInSpace, busInBool, outMenuFunc, thisMenuItem, thisMenuItems, trackIds;
-
-			oldTrack = outputSettings[ind].asSymbol;
-			oldDest = Ndef(("space" ++
-				mixTrackNames[ind].asString.capitalise).asSymbol);
-			//old destination off
-			/*if(ignoreOff.not, {*/
-
-			oldTrack.cs.postln;
-
-			if(oldTrack != "".asSymbol, {
-				inputs.flop[0].do{|item, index|
-					if(item.asString.find(oldTrack.asString.capitalise).notNil, {
-						oldInput = item;
-						thisInput =  inputs.flop[1][index]});
-				};
-				thisNewArr = [];
-				if(thisInput.isArray, {
-					thisInput.do{|item|
-						if(Ndef(("space" ++ mixTrackNames[ind].asString.capitalise)
-							.asSymbol) != item, {
-							thisNewArr = thisNewArr.add(item);
-						});
-					};
-
-					oldDest = oldTrack.asString.divNumStr;
-					if(oldDest[1].isNil, {oldDest[1] = 1;});
-
-					oldInput.postln;
-					thisInput.postln;
-					thisNewArr.postln;
-					oldDest.postln;
-
-					if(thisNewArr.notEmpty, {
-						if(thisNewArr.size == 1, {
-							this.input(thisNewArr[0],
-								oldDest[0].asSymbol, oldDest[1]);
-						}, {
-							this.input(thisNewArr,
-								oldDest[0].asSymbol, oldDest[1]);
-						});
-					}, {
-						("Ndef(" ++ ("space" ++
-							oldDest[0].capitalise).asSymbol.cs ++
-						").source = nil").radpost.interpret;
-					});
-				}, {
-					("Ndef(" ++ oldInput.cs ++
-						").source = nil;").radpost.interpret;
-				});
-			});
-			/*});*/
-			//new destination
-			outputSettings[ind] = menuItem.asSymbol;
-		};*/
-
-		thisOutputFunc = {var thisOutArr;
-			thisOutArr = [];
-			outputSettings.do{|it, ind|
-				if(it == 'master', {
-					thisOutArr = thisOutArr.add(
-						Ndef(("space" ++ mixTrackNames[ind].asString.capitalise).asSymbol);
-					);
-				});
-			};
-			if(thisOutArr.notEmpty, {
-				this.input(thisOutArr, \master);
-			}, {
-				"Ndef('inMaster').source = nil".radpost.interpret;
-			});
-		};
 
 		outputMenuArr.do{|it, ind|
 			if(ind != (sysChans.size-1), {
 				it.action  = {arg menu;
 					outputSettings[ind] = menu.item.asSymbol;
-					thisOutputFunc.();
+					this.outputMasterFunc;
 				};
 			});
 		};
 
 		setOutputMenu = {arg index, value;
 			outputMenuArr[index].value = value;
-		};
-
-		getOutputMenu = {arg index=0;
-			outputMenuArr[index].items.radpost;
-		};
-
-		getOutputMenuItem = {arg index=0;
-			outputMenuArr[index].item.radpost;
 		};
 
 		Ndef("AssembladgeGUI", {
@@ -2520,7 +2334,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	setTrackIn {arg trackNum, inIndex;
+	setTrackIn {arg trackNum=1, inIndex=0;
 		var label, mixTrackIndex;
 		mixTrackIndex = mixTrackNames.indexOfEqual( (\track ++ trackNum).asSymbol );
 		label = this.inputLablesFunc(mixTrackIndex, mixTrackNames);
@@ -2536,7 +2350,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	getTrackInMenu {arg trackNum;
+	getTrackInMenu {arg trackNum=1;
 		var mixTrackIndex;
 		mixTrackIndex = mixTrackNames.indexOfEqual( (\track ++ trackNum).asSymbol );
 		if(mixTrackIndex.notNil, {
@@ -2546,7 +2360,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	getTrackInIndex {arg trackNum;
+	getTrackInIndex {arg trackNum=1;
 		var mixTrackIndex;
 		mixTrackIndex = mixTrackNames.indexOfEqual( (\track ++ trackNum).asSymbol );
 		if(mixTrackIndex.notNil, {
@@ -2556,12 +2370,80 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	getTrackInItem {arg trackNum;
+	getTrackInItem {arg trackNum=1;
 		var mixTrackIndex, label;
 		mixTrackIndex = mixTrackNames.indexOfEqual( (\track ++ trackNum).asSymbol );
 		if(mixTrackIndex.notNil, {
 			label = this.inputLablesFunc(mixTrackIndex, mixTrackNames);
 			label[0][label[1]].radpost;
+		}, {
+			"track not found".warn;
+		});
+	}
+
+	outputMasterFunc {var thisOutArr;
+		thisOutArr = [];
+		outputSettings.do{|it, ind|
+			if(it == 'master', {
+				thisOutArr = thisOutArr.add(
+					Ndef(("space" ++ mixTrackNames[ind].asString.capitalise).asSymbol);
+				);
+			});
+		};
+		if(thisOutArr.notEmpty, {
+			this.input(thisOutArr, \master);
+		}, {
+			"Ndef('inMaster').source = nil".radpost.interpret;
+		});
+	}
+
+	setTrackOut {arg trackType=\track, trackNum=1, inIndex=0;
+		var mixTrackIndex, label;
+		mixTrackIndex = mixTrackNames.indexOfEqual( (trackType ++ trackNum).asSymbol );
+
+		if(inIndex == 0, {
+			label = '';
+		}, {
+			label = 'master';
+			inIndex = 1;
+		});
+
+		if(mixTrackIndex.notNil, {
+
+			outputSettings[mixTrackIndex] = label;
+			this.outputMasterFunc;
+
+			if(mixerWin.notNil, {
+				if(mixerWin.notClosed, {
+					setOutputMenu.(mixTrackIndex, inIndex);
+				});
+			});
+
+		}, {
+			"track not found".warn;
+		});
+	}
+
+	getTrackOutIndex {arg  trackType=\track, trackNum=1;
+		var mixTrackIndex, outIndex;
+		mixTrackIndex = mixTrackNames.indexOfEqual( (trackType ++ trackNum).asSymbol );
+		if(mixTrackIndex.notNil, {
+			if(outputSettings[mixTrackIndex] == '', {
+				outIndex = 0;
+			}, {
+				outIndex = 1;
+			});
+			outIndex.postln;
+		}, {
+			"track not found".warn;
+		});
+	}
+
+	getTrackOutItem {arg  trackType=\track, trackNum=1;
+		var mixTrackIndex, outItem;
+		mixTrackIndex = mixTrackNames.indexOfEqual( (trackType ++ trackNum).asSymbol );
+		if(mixTrackIndex.notNil, {
+			outputSettings[mixTrackIndex].cs.postln;
 		}, {
 			"track not found".warn;
 		});
@@ -3087,7 +2969,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(newStates.includes(1), {
 				this.masterSoloFunc((newStates));
 				if(Ndef('master').getKeysValues.collect{|item| item == [\off, 1] }.includes(true), {
-				"Ndef('master').set('off', 0)".radpost;
+					"Ndef('master').set('off', 0)".radpost;
 				});
 				Ndef('master').set('off', 0);
 			}, {
@@ -3095,9 +2977,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		}, {
 			this.masterSoloFunc((1!newStates.size););
-				if(Ndef('master').getKeysValues.collect{|item| item == [\off, 1] }.includes(true), {
-			"Ndef('master').set('off', 0)".radpost;
-			Ndef('master').set('off', 0);
+			if(Ndef('master').getKeysValues.collect{|item| item == [\off, 1] }.includes(true), {
+				"Ndef('master').set('off', 0)".radpost;
+				Ndef('master').set('off', 0);
 			});
 		});
 	}
