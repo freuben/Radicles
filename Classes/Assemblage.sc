@@ -6,8 +6,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
-	<recordingButton, <recordingValBut, <setOutputMenu, <getOutputMenu,
-	<getOutputMenuItem, <setInputMenu;
+	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
