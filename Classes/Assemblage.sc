@@ -29,12 +29,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					chanMaster = chanNum;
 					chanTrack = chanNum;
 					chanBus = chanNum;
+					systemChanNum = chanNum;
 				}, {
 					chanTrack = chanNum[0];
 					chanBus = chanNum[1];
 					chanMaster = chanNum[2];
+					systemChanNum = chanNum[2];
 				});
-				systemChanNum = chanNum;
 				if(spaceType.isArray.not, {
 					spaceMaster = spaceType;
 					spaceTrack = spaceType;
@@ -1384,11 +1385,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		winWidth = (42*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
 		if(winRefresh, {oldMixerWin=mixerWin; winRefresh = false;
-			{0.1.yield; oldMixerWin.close; 0.1.yield; oscDefFunc.()}.fork(AppClock);
+			//aqui 2
+			{0.1.yield; oldMixerWin.close; 0.1.yield; server.sync;
+				oscDefFunc.()}.fork(AppClock);
 		});
-		/*mixerWin = ScrollView(bounds: (Rect(0, 0, winWidth,winHeight))).name_("Assemblage");*/
 		mixerWin = ScrollView().name_("Assemblage");
-		mixerWin.hasVerticalScroller = false;
+		/*mixerWin.hasVerticalScroller = false;*/
 		mixerWin.mouseDownAction = {
 			if(fltMenuWindow.notNil, {
 				if(fltMenuWindow.visible, {
@@ -1417,10 +1419,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		};
-		/*if(mixerWin.bounds != Rect(0, 0, winWidth,winHeight), {
-		mixerWin.bounds = Rect(0, 0, winWidth,winHeight);
-		});*/
-		/*mixerWin.fixedHeight = winHeight;*/
+
 		canvas = View();
 		canvas.background_(Color.black);
 
@@ -1593,7 +1592,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			outputLabel.font = basicFont; outputLabel.string_("Output");
 
-			if( index == (sysChans.size-1), {
+			if(index == (sysChans.size-1), {
 				//master output button
 				outputMenu = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize)
 				.minWidth_(slotsSize).maxWidth_(slotsSize);
@@ -1612,9 +1611,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				//output menu
 				outputMenu = PopUpMenu().maxHeight_(popupmenusize)
 				.minHeight_(popupmenusize).minWidth_(slotsSize).maxWidth_(slotsSize);
-
 				outputMenu.items = ["", "master"];
-				/*outputMenu.items = ["", "master"] ++numBuses.collect{|item| "bus" ++ (item+1)};*/
 				if(outputSettings[index] == 'master', {
 					outputMenu.value = 1;
 				}, {
@@ -1806,7 +1803,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			vlay = vlay.add(VLayout(*finalLayout) );
 		};
 
-		//setting interface
+		//setting up interface
 		sliderTextArr.do{|item, index| item.font = basicFont; item.string_(
 			mixTrackNdefs[index].getKeysValues.collect({|item|
 				if(item[0] == \volume, {item[1]});
@@ -1815,9 +1812,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		levelTextArr.do{|item, index| item.font = basicFont; item.string_("-inf");
 			item.mouseDownAction_({
 				peakMax[index] = -inf;
+				levelTextArr[index].stringColor = Color.white;
 				item.string_("-inf");
 			});
-			/*item.background_(Color.new255(78, 109, 38)); */
 		};
 		peakMax = -inf!levelTextArr.size;
 		//panning
@@ -1923,11 +1920,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		sumHeight = 45 + 9 + sumHeight + (7 * (10+gapHeight)) + (2 * (12+gapHeight)) +
 		(180+gapHeight) + (sendsMenuArr[0].size*(14+gapHeight)) +
 		(fxSlotArr[0].size*(14+gapHeight));
+		sumHeight = sumHeight + 4;
 
 		sumWidth = 9 + slotsSizeArr.sum + spaceGap.sum + (9-spaceGap.last+2);
+		if(sumWidth > screenBounds.width, {
+		sumWidth = screenBounds.width;
+		});
+		if(sumHeight > (screenBounds.height-45), {
+		sumHeight = screenBounds.height-45;
+		});
 		mixerWin.maxWidth_(sumWidth).minWidth_(sumWidth);
 		mixerWin.maxHeight_(sumHeight).minHeight_(sumHeight);
 		mixerWin.front;
+
 		if(scrollPoint.notNil, {
 			//check this bug hasn't been fixed in latest SC version, if so, remove fork
 			{0.001.yield; mixerWin.visibleOrigin_(scrollPoint);}.fork(AppClock);
@@ -2085,7 +2090,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					});
 				});
-
 				fltWinFunc1 = {arg menu, labelKey;
 					{menu.string = labelKey;
 						fltMenuWindow.close;
@@ -2095,7 +2099,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					}.fork(AppClock);
 				};
-
 				fltWinFunc2 = {arg menu, thisListView, irItems, labelKey;
 					menu.string = labelKey;
 					irItems = PathName(mainPath ++ "SoundFiles/IR/").entries
@@ -2114,11 +2117,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					};
 				};
-
 				it.mouseDownAction = { arg menu;
 					var boundArr, thisBounds, thisArrBounds, thisitemArr,
 					thisListView, thisTagFlt, scrollOrg, fltUIArr;
-
 					boundArr = it.bounds.asArray;
 					scrollPoint = mixerWin.visibleOrigin;
 					scrollOrg = scrollPoint.asArray;
@@ -2166,7 +2167,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 			}
 		};
-
 
 		outputMenuArr.do{|it, ind|
 			if(ind != (sysChans.size-1), {
@@ -2231,6 +2231,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								if((levelSoloStates.atAll((sysChans.integrate - sysChans[0]))[index] == 0).or(
 									muteStates[index] == 1;
 								), {
+									levelTextArr[index].stringColor = Color.white;
 									levelTextArr[index].string = "-inf";
 									peakMax[index] = -inf;
 								}, {
