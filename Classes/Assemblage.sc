@@ -15,8 +15,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
 		server.options.numWireBufs = 128*4;
-		server.options.numAudioBusChannels = 1024;
-		server.options.numControlBusChannels = 16384;
+		server.options.numAudioBusChannels = 128*8;
+		server.options.numControlBusChannels = 128*128;
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
@@ -260,6 +260,34 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			server.sync;
 			action.();
 		}.fork;
+	}
+
+	removeTrack {arg trackType=\track, trackNum=1;
+		var trackString, inTrack, realTrack, spaceTrack, indexTrack;
+		if(trackType != \master, {
+			trackString = (\track ++ 1).asString;
+			inTrack = ("in" ++ trackString.capitalise).asSymbol;
+			realTrack = trackString.asSymbol;
+			spaceTrack = ("space" ++ trackString.capitalise).asSymbol;
+			indexTrack = trackNames.indexOf(realTrack);
+
+			("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
+			("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
+			("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
+
+			tracks.remove(tracks.detect{|item| item.flat.includes(realTrack); });
+			specs.remove(specs.detect{|item| item.flat.includes(inTrack); });
+			masterNdefs.remove(masterNdefs.detect{|item| item.flat.includes(Ndef(realTrack))};);
+			trackNames.remove(realTrack);
+			mixTrackNames.remove(realTrack);
+			outputSettings.removeAt(indexTrack);
+			soloStates.removeAt(indexTrack);
+			muteStates.removeAt(indexTrack);
+			recStates.removeAt(indexTrack);
+			this.outputMasterFunc;
+		}, {
+			"You can\'t remove the master track".warn;
+		});
 	}
 
 	ndefPrepare {arg ndef, func;
@@ -1384,12 +1412,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		winWidth = (42*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
 		if(winRefresh, {oldMixerWin=mixerWin; winRefresh = false;
-			//aqui 2
-			{0.1.yield; oldMixerWin.close; 0.1.yield; server.sync;
-				oscDefFunc.()}.fork(AppClock);
+			{server.latency.yield; oldMixerWin.close;
+				server.latency.yield;
+				server.sync;
+				oscDefFunc.();
+			}.fork(AppClock);
 		});
 		mixerWin = ScrollView().name_("Assemblage");
-		/*mixerWin.hasVerticalScroller = false;*/
 		mixerWin.mouseDownAction = {
 			if(fltMenuWindow.notNil, {
 				if(fltMenuWindow.visible, {
@@ -1923,10 +1952,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		sumWidth = 9 + slotsSizeArr.sum + spaceGap.sum + (9-spaceGap.last+2);
 		if(sumWidth > screenBounds.width, {
-		sumWidth = screenBounds.width;
+			sumWidth = screenBounds.width;
 		});
 		if(sumHeight > (screenBounds.height-45), {
-		sumHeight = screenBounds.height-45;
+			sumHeight = screenBounds.height-45;
 		});
 		mixerWin.maxWidth_(sumWidth).minWidth_(sumWidth);
 		mixerWin.maxHeight_(sumHeight).minHeight_(sumHeight);
@@ -2090,7 +2119,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					});
 				});
 				fltWinFunc1 = {arg menu, labelKey;
-					{menu.string = labelKey;
+					{
+						menu.string = labelKey;
 						fltMenuWindow.close;
 						fltMenuWindow = nil;
 						if((ind+1) > (fxsNum-1), {
@@ -2212,15 +2242,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						var meter, thisPeakVal, value;
 						i = i * 0.5;
 						meter = 	levelArr.flat[i];
-						value = val*levelSoloStates[i];
-						meter.value = (value.max(0.0) * numRMSSampsRecip)
-						.sqrt.ampdb.linlin(dBLow, 0, 0, 1);
-						peakVal = (peak*levelSoloStates[i]).ampdb;
-						thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
-						meter.peakLevel = thisPeakVal;
-						peakArr = peakArr.add(peakVal);
+						if(meter.notNil, {
+
+							value = val*levelSoloStates[i];
+							meter.value = (value.max(0.0) * numRMSSampsRecip)
+							.sqrt.ampdb.linlin(dBLow, 0, 0, 1);
+							peakVal = (peak*levelSoloStates[i]).ampdb;
+							thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
+							meter.peakLevel = thisPeakVal;
+							peakArr = peakArr.add(peakVal);
+						});
+						peakArr = peakArr.reshapeLike(levelArr);
 					});
-					peakArr = peakArr.reshapeLike(levelArr);
 					if(levelTextArr.notNil, {
 						peakArr.do{|item, index|
 							var peakDb;
@@ -2258,9 +2291,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				}.defer;
 			}, \AssembladgeGUI);
 		};
-
 		oscDefFunc.();
-
 		mixerWin.onClose = {
 			levelTextArr = nil;
 			/*mixerWin = nil;*/
@@ -2497,37 +2528,37 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var trackIndex, funcThis;
 		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
 		if(trackIndex.notNil, {
-		funcThis = {
-			if(busNum == 0, {
-				this.removeBus(trackNum, slotNum, trackType);
-			}, {
-				this.bus(trackNum, slotNum, val, trackType);
-			});
-		}; //track, bus, mix, type
-		if(mixerWin.notNil, {
-			if(mixerWin.notClosed, {
-				{
-					setBusIns.(trackIndex,(slotNum-1), busNum);
-					if(val != inf, {
+			funcThis = {
+				if(busNum == 0, {
+					this.removeBus(trackNum, slotNum, trackType);
+				}, {
+					this.bus(trackNum, slotNum, val, trackType);
+				});
+			}; //track, bus, mix, type
+			if(mixerWin.notNil, {
+				if(mixerWin.notClosed, {
+					{
+						setBusIns.(trackIndex,(slotNum-1), busNum);
+						if(val != inf, {
 							if(busNum != 0, {
-						nodeTime.yield;
-						this.setSendKnob(trackType, trackNum, slotNum, val);
+								nodeTime.yield;
+								this.setSendKnob(trackType, trackNum, slotNum, val);
 							});
-					});
-				}.fork(AppClock);
+						});
+					}.fork(AppClock);
+				}, {
+					funcThis.();
+				});
 			}, {
 				funcThis.();
 			});
-		}, {
-			funcThis.();
-		});
 			if(dirMaster, {
-				if(outputSettings[trackIndex].postln == '', {
-				this.setTrackOut(trackType, trackNum, 1);
+				if(outputSettings[trackIndex] == '', {
+					this.setTrackOut(trackType, trackNum, 1);
 				});
 			}, {
-				if(outputSettings[trackIndex].postln == 'master', {
-				this.setTrackOut(trackType, trackNum, 0);
+				if(outputSettings[trackIndex] == 'master', {
+					this.setTrackOut(trackType, trackNum, 0);
 				});
 			});
 		}, {
@@ -2561,7 +2592,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					});
 				}, {
-					"No buses in this track".warn;
+					/*"No buses in this track".warn;*/
 				});
 			}, {
 				"This bus doesn't exist in this track".warn;
@@ -2980,11 +3011,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				this.masterSoloFunc((newStates));
 				if(Ndef('master').getKeysValues.collect{|item| item == [\off, 1] }.includes(true), {
 					{
-					Ndef(\master).fadeTime.yield;
-					"Ndef('master').set('off', 0)".radpost.interpret;
+						Ndef(\master).fadeTime.yield;
+						"Ndef('master').set('off', 0)".radpost.interpret;
 					}.fork;
 				}, {
-				Ndef('master').set('off', 0);
+					Ndef('master').set('off', 0);
 				});
 			}, {
 				"Ndef('master').set('off', 1)".radpost.interpret;
