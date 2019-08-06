@@ -263,9 +263,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	removeTrack {arg trackType=\track, trackNum=1;
-		var trackString, inTrack, realTrack, spaceTrack, indexTrack;
+		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums;
 		if(trackType != \master, {
-			trackString = (\track ++ 1).asString;
+			trackString = (trackType ++ trackNum).asString;
 			inTrack = ("in" ++ trackString.capitalise).asSymbol;
 			realTrack = trackString.asSymbol;
 			spaceTrack = ("space" ++ trackString.capitalise).asSymbol;
@@ -285,6 +285,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			muteStates.removeAt(indexTrack);
 			recStates.removeAt(indexTrack);
 			this.outputMasterFunc;
+
+			indArr = [];
+			if(busArr.flat.includes(nil).not, {
+			busArr.flop[1].do{|item, index|
+				if(item.includes(Ndef(realTrack)), {indArr = indArr.add(index)}); };
+			thisBusNums = busArr.flop[0].atAll(indArr).collect{|item|
+				item.asString.divNumStr[1].interpret };
+			{
+				thisBusNums.do{|item|
+					this.removeBus(trackNum, item, trackType);
+					server.sync;
+				};
+			}.fork;
+			});
 		}, {
 			"You can\'t remove the master track".warn;
 		});
@@ -2595,7 +2609,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					/*"No buses in this track".warn;*/
 				});
 			}, {
-				"This bus doesn't exist in this track".warn;
+				/*"This bus doesn't exist in this track".warn;*/
 			});
 		});
 	}
