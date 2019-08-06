@@ -269,7 +269,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			inTrack = ("in" ++ trackString.capitalise).asSymbol;
 			realTrack = trackString.asSymbol;
 			spaceTrack = ("space" ++ trackString.capitalise).asSymbol;
-			indexTrack = trackNames.indexOf(realTrack);
+			indexTrack = mixTrackNames.indexOf(realTrack);
 
 			("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 			("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
@@ -278,8 +278,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			tracks.remove(tracks.detect{|item| item.flat.includes(realTrack); });
 			specs.remove(specs.detect{|item| item.flat.includes(inTrack); });
 			masterNdefs.remove(masterNdefs.detect{|item| item.flat.includes(Ndef(realTrack))};);
+			space.remove(space.detect{|item| item.flat.includes(spaceTrack);});
 			trackNames.remove(realTrack);
 			mixTrackNames.remove(realTrack);
+			mixTrackNdefs.remove(mixTrackNdefs.detect{|item| item == Ndef(realTrack)};);
 			outputSettings.removeAt(indexTrack);
 			soloStates.removeAt(indexTrack);
 			muteStates.removeAt(indexTrack);
