@@ -262,8 +262,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
+		updateTrackCount {arg trackType=\track; var countArr, result;
+		if(trackNames.notNil, {
+			countArr = trackNames.select({|item|
+				item.asString.find(trackType.asString).notNil }).collect{|it|
+				it.asString.divNumStr[1] };
+			result = (countArr.maxItem) + 1;
+		}, {
+			result = 1;
+		});
+		^result;
+	}
+
 	removeTrack {arg trackType=\track, trackNum=1;
-		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums;
+		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums, indArrBusIn;
 		if(trackType != \master, {
 			trackString = (trackType ++ trackNum).asString;
 			inTrack = ("in" ++ trackString.capitalise).asSymbol;
@@ -288,19 +300,39 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			recStates.removeAt(indexTrack);
 			this.outputMasterFunc;
 
+			if(trackType == \bus, {
+				if(busArr.flat.includes(nil).not, {
+				indArrBusIn =
+				busArr.flop[0].indexOf( (trackType ++  "In" ++ trackNum).asSymbol );
+				{
+					busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr[1]}.do{|it|
+						this.removeBus(it, trackNum);
+						server.sync;
+					};
+				}.fork;
+				});
+			});
+
 			indArr = [];
 			if(busArr.flat.includes(nil).not, {
-			busArr.flop[1].do{|item, index|
-				if(item.includes(Ndef(realTrack)), {indArr = indArr.add(index)}); };
-			thisBusNums = busArr.flop[0].atAll(indArr).collect{|item|
-				item.asString.divNumStr[1].interpret };
-			{
-				thisBusNums.do{|item|
-					this.removeBus(trackNum, item, trackType);
-					server.sync;
-				};
-			}.fork;
+				busArr.flop[1].do{|item, index|
+					if(item.includes(Ndef(realTrack)), {indArr = indArr.add(index)}); };
+				thisBusNums = busArr.flop[0].atAll(indArr).collect{|item|
+					item.asString.divNumStr[1].interpret };
+				{
+					thisBusNums.do{|item|
+						this.removeBus(trackNum, item, trackType);
+						server.sync;
+					};
+				}.fork;
 			});
+
+			if(trackType == \track, {
+			trackCount = this.updateTrackCount(trackType);
+			}, {
+				busCount = this.updateTrackCount(trackType);
+			});
+
 		}, {
 			"You can\'t remove the master track".warn;
 		});
@@ -1428,8 +1460,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		winWidth = (42*(sysChans.sum));
 		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
 		if(winRefresh, {oldMixerWin=mixerWin; winRefresh = false;
-			{server.latency.yield; oldMixerWin.close;
-				server.latency.yield;
+			{
+				nodeTime.yield;
+				oldMixerWin.close;
+				nodeTime.yield;
 				server.sync;
 				oscDefFunc.();
 			}.fork(AppClock);
@@ -1678,10 +1712,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			//sends menu
 			if( index != (sysChans.size-1), {
-				sends.do{var smenu, sknob;
+				sends.do{var smenu, sknob, sendItems;
 					smenu = PopUpMenu().maxHeight_(popupmenusize).minHeight_(popupmenusize)
 					.maxWidth_(slotsSize-popupmenusize);
-					smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};
+
+					sendItems = mixTrackNames.select({|item|
+						item.asString.find("bus").notNil }).collect{|it|
+						it.asString.divNumStr[1] };
+					sendItems = sendItems ++ (sendItems.maxItem + 1);
+
+					smenu.items = [""] ++ sendItems.collect({|item| "bus" ++ item });
+
+					/*smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};*/
+
 					smenu.background_(Color.black).stringColor_(Color.white)
 					.font_(basicFont);
 					sknob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
@@ -2002,6 +2045,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 
+		/*		if(busInLabels.notNil, {
+		busInLabels.do{|item|
+		var thisTackNameInd;
+		thisTackNameInd = mixTrackNames.indexOf(item[0]);
+		sendsMenuArr[thisTackNameInd].do{|it, ind|
+		if(item[1][ind].notNil, {
+		it.value = item[1][ind].asString.divNumStr[1];
+		busInSettings[thisTackNameInd][ind] = it.item;
+		});
+		};
+		sendsKnobArr[mixTrackNames.indexOf(item[0])].do{|it, ind|
+		knobFunc.(it, item[0], item[1][ind]);
+		};
+		};
+		});*/
+
 		if(busInLabels.notNil, {
 			busInLabels.do{|item|
 				var thisTackNameInd;
@@ -2009,12 +2068,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				sendsMenuArr[thisTackNameInd].do{|it, ind|
 					var labInArr;
 					if(item[1][ind].notNil, {
-						it.value = item[1][ind].asString.divNumStr[1];
+						/*it.value = item[1][ind].asString.divNumStr[1];*/
+						it.value = it.items.collect({|it| it.divNumStr[1] }).indexOf(item[1][ind].asString.divNumStr[1]);
 						busInSettings[thisTackNameInd][ind] = it.item;
 					});
 				};
 				sendsKnobArr[mixTrackNames.indexOf(item[0])].do{|it, ind|
-					knobFunc.(it, item[0], item[1][ind]);
+					[it, item[0], item[1][ind]].postln;
+					knobFunc.(it, item[0], item[1][ind]); //aqui el problema?
 				};
 			};
 		});
@@ -2061,7 +2122,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					if(([''] ++ mixTrackNames).includesEqual(it.item.asSymbol).not, {
 						this.autoAddTrack(\bus, systemChanNum, action: {
 							{
-								this.setSend(thisTrackLabel, index+1, ind+1, thisBusNum);
+								this.setSend(thisTrackLabel, index+1, ind+1, thisBusNum); //tackLabel, trackNum, trackSlot
 							}.defer;
 						});
 					}, {
@@ -2307,7 +2368,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				}.defer;
 			}, \AssembladgeGUI);
 		};
+
 		oscDefFunc.();
+
 		mixerWin.onClose = {
 			levelTextArr = nil;
 			/*mixerWin = nil;*/
@@ -2327,6 +2390,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	refreshMixGUI {
+		"start".postln;
+		SystemClock.sched(0,{ arg time;
+    time.postln;
+});
 		if(mixerWin.notNil, {
 			mixerWin.children.do { |child| child.remove };
 			winRefresh = true;
