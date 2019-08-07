@@ -1463,7 +1463,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			{
 				nodeTime.yield;
 				oldMixerWin.close;
-				nodeTime.yield;
+				server.latency.yield;
 				server.sync;
 				oscDefFunc.();
 			}.fork(AppClock);
@@ -2314,6 +2314,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				numRMSSampsRecip = 1 / numRMSSamps;
 				dBLow = -80;
 				{
+					try {
 					peakArr = [];
 					msg.copyToEnd(3).pairsDo({|val, peak, i|
 						var meter, thisPeakVal, value;
@@ -2365,6 +2366,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 						};
 					});
+					} { |error|
+						if(error.isKindOf(PrimitiveFailedError).not) { error.throw }
+					};
 				}.defer;
 			}, \AssembladgeGUI);
 		};
@@ -2390,10 +2394,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	refreshMixGUI {
-		"start".postln;
-		SystemClock.sched(0,{ arg time;
-    time.postln;
-});
 		if(mixerWin.notNil, {
 			mixerWin.children.do { |child| child.remove };
 			winRefresh = true;
