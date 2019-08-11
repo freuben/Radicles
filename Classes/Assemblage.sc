@@ -1012,6 +1012,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 		thisTrack = this.getThisTrack(type, num);
 
+		thisTrack = thisTrack.copyRange(0, thisTrack.size-2);
+
 		if(thisTrack.size > 2, {
 			arr1 = [thisTrack[0], thisTrack.last];
 			arr2 = thisTrack.copyRange(1, thisTrack.size-2);
