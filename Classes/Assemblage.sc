@@ -333,6 +333,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				busCount = this.updateTrackCount(trackType);
 			});
 
+			//refresh win if open
+			if(mixerWin.notNil, {
+				if(mixerWin.notClosed, {
+					{this.refreshMixGUI;}.defer;
+				});
+			});
+
 		}, {
 			"You can\'t remove the master track".warn;
 		});
@@ -546,8 +553,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	input {arg ndefsIn, type=\track, num=1, respace=true, spaceType;
 		var trackArr, ndefCS, connect, inTag, newInIndex;
 		if([\track, \bus, \master].includes(type), {
-			trackArr = this.get(type)[num-1];
+			/*trackArr = this.get(type)[num-1];*/
 			if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
+			trackArr = this.get(type).detect({|item| item.flat.includes(inTag) });
 			if(inputs.notNil, {
 				if(inputs.flop[0].includes(inTag), {
 					inputs.removeAt(inputs.flop[0].indexOf(inTag));
