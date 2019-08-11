@@ -262,7 +262,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
-		updateTrackCount {arg trackType=\track; var countArr, result;
+	updateTrackCount {arg trackType=\track; var countArr, result;
 		if(trackNames.notNil, {
 			countArr = trackNames.select({|item|
 				item.asString.find(trackType.asString).notNil }).collect{|it|
@@ -302,14 +302,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			if(trackType == \bus, {
 				if(busArr.flat.includes(nil).not, {
-				indArrBusIn =
-				busArr.flop[0].indexOf( (trackType ++  "In" ++ trackNum).asSymbol );
-				{
-					busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr[1]}.do{|it|
-						this.removeBus(it, trackNum);
-						server.sync;
-					};
-				}.fork;
+					indArrBusIn =
+					busArr.flop[0].indexOf( (trackType ++  "In" ++ trackNum).asSymbol );
+					{
+						busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr[1]}.do{|it|
+							this.removeBus(it, trackNum);
+							server.sync;
+						};
+					}.fork;
 				});
 			});
 
@@ -328,7 +328,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 
 			if(trackType == \track, {
-			trackCount = this.updateTrackCount(trackType);
+				trackCount = this.updateTrackCount(trackType);
 			}, {
 				busCount = this.updateTrackCount(trackType);
 			});
@@ -336,7 +336,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//refresh win if open
 			if(mixerWin.notNil, {
 				if(mixerWin.notClosed, {
-					{this.refreshMixGUI;}.defer;
+					{nodeTime.yield; this.refreshMixGUI;}.fork(AppClock);
 				});
 			});
 
@@ -550,12 +550,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
+	getThisTrack {arg type, num;
+		var inTag, trackArr;
+		if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
+		trackArr = this.get(type).detect({|item| item.flat.includes(inTag) });
+		^trackArr;
+	}
+
 	input {arg ndefsIn, type=\track, num=1, respace=true, spaceType;
 		var trackArr, ndefCS, connect, inTag, newInIndex;
 		if([\track, \bus, \master].includes(type), {
 			/*trackArr = this.get(type)[num-1];*/
 			if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
-			trackArr = this.get(type).detect({|item| item.flat.includes(inTag) });
+			/*trackArr = this.get(type).detect({|item| item.flat.includes(inTag) });*/
+
+			trackArr = this.getThisTrack(type, num);
+
 			if(inputs.notNil, {
 				if(inputs.flop[0].includes(inTag), {
 					inputs.removeAt(inputs.flop[0].indexOf(inTag));
@@ -606,7 +616,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					/*if(spaceType.isNil, {spaceType = this.findSpaceType(sysChans.last)});*/
 					/*					this.respace(trackArr[0][0], ndefsIn, spaceType);*/
 
-					trackArr = this.get(type)[num-1];
+					/*trackArr = this.get(type)[num-1];*/
+
+					trackArr =this.getThisTrack(type, num);
+
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
 					ndefCS.radpost.interpret;
 				}, {
@@ -827,7 +840,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 			});
 
-			ndefArr = this.get(type)[num-1];
+			/*			ndefArr = this.get(type)[num-1];*/
+			ndefArr = this.getThisTrack(type, num);
+
 			ndefSpace = ndefArr.last;
 			ndefArr = ndefArr.copyRange(0, ndefArr.size-2);
 
@@ -939,7 +954,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	removeFilter {arg type=\track, num= 1, slot=1, action;
 		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd, thisFilterTag, thisFilterIndex;
 		this.globFadeTime;
-		thisTrack = this.get(type)[num-1];
+		/*thisTrack = this.get(type)[num-1];*/
+
+		thisTrack = this.getThisTrack(type, num);
+
 		if(thisTrack.size > 2, {
 
 			thisFilterTag = this.findFilterTag(type, num, slot);
@@ -990,7 +1008,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	removeTrackFilters {arg type=\track, num= 1, post=true;
 		var thisTrack, thisSlot, ndefCS, arr1, arr2, setArr;
-		thisTrack = this.get(type)[num-1];
+		/*thisTrack = this.get(type)[num-1];*/
+
+		thisTrack = this.getThisTrack(type, num);
+
 		if(thisTrack.size > 2, {
 			arr1 = [thisTrack[0], thisTrack.last];
 			arr2 = thisTrack.copyRange(1, thisTrack.size-2);
@@ -2323,57 +2344,57 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				dBLow = -80;
 				{
 					try {
-					peakArr = [];
-					msg.copyToEnd(3).pairsDo({|val, peak, i|
-						var meter, thisPeakVal, value;
-						i = i * 0.5;
-						meter = 	levelArr.flat[i];
-						if(meter.notNil, {
+						peakArr = [];
+						msg.copyToEnd(3).pairsDo({|val, peak, i|
+							var meter, thisPeakVal, value;
+							i = i * 0.5;
+							meter = 	levelArr.flat[i];
+							if(meter.notNil, {
 
-							value = val*levelSoloStates[i];
-							meter.value = (value.max(0.0) * numRMSSampsRecip)
-							.sqrt.ampdb.linlin(dBLow, 0, 0, 1);
-							peakVal = (peak*levelSoloStates[i]).ampdb;
-							thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
-							meter.peakLevel = thisPeakVal;
-							peakArr = peakArr.add(peakVal);
+								value = val*levelSoloStates[i];
+								meter.value = (value.max(0.0) * numRMSSampsRecip)
+								.sqrt.ampdb.linlin(dBLow, 0, 0, 1);
+								peakVal = (peak*levelSoloStates[i]).ampdb;
+								thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
+								meter.peakLevel = thisPeakVal;
+								peakArr = peakArr.add(peakVal);
+							});
+							peakArr = peakArr.reshapeLike(levelArr);
 						});
-						peakArr = peakArr.reshapeLike(levelArr);
-					});
-					if(levelTextArr.notNil, {
-						peakArr.do{|item, index|
-							var peakDb;
-							peakDb = item.maxItem;
-							if(peakDb < dBLow, {peakDb = -inf });
-							if(levelTextArr[index].notNil, {
-								if((levelSoloStates.atAll((sysChans.integrate - sysChans[0]))[index] == 0).or(
-									muteStates[index] == 1;
-								), {
-									levelTextArr[index].stringColor = Color.white;
-									levelTextArr[index].string = "-inf";
-									peakMax[index] = -inf;
-								}, {
-									if(peakMax[index] < peakDb, {
-										peakAmp = peakDb.linlin(dBLow, 0, 0, 1);
-										if(peakAmp >= 0.9999, {
-											if(levelTextArr[index].notNil, {
-												/*levelTextArr[index].background_(Color.new255(211, 14, 14));*/
-												levelTextArr[index].stringColor_(Color.new255(211, 14, 14));
+						if(levelTextArr.notNil, {
+							peakArr.do{|item, index|
+								var peakDb;
+								peakDb = item.maxItem;
+								if(peakDb < dBLow, {peakDb = -inf });
+								if(levelTextArr[index].notNil, {
+									if((levelSoloStates.atAll((sysChans.integrate - sysChans[0]))[index] == 0).or(
+										muteStates[index] == 1;
+									), {
+										levelTextArr[index].stringColor = Color.white;
+										levelTextArr[index].string = "-inf";
+										peakMax[index] = -inf;
+									}, {
+										if(peakMax[index] < peakDb, {
+											peakAmp = peakDb.linlin(dBLow, 0, 0, 1);
+											if(peakAmp >= 0.9999, {
+												if(levelTextArr[index].notNil, {
+													/*levelTextArr[index].background_(Color.new255(211, 14, 14));*/
+													levelTextArr[index].stringColor_(Color.new255(211, 14, 14));
+												});
+											}, {
+												if(levelTextArr[index].notNil, {
+													/*levelTextArr[index].background_(Color.black);*/
+													levelTextArr[index].stringColor_(Color.white);
+												});
 											});
-										}, {
-											if(levelTextArr[index].notNil, {
-												/*levelTextArr[index].background_(Color.black);*/
-												levelTextArr[index].stringColor_(Color.white);
-											});
+											levelTextArr[index].string = peakDb.round(0.1).asString;
+											peakMax[index] = peakDb;
 										});
-										levelTextArr[index].string = peakDb.round(0.1).asString;
-										peakMax[index] = peakDb;
 									});
 								});
-							});
 
-						};
-					});
+							};
+						});
 					} { |error|
 						if(error.isKindOf(PrimitiveFailedError).not) { error.throw }
 					};
