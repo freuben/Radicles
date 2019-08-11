@@ -276,12 +276,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	removeTrack {arg trackType=\track, trackNum=1;
 		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums, indArrBusIn;
+
 		if(trackType != \master, {
+			{
 			trackString = (trackType ++ trackNum).asString;
 			inTrack = ("in" ++ trackString.capitalise).asSymbol;
 			realTrack = trackString.asSymbol;
 			spaceTrack = ("space" ++ trackString.capitalise).asSymbol;
 			indexTrack = mixTrackNames.indexOf(realTrack);
+
+				this.removeTrackFilters(trackType, trackNum, false, true);
+				server.sync;
 
 			("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 			("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
@@ -304,12 +309,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				if(busArr.flat.includes(nil).not, {
 					indArrBusIn =
 					busArr.flop[0].indexOf( (trackType ++  "In" ++ trackNum).asSymbol );
-					{
+					/*{*/
 						busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr[1]}.do{|it|
 							this.removeBus(it, trackNum);
 							server.sync;
 						};
-					}.fork;
+					/*}.fork;*/
 				});
 			});
 
@@ -319,12 +324,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					if(item.includes(Ndef(realTrack)), {indArr = indArr.add(index)}); };
 				thisBusNums = busArr.flop[0].atAll(indArr).collect{|item|
 					item.asString.divNumStr[1].interpret };
-				{
+				/*{*/
 					thisBusNums.do{|item|
 						this.removeBus(trackNum, item, trackType);
 						server.sync;
 					};
-				}.fork;
+				/*}.fork;*/
 			});
 
 			if(trackType == \track, {
@@ -336,9 +341,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//refresh win if open
 			if(mixerWin.notNil, {
 				if(mixerWin.notClosed, {
-					{nodeTime.yield; this.refreshMixGUI;}.fork(AppClock);
+					nodeTime.yield;
+						{this.refreshMixGUI;}.defer;
 				});
 			});
+
+		}.fork;
 
 		}, {
 			"You can\'t remove the master track".warn;
@@ -862,7 +870,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 			filterInfo = [filterTag, SynthFile.read(\filter, filter);];
-			filterSpecs = [filterTag, SpecFile.read(\filter, filter)];
+			filterSpecs = [filterTag, SpecFile.read(\filter, filter, false)];
 			cond = Condition(false);
 			cond.test = false;
 			if(data.notNil, {
@@ -1006,14 +1014,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	removeTrackFilters {arg type=\track, num= 1, post=true;
+	removeTrackFilters {arg type=\track, num= 1, post=true, clear=false;
 		var thisTrack, thisSlot, ndefCS, arr1, arr2, setArr;
-		/*thisTrack = this.get(type)[num-1];*/
-
 		thisTrack = this.getThisTrack(type, num);
-
+		if(thisTrack.notNil, {
 		thisTrack = thisTrack.copyRange(0, thisTrack.size-2);
-
 		if(thisTrack.size > 2, {
 			arr1 = [thisTrack[0], thisTrack.last];
 			arr2 = thisTrack.copyRange(1, thisTrack.size-2);
@@ -1027,11 +1032,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
 				filters = filters.reject({|it| it[0] == item[0] });
 			};
+				if(clear.not, {
 			this.autoRoute(arr1);
+				});
 		}, {
 			if(post, {
 				"No filters to remove".warn;
 			});
+		});
 		});
 	}
 
