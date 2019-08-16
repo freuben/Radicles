@@ -267,7 +267,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			countArr = trackNames.select({|item|
 				item.asString.find(trackType.asString).notNil }).collect{|it|
 				it.asString.divNumStr[1] };
+			if(countArr.maxItem.notNil, {
 			result = (countArr.maxItem) + 1;
+			}, {
+			result = 1;
+			});
 		}, {
 			result = 1;
 		});
@@ -310,8 +314,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					indArrBusIn =
 					busArr.flop[0].indexOf( (trackType ++  "In" ++ trackNum).asSymbol );
 					/*{*/
-						busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr[1]}.do{|it|
-							this.removeBus(it, trackNum);
+						busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr}.do{|it|
+							"remove bus at this stage 1".postln;
+							it.postln;
+							this.removeBus(it[1], trackNum, it[0].asSymbol, true);
 							server.sync;
 						};
 					/*}.fork;*/
@@ -568,9 +574,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	input {arg ndefsIn, type=\track, num=1, respace=true, spaceType;
 		var trackArr, ndefCS, connect, inTag, newInIndex;
 		if([\track, \bus, \master].includes(type), {
-			/*trackArr = this.get(type)[num-1];*/
 			if(type == \master, {inTag = type}, {inTag = (type ++ num).asSymbol});
-			/*trackArr = this.get(type).detect({|item| item.flat.includes(inTag) });*/
 
 			trackArr = this.getThisTrack(type, num);
 
@@ -623,8 +627,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					//this needs more work
 					/*if(spaceType.isNil, {spaceType = this.findSpaceType(sysChans.last)});*/
 					/*					this.respace(trackArr[0][0], ndefsIn, spaceType);*/
-
-					/*trackArr = this.get(type)[num-1];*/
 
 					trackArr =this.getThisTrack(type, num);
 
@@ -730,9 +732,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	bus {arg trackNum=1, busNum=1, mix=1, trackType=\track, action;
 		var numChan, busTag, ndefCS1, ndefCS2, ndefCS3, funcBus, thisBusArr,
-		busAdd, argIndex;
+		busAdd, argIndex, thisBusLabel;
 		{
-			numChan = Ndef(this.getBuses.flop[0][busNum-1][0]).numChannels;
+			thisBusLabel = ("inBus" ++ busNum).asSymbol;
+			numChan = Ndef(thisBusLabel).numChannels;
 			busTag = ("busIn" ++ busNum).asSymbol;
 			if(busArr[busNum-1][0].isNil, {
 				busArr[busNum-1][0] = busTag;
@@ -776,7 +779,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
-	removeBus {arg trackNum= 1, busNum=1, trackType=\track;
+	removeBus {arg trackNum= 1, busNum=1, trackType=\track, clearTrack=false;
 		var oldLabel, newBusInd, newLabelArr, spaceBusNum, spaceBusLabel,
 		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel;
 		oldLabel = ("busIn" ++ busNum).asSymbol;
@@ -791,13 +794,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			busArr[newBusInd][1] = newLabelArr;
 			thisBusIndLabel = inputs.flop[0].indexOf(oldLabel);
 			if(newLabelArr.isEmpty, {
-				("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radpost.interpret;
+				if(clearTrack, {
+					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
+				}, {
+					("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radpost.interpret;
+				});
 				busArr[newBusInd] = [nil,nil];
 				inputs.removeAt(thisBusIndLabel);
 				spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
 				if(inputs.flop[1][spaceInInd].isArray.not, {
+					if(clearTrack.not, {
 					("Ndef(" ++ spaceBusLabel.cs ++ ").source = nil;").radpost.interpret;
 					inputs.removeAt(spaceInInd);
+					});
 				});
 			}, {
 				if(newLabelArr.size == 1, {
@@ -848,7 +857,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				};
 			});
 
-			/*			ndefArr = this.get(type)[num-1];*/
 			ndefArr = this.getThisTrack(type, num);
 
 			ndefSpace = ndefArr.last;
@@ -962,7 +970,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	removeFilter {arg type=\track, num= 1, slot=1, action;
 		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd, thisFilterTag, thisFilterIndex;
 		this.globFadeTime;
-		/*thisTrack = this.get(type)[num-1];*/
 
 		thisTrack = this.getThisTrack(type, num);
 
@@ -2103,7 +2110,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(busInLabels.notNil, {
 			busInLabels.do{|item|
 				var thisTackNameInd;
+				"item: ".post; item.postln;
 				thisTackNameInd = mixTrackNames.indexOf(item[0]);
+				"thisTackNameInd: ".post; thisTackNameInd.postln;
+				if(thisTackNameInd.notNil, {
 				sendsMenuArr[thisTackNameInd].do{|it, ind|
 					var labInArr;
 					if(item[1][ind].notNil, {
@@ -2116,6 +2126,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					[it, item[0], item[1][ind]].postln;
 					knobFunc.(it, item[0], item[1][ind]); //aqui el problema?
 				};
+				});
 			};
 		});
 
