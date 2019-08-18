@@ -310,32 +310,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			this.outputMasterFunc;
 
 			if(trackType == \bus, {
-				if(busArr.flat.includes(nil).not, {
+						if(busArr.flat.select({|item| item.notNil}).size != 0, {
 					indArrBusIn =
 					busArr.flop[0].indexOf( (trackType ++  "In" ++ trackNum).asSymbol );
-					/*{*/
 						busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr}.do{|it|
-							"remove bus at this stage 1".postln;
-							it.postln;
 							this.removeBus(it[1], trackNum, it[0].asSymbol, true);
 							server.sync;
 						};
-					/*}.fork;*/
 				});
 			});
 
 			indArr = [];
-			if(busArr.flat.includes(nil).not, {
-				busArr.flop[1].do{|item, index|
+/*			if(busArr.flat.includes(nil).not, {*/
+										if(busArr.flat.select({|item| item.notNil}).size != 0, {
+				busArr.flop[1].select({|item| item.notNil }).do{|item, index|
 					if(item.includes(Ndef(realTrack)), {indArr = indArr.add(index)}); };
-				thisBusNums = busArr.flop[0].atAll(indArr).collect{|item|
+				thisBusNums = busArr.flop[0].select({|item| item.notNil }).atAll(indArr).collect{|item|
 					item.asString.divNumStr[1].interpret };
-				/*{*/
 					thisBusNums.do{|item|
 						this.removeBus(trackNum, item, trackType);
 						server.sync;
 					};
-				/*}.fork;*/
 			});
 
 			if(trackType == \track, {
@@ -2091,40 +2086,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 
-		/*		if(busInLabels.notNil, {
-		busInLabels.do{|item|
-		var thisTackNameInd;
-		thisTackNameInd = mixTrackNames.indexOf(item[0]);
-		sendsMenuArr[thisTackNameInd].do{|it, ind|
-		if(item[1][ind].notNil, {
-		it.value = item[1][ind].asString.divNumStr[1];
-		busInSettings[thisTackNameInd][ind] = it.item;
-		});
-		};
-		sendsKnobArr[mixTrackNames.indexOf(item[0])].do{|it, ind|
-		knobFunc.(it, item[0], item[1][ind]);
-		};
-		};
-		});*/
-
 		if(busInLabels.notNil, {
 			busInLabels.do{|item|
 				var thisTackNameInd;
-				"item: ".post; item.postln;
 				thisTackNameInd = mixTrackNames.indexOf(item[0]);
-				"thisTackNameInd: ".post; thisTackNameInd.postln;
 				if(thisTackNameInd.notNil, {
 				sendsMenuArr[thisTackNameInd].do{|it, ind|
 					var labInArr;
 					if(item[1][ind].notNil, {
-						/*it.value = item[1][ind].asString.divNumStr[1];*/
-						it.value = it.items.collect({|it| it.divNumStr[1] }).indexOf(item[1][ind].asString.divNumStr[1]);
+						it.value = it.items.collect({|it| it.divNumStr[1] })
+							.indexOf(item[1][ind].asString.divNumStr[1]);
 						busInSettings[thisTackNameInd][ind] = it.item;
 					});
 				};
 				sendsKnobArr[mixTrackNames.indexOf(item[0])].do{|it, ind|
-					[it, item[0], item[1][ind]].postln;
-					knobFunc.(it, item[0], item[1][ind]); //aqui el problema?
+					knobFunc.(it, item[0], item[1][ind]);
 				};
 				});
 			};
@@ -2172,13 +2148,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					if(([''] ++ mixTrackNames).includesEqual(it.item.asSymbol).not, {
 						this.autoAddTrack(\bus, systemChanNum, action: {
 							{var trackorbusIndex;
-								if(thisTrackLabel == \bus, {
-								trackorbusIndex = index - mixTrackNames.select({|item|
-										item.asString.find("track").notNil }).size;
-								}, {
-									trackorbusIndex = index;
-								});
-								this.setSend(thisTrackLabel, trackorbusIndex+1, ind+1, thisBusNum);
+								trackorbusIndex = mixTrackNames[index].asString.divNumStr[1];
+								this.setSend(thisTrackLabel, trackorbusIndex, ind+1, thisBusNum);
 							}.defer;
 						});
 					}, {
@@ -2666,13 +2637,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf, dirMaster=true;
 		var trackIndex, funcThis;
 		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
-		trackIndex.postln;
 		if(trackIndex.notNil, {
 			funcThis = {
 				if(busNum == 0, {
 					this.removeBus(trackNum, slotNum, trackType);
 				}, {
-					[trackNum, slotNum, val, trackType].postln;
 					this.bus(trackNum, slotNum, val, trackType);
 				});
 			}; //track, bus, mix, type
