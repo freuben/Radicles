@@ -2171,8 +2171,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 					if(([''] ++ mixTrackNames).includesEqual(it.item.asSymbol).not, {
 						this.autoAddTrack(\bus, systemChanNum, action: {
-							{
-								this.setSend(thisTrackLabel, index+1, ind+1, thisBusNum); //tackLabel, trackNum, trackSlot
+							{var trackorbusIndex;
+								if(thisTrackLabel == \bus, {
+								trackorbusIndex = index - mixTrackNames.select({|item|
+										item.asString.find("track").notNil }).size;
+								}, {
+									trackorbusIndex = index;
+								});
+								this.setSend(thisTrackLabel, trackorbusIndex+1, ind+1, thisBusNum);
 							}.defer;
 						});
 					}, {
@@ -2660,11 +2666,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf, dirMaster=true;
 		var trackIndex, funcThis;
 		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
+		trackIndex.postln;
 		if(trackIndex.notNil, {
 			funcThis = {
 				if(busNum == 0, {
 					this.removeBus(trackNum, slotNum, trackType);
 				}, {
+					[trackNum, slotNum, val, trackType].postln;
 					this.bus(trackNum, slotNum, val, trackType);
 				});
 			}; //track, bus, mix, type
