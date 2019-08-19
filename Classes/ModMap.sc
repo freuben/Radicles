@@ -1,5 +1,5 @@
 ModMap : Radicles {
-	classvar <modNodes, modIndex=0;
+	classvar <modNodes, modIndex=0, <lagArr;
 
 	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag;
 		var modMap;
@@ -13,9 +13,7 @@ ModMap : Radicles {
 		modNodes = modNodes.add([modMap, ndef, key]);
 		ndef.xset(key, modMap);
 		if(lag.notNil, {
-			lag.keysValuesDo{|key, val|
-				ndef.lag(key, val);
-			}
+			this.lag(ndef.key.asString.divNumStr[1], key, lag);
 		});
 		(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost;
 		^modMap;
@@ -74,34 +72,48 @@ ModMap : Radicles {
 	}
 
 	*lag {arg modNum=1, key, value;
-		var modNumIndex, string;
+		var modNumIndex, string, ndef;
 		modNumIndex = modNum-1;
-		string = modNodes[modNumIndex][0].cs ++ ".lag(" ++ key.cs
-				++ ", " ++ value.cs ++ ");";
-				string.radpost;
-				string.interpret;
+		ndef = modNodes[modNumIndex][0];
+		string = ndef.cs ++ ".lag(" ++ key.cs
+		++ ", " ++ value.cs ++ ");";
+		string.radpost;
+		string.interpret;
+		lagArr.do{|item| if( [item[0], item[1]] == [ndef, key], {
+			lagArr.remove(item);
+		}); };
+		lagArr = lagArr.add([ndef, key, value]);
 	}
 
 	*set {arg modNum=1, key, value;
 		var modNumIndex, string;
 		modNumIndex = modNum-1;
 		string = modNodes[modNumIndex][0].cs ++ ".set(" ++ key.cs
-				++ ", " ++ value.cs ++ ");";
-				string.radpost;
-				string.interpret;
+		++ ", " ++ value.cs ++ ");";
+		string.radpost;
+		string.interpret;
 	}
 
 	*xset {arg modNum=1, key, value;
 		var modNumIndex, string;
 		modNumIndex = modNum-1;
 		string = modNodes[modNumIndex][0].cs ++ ".xset(" ++ key.cs
-				++ ", " ++ value.cs ++ ");";
-				string.radpost;
-				string.interpret;
+		++ ", " ++ value.cs ++ ");";
+		string.radpost;
+		string.interpret;
 	}
 
 	*ndefs {
 		^modNodes.flop[0];
+	}
+
+	*read {arg type;
+		ControlFile.read(\map, type).cs;
+	}
+
+	*getPresets {
+		^modNodes.collect{|item| item.copyFromStart(1).collect{|it|
+			[it, it.source, it.controlKeysValues]} ++ item[2] };
 	}
 
 }
