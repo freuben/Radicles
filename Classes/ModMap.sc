@@ -112,8 +112,22 @@ ModMap : Radicles {
 	}
 
 	*getPresets {
-		^modNodes.collect{|item| item.copyFromStart(1).collect{|it|
-			[it, it.source, it.controlKeysValues]} ++ item[2] };
+		^modNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
+			item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs]
+		++ [ModMap.lagArr[index].collect({|it| it.cs }) ] };
+	}
+
+	* presetToCode {arg arr, newNdef;
+		newNdef ?? {newNdef = arr[3]};
+		if(newNdef.isString.not, {newNdef = newNdef.cs});
+		^[
+			("Ndef(" ++ arr[0] ++ ", " ++ arr[1] ++ ");"),
+			("Ndef(" ++ arr[0] ++ ").set(" ++ arr[2].replace("[", "").replace("]", ");");),
+			if(arr[5].notNil, {
+				(arr[5][0] ++ ".lag(" ++ arr[5][1] ++  ", " ++ arr[5][2] ++ ");");
+			}),
+			(newNdef ++ ".set(" ++ arr[4] ++ ", " ++ "Ndef(" ++ arr[0] ++ "));";)
+		]
 	}
 
 }
