@@ -2954,20 +2954,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					.maxHeight_(15).minHeight_(15);
 					panKnob.orientation = \horizontal;
 					if(defaultArgArr[index].isNumber, {
-					panKnob.action = {
-						if(thisFunc.notNil, {
-							thisResult = thisFunc.(thisSpec.map(panKnob.value));
-						}, {
-							thisResult = thisSpec.map(panKnob.value);
-						});
-						panKnobText.string = thisResult.asString.copyRange(0, 7);
-						("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
-							++ thisResult ++ ");").radpostcont.interpret;
-					};
-					thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
-					panKnob.value = thisResult;
-					panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
-						}, {
+						panKnob.action = {
+							if(thisFunc.notNil, {
+								thisResult = thisFunc.(thisSpec.map(panKnob.value));
+							}, {
+								thisResult = thisSpec.map(panKnob.value);
+							});
+							panKnobText.string = thisResult.asString.copyRange(0, 7);
+							("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
+								++ thisResult ++ ");").radpostcont.interpret;
+						};
+						thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
+						panKnob.value = thisResult;
+						panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+					}, {
 						panKnob.value = 0.5;
 						panKnob.background = colorCritical; //mod color
 						panKnob.enabled = false;
@@ -2981,16 +2981,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					defaultVal = defaultArgArr[index];
 					if(defaultVal.notNil, {
 						if(defaultVal.cs.find("Ndef").isNil, {
-						panKnob.string = defaultVal.cs;
-						panKnobText.string = defaultVal.cs.copyRange(0, 7);
-						panKnob.action = {arg field;
-						panKnobText.string = field.value;
-						("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
-							++ field.value ++ ");").radpostcont.interpret;
-					};
+							panKnob.string = defaultVal.cs;
+							panKnobText.string = defaultVal.cs.copyRange(0, 7);
+							panKnob.action = {arg field;
+								panKnobText.string = field.value;
+								("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
+									++ field.value ++ ");").radpostcont.interpret;
+							};
 						}, {
-						panKnob.background = colorCritical; //mod color
-						panKnob.enabled = false;
+							panKnob.background = colorCritical; //mod color
+							panKnob.enabled = false;
 							panKnob.string = defaultVal.cs;
 							panKnobText.string = defaultVal.key.asString.copyRange(0, 7);
 						});
@@ -3396,4 +3396,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	garbage {
 		Ndef.all[server.asSymbol].clean; //garbage collection
 	}
+
+	modFunc {arg filterInfo, argIn, type, extraArgs, func, mul=1, add=0, min, val, warp, lag;
+		var filterKey, filterType, index, keyValues, spec, newArr, specInd;
+		filterKey = filterInfo;
+		if(argIn.isNumber, {
+			index = argIn;
+		}, {
+			index = Ndef(filterKey).controlKeys.indexOf(argIn)
+		});
+		keyValues = Ndef(filterKey).getKeysValues[index];
+		spec = [];
+		specs.do{|item| spec = (item ++ spec) };
+		specInd =	spec.flop[1][spec.flop[0].indexOf(filterKey);].postln;
+		if(specInd.notNil, {
+			spec =specInd.detect({|item| item[0] == keyValues[0] });
+			spec = spec[1];
+			if(spec.includes(\db), {
+				spec = spec.copyFromStart(1);
+				spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
+			});
+		}, {spec = [-1,1]});
+		if(spec.isNil, {spec = [-1,1] });
+		ModMap.map(Ndef(filterKey), keyValues[0], type, spec, extraArgs, func, mul, add, min, val, warp, lag);
+	}
+
 }
