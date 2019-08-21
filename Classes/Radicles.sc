@@ -1,9 +1,17 @@
 Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
-	<>ignorePost=false, <>ignorePostcont=false;
+	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
+	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField;
 
 	*new {
+		colorCritical = Color.new255(211, 14, 14);
+		colorMeter = Color.new255(78, 109, 38);
+		colorWarning = Color.new255(232, 90, 13);
+		colorTrack = Color.new255(58, 162, 175);
+		colorBus = Color.new255(132, 124, 10);
+		colorMaster = Color.new255(102, 57, 130);
+		colorTextField = Color.new255(246, 246, 246);
 		^super.new.initRadicles;
 	}
 

@@ -1559,7 +1559,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 			//levelIndicator
 			levelText = StaticText(canvas).align_(\center)
-			/*.background_(Color.new255(78, 109, 38)).stringColor_(Color.white)*/
+			/*.background_(colorMeter).stringColor_(Color.white)*/
 			.background_(Color.black).stringColor_(Color.white)
 			.minWidth_(24).maxHeight_(10).minHeight_(10);
 			levelTextArr = levelTextArr.add(levelText);
@@ -1637,7 +1637,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				.focusColor_(Color.red(alpha:0.2))
 				.background_(Color.black);
 				soloButton.states = [["S", Color.white, Color.black],
-					["S", Color.white, Color.new255(232, 90, 13)]];
+					["S", Color.white, colorWarning]];
 				soloButton.font = basicFont;
 				soloButton.action = {|butt|
 					soloStates[index] = butt.value;
@@ -1653,7 +1653,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.focusColor_(Color.red(alpha:0.2))
 			.background_(Color.black);
 			recButton.states = [["R", Color.white, Color.black],
-				["R", Color.white, Color.new255(211, 14, 14)]];
+				["R", Color.white, colorCritical]];
 			recButton.font = basicFont;
 			recButton.action = {|butt|
 				var thisVal;
@@ -1666,7 +1666,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			.maxHeight_(butUIHeight).minHeight_(butUIHeight)
 			.background_(Color.black);
 			muteButton.states = [["M", Color.white, Color.black],
-				["M", Color.white, Color.new255(58, 162, 175)]];
+				["M", Color.white, colorTrack]];
 			muteButton.font = basicFont;
 			muteButton.action = {|butt|
 				var thisVal;
@@ -1884,11 +1884,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			//track name label
 			case
 			{mixTrackNames[index].asString.find("track").notNil} {
-				trackColor = Color.new255(58, 162, 175)}
+				trackColor = colorTrack}
 			{mixTrackNames[index].asString.find("bus").notNil} {
-				trackColor = Color.new255(132, 124, 10)}
+				trackColor = colorBus}
 			{mixTrackNames[index].asString.find("master").notNil} {
-				trackColor = Color.new255(102, 57, 130)};
+				trackColor = colorMaster};
 			trackLabel = StaticText(canvas).align_(\center).background_(trackColor)
 			.stringColor_(Color.white).maxHeight_(10).minHeight_(10);
 			trackLabel.font = basicFont;
@@ -2026,9 +2026,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		};
 
 		levelArr.do{|it| it.do{|item|
-			item.meterColor = Color.new255(78, 109, 38);
-			item.warningColor = Color.new255(232, 90, 13);
-			item.criticalColor = Color.new255(211, 14, 14);
+			item.meterColor = colorMeter;
+			item.warningColor = colorWarning;
+			item.criticalColor = colorCritical;
 			item.drawsPeak = true;
 		}
 		};
@@ -2270,7 +2270,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						.background_(Color.clear)
 						.font_(Font("Monaco", 10);)
 						.stringColor_(Color.white)
-						.hiliteColor_(Color.new255(78, 109, 38);)
+						.hiliteColor_(colorMeter;)
 						.action_({ arg sbs;
 							var labelKey, irItems;
 							labelKey = thisListView.items[sbs.value];
@@ -2372,7 +2372,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 									peakAmp = peakDb.linlin(dBLow, 0, 0, 1);
 									if(peakAmp >= 0.9999, {
 										if(levelTextArr[index].notNil, {
-											levelTextArr[index].stringColor_(Color.new255(211, 14, 14));
+											levelTextArr[index].stringColor_(colorCritical);
 										});
 									}, {
 										if(levelTextArr[index].notNil, {
@@ -2953,6 +2953,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					panKnob = Slider().minWidth_(180).maxWidth_(180)
 					.maxHeight_(15).minHeight_(15);
 					panKnob.orientation = \horizontal;
+					if(defaultArgArr[index].isNumber, {
 					panKnob.action = {
 						if(thisFunc.notNil, {
 							thisResult = thisFunc.(thisSpec.map(panKnob.value));
@@ -2966,21 +2967,35 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
 					panKnob.value = thisResult;
 					panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+						}, {
+						panKnob.value = 0.5;
+						panKnob.background = colorCritical; //mod color
+						panKnob.enabled = false;
+						panKnobText.string = defaultArgArr[index].key.asString.copyRange(0, 7);
+					});
 				}, {
 					panKnob = TextField().minWidth_(180).maxWidth_(180)
 					.font_(basicFont)
-					.background_(Color.new255(246, 246, 246))
+					.background_(colorTextField)
 					.maxHeight_(15).minHeight_(15);
 					defaultVal = defaultArgArr[index];
 					if(defaultVal.notNil, {
-						panKnob.string = defaultArgArr[index].cs;
-						panKnobText.string = defaultArgArr[index].cs.copyRange(0, 7);
-					});
-					panKnob.action = {arg field;
+						if(defaultVal.cs.find("Ndef").isNil, {
+						panKnob.string = defaultVal.cs;
+						panKnobText.string = defaultVal.cs.copyRange(0, 7);
+						panKnob.action = {arg field;
 						panKnobText.string = field.value;
 						("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
 							++ field.value ++ ");").radpostcont.interpret;
 					};
+						}, {
+						panKnob.background = colorCritical; //mod color
+						panKnob.enabled = false;
+							panKnob.string = defaultVal.cs;
+							panKnobText.string = defaultVal.key.asString.copyRange(0, 7);
+						});
+					});
+
 				});
 				labelString = item.asString;
 				labelText = StaticText(fltCanvas).align_(\center)
@@ -3001,7 +3016,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				fltVlay = fltVlay.add(HLayout(*finalLayout) );
 			};
 			removeButton = Button().maxHeight_(15).minHeight_(15)
-			.states_([["", Color.new255(211, 14, 14), Color.black]])
+			.states_([["", colorCritical, Color.black]])
 			.string_("R E M O V E   F I L T E R")
 			.font_(basicFont)
 			.action = { arg menu;
@@ -3240,7 +3255,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		mastOutWin = Window("", thisBounds, border:false);
 		mastOutWin.background_(Color.black);
 		butt = { {Button(mastOutWin).maxWidth_(15).maxHeight_(15)
-			.states_([["", Color.white, Color.black], ["", Color.white, Color.new255(102, 57, 130)] ]);
+			.states_([["", Color.white, Color.black], ["", Color.white, colorMaster] ]);
 		} ! oiOuts } ! oiIns ;
 		butt.flat.do{|item| item.canFocus = false };
 		oiOuts.do{|ind|
@@ -3327,7 +3342,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		.background_(Color.clear)
 		.font_(Font("Monaco", 10);)
 		.stringColor_(Color.white)
-		.hiliteColor_(Color.new255(78, 109, 38);)
+		.hiliteColor_(colorMeter;)
 		.selectionMode_(\multi);
 		view.selection = recInputArr.collect({|item|
 			states.indicesOfEqual(item) }).flat;

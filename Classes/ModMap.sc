@@ -111,10 +111,16 @@ ModMap : Radicles {
 		ControlFile.read(\map, type).cs;
 	}
 
-	*getPresets {
-		^modNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
+	*getPresets {var result;
+		if(ModMap.lagArr.notNil, {
+			result = modNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
 			item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs]
 		++ [ModMap.lagArr[index].collect({|it| it.cs }) ] };
+		}, {
+			result = modNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
+			item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs] };
+		});
+		^result;
 	}
 
 	* presetToCode {arg arr, newNdef;
