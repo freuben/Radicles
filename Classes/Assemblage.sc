@@ -2774,7 +2774,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		refreshFunc = {
 			if(mixerWin.notNil, {
 				if(mixerWin.visible, {
-					"refresh".postln;
 					this.refreshMixGUI;
 				});
 			});
@@ -3397,28 +3396,67 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		Ndef.all[server.asSymbol].clean; //garbage collection
 	}
 
-	modFunc {arg filterInfo, argIn, type, extraArgs, func, mul=1, add=0, min, val, warp, lag;
-		var filterKey, filterType, index, keyValues, spec, newArr, specInd;
-		filterKey = filterInfo;
+	modFunc {arg ndefKey, argIn, type, extraArgs, func, mul=1, add=0, min, val, warp, lag;
+		var filterType, index, keyValues, spec, newArr, specInd;
 		if(argIn.isNumber, {
 			index = argIn;
 		}, {
-			index = Ndef(filterKey).controlKeys.indexOf(argIn)
+			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
 		});
-		keyValues = Ndef(filterKey).getKeysValues[index];
+		keyValues = Ndef(ndefKey).getKeysValues[index];
 		spec = [];
 		specs.do{|item| spec = (item ++ spec) };
-		specInd =	spec.flop[1][spec.flop[0].indexOf(filterKey);].postln;
-		if(specInd.notNil, {
+		specInd =	spec.flop[1][spec.flop[0].indexOf(ndefKey);];
+		if((specInd.isNil).or(specInd.isEmpty), {
+			spec = [-1,1];
+		}, {
 			spec =specInd.detect({|item| item[0] == keyValues[0] });
 			spec = spec[1];
 			if(spec.includes(\db), {
 				spec = spec.copyFromStart(1);
 				spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
 			});
-		}, {spec = [-1,1]});
+		});
 		if(spec.isNil, {spec = [-1,1] });
-		ModMap.map(Ndef(filterKey), keyValues[0], type, spec, extraArgs, func, mul, add, min, val, warp, lag);
+		ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs, func, mul, add, min, val, warp, lag);
+	}
+
+	modMix {arg trackType, trackNum, modArg, modType, extraArgs,
+		func, mul=1, add=0, min, val, warp, lag;
+		var typeKey, ndefKey;
+		typeKey = trackType.asString;
+		case
+		{(modArg == \vol).or(modArg == \volume)} {
+			ndefKey = (typeKey ++ trackNum); modArg = \volume }
+		{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
+		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
+		ndefKey = ndefKey.asSymbol;
+		this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+	}
+
+	modFx {arg filterInd, modArg, modType, extraArgs,
+		func, mul=1, add=0, min, val, warp, lag;
+		var typeKey, ndefKey;
+		if(modArg.notNil, {
+			ndefKey = filters[filterInd][0];
+			this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+		}, {
+			Ndef(filters[filterInd][0]).controlKeys.postln;
+		});
+	}
+
+	modFxTrack {arg trackType, trackNum, trackSlot, modArg, modType, extraArgs, func,
+		mul=1, add=0, min, val, warp, lag;
+		var ndefKey;
+		ndefKey = (\filter ++ trackType.asString.capitalise ++
+			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
+		if(filters.flop[0].includes(ndefKey), {
+			if(modArg.notNil, {
+				this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul=1, add=0, min, val, warp, lag);
+			}, {
+				Ndef(ndefKey).controlKeys.postln;
+			});
+		});
 	}
 
 }
