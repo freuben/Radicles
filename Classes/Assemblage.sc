@@ -1992,13 +1992,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		};
 
 		sliderArr.do{|item, index|
-			var volSpec;
+			var volSpec, volValue;
 			volSpec = this.getSpec(mixTrackNames[index], \volume).asSpec;
-			item.value_(volSpec.unmap(
-				mixTrackNdefs[index].getKeysValues.collect({|item|
+			volValue = mixTrackNdefs[index].getKeysValues.collect({|item|
 					if(item[0] == \volume, {item[1]});
 				})[0];
-			) ).action_({|val|
+			if(volValue.cs.find("mod").notNil, {
+				item.background = colorCritical;
+				item.enabled = false;
+				volValue = 0;
+				sliderTextArr[index].string_(volValue);
+			});
+			item.value_(
+			volSpec.unmap( volValue.postln );
+		).action_({|val|
 				sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString);
 				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
 					volSpec.map(val.value) ++ ");").radpostcont.interpret;
