@@ -1952,10 +1952,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var panKey, panKeyValues, panValues;
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			panKeyValues = Ndef(panKey).controlKeysValues;
-			/*case
-			{panKeyValues.size == 0} {panValues = 0}
-			{panKeyValues.size == 4} {panValues = panKeyValues[1]}
-			{panKeyValues.size == 6} {panValues = [panKeyValues[1], panKeyValues[3]]};*/
 			case
 			{panKeyValues.size == 0} {panValues = 0}
 			{panKeyValues.includes(\pan)} {
@@ -1965,6 +1961,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					panKeyValues[panKeyValues.indexOf(\pany)+1]
 			]};
 			if(sysPan[index] == 0, {
+				if(panValues.cs.find("mod").notNil, {
+				item.background = colorCritical;
+				item.enabled = false;
+				panValues = 0;
+			});
 				item.value = panSpec.unmap(panValues);
 				panKnobTextArr[index][0].string_(panValues);
 				item.action = {|val|
@@ -2004,7 +2005,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				sliderTextArr[index].string_(volValue);
 			});
 			item.value_(
-			volSpec.unmap( volValue.postln );
+			volSpec.unmap( volValue );
 		).action_({|val|
 				sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString);
 				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
@@ -2401,11 +2402,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		oscDefFunc.();
 
 		mixerWin.onClose = {
-			levelTextArr = nil;
+			/*levelTextArr = nil;*/
 			/*mixerWin = nil;*/
 
 			OSCdef(\AssembladgeGUI).free;
 			Ndef("AssembladgeGUI").clear;
+
+			levelTextArr = nil;
 
 			filtersWindow.do{|item| item.close; };
 			if(fltMenuWindow.notNil, {
