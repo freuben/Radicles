@@ -19,13 +19,10 @@ ModMap : Radicles {
 		^modMap;
 	}
 
-	*unmap {arg ndef, key, value;
+	*unmap {arg ndef, key, value=0;
 		var indexNodes, thisArr, num;
 		modNodes.do{|item, index| if( item.indexOfAll([ndef, key]).reject({|item| item == nil}).size == 2,
 			{
-				if(value.isNil, {
-					value = item.last.funcSpec.(0.5);
-				});
 				ndef.xset(key, value);
 				modNodes.removeAt(index);
 		});
@@ -107,8 +104,12 @@ ModMap : Radicles {
 		^modNodes.flop[0];
 	}
 
+	*list {
+		ControlFile.read(\map).postln;
+	}
+
 	*read {arg type;
-		ControlFile.read(\map, type).cs;
+		ControlFile.read(\map, type).cs.postln;
 	}
 
 	*getPresets {var result;

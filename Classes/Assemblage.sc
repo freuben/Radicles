@@ -1962,10 +1962,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			]};
 			if(sysPan[index] == 0, {
 				if(panValues.cs.find("mod").notNil, {
-				item.background = colorCritical;
-				item.enabled = false;
-				panValues = 0;
-			});
+					item.background = colorCritical;
+					item.enabled = false;
+					panValues = 0;
+				});
 				item.value = panSpec.unmap(panValues);
 				panKnobTextArr[index][0].string_(panValues);
 				item.action = {|val|
@@ -1996,8 +1996,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			var volSpec, volValue;
 			volSpec = this.getSpec(mixTrackNames[index], \volume).asSpec;
 			volValue = mixTrackNdefs[index].getKeysValues.collect({|item|
-					if(item[0] == \volume, {item[1]});
-				})[0];
+				if(item[0] == \volume, {item[1]});
+			})[0];
 			if(volValue.cs.find("mod").notNil, {
 				item.background = colorCritical;
 				item.enabled = false;
@@ -2005,8 +2005,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				sliderTextArr[index].string_(volValue);
 			});
 			item.value_(
-			volSpec.unmap( volValue );
-		).action_({|val|
+				volSpec.unmap( volValue );
+			).action_({|val|
 				sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString);
 				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
 					volSpec.map(val.value) ++ ");").radpostcont.interpret;
@@ -2080,13 +2080,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 
 		knobFunc = {|it, trackLb, thisKey|
-			var thisNdefVal, selArg, thisSpec;
+			var thisNdefVal, selArg, thisSpec, selValue;
 			if(thisKey.notNil, {
 				thisNdefVal = Ndef(thisKey).getKeysValues;
 				selArg = ("vol" ++ (busArr.flop[1][busArr.flop[0].indexOf(thisKey)].collect{|keyVal|
 					keyVal.key}.indexOf(trackLb) + 1)).asSymbol;
 				thisSpec = this.getSpec(thisKey.asString.replace("In", "").asSymbol, \volume).asSpec;
-				it.value = thisSpec.unmap(thisNdefVal.flop[1][thisNdefVal.flop[0].indexOf(selArg)]);
+				selValue = thisNdefVal.flop[1][thisNdefVal.flop[0].indexOf(selArg)];
+				if(selValue.cs.find("mod").notNil, {
+					it.background = colorCritical;
+					it.enabled = false;
+					selValue = -inf;
+				});
+				it.value = thisSpec.unmap( selValue );
 				it.action = {|val|
 					("Ndef(" ++ thisKey.cs ++ ").set(" ++ selArg.cs ++
 						", " ++ thisSpec.map(val.value) ++ ");").radpostcont.interpret;
@@ -2119,15 +2125,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			trimKeys = Ndef(thisKey).controlKeysValues;
 			thisSpec = this.getSpec(thisKey, \trim).asSpec;
 			if(trimKeys.notEmpty, {
-				//aquii
-			thisTrimKey = trimKeys[trimKeys.indexOf(\trim)+1];
-			thisTrimKey.postln;
-
+				thisTrimKey = trimKeys[trimKeys.indexOf(\trim)+1];
 				if(thisTrimKey.cs.find("mod").notNil, {
-				item.background = colorCritical;
-				item.enabled = false;
-				thisTrimKey = 0;
-			});
+					item.background = colorCritical;
+					item.enabled = false;
+					thisTrimKey = 0;
+				});
 				item.value = thisSpec.unmap( thisTrimKey );
 			}, {
 				item.value = 0.5;
@@ -3423,18 +3426,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
 		});
 		keyValues = Ndef(ndefKey).getKeysValues[index];
-		spec = [];
-		specs.do{|item| spec = (item ++ spec) };
-		specInd =	spec.flop[1][spec.flop[0].indexOf(ndefKey);];
-		if((specInd.isNil).or(specInd.isEmpty), {
-			spec = [-1,1];
-		}, {
-			spec =specInd.detect({|item| item[0] == keyValues[0] });
-			spec = spec[1];
-			if(spec.includes(\db), {
-				spec = spec.copyFromStart(1);
-				spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
+		if(ndefKey.cs.find("busIn").isNil, {
+			spec = [];
+			specs.do{|item| spec = (item ++ spec) };
+			specInd =	spec.flop[1][spec.flop[0].indexOf(ndefKey);];
+			if((specInd.isNil).or(specInd.isEmpty), {
+				spec = [-1,1];
+			}, {
+				spec =specInd.detect({|item| item[0] == keyValues[0] });
+				spec = spec[1];
+				if(spec.includes(\db), {
+					spec = spec.copyFromStart(1);
+					spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
+				});
 			});
+		}, {
+			spec = [-90, 6];
 		});
 		if(spec.isNil, {spec = [-1,1] });
 		ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs, func, mul, add, min, val, warp, lag);
@@ -3450,7 +3457,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
 		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
 		ndefKey = ndefKey.asSymbol;
+		{
 		this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+			server.sync;
+		if(mixerWin.notNil, {
+				if(mixerWin.visible, {
+					this.refreshMixGUI;
+				});
+			});
+		}.fork(AppClock);
 	}
 
 	modFx {arg filterInd, modArg, modType, extraArgs,
@@ -3475,6 +3490,38 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {
 				Ndef(ndefKey).controlKeys.postln;
 			});
+		});
+	}
+
+	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
+		func, mul=1, add=0, min, val, warp, lag;
+		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
+		trackKey = (trackType ++ trackNum).asSymbol;
+		busArr.flop[1].do{|item, index|
+			if(item.includes(Ndef(trackKey)), {
+				indArr = indArr.add(index);
+			});
+		};
+		if(indArr.notNil, {
+			busInArr = indArr.collect({|item| busArr.flop[0][item] });
+			thisBusIn = busInArr[sendSlot];
+			if(thisBusIn.notNil, {
+				{
+				slotArr = busArr.flop[1][busArr.flop[0].indexOf(thisBusIn)];
+				volArg = (\vol ++ (slotArr.indexOf(Ndef(trackKey) ) + 1)).asSymbol;
+				this.modFunc(busInArr[sendSlot], volArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+				server.sync;
+		if(mixerWin.notNil, {
+				if(mixerWin.visible, {
+					this.refreshMixGUI;
+				});
+			});
+				}.fork(AppClock);
+			}, {
+				"No send in this slot".warn;
+			});
+		}, {
+			"No send in this track".warn;
 		});
 	}
 
