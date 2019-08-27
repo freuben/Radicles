@@ -2114,12 +2114,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			};
 		});
 
-		inKnobArr.do{|item, index| var thisKey, trimKeys, thisSpec;
+		inKnobArr.do{|item, index| var thisKey, trimKeys, thisSpec, thisTrimKey;
 			thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			trimKeys = Ndef(thisKey).controlKeysValues;
 			thisSpec = this.getSpec(thisKey, \trim).asSpec;
 			if(trimKeys.notEmpty, {
-				item.value = thisSpec.unmap( trimKeys[trimKeys.indexOf(\trim)+1]; );
+				//aquii
+			thisTrimKey = trimKeys[trimKeys.indexOf(\trim)+1];
+			thisTrimKey.postln;
+
+				if(thisTrimKey.cs.find("mod").notNil, {
+				item.background = colorCritical;
+				item.enabled = false;
+				thisTrimKey = 0;
+			});
+				item.value = thisSpec.unmap( thisTrimKey );
 			}, {
 				item.value = 0.5;
 			});
