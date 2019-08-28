@@ -23,8 +23,12 @@ ModMap : Radicles {
 		var indexNodes, thisArr, num;
 		modNodes.do{|item, index| if( item.indexOfAll([ndef, key]).reject({|item| item == nil}).size == 2,
 			{
-				ndef.xset(key, value);
+				{
+					(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;
+					fadeTime.yield;
+					(modNodes[index][0].cs ++ ".clear;").radpost.interpret;
 				modNodes.removeAt(index);
+				}.fork;
 		});
 		};
 	}

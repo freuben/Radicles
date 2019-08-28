@@ -2795,7 +2795,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var refreshFunc;
 		refreshFunc = {
 			if(mixerWin.notNil, {
-				if(mixerWin.visible, {
+				if(mixerWin.visible.notNil, {
 					this.refreshMixGUI;
 				});
 			});
@@ -3458,10 +3458,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
 		ndefKey = ndefKey.asSymbol;
 		{
-		this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+			this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
 			server.sync;
-		if(mixerWin.notNil, {
-				if(mixerWin.visible, {
+			if(mixerWin.notNil, {
+				if(mixerWin.visible.notNil, {
 					this.refreshMixGUI;
 				});
 			});
@@ -3507,15 +3507,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			thisBusIn = busInArr[sendSlot];
 			if(thisBusIn.notNil, {
 				{
-				slotArr = busArr.flop[1][busArr.flop[0].indexOf(thisBusIn)];
-				volArg = (\vol ++ (slotArr.indexOf(Ndef(trackKey) ) + 1)).asSymbol;
-				this.modFunc(busInArr[sendSlot], volArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
-				server.sync;
-		if(mixerWin.notNil, {
-				if(mixerWin.visible, {
-					this.refreshMixGUI;
-				});
-			});
+					slotArr = busArr.flop[1][busArr.flop[0].indexOf(thisBusIn)];
+					volArg = (\vol ++ (slotArr.indexOf(Ndef(trackKey) ) + 1)).asSymbol;
+					this.modFunc(busInArr[sendSlot], volArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+					server.sync;
+					if(mixerWin.notNil, {
+						if(mixerWin.visible.notNil, {
+							this.refreshMixGUI;
+						});
+					});
 				}.fork(AppClock);
 			}, {
 				"No send in this slot".warn;
@@ -3523,6 +3523,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, {
 			"No send in this track".warn;
 		});
+	}
+
+	unmapMix {arg trackType, trackNum, modArg, value=0;
+		var typeKey, ndefKey;
+		{
+		typeKey = trackType.asString;
+		case
+		{(modArg == \vol).or(modArg == \volume)} {
+			ndefKey = (typeKey ++ trackNum); modArg = \volume }
+		{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
+		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
+		ndefKey = ndefKey.asSymbol;
+			ModMap.unmap(Ndef(ndefKey), modArg, value);
+			server.sync;
+			if(mixerWin.notNil, {
+				if(mixerWin.visible.notNil, {
+					this.refreshMixGUI;
+				});
+			});
+		}.fork(AppClock);
 	}
 
 }
