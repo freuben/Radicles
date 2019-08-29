@@ -21,13 +21,16 @@ ModMap : Radicles {
 
 	*unmap {arg ndef, key, value=0;
 		var indexNodes, thisArr, num;
+		if(key.isInteger, {
+			key = ndef.controlKeys[key];
+		});
 		modNodes.do{|item, index| if( item.indexOfAll([ndef, key]).reject({|item| item == nil}).size == 2,
 			{
 				{
 					(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;
 					fadeTime.yield;
 					(modNodes[index][0].cs ++ ".clear;").radpost.interpret;
-				modNodes.removeAt(index);
+					modNodes.removeAt(index);
 				}.fork;
 		});
 		};
@@ -119,11 +122,11 @@ ModMap : Radicles {
 	*getPresets {var result;
 		if(ModMap.lagArr.notNil, {
 			result = modNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
-			item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs]
-		++ [ModMap.lagArr[index].collect({|it| it.cs }) ] };
+				item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs]
+			++ [ModMap.lagArr[index].collect({|it| it.cs }) ] };
 		}, {
 			result = modNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
-			item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs] };
+				item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs] };
 		});
 		^result;
 	}

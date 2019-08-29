@@ -2922,12 +2922,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var winName, filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
 		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop, winBool;
 
-		winName = filterTag.asString.split($_);
+		winName = filterTag.asString;
+		/*		winName = filterTag.asString.split($_);
 		winName[0] = winName[0].asString.replace("filter", "Filter ");
 		if(winName.size == 3, {
-			winName = [winName[0] ++ winName[1], winName[2]]
+		winName = [winName[0] ++ winName[1], winName[2]]
 		});
-		winName = (winName[0] ++ ": " ++ winName[1]) ++ " | " ++ filterKey.asString;
+		winName = (winName[0] ++ ": " ++ winName[1]) ++ " | " ++ filterKey.asString;*/
+		winName = winName ++ " | " ++ filterKey.asString;
 		winBool = true;
 		if(filtersWindow.notNil, {
 			if(filtersWindow.collect({|item| item.name ==  winName}).includes(true), {
@@ -3425,19 +3427,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, {
 			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
 		});
+		if(index.notNil, {
 		keyValues = Ndef(ndefKey).getKeysValues[index];
 		if(ndefKey.cs.find("busIn").isNil, {
 			spec = [];
 			specs.do{|item| spec = (item ++ spec) };
 			specInd =	spec.flop[1][spec.flop[0].indexOf(ndefKey);];
-			if((specInd.isNil).or(specInd.isEmpty), {
+			if(specInd.isNil, {
 				spec = [-1,1];
 			}, {
-				spec =specInd.detect({|item| item[0] == keyValues[0] });
-				spec = spec[1];
-				if(spec.includes(\db), {
-					spec = spec.copyFromStart(1);
-					spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
+				if(specInd.notEmpty, {
+					spec =specInd.detect({|item| item[0] == keyValues[0] });
+					spec = spec[1];
+					if(spec.includes(\db), {
+						spec = spec.copyFromStart(1);
+						spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
+					});
+				}, {
+					spec = [-1,1];
 				});
 			});
 		}, {
@@ -3445,6 +3452,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 		if(spec.isNil, {spec = [-1,1] });
 		ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs, func, mul, add, min, val, warp, lag);
+		}, {
+			"argument doesn't match synth".warn;
+		});
 	}
 
 	modMix {arg trackType, trackNum, modArg, modType, extraArgs,
@@ -3470,10 +3480,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	modFx {arg filterInd, modArg, modType, extraArgs,
 		func, mul=1, add=0, min, val, warp, lag;
-		var typeKey, ndefKey;
+		var typeKey, ndefKey, convTag;
 		if(modArg.notNil, {
-			ndefKey = filters[filterInd][0];
-			this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+			{
+				ndefKey = filters[filterInd][0];
+				this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+				server.sync;
+				if(filtersWindow.notNil, {
+					if(filtersWindow.notEmpty, {
+						filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
+						server.sync;
+						convTag = this.convFilterTag(ndefKey);
+						this.filterGUI(convTag[0], convTag[1], convTag[2]);
+					});
+				});
+			}.fork(AppClock);
 		}, {
 			Ndef(filters[filterInd][0]).controlKeys.postln;
 		});
@@ -3481,15 +3502,32 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	modFxTrack {arg trackType, trackNum, trackSlot, modArg, modType, extraArgs, func,
 		mul=1, add=0, min, val, warp, lag;
-		var ndefKey;
+		var ndefKey, convTag;
 		ndefKey = (\filter ++ trackType.asString.capitalise ++
 			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
+		if(filters.notNil, {
 		if(filters.flop[0].includes(ndefKey), {
 			if(modArg.notNil, {
-				this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul=1, add=0, min, val, warp, lag);
+				{
+					this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul=1, add=0, min, val, warp, lag);
+					server.sync;
+					if(filtersWindow.notNil, {
+						if(filtersWindow.notEmpty, {
+							filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
+							server.sync;
+							convTag = this.convFilterTag(ndefKey);
+							this.filterGUI(convTag[0], convTag[1], convTag[2]);
+						});
+					});
+				}.fork(AppClock);
 			}, {
 				Ndef(ndefKey).controlKeys.postln;
 			});
+		}, {
+				"no filter matches specified track and slot numbers".warn;
+			});
+		}, {
+			"no filters are active".warn;
 		});
 	}
 
@@ -3528,18 +3566,53 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	unmapMix {arg trackType, trackNum, modArg, value=0;
 		var typeKey, ndefKey;
 		{
-		typeKey = trackType.asString;
-		case
-		{(modArg == \vol).or(modArg == \volume)} {
-			ndefKey = (typeKey ++ trackNum); modArg = \volume }
-		{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
-		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
-		ndefKey = ndefKey.asSymbol;
+			typeKey = trackType.asString;
+			case
+			{(modArg == \vol).or(modArg == \volume)} {
+				ndefKey = (typeKey ++ trackNum); modArg = \volume }
+			{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
+			{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
+			ndefKey = ndefKey.asSymbol;
 			ModMap.unmap(Ndef(ndefKey), modArg, value);
 			server.sync;
 			if(mixerWin.notNil, {
 				if(mixerWin.visible.notNil, {
 					this.refreshMixGUI;
+				});
+			});
+		}.fork(AppClock);
+	}
+
+	unmapFx {arg filterInd, modArg, value=0;
+		var ndefKey, convTag;
+		{
+			ndefKey = filters[filterInd][0];
+			ModMap.unmap(Ndef(ndefKey), modArg, value);
+			server.sync;
+			if(filtersWindow.notNil, {
+				if(filtersWindow.notEmpty, {
+					filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
+					server.sync;
+					convTag = this.convFilterTag(ndefKey);
+					this.filterGUI(convTag[0], convTag[1], convTag[2]);
+				});
+			});
+		}.fork(AppClock);
+	}
+
+	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value=0;
+		var ndefKey, convTag;
+		{
+		ndefKey = (\filter ++ trackType.asString.capitalise ++
+			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
+					ModMap.unmap(Ndef(ndefKey), modArg, value);
+			server.sync;
+			if(filtersWindow.notNil, {
+				if(filtersWindow.notEmpty, {
+					filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
+					server.sync;
+					convTag = this.convFilterTag(ndefKey);
+					this.filterGUI(convTag[0], convTag[1], convTag[2]);
 				});
 			});
 		}.fork(AppClock);
