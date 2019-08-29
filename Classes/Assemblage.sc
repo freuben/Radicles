@@ -3428,30 +3428,30 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
 		});
 		if(index.notNil, {
-		keyValues = Ndef(ndefKey).getKeysValues[index];
-		if(ndefKey.cs.find("busIn").isNil, {
-			spec = [];
-			specs.do{|item| spec = (item ++ spec) };
-			specInd =	spec.flop[1][spec.flop[0].indexOf(ndefKey);];
-			if(specInd.isNil, {
-				spec = [-1,1];
-			}, {
-				if(specInd.notEmpty, {
-					spec =specInd.detect({|item| item[0] == keyValues[0] });
-					spec = spec[1];
-					if(spec.includes(\db), {
-						spec = spec.copyFromStart(1);
-						spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
-					});
-				}, {
+			keyValues = Ndef(ndefKey).getKeysValues[index];
+			if(ndefKey.cs.find("busIn").isNil, {
+				spec = [];
+				specs.do{|item| spec = (item ++ spec) };
+				specInd =	spec.flop[1][spec.flop[0].indexOf(ndefKey);];
+				if(specInd.isNil, {
 					spec = [-1,1];
+				}, {
+					if(specInd.notEmpty, {
+						spec =specInd.detect({|item| item[0] == keyValues[0] });
+						spec = spec[1];
+						if(spec.includes(\db), {
+							spec = spec.copyFromStart(1);
+							spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
+						});
+					}, {
+						spec = [-1,1];
+					});
 				});
+			}, {
+				spec = [-90, 6];
 			});
-		}, {
-			spec = [-90, 6];
-		});
-		if(spec.isNil, {spec = [-1,1] });
-		ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs, func, mul, add, min, val, warp, lag);
+			if(spec.isNil, {spec = [-1,1] });
+			ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs, func, mul, add, min, val, warp, lag);
 		}, {
 			"argument doesn't match synth".warn;
 		});
@@ -3506,24 +3506,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		ndefKey = (\filter ++ trackType.asString.capitalise ++
 			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
 		if(filters.notNil, {
-		if(filters.flop[0].includes(ndefKey), {
-			if(modArg.notNil, {
-				{
-					this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul=1, add=0, min, val, warp, lag);
-					server.sync;
-					if(filtersWindow.notNil, {
-						if(filtersWindow.notEmpty, {
-							filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
-							server.sync;
-							convTag = this.convFilterTag(ndefKey);
-							this.filterGUI(convTag[0], convTag[1], convTag[2]);
+			if(filters.flop[0].includes(ndefKey), {
+				if(modArg.notNil, {
+					{
+						this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul=1, add=0, min, val, warp, lag);
+						server.sync;
+						if(filtersWindow.notNil, {
+							if(filtersWindow.notEmpty, {
+								filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
+								server.sync;
+								convTag = this.convFilterTag(ndefKey);
+								this.filterGUI(convTag[0], convTag[1], convTag[2]);
+							});
 						});
-					});
-				}.fork(AppClock);
+					}.fork(AppClock);
+				}, {
+					Ndef(ndefKey).controlKeys.postln;
+				});
 			}, {
-				Ndef(ndefKey).controlKeys.postln;
-			});
-		}, {
 				"no filter matches specified track and slot numbers".warn;
 			});
 		}, {
@@ -3531,35 +3531,45 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
-		func, mul=1, add=0, min, val, warp, lag;
+	prepareModSend {arg trackType, trackNum, sendSlot;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
 		trackKey = (trackType ++ trackNum).asSymbol;
 		busArr.flop[1].do{|item, index|
-			if(item.includes(Ndef(trackKey)), {
-				indArr = indArr.add(index);
+			if(item.notNil, {
+				if(item.includes(Ndef(trackKey)), {
+					indArr = indArr.add(index);
+				});
 			});
 		};
 		if(indArr.notNil, {
 			busInArr = indArr.collect({|item| busArr.flop[0][item] });
 			thisBusIn = busInArr[sendSlot];
 			if(thisBusIn.notNil, {
-				{
-					slotArr = busArr.flop[1][busArr.flop[0].indexOf(thisBusIn)];
-					volArg = (\vol ++ (slotArr.indexOf(Ndef(trackKey) ) + 1)).asSymbol;
-					this.modFunc(busInArr[sendSlot], volArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
-					server.sync;
-					if(mixerWin.notNil, {
-						if(mixerWin.visible.notNil, {
-							this.refreshMixGUI;
-						});
-					});
-				}.fork(AppClock);
-			}, {
-				"No send in this slot".warn;
+				slotArr = busArr.flop[1][busArr.flop[0].indexOf(thisBusIn)];
+				volArg = (\vol ++ (slotArr.indexOf(Ndef(trackKey) ) + 1)).asSymbol;
 			});
+		});
+		^[thisBusIn, volArg];
+	}
+
+	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
+		func, mul=1, add=0, min, val, warp, lag;
+		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
+		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
+		if(busInArr.includes(nil).not, {
+			{
+				thisBusIn = busInArr[0];
+				volArg = busInArr[1];
+				this.modFunc(thisBusIn, volArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+				server.sync;
+				if(mixerWin.notNil, {
+					if(mixerWin.visible.notNil, {
+						this.refreshMixGUI;
+					});
+				});
+			}.fork(AppClock);
 		}, {
-			"No send in this track".warn;
+			"track and slot numers don't match active send".warn;
 		});
 	}
 
@@ -3603,9 +3613,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value=0;
 		var ndefKey, convTag;
 		{
-		ndefKey = (\filter ++ trackType.asString.capitalise ++
-			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
-					ModMap.unmap(Ndef(ndefKey), modArg, value);
+			ndefKey = (\filter ++ trackType.asString.capitalise ++
+				"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
+			ModMap.unmap(Ndef(ndefKey), modArg, value);
 			server.sync;
 			if(filtersWindow.notNil, {
 				if(filtersWindow.notEmpty, {
@@ -3616,6 +3626,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		}.fork(AppClock);
+	}
+
+	unmapSend {arg trackType, trackNum, sendSlot, value=0;
+		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
+		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
+		if(busInArr.includes(nil).not, {
+			{
+				thisBusIn = busInArr[0];
+				volArg = busInArr[1];
+				ModMap.unmap(Ndef(thisBusIn), volArg, value);
+				server.sync;
+				if(mixerWin.notNil, {
+					if(mixerWin.visible.notNil, {
+						this.refreshMixGUI;
+					});
+				});
+			}.fork(AppClock);
+		}, {
+			"track and slot numers don't match active send".warn;
+		});
 	}
 
 }
