@@ -26,12 +26,11 @@ ModMap : Radicles {
 		});
 		modNodes.do{|item, index| if( item.indexOfAll([ndef, key]).reject({|item| item == nil}).size == 2,
 			{
-				{
+				if(value.notNil, {
 					(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;
-					fadeTime.yield;
-					(modNodes[index][0].cs ++ ".clear;").radpost.interpret;
-					modNodes.removeAt(index);
-				}.fork;
+				});
+				(modNodes[index][0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
+				modNodes.removeAt(index);
 		});
 		};
 	}

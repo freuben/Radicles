@@ -776,15 +776,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	removeBus {arg trackNum= 1, busNum=1, trackType=\track, clearTrack=false;
 		var oldLabel, newBusInd, newLabelArr, spaceBusNum, spaceBusLabel,
-		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel;
+		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel, trackKey;
 		oldLabel = ("busIn" ++ busNum).asSymbol;
 		spaceBusLabel = ("inBus" ++ busNum).asSymbol;
 		spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
+		trackKey = (trackType.asString ++ trackNum).asSymbol;
+
 		if(spaceInInd.notNil, {
 			newBusInd = busArr.flop[0].indexOf(oldLabel);
 			newLabelArr = busArr.flop[1][newBusInd];
 			newLabelArr = newLabelArr.select({|item|
-				item.key != (trackType.asString ++ trackNum).asSymbol;
+				item.key != trackKey;
 			});
 			busArr[newBusInd][1] = newLabelArr;
 			thisBusIndLabel = inputs.flop[0].indexOf(oldLabel);
@@ -2648,7 +2650,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf, dirMaster=true;
-		var trackIndex, funcThis;
+		var trackIndex, funcThis, modArr;
+		if(busNum == 0, {
+		modArr = ModMap.modNodes;
+		if(modArr.notNil, {
+			if(modArr.notEmpty, {
+				this.unmapSend(trackType, trackNum, slotNum, -inf);
+			});
+		});
+		});
 		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
 		if(trackIndex.notNil, {
 			funcThis = {
@@ -3423,7 +3433,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	modFunc {arg ndefKey, argIn, type, extraArgs, func, mul=1, add=0, min, val, warp, lag;
 		var filterType, index, keyValues, spec, newArr, specInd;
 		if(argIn.isNumber, {
-			index = argIn;
+			index = argIn-1;
 		}, {
 			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
 		});
@@ -3478,12 +3488,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork(AppClock);
 	}
 
-	modFx {arg filterInd, modArg, modType, extraArgs,
+	modFx {arg filterNum, modArg, modType, extraArgs,
 		func, mul=1, add=0, min, val, warp, lag;
 		var typeKey, ndefKey, convTag;
 		if(modArg.notNil, {
 			{
-				ndefKey = filters[filterInd][0];
+				ndefKey = filters[filterNum-1][0];
 				this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
 				server.sync;
 				if(filtersWindow.notNil, {
@@ -3496,7 +3506,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			}.fork(AppClock);
 		}, {
-			Ndef(filters[filterInd][0]).controlKeys.postln;
+			Ndef(filters[filterNum-1][0]).controlKeys.postln;
 		});
 	}
 
@@ -3543,7 +3553,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		};
 		if(indArr.notNil, {
 			busInArr = indArr.collect({|item| busArr.flop[0][item] });
-			thisBusIn = busInArr[sendSlot];
+			thisBusIn = busInArr[sendSlot-1];
 			if(thisBusIn.notNil, {
 				slotArr = busArr.flop[1][busArr.flop[0].indexOf(thisBusIn)];
 				volArg = (\vol ++ (slotArr.indexOf(Ndef(trackKey) ) + 1)).asSymbol;
@@ -3593,11 +3603,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork(AppClock);
 	}
 
-	unmapFx {arg filterInd, modArg, value=0;
+	unmapFx {arg filterNum, modArg, value=0;
 		var ndefKey, convTag;
 		{
-			ndefKey = filters[filterInd][0];
-			ModMap.unmap(Ndef(ndefKey), modArg, value);
+			ndefKey = filters[filterNum-1][0];
+			ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 			server.sync;
 			if(filtersWindow.notNil, {
 				if(filtersWindow.notEmpty, {
@@ -3615,7 +3625,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{
 			ndefKey = (\filter ++ trackType.asString.capitalise ++
 				"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
-			ModMap.unmap(Ndef(ndefKey), modArg, value);
+			ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 			server.sync;
 			if(filtersWindow.notNil, {
 				if(filtersWindow.notEmpty, {
@@ -3633,6 +3643,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
 			{
+				busInArr.postln;
 				thisBusIn = busInArr[0];
 				volArg = busInArr[1];
 				ModMap.unmap(Ndef(thisBusIn), volArg, value);
