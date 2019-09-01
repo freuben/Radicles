@@ -6,7 +6,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
-	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu;
+	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -296,6 +296,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 
+				this.clearModTrackNdefs(trackType, trackNum);
+
 				tracks.remove(tracks.detect{|item| item.flat.includes(realTrack); });
 				specs.remove(specs.detect{|item| item.flat.includes(inTrack); });
 				masterNdefs.remove(masterNdefs.detect{|item| item.flat.includes(Ndef(realTrack))};);
@@ -321,7 +323,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 
 				indArr = [];
-				/*			if(busArr.flat.includes(nil).not, {*/
+
 				if(busArr.flat.select({|item| item.notNil}).size != 0, {
 					busArr.flop[1].select({|item| item.notNil }).do{|item, index|
 						if(item.includes(Ndef(realTrack)), {indArr = indArr.add(index)}); };
@@ -976,9 +978,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			thisFilterTag = this.findFilterTag(type, num, slot);
 			thisSlot = this.findFilterTag(type, num, slot);
 			thisFilterIndex = thisTrack.flop[0].indexOf(thisSlot);
-
-			/*			if(slot < (thisTrack.size-1), {
-			thisSlot = thisTrack[slot];*/
 
 			if(thisFilterIndex.notNil, {
 
@@ -2382,43 +2381,47 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							var meter, thisPeakVal, value;
 							i = i * 0.5;
 							meter = 	levelArr.flat[i];
-							value = val*levelSoloStates[i];
-							meter.value = (value.max(0.0) * numRMSSampsRecip)
-							.sqrt.ampdb.linlin(dBLow, 0, 0, 1);
-							peakVal = (peak*levelSoloStates[i]).ampdb;
-							thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
-							meter.peakLevel = thisPeakVal;
-							peakArr = peakArr.add(peakVal);
-						});
-						peakArr = peakArr.reshapeLike(levelArr);
-						peakArr.do{|item, index|
-							var peakDb;
-							peakDb = item.maxItem;
-							if(peakDb < dBLow, {peakDb = -inf });
-
-							if((levelSoloStates.atAll((sysChans.integrate - sysChans[0]))[index] == 0).or(
-								muteStates[index] == 1;
-							), {
-								levelTextArr[index].stringColor = Color.white;
-								levelTextArr[index].string = "-inf";
-								peakMax[index] = -inf;
-							}, {
-								if(peakMax[index] < peakDb, {
-									peakAmp = peakDb.linlin(dBLow, 0, 0, 1);
-									if(peakAmp >= 0.9999, {
-										if(levelTextArr[index].notNil, {
-											levelTextArr[index].stringColor_(colorCritical);
-										});
-									}, {
-										if(levelTextArr[index].notNil, {
-											levelTextArr[index].stringColor_(Color.white);
-										});
-									});
-									levelTextArr[index].string = peakDb.round(0.1).asString;
-									peakMax[index] = peakDb;
-								});
+							if(meter.notNil, {
+								value = val*levelSoloStates[i];
+								meter.value = (value.max(0.0) * numRMSSampsRecip)
+								.sqrt.ampdb.linlin(dBLow, 0, 0, 1);
+								peakVal = (peak*levelSoloStates[i]).ampdb;
+								thisPeakVal = peakVal.linlin(dBLow, 0, 0, 1);
+								meter.peakLevel = thisPeakVal;
+								peakArr = peakArr.add(peakVal);
 							});
-						};
+						});
+						if(peakArr.notNil, {
+							peakArr = peakArr.reshapeLike(levelArr);
+							peakArr.do{|item, index|
+								var peakDb;
+								peakDb = item.maxItem;
+								if(peakDb < dBLow, {peakDb = -inf });
+
+								if((levelSoloStates.atAll((sysChans.integrate - sysChans[0]))[index] == 0).or(
+									muteStates[index] == 1;
+								), {
+									levelTextArr[index].stringColor = Color.white;
+									levelTextArr[index].string = "-inf";
+									peakMax[index] = -inf;
+								}, {
+									if(peakMax[index] < peakDb, {
+										peakAmp = peakDb.linlin(dBLow, 0, 0, 1);
+										if(peakAmp >= 0.9999, {
+											if(levelTextArr[index].notNil, {
+												levelTextArr[index].stringColor_(colorCritical);
+											});
+										}, {
+											if(levelTextArr[index].notNil, {
+												levelTextArr[index].stringColor_(Color.white);
+											});
+										});
+										levelTextArr[index].string = peakDb.round(0.1).asString;
+										peakMax[index] = peakDb;
+									});
+								});
+							};
+						});
 					} { |error|
 						if(error.isKindOf(PrimitiveFailedError).not) { error.throw }
 					};
@@ -3480,7 +3483,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 			if(thisSpec.notNil, {spec = thisSpec});
 			if(spec.isNil, {spec = [-1,1] });
-			ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
+			^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
 				func, mul, add, min, val, warp, lag);
 		}, {
 			"argument doesn't match synth".warn;
@@ -3691,14 +3694,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
 		func, mul=1, add=0, min, val, warp, lag, thisSpec;
-		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
+		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn, modNdef;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
 			{
 				thisBusIn = busInArr[0];
 				volArg = busInArr[1];
-				this.modFunc(thisBusIn, volArg, modType, extraArgs, func,
+				modNdef = this.modFunc(thisBusIn, volArg, modType, extraArgs, func,
 					mul, add, min, val, warp, lag, thisSpec);
+				modSendArr = modSendArr.add([trackType, trackNum, sendSlot, modNdef]);
 				server.sync;
 				if(mixerWin.notNil, {
 					if(mixerWin.visible.notNil, {
@@ -3760,6 +3764,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				thisBusIn = busInArr[0];
 				volArg = busInArr[1];
 				ModMap.unmap(Ndef(thisBusIn), volArg, value);
+				modSendArr.collect{|item| item.copyFromStart(2) }.collect{|it, ind|
+					if(it == [trackType, trackNum, sendSlot], {modSendArr.removeAt(ind);});
+				};
 				server.sync;
 				if(mixerWin.notNil, {
 					if(mixerWin.visible.notNil, {
@@ -3769,6 +3776,56 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}.fork(AppClock);
 		}, {
 			"track and slot numers don't match active send".warn;
+		});
+	}
+
+	prepModTrackNdefs {arg trackType=\track, trackNum=1;
+		var thisInfoArr, thisIndexArr, thisModNodes, result;
+		thisModNodes = ModMap.modNodes;
+		if(thisModNodes.notNil, {
+			thisInfoArr = thisModNodes.flop[1].collect{|item|
+				var thisString;
+				thisString = item.key.asString;
+				if(thisString.find("filter").isNil, {
+					thisString.divNumStr;
+				}, {
+					thisString.split($_);
+				});
+			};
+			thisInfoArr.do{|item, index|
+				if((item[0].toLower.find(trackType.asString).notNil).and(
+					item[1].interpret == trackNum), {
+					thisIndexArr = thisIndexArr.add(index);
+				});
+			};
+			result = thisModNodes.flop[0].atAll(thisIndexArr);
+		});
+		^result;
+	}
+
+	prepModSendNdefs {arg trackType=\track, trackNum=1;
+		var newArr, result;
+		newArr = modSendArr.select({|item| (item[0] == trackType).and(item[1] == trackNum) });
+		if(newArr.notNil, {
+			result = newArr.flop[3];
+		});
+		^result;
+	}
+
+	clearModTrackNdefs {arg trackType=\track, trackNum=1;
+		var ndefArr, sendNdefs, indArr;
+		sendNdefs = this.prepModSendNdefs(trackType, trackNum);
+		ndefArr = (this.prepModTrackNdefs(trackType, trackNum) ++
+			sendNdefs);
+		ndefArr.do{|item|
+			(item.cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
+		};
+		if(modSendArr.notNil, {
+			modSendArr.flop[3].do{|item, index|
+				if(sendNdefs.includes(item), {
+					indArr = indArr.add(index) });
+			};
+			modSendArr.removeAtAll(indArr);
 		});
 	}
 
