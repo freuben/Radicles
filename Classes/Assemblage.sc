@@ -965,7 +965,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	removeFilter {arg type=\track, num= 1, slot=1, action;
-		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd, thisFilterTag, thisFilterIndex;
+		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd, thisFilterTag, thisFilterIndex,
+		keyArr, activeMods, modArr;
 		this.globFadeTime;
 
 		thisTrack = this.getThisTrack(type, num);
@@ -980,6 +981,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			thisSlot = thisTrack[slot];*/
 
 			if(thisFilterIndex.notNil, {
+
+				//get rid of modulation ndefs in filters
+				modArr = ModMap.modNodes;
+				if(modArr.notNil, {
+					if(modArr.notEmpty, {
+						keyArr = this.convFilterTag(thisSlot);
+						activeMods = ModMap.modNodes.select({|item| item[1].key == thisSlot });
+						activeMods.flop[2].do{|item|
+							this.unmapFxTrack(keyArr[0], keyArr[1], keyArr[2], item, nil);
+						};
+					});
+				});
 
 				ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 				ndefCS.radpost.interpret;
@@ -2652,12 +2665,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf, dirMaster=true;
 		var trackIndex, funcThis, modArr;
 		if(busNum == 0, {
-		modArr = ModMap.modNodes;
-		if(modArr.notNil, {
-			if(modArr.notEmpty, {
-				this.unmapSend(trackType, trackNum, slotNum, -inf);
+			modArr = ModMap.modNodes;
+			if(modArr.notNil, {
+				if(modArr.notEmpty, {
+					this.unmapSend(trackType, trackNum, slotNum, -inf);
+				});
 			});
-		});
 		});
 		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
 		if(trackIndex.notNil, {
@@ -2798,6 +2811,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++volTag.cs ++ ", " ++ mix ++ ");";
 		ndefCS.radpost.interpret;
+	}
+
+	listFx {
+		SynthFile.read(\filter).sort.radpost;
 	}
 
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
@@ -3430,7 +3447,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		Ndef.all[server.asSymbol].clean; //garbage collection
 	}
 
-	modFunc {arg ndefKey, argIn, type, extraArgs, func, mul=1, add=0, min, val, warp, lag;
+	modFunc {arg ndefKey, argIn, type, extraArgs, func,
+		mul=1, add=0, min, val, warp, lag, thisSpec;
 		var filterType, index, keyValues, spec, newArr, specInd;
 		if(argIn.isNumber, {
 			index = argIn-1;
@@ -3460,15 +3478,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {
 				spec = [-90, 6];
 			});
+			if(thisSpec.notNil, {spec = thisSpec});
 			if(spec.isNil, {spec = [-1,1] });
-			ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs, func, mul, add, min, val, warp, lag);
+			ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
+				func, mul, add, min, val, warp, lag);
 		}, {
 			"argument doesn't match synth".warn;
 		});
 	}
 
 	modMix {arg trackType, trackNum, modArg, modType, extraArgs,
-		func, mul=1, add=0, min, val, warp, lag;
+		func, mul=1, add=0, min, val, warp, lag, thisSpec;
 		var typeKey, ndefKey;
 		typeKey = trackType.asString;
 		case
@@ -3478,7 +3498,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
 		ndefKey = ndefKey.asSymbol;
 		{
-			this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+			this.modFunc(ndefKey, modArg, modType, extraArgs, func,
+				mul, add, min, val, warp, lag, thisSpec);
 			server.sync;
 			if(mixerWin.notNil, {
 				if(mixerWin.visible.notNil, {
@@ -3488,22 +3509,134 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork(AppClock);
 	}
 
+	updateFXWin {arg ndefKey;
+		var convTag;
+		if(filtersWindow.notNil, {
+			if(filtersWindow.notEmpty, {
+				filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
+				server.sync;
+				convTag = this.convFilterTag(ndefKey);
+				this.filterGUI(convTag[0], convTag[1], convTag[2]);
+			});
+		});
+	}
+
+	setFxArg {arg filterNum, fxArg, value;
+		var ndefKey, thisArg, index;
+		if(fxArg.notNil, {
+			{
+				ndefKey = filters[filterNum-1][0];
+				if(fxArg.isNumber, {
+					index = fxArg-1;
+					thisArg = Ndef(ndefKey).controlKeys[index];
+					("Ndef(" ++ ndefKey.cs ++ ").set(" ++ thisArg.cs ++ ", " ++
+						value.cs ++ ");").radpostcont.interpret;
+				}, {
+					("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
+						value.cs ++ ");").radpostcont.interpret;
+				});
+				server.sync;
+				this.updateFXWin(ndefKey);
+			}.fork(AppClock);
+		}, {
+			Ndef(filters[filterNum-1][0]).controlKeys.postln;
+		});
+	}
+
+	setFxArgTrack {arg trackType, trackNum, trackSlot, fxArg, value;
+		var ndefKey, thisArg, index;
+		ndefKey = (\filter ++ trackType.asString.capitalise ++
+			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
+		if(filters.notNil, {
+			if(filters.flop[0].includes(ndefKey), {
+				if(fxArg.notNil, {
+					{
+						if(fxArg.isNumber, {
+							index = fxArg-1;
+							thisArg = Ndef(ndefKey).controlKeys[index];
+							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ thisArg.cs ++ ", " ++
+								value.cs ++ ");").radpostcont.interpret;
+						}, {
+							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
+								value.cs ++ ");").radpostcont.interpret;
+						});
+						server.sync;
+						this.updateFXWin(ndefKey);
+					}.fork(AppClock);
+				}, {
+					Ndef(ndefKey).controlKeys.postln;
+				});
+			}, {
+				"no filter matches specified track and slot numbers".warn;
+			});
+		}, {
+			"no filters are active".warn;
+		});
+	}
+
+	lagFxArg {arg filterNum, fxArg, value;
+		var ndefKey, thisArg, index;
+		if(fxArg.notNil, {
+			{
+				ndefKey = filters[filterNum-1][0];
+				if(fxArg.isNumber, {
+					index = fxArg-1;
+					thisArg = Ndef(ndefKey).controlKeys[index];
+					("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ thisArg.cs ++ ", " ++
+						value.cs ++ ");").radpost.interpret;
+				}, {
+					("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ fxArg.cs ++ ", " ++
+						value.cs ++ ");").radpost.interpret;
+				});
+				server.sync;
+				this.updateFXWin(ndefKey);
+			}.fork(AppClock);
+		}, {
+			Ndef(filters[filterNum-1][0]).controlKeys.postln;
+		});
+	}
+
+	lagFxArgTrack {arg trackType, trackNum, trackSlot, fxArg, value;
+		var ndefKey, thisArg, index;
+		ndefKey = (\filter ++ trackType.asString.capitalise ++
+			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
+		if(filters.notNil, {
+			if(filters.flop[0].includes(ndefKey), {
+				if(fxArg.notNil, {
+					{
+						if(fxArg.isNumber, {
+							index = fxArg-1;
+							thisArg = Ndef(ndefKey).controlKeys[index];
+							("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ thisArg.cs ++ ", " ++
+								value.cs ++ ");").radpost.interpret;
+						}, {
+							("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ fxArg.cs ++ ", " ++
+								value.cs ++ ");").radpost.interpret;
+						});
+						server.sync;
+						this.updateFXWin(ndefKey);
+					}.fork(AppClock);
+				}, {
+					Ndef(ndefKey).controlKeys.postln;
+				});
+			}, {
+				"no filter matches specified track and slot numbers".warn;
+			});
+		}, {
+			"no filters are active".warn;
+		});
+	}
+
 	modFx {arg filterNum, modArg, modType, extraArgs,
-		func, mul=1, add=0, min, val, warp, lag;
-		var typeKey, ndefKey, convTag;
+		func, mul=1, add=0, min, val, warp, lag, thisSpec;
+		var typeKey, ndefKey;
 		if(modArg.notNil, {
 			{
 				ndefKey = filters[filterNum-1][0];
-				this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+				this.modFunc(ndefKey, modArg, modType, extraArgs, func,
+					mul, add, min, val, warp, lag, thisSpec);
 				server.sync;
-				if(filtersWindow.notNil, {
-					if(filtersWindow.notEmpty, {
-						filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
-						server.sync;
-						convTag = this.convFilterTag(ndefKey);
-						this.filterGUI(convTag[0], convTag[1], convTag[2]);
-					});
-				});
+				this.updateFXWin(ndefKey);
 			}.fork(AppClock);
 		}, {
 			Ndef(filters[filterNum-1][0]).controlKeys.postln;
@@ -3511,24 +3644,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	modFxTrack {arg trackType, trackNum, trackSlot, modArg, modType, extraArgs, func,
-		mul=1, add=0, min, val, warp, lag;
-		var ndefKey, convTag;
+		mul=1, add=0, min, val, warp, lag, thisSpec;
+		var ndefKey;
 		ndefKey = (\filter ++ trackType.asString.capitalise ++
 			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
 		if(filters.notNil, {
 			if(filters.flop[0].includes(ndefKey), {
 				if(modArg.notNil, {
 					{
-						this.modFunc(ndefKey, modArg, modType, extraArgs, func, mul=1, add=0, min, val, warp, lag);
+						this.modFunc(ndefKey, modArg, modType, extraArgs, func,
+							mul=1, add=0, min, val, warp, lag, thisSpec);
 						server.sync;
-						if(filtersWindow.notNil, {
-							if(filtersWindow.notEmpty, {
-								filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
-								server.sync;
-								convTag = this.convFilterTag(ndefKey);
-								this.filterGUI(convTag[0], convTag[1], convTag[2]);
-							});
-						});
+						this.updateFXWin(ndefKey);
 					}.fork(AppClock);
 				}, {
 					Ndef(ndefKey).controlKeys.postln;
@@ -3563,14 +3690,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
-		func, mul=1, add=0, min, val, warp, lag;
+		func, mul=1, add=0, min, val, warp, lag, thisSpec;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
 			{
 				thisBusIn = busInArr[0];
 				volArg = busInArr[1];
-				this.modFunc(thisBusIn, volArg, modType, extraArgs, func, mul, add, min, val, warp, lag);
+				this.modFunc(thisBusIn, volArg, modType, extraArgs, func,
+					mul, add, min, val, warp, lag, thisSpec);
 				server.sync;
 				if(mixerWin.notNil, {
 					if(mixerWin.visible.notNil, {
@@ -3604,37 +3732,23 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	unmapFx {arg filterNum, modArg, value=0;
-		var ndefKey, convTag;
+		var ndefKey;
 		{
 			ndefKey = filters[filterNum-1][0];
 			ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 			server.sync;
-			if(filtersWindow.notNil, {
-				if(filtersWindow.notEmpty, {
-					filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
-					server.sync;
-					convTag = this.convFilterTag(ndefKey);
-					this.filterGUI(convTag[0], convTag[1], convTag[2]);
-				});
-			});
+			this.updateFXWin(ndefKey);
 		}.fork(AppClock);
 	}
 
 	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value=0;
-		var ndefKey, convTag;
+		var ndefKey;
 		{
 			ndefKey = (\filter ++ trackType.asString.capitalise ++
 				"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
 			ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 			server.sync;
-			if(filtersWindow.notNil, {
-				if(filtersWindow.notEmpty, {
-					filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
-					server.sync;
-					convTag = this.convFilterTag(ndefKey);
-					this.filterGUI(convTag[0], convTag[1], convTag[2]);
-				});
-			});
+			this.updateFXWin(ndefKey);
 		}.fork(AppClock);
 	}
 
@@ -3643,7 +3757,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
 			{
-				busInArr.postln;
 				thisBusIn = busInArr[0];
 				volArg = busInArr[1];
 				ModMap.unmap(Ndef(thisBusIn), volArg, value);

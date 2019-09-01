@@ -7,15 +7,15 @@ ModMap : Radicles {
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
-		modNodes.do{|item| if( [item[1], item[2]] == [ndef, key], {item[0].clear;
+				(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost.interpret;
+		modNodes.do{|item| if( [item[1], item[2]] == [ndef, key], {
+			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
 			modNodes.remove(item);
 		}); };
 		modNodes = modNodes.add([modMap, ndef, key]);
-		ndef.xset(key, modMap);
 		if(lag.notNil, {
 			this.lag(ndef.key.asString.divNumStr[1], key, lag);
 		});
-		(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost;
 		^modMap;
 	}
 
@@ -59,8 +59,6 @@ ModMap : Radicles {
 			if(extraArgs.isNil, {
 				compile = "Ndef('mod" ++ modIndex.cs ++ "', " ++ ndefString ++ ");";
 			}, {
-				/*compile = "Ndef('mod" ++ modIndex.cs ++ "').put(0, " ++ ndefString
-				++ ", extraArgs: " ++ extraArgs.cs ++ ");";*/
 				compile = "Ndef('mod" ++ modIndex.cs ++ "', " ++ ndefString ++ ");" ++
 				10.asAscii ++"Ndef('mod" ++ modIndex.cs ++ "').set" ++
 				extraArgs.cs.squareToRound ++ ";";
