@@ -55,7 +55,410 @@ Data for filter (if required)
 Examples::
 
 code::
+/*
+Work on remove Tracks and GUI update
 
+Modulation!!
+//modulation set and xset within Assembladge for simplicity
+//removing filters and tracks should also remove modulation ndefs
+
+Set FX arguments with code (and auto UI update)
+
+Make sure there are no errors when mixer window is closed
+Presets
+
+Make sure it's possible to change all GUI through code, including everything (e.g. sub-windows)
+
+Work on multichannel stuff
+interface space buttons (mono to multichan toggle)
+*/
+
+a = Assemblage(6, 2);
+
+Block.addNum(6, 2);
+
+(
+Block.play(1, \pattern, \nobuf, \test1, data: [\pan, 0]); //be aware that default synth is stereo, therfore pan -1 to avoid issues of doubling blocks - although this is something maybe that should be looked into in the block class...
+Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \default, \pan, 0]);
+Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \default, \pan, 0]);
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05, \pan, 0]);
+Block.play(5, \loop, \marilyn1);
+)
+
+/*(
+Block.play(1, \pattern, \nobuf, \test1, data: [\pan, -1]); //be aware that default synth is stereo, therfore pan -1 to avoid issues of doubling blocks - although this is something maybe that should be looked into in the block class...
+Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \default, \pan, -1]);
+Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \default, \pan, -1]);
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05, \pan, -1]);
+Block.play(5, \loop, \marilyn1);
+)*/
+Block.play(6, \looppv, \parsifal, [\rate, 0.1, \mul, 4]);
+
+a.input(Block.ndefs[0], \track, 1);
+a.input(Block.ndefs[1], \track, 2);
+a.input(Block.ndefs[2], \track, 3);
+a.input(Block.ndefs[3], \track, 4);
+a.input(Block.ndefs[4], \track, 5);
+a.input(Block.ndefs[5], \track, 6);
+
+
+
+// a.mixer;
+a.inputs.dopostln
+a.mixTrackNames;
+a.mixerWin.bounds;
+
+a.mixer;
+a.mixerWin.close;
+a.play;
+//to stop posting
+Radicles.ignorePost = true;
+Radicles.ignorePostcont = true;
+
+Radicles.ignorePost = false;
+Radicles.ignorePostcont = false;
+
+//fadeTime
+a.fadeTime(5);
+Radicles.fadeTime; //changes global fadeTime
+
+a.fadeTime(0.5);
+
+//recording
+
+a.prepareRecording;
+a.startRecording;
+
+a.stopRecording;
+
+Block.stopAll(5);
+
+//to add tracks use auto add track
+a.autoAddTrack(\track);
+a.input(Block.ndefs[3], \track, 7);
+
+
+//Change interface with code!!
+a.setVolume(\track, 1, 0, 0);
+a.setVolume(\bus, 2, -10);
+a.setVolume(\track, 2, -5);
+a.setVolume(\bus, 4, -5);
+
+a.setVolumeLag(\track, 1, 10);
+a.setVolume(\track, 1, -inf);
+
+a.setVolumeLag(\track, 1, nil);
+a.setVolume(\track, 1, 0);
+
+a.setPan(\track, 1, 1);
+a.setPan(\track, 1, -1);
+
+a.setPanLag(\track, 1, 10);
+a.setPan(\track, 1, 1);
+a.setPanLag(\track, 1, nil);
+a.setPan(\track, 1, 0);
+
+//set buses
+a.setSend(\track, 1, 1, 1); //trackType, trackNum, busNum
+a.setSend(\track, 1, 1, 0); //remove
+
+a.setSend(\track, 1, 2, 2);
+a.setSend(\track, 1, 3, 3);
+
+a.setSend(\track, 1, 1, 1, 0); //trackType, trackNum, busNum, val
+a.setSend(\track, 1, 1, 0); //remove
+
+//send bus only without track
+a.setSend(\track, 1, 1, 1, 0, false); //trackType, trackNum, busNum, val, dirMaster (bool)
+
+//set knobs in buses only
+a.setSendKnob(\track, 1, 1, 0, 10); //trackType, trackNum, val, lag
+a.setSendKnob(\track, 1, 2, -10, 1); //trackType, trackNum, val, lag
+a.setSendKnob(\track, 1, 3, -20, 1); //trackType, trackNum, val, lag
+
+a.setSendKnob(\track, 2, 2, 0, 10); //trackType, trackNum, busNum, val, lag
+a.setSendKnob(\track, 1, 2, 0, 1); //trackType, trackNum, val, lag
+a.setSendKnob(\track, 1, 3, 0, 1); //trackType, trackNum, val, lag
+
+//filters
+a.setFx(\track, 1, 1, \pch);
+
+a.setFxArg(1, \pitchRatio, rrand(0.5,1.5)) //fltNum, fxArg, value
+a.setFxArg(1); //args
+a.setFxArg(1, 2, 2.0) //fltNum, fxArg, value
+
+a.lagFxArg(1, 2, 5); //filter set lags too!
+a.setFxArg(1, 2, 0)
+
+a.lagFxArg(1, 2, nil); //get rid of lag
+a.setFxArgTrack(\track, 1, 1, 2, 1.5); //trackType, trackNum, trackSlot, fxArg, value
+a.setFxArgTrack(\track, 1, 1, 2, 0);
+a.setFxArgTrack(\track, 1, 1, 1, 1);
+
+//remove filter
+a.setFx(\track, 1, 1, remove: true);
+
+a.setFx(\track, 2, 3, \pch); //should expand;
+a.setFx(\track, 2, 3, remove: true);
+
+//remove tracks
+a.removeTrack(\track, 1);
+a.removeTrack(\track, 3);
+
+//set inputs
+a.getTrackInMenu(1); //trackNum
+a.getTrackInItem(1);
+a.getTrackInIndex(1);
+
+a.setTrackIn(1, 2); //trackNum, input menu index
+
+a.getTrackInMenu(2);
+a.getTrackInItem(2);
+
+a.setTrackIn(2, 0);
+
+a.getTrackInItem(2);
+
+//set outputs
+a.getTrackOutItem(\track, 1);
+a.getTrackOutIndex(\track, 1);
+
+//doesn't route track to mixer with 0
+a.setTrackOut(\track, 1, 0);  //trackType, trackNum, val
+a.setTrackOut(\track, 2, 0);
+a.setTrackOut(\track, 3, 0);
+a.setTrackOut(\track, 4, 0);
+a.setTrackOut(\track, 5, 0);
+a.setTrackOut(\bus, 1, 0);
+
+//routes track to mixer with 1
+a.setTrackOut(\track, 1, 1); //trackType, trackNum, val
+a.setTrackOut(\track, 2, 1);
+a.setTrackOut(\track, 3, 1);
+a.setTrackOut(\track, 4, 1);
+a.setTrackOut(\track, 5, 1);
+a.setTrackOut(\bus, 1, 1);
+
+
+//set buttons (works both then GUI is on or not)
+//mute
+a.setMute(\track, 1, 1);
+a.setMute(\track, 1, 0);
+//rec
+a.setRec(\track, 1, 1);
+a.setRec(\track, 1, 0);
+//rec
+a.setSolo(\track, 1, 1);
+a.setSolo(\track, 1, 0);
+
+a.setSolo(\bus, 1, 1);
+a.setSolo(\bus, 1, 0);
+
+a.setSolo(\master, 1, 1);
+//space
+a.setSpace(\track, 1, 1);
+
+//recording button (evaluate several times)
+a.setRecording;
+//dir in rec
+a.setDirInRec([0,1]);
+
+//set outputs
+//map software outs to interface outs
+a.mapOuts([1,2]); //stero output into out 1 and 2 in interface
+a.mapOuts([[1,3],4]); //stero output, chan 1 into out 1 and 3  in interface, chan 2 into out 4 in interface
+
+//////
+
+//Modulation!
+a.modMix(\track, 1, \vol, \sin, [\freq, 3]);
+a.modMix(\track, 1, \pan, \sin, [\freq, 3]);
+
+a.unmapMix(\track, 1, \vol, 0);
+a.unmapMix(\track, 1, \pan, 0);
+
+
+a.setSend(\track, 1, 1, 1); //trackType, trackNum, busNum
+a.setSend(\track, 1, 2, 2); //trackType, trackNum, busNum
+
+a.modSend(\track, 1, 1, \sin, [\freq, 1]);
+a.modSend(\track, 1, 2, \sin, [\freq, 2]);
+
+a.setSend(\track, 2, 1, 1); //trackType, trackNum, busNum
+
+a.setSend(\track, 1, 1, 0); //remove
+a.setSend(\track, 1, 1, 0); //remove
+
+
+a.mixer;
+
+a.listFx; //list effects
+a.setFx(\track, 1, 1, \pch); //add fx
+
+ModMap.list; //modulation list
+a.modFx(1, 1, \sin, [\freq, 1]); //with default spec
+a.setFx(\track, 1, 1, remove: true); //remove fx
+
+a.setFx(\track, 1, 1, \pch); //add fx again
+a.modFx(1, 1, \sin, [\freq, 1], thisSpec: [0.25,4]); //specify spec
+
+ModMap.xset(1, \freq, 10);
+ModMap.xset(1, \mul, 0.5);
+ModMap.xset(1, \add, -0.5);
+ModMap.xset(1, \freq, 3);
+
+ModMap.xset(1, \add, 0.5);
+
+a.setFx(\track, 1, 2, \harm);
+a.modFx(2, 1, \sin, [\freq, 10], thisSpec: [0.2,5]);
+
+a.unmapFx(1, 1, 1);
+a.unmapFx(2, 1, 1);
+
+a.modFxTrack(\track, 1, 1); //lists fx arguments
+a.modFxTrack(\track, 1, 1, 2, \sin, [\freq, 3]);
+a.modFxTrack(\track, 1, 2);
+a.modFx(1, 1, \sin, [\freq, 1]);
+
+a.setFx(\track, 1, 1, remove: true); //remove fx will also remove mod ndefs
+
+ModMap.modNodes; //clear
+
+a.modFxTrack(\track, 1, 2, \pitchRatio1, \sin, [\freq, 1], thisSpec: [0.25,6]);
+a.unmapFxTrack(\track, 1, 2, \pitchRatio1, 1.0);
+
+
+
+/////////
+a.mixTrackNames;
+
+a.mixer;
+
+a.recordingButton.value = [1,2,3][a.recordingIndexBut]
+
+
+a.autoAddTrack(\bus);
+
+a.removeBus(1, 1, \track);
+a.removeBus(2, 1, \track);
+a.removeBus(1, 2, \bus);
+a.removeBus(1, 2, \bus);
+
+
+
+
+a.mixTrackNdefs[0].source.cs
+
+a.mixTrackNames;
+a.mixTrackNdefs;
+a.sysChans;
+a.sysPan;
+
+a.getBusInLabels
+
+Ndef(\busIn1).getKeysValues;
+Ndef(\busIn1).source.cs
+
+a.specs.dopostln
+a.getSpec(\bus1, \volume).cs
+
+Ndef(\busIn2).source.cs
+
+a.specs.dopostln;
+
+a.collectSpecArr(\spaceMaster);
+
+
+a.getSpec(\master, \volume);
+
+a.outputSettings.includes("".asSymbol);
+
+a.bus(1, 1, 0.4);
+// a.bus(1, 1, dirIn: false);
+a.routingMap.dopostln
+
+~in = \bus3;
+~arr = [];
+a.outputSettings.do{|item, index| if(item == ~in, {~arr = ~arr.add(mixTrackNdefs[index]) }); };
+
+~arr.postln;
+
+mixTrackNdefs
+
+Ndef(\spaceBus1).source.cs
+Ndef(\busIn1).source.cs
+Ndef(\busIn2).source.cs
+
+Ndef(\spaceMaster).source.cs;
+
+a.inputs.dopostln;
+
+Ndef(\track1).source.cs
+
+
+Ndef(\track1).set(\volume, 0.ampdb);
+Ndef(\track2).set(\volume, 0.ampdb);
+Ndef(\track3).set(\volume, 0.ampdb);
+Ndef(\track4).set(\volume, 0.ampdb);
+Ndef(\track5).set(\volume, 0.ampdb);
+
+Ndef(\track1);
+
+a.filter(extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+////////
+//work in progress
+
+a = Assemblage(6, 2, 4);
+
+Block.addNum(6, 2);
+
+(
+Block.play(1, \pattern, \nobuf, \test1); //be aware that default synth is stereo, therfore pan -1 to avoid issues of doubling blocks - although this is something maybe that should be looked into in the block class...
+Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \default]);
+Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \default]);
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);
+Block.play(5, \loop, \marilyn1);
+)
+
+a.input(Block.ndefs[0], \track, 1);
+a.input(Block.ndefs[1], \track, 2);
+a.input(Block.ndefs[2], \track, 3);
+a.input(Block.ndefs[3], \track, 4);
+a.input(Block.ndefs[4], \track, 5);
+
+a.mixer
+
+
+View
+
+.enabled
+
+.acceptsMouse
+
+(
+w = Window.new.front;
+c = NumberBox(w, Rect(20, 20, 150, 20));
+a = Slider(w, Rect(20, 60, 150, 20))
+    .action_({
+        c.value_(a.value)
+        });
+a.action.value;
+)
+
+a.enabled = false;
+a.enabled = true;
+
+a.background_(Color.red)
+a.background_(Color.grey)
+
+/////
+
+//////////////////////////
+//HELP DOCUMENTATION
+//////////////////////////
+
+//////
 Ndef(\output).play;
 
 Ndef(\output).fadeTime = 0.5;
