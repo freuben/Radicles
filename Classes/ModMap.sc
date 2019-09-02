@@ -1,5 +1,5 @@
 ModMap : Radicles {
-	classvar <modNodes, modIndex=0, <lagArr;
+	classvar <modNodes, <modInfoArr, modIndex=0, <lagArr;
 
 	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag;
 		var modMap;
@@ -8,11 +8,13 @@ ModMap : Radicles {
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
 				(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost.interpret;
-		modNodes.do{|item| if( [item[1], item[2]] == [ndef, key], {
+		modNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
 			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
 			modNodes.remove(item);
+			modInfoArr.removeAt(index);
 		}); };
 		modNodes = modNodes.add([modMap, ndef, key]);
+		modInfoArr = modInfoArr.add([modMap.key, type, spec, extraArgs, func, mul, add, min, val, warp, lag]);
 		if(lag.notNil, {
 			this.lag(ndef.key.asString.divNumStr[1], key, lag);
 		});
@@ -31,6 +33,7 @@ ModMap : Radicles {
 				});
 				(modNodes[index][0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
 				modNodes.removeAt(index);
+				modInfoArr.removeAt(index);
 		});
 		};
 	}

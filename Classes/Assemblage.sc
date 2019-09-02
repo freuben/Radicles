@@ -3829,4 +3829,49 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
+	rawFilterPreset {arg filterKey;
+		var mods, keyValues, arr, arr2, arr3, rawWrite, thisKey;
+		Ndef(filterKey).getKeysValues.do{|item|
+			var modArr;
+			if(item[1].cs.find("Ndef").notNil, {
+				modArr = ModMap.modInfoArr.detect({|it| it[0] == item[1].key });
+				keyValues = keyValues.add(	[
+					ModMap.modNodes.detect({|it| it[0] == item[1] }).last,
+					modArr;
+				]);
+				mods = mods.add(modArr[0])
+			}, {keyValues = keyValues.add(item)});
+		};
+		arr = ModMap.modNodes.flop[0].collect{|item|
+			[item.key,
+				item.getKeysValues.collect{|it1|
+					if(it1[1].cs.find("Ndef").notNil, {
+						[
+							ModMap.modNodes.detect({|it2| it2[0] == it1[1] }).last,
+							ModMap.modInfoArr.detect({|it2| it2[0] == it1[1].key }),
+						];
+					}, {it1});
+
+			}];
+		};
+		mods.do{|item|
+			var thisArr;
+			thisArr = arr[arr.flop[0].indexOf(item)];
+			if(thisArr[1].flat[1].asString.find("mod").notNil, {
+				mods = mods.add(thisArr[1].flat[1]);
+			});
+		};
+		arr2 = [];
+		arr.flop[0].do{|item, index|
+			if(mods.includes(item), {arr2 = arr2.add(index) });
+		};
+		arr3 = arr.atAll(arr2);
+		keyValues = ([filterKey!keyValues.size] ++ [keyValues]).flop;
+		rawWrite = (keyValues ++ arr3);
+		filters.flop[0].do{|item, index|
+			if(item == filterKey, {thisKey = filters.flop[1][index] });
+		};
+		^[thisKey, rawWrite];
+	}
+
 }
