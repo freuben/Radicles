@@ -3843,26 +3843,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {keyValues = keyValues.add(item)});
 		};
 		if(mods.notNil, {
-		arr = ModMap.modNodes.flop[0].collect{|item|
-			[item.key,
-				item.getKeysValues.collect{|it1|
-					if(it1[1].cs.find("Ndef").notNil, {
-						[ModMap.modNodes.detect({|it2| it2[0] == it1[1] }).last,
-							ModMap.modInfoArr.detect({|it2| it2[0] == it1[1].key })];
-					}, {it1});
-			}];
-		};
-		mods.do{|item|
-			var thisArr;
-			thisArr = arr[arr.flop[0].indexOf(item)];
-			if(thisArr[1].flat[1].asString.find("mod").notNil, {
-				mods = mods.add(thisArr[1].flat[1]);
-			});
-		};
-		arr.flop[0].do{|item, index|
-			if(mods.includes(item), {arr2 = arr2.add(index) });
-		};
-		arr3 = arr.atAll(arr2);
+			arr = ModMap.modNodes.flop[0].collect{|item|
+				[item.key,
+					item.getKeysValues.collect{|it1|
+						if(it1[1].cs.find("Ndef").notNil, {
+							[ModMap.modNodes.detect({|it2| it2[0] == it1[1] }).last,
+								ModMap.modInfoArr.detect({|it2| it2[0] == it1[1].key })];
+						}, {it1});
+				}];
+			};
+			mods.do{|item|
+				var thisArr;
+				thisArr = arr[arr.flop[0].indexOf(item)];
+				if(thisArr[1].flat[1].asString.find("mod").notNil, {
+					mods = mods.add(thisArr[1].flat[1]);
+				});
+			};
+			arr.flop[0].do{|item, index|
+				if(mods.includes(item), {arr2 = arr2.add(index) });
+			};
+			arr3 = arr.atAll(arr2);
 		});
 		keyValues = [filterKey, keyValues];
 		rawWrite = ([keyValues] ++ arr3);
@@ -3895,10 +3895,38 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	listFilterPresets {arg filterType=\pch;
 		if(filterType.isNil, {
-		PresetFile.post(\filter);
+			PresetFile.post(\filter);
 		}, {
-		PresetFile.readAll(\filter).select{|item| item[1][0] == filterType }.flop[0].cs.postln;
+			PresetFile.readAll(\filter).select{|item| item[1][0] == filterType }.flop[0].cs.postln;
 		});
+	}
+
+	loadRawFilterPreset {arg newFilterNdef, presetName;
+		var dataArr, newArr, hasMod, filterArgs, firstNdef;
+		{
+			dataArr = PresetFile.read(\filter, presetName);
+			newArr = dataArr[1];
+			hasMod = dataArr[2];
+			//set intitial filter preset arguments
+			filterArgs = newArr[0];
+			newFilterNdef ?? {newFilterNdef = filterArgs[0]};
+			("Ndef(" ++ newFilterNdef.cs ++ ").set" ++
+				filterArgs[1].cs.replace("[", "(").replace("]", ")")++ ";").radpost.interpret;
+			server.sync;
+			//set modulations
+			firstNdef = Ndef(newFilterNdef);
+			if(hasMod.notNil, {
+				hasMod.do{|item|
+					firstNdef = ModMap.map(firstNdef, item[1][0], item[1][1][1], item[1][1][2],
+						item[1][1][3], item[1][1][4], item[1][1][5], item[1][1][6], item[1][1][7],
+						item[1][1][8], item[1][1][9], item[1][1][10]);
+					if(item[0].cs.find("filter").notNil, {
+						firstNdef = Ndef(newFilterNdef);
+					});
+					server.sync;
+				};
+			});
+		}.fork;
 	}
 
 }
