@@ -1208,7 +1208,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(tagIndex.notNil, {
 			^filters.flop[0][tagIndex]
 		}, {
-			"filter slot is not active".warn;
+			/*"filter slot is not active".warn;*/
 			^nil;
 		});
 	}
@@ -3842,16 +3842,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				mods = mods.add(modArr[0])
 			}, {keyValues = keyValues.add(item)});
 		};
+		if(mods.notNil, {
 		arr = ModMap.modNodes.flop[0].collect{|item|
 			[item.key,
 				item.getKeysValues.collect{|it1|
 					if(it1[1].cs.find("Ndef").notNil, {
-						[
-							ModMap.modNodes.detect({|it2| it2[0] == it1[1] }).last,
-							ModMap.modInfoArr.detect({|it2| it2[0] == it1[1].key }),
-						];
+						[ModMap.modNodes.detect({|it2| it2[0] == it1[1] }).last,
+							ModMap.modInfoArr.detect({|it2| it2[0] == it1[1].key })];
 					}, {it1});
-
 			}];
 		};
 		mods.do{|item|
@@ -3861,17 +3859,46 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				mods = mods.add(thisArr[1].flat[1]);
 			});
 		};
-		arr2 = [];
 		arr.flop[0].do{|item, index|
 			if(mods.includes(item), {arr2 = arr2.add(index) });
 		};
 		arr3 = arr.atAll(arr2);
-		keyValues = ([filterKey!keyValues.size] ++ [keyValues]).flop;
-		rawWrite = (keyValues ++ arr3);
+		});
+		keyValues = [filterKey, keyValues];
+		rawWrite = ([keyValues] ++ arr3);
 		filters.flop[0].do{|item, index|
 			if(item == filterKey, {thisKey = filters.flop[1][index] });
 		};
 		^[thisKey, rawWrite];
+	}
+
+	writeFilterPreset {arg filterKey, presetName;
+		var presetArr, extraArgs, hasMod, newArr, dataArr;
+		presetArr = this.rawFilterPreset(filterKey);
+		presetArr[1].do{|item, index|
+			item[1].do{|it|
+				if(it[1][0].cs.find("mod").notNil, {
+					hasMod = hasMod.add([item[0], it]);
+				}, {
+					extraArgs = extraArgs.add([item[0], it]);
+				});
+		} };
+		presetArr[1].flop[0].do{|item|
+			newArr = newArr.add( [item, extraArgs.flop[1].atAll(extraArgs.flop[0].indicesOfEqual(item)).flat;] );
+		};
+		hasMod.do{|item|
+			item[1][1][3] = newArr.flop[1][newArr.flop[0].indexOf(item[1][1][0])];
+		};
+		dataArr = [presetArr[0], newArr, hasMod];
+		PresetFile.write(\filter, presetName, dataArr);
+	}
+
+	listFilterPresets {arg filterType=\pch;
+		if(filterType.isNil, {
+		PresetFile.post(\filter);
+		}, {
+		PresetFile.readAll(\filter).select{|item| item[1][0] == filterType }.flop[0].cs.postln;
+		});
 	}
 
 }

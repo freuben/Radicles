@@ -366,43 +366,47 @@ DescriptionFile : ModFile {
 PresetFile : ModFile {
 
 	*path {arg class=\bstore;
-		var synthFile;
-		synthFile = this.new(\preset, class);
-		^synthFile.filePath;
+		var presetFile;
+		presetFile = this.new(\preset, class);
+		^presetFile.filePath;
 	}
 
 	* read {arg class=\bstore, key;
-		var synthFile;
-		synthFile = this.new(\preset, class);
-		^synthFile.read(key);
+		var presetFile;
+		presetFile = this.new(\preset, class);
+		^presetFile.read(key);
 	}
 
 	* post {arg class=\bstore, key;
-		var synthFile;
-		synthFile = this.new(\preset, class);
-		^synthFile.post(key);
+		var presetFile;
+		presetFile = this.new(\preset, class);
+		^presetFile.post(key);
 	}
 
 	* postAll {arg class=\bstore;
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
+	* readAll {arg class=\bstore;
+		^this.read(class).collect{|item| [item, this.read(class, item)] }
+	}
+
 	* write {arg class=\bstore, key, dataArr, win=true;
-		var synthFile;
-		synthFile = this.new(\preset, class);
-		^synthFile.write(key, dataArr, win);
+		var presetFile;
+		presetFile = this.new(\preset, class);
+		^presetFile.write(key, dataArr, win);
 	}
 
 	* remove {arg class=\bstore, key, win=true;
-		var synthFile;
-		synthFile = this.new(\preset, class);
-		^synthFile.remove(key, win);
+		var presetFile;
+		presetFile = this.new(\preset, class);
+		^presetFile.remove(key, win);
 	}
 
 	* string {arg class=\filter, key;
-		var synthFile;
-		synthFile = this.new(\preset, class);
-		^synthFile.read(key).cs;
+		var presetFile;
+		presetFile = this.new(\preset, class);
+		^presetFile.read(key).cs;
 	}
 
 }
