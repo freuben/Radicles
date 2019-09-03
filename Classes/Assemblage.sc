@@ -188,7 +188,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			space = space.add([spaceTag, spaceType]);
 			^thisTrackInfo;
 		}, {
-			"track type not found".warn;
+			"Track type not found".warn;
 		});
 	}
 
@@ -557,7 +557,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			space[space.flop[0].indexOf(trackName)] = [trackName, spaceType];
 			/*space.do{|item| if(item[0] == trackName, {item[1] = chanNum; item[2] = spaceType }) };*/
 		}, {
-			"track name not found".warn;
+			"Track name not found".warn;
 		});
 	}
 
@@ -630,11 +630,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
 					ndefCS.radpost.interpret;
 				}, {
-					"channel number input doesn't match track".warn;
+					"Channel number input doesn't match track".warn;
 				});
 			});
 		}, {
-			"wrong track type".warn;
+			"Wrong track type".warn;
 		});
 	}
 
@@ -650,10 +650,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(index.notNil, {
 				^inputs.flop[1][index];
 			}, {
-				"no input assigned to this track".warn;
+				"No input assigned to this track".warn;
 			});
 		}, {
-			"track doesn't exist".warn;
+			"Track doesn't exist".warn;
 		});
 	}
 
@@ -723,7 +723,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				^inputs.flop[0].atAll(ind);
 			});
 		}, {
-			"destination not found".warn;
+			"Destination not found".warn;
 		});
 	}
 
@@ -1101,7 +1101,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			space.removeAt(trackIndex);
 			livetracks.removeAt(trackIndex);
 		}, {
-			"track number not found".warn;
+			"Track number not found".warn;
 		});
 	}
 
@@ -1112,7 +1112,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				newArr = newArr.add(item-1);
 				masterNdefs[item-1].clear;
 			}, {
-				"track Number not Found".warn;
+				"Track Number not Found".warn;
 			});
 		};
 		masterNdefs.removeAtAll(newArr);
@@ -1182,7 +1182,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 			this.setFilterTag(filterTag, key, arg2, post);
 		}, {
-			"filter info not found".warn;
+			"Filter info not found".warn;
 		});
 	}
 
@@ -1208,7 +1208,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(tagIndex.notNil, {
 			^filters.flop[0][tagIndex]
 		}, {
-			/*"filter slot is not active".warn;*/
+			/*"Filter slot is not active".warn;*/
 			^nil;
 		});
 	}
@@ -1255,7 +1255,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}, {^nil});
 	}
 
-	//more work on filter lags
 	filterLags {arg filterNdefKey, lag=nil;
 		var ndefArgs, argValArr, newNdefArgs;
 		ndefArgs = Ndef(filterNdefKey).controlKeys;
@@ -1265,7 +1264,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			argValArr = lag!ndefArgs.size;
 		});
 		newNdefArgs = ([ndefArgs.copyRange(0,argValArr.size-1)] ++ [argValArr]).flop.flat;
-		("Ndef('filterBus_1_1').lag(" ++ newNdefArgs.cs.asString
+		("Ndef(" ++ filterNdefKey.cs ++ ").lag(" ++ newNdefArgs.cs.asString
 			.replace("[", "").replace("]", "") ++ ");").radpost.interpret;
 	}
 
@@ -2518,7 +2517,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2528,7 +2527,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(mixTrackIndex.notNil, {
 			this.inputLablesFunc(mixTrackIndex, mixTrackNames)[0].radpost;
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2538,7 +2537,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(mixTrackIndex.notNil, {
 			this.inputLablesFunc(mixTrackIndex, mixTrackNames)[1].radpost;
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2549,7 +2548,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			label = this.inputLablesFunc(mixTrackIndex, mixTrackNames);
 			label[0][label[1]].radpost;
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2587,7 +2586,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2602,7 +2601,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 			outIndex.postln;
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2612,7 +2611,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(mixTrackIndex.notNil, {
 			outputSettings[mixTrackIndex].cs.postln;
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2638,7 +2637,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2711,7 +2710,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			});
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2772,7 +2771,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				").set(" ++ thisKey ++ ", " ++ lag ++ ");");
 			ndefCS.radpostcont.interpret;
 		}, {
-			"wrong track or bus".warn;
+			"Wrong track or bus".warn;
 		});
 	}
 
@@ -2870,7 +2869,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				noUIFunc.();
 			});
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2892,7 +2891,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				noUIFunc.();
 			});
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -2917,10 +2916,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					noUIFunc.();
 				});
 			}, {
-				"track not found".warn;
+				"Track not found".warn;
 			});
 		}, {
-			"master track can\'t be soloed".warn;
+			"Master track can\'t be soloed".warn;
 		});
 	}
 
@@ -2943,7 +2942,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				noUIFunc.();
 			});
 		}, {
-			"track not found".warn;
+			"Track not found".warn;
 		});
 	}
 
@@ -3134,10 +3133,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 				this.filterWinGUI(filterTag, filterKey, filterPairs, left, top, mixButton);
 			}, {
-				"filter not found".warn;
+				"Filter not found".warn;
 			});
 		}, {
-			"no active filters".warn;
+			"No active filters".warn;
 		});
 	}
 
@@ -3150,7 +3149,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				this.filterGUIIndex(filterIndex, topLeftArr, mixButton);
 			});
 		}, {
-			"no filters active".warn;
+			"No filters active".warn;
 		});
 	}
 
@@ -3486,7 +3485,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
 				func, mul, add, min, val, warp, lag);
 		}, {
-			"argument doesn't match synth".warn;
+			"Argument doesn't match synth".warn;
 		});
 	}
 
@@ -3512,7 +3511,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork(AppClock);
 	}
 
-	updateFXWin {arg ndefKey;
+	updateFxWin {arg ndefKey;
 		var convTag;
 		if(filtersWindow.notNil, {
 			if(filtersWindow.notEmpty, {
@@ -3524,25 +3523,57 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	setFxArg {arg filterNum, fxArg, value;
-		var ndefKey, thisArg, index;
-		if(fxArg.notNil, {
-			{
-				ndefKey = filters[filterNum-1][0];
-				if(fxArg.isNumber, {
-					index = fxArg-1;
-					thisArg = Ndef(ndefKey).controlKeys[index];
-					("Ndef(" ++ ndefKey.cs ++ ").set(" ++ thisArg.cs ++ ", " ++
-						value.cs ++ ");").radpostcont.interpret;
+	fxWarn {arg filterNum, action={};
+		var ndefKey, filterType, filterInfo;
+		if(filters.notNil, {
+			filterInfo = filters[filterNum-1];
+			if(filterInfo.notNil, {
+				ndefKey = filterInfo[0];
+				filterType = filterInfo[1];
+				if(ndefKey.notNil, {
+					action.(ndefKey, filterType);
 				}, {
-					("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
-						value.cs ++ ");").radpostcont.interpret;
+					"Filter not found".warn;
 				});
-				server.sync;
-				this.updateFXWin(ndefKey);
-			}.fork(AppClock);
+			}, {
+				"Incorrect filter number".warn;
+			});
 		}, {
-			Ndef(filters[filterNum-1][0]).controlKeys.postln;
+			"No filters are active".warn;
+		});
+	}
+
+	fxTrackWarn {
+
+	}
+
+	setFxArg {arg filterNum, fxArg, value;
+		var thisArg, index;
+		if(fxArg.notNil, {
+			this.fxWarn(filterNum, {|ndefKey|
+				{
+					if(fxArg.isNumber, {
+						index = fxArg-1;
+						thisArg = Ndef(ndefKey).controlKeys[index];
+						if(thisArg.notNil, {
+							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ thisArg.cs ++ ", " ++
+								value.cs ++ ");").radpostcont.interpret;
+						}, {
+							"Fx argument doesn't exist".warn;
+						});
+					}, {
+						("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
+							value.cs ++ ");").radpostcont.interpret;
+					});
+					server.sync;
+					this.updateFxWin(ndefKey);
+				}.fork(AppClock);
+			});
+
+		}, {
+			this.fxWarn(filterNum, {|ndefKey|
+				Ndef(ndefKey).controlKeys.postln;
+			});
 		});
 	}
 
@@ -3564,38 +3595,45 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								value.cs ++ ");").radpostcont.interpret;
 						});
 						server.sync;
-						this.updateFXWin(ndefKey);
+						this.updateFxWin(ndefKey);
 					}.fork(AppClock);
 				}, {
 					Ndef(ndefKey).controlKeys.postln;
 				});
 			}, {
-				"no filter matches specified track and slot numbers".warn;
+				"No filter matches specified track and slot numbers".warn;
 			});
 		}, {
-			"no filters are active".warn;
+			"No filters are active".warn;
 		});
 	}
 
 	lagFxArg {arg filterNum, fxArg, value;
-		var ndefKey, thisArg, index;
+		var thisArg, index;
 		if(fxArg.notNil, {
-			{
-				ndefKey = filters[filterNum-1][0];
-				if(fxArg.isNumber, {
-					index = fxArg-1;
-					thisArg = Ndef(ndefKey).controlKeys[index];
-					("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ thisArg.cs ++ ", " ++
-						value.cs ++ ");").radpost.interpret;
-				}, {
-					("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ fxArg.cs ++ ", " ++
-						value.cs ++ ");").radpost.interpret;
-				});
-				server.sync;
-				this.updateFXWin(ndefKey);
-			}.fork(AppClock);
+			this.fxWarn(filterNum, {|ndefKey|
+				{
+					if(fxArg.isNumber, {
+						index = fxArg-1;
+						thisArg = Ndef(ndefKey).controlKeys[index];
+						if(thisArg.notNil, {
+							("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ thisArg.cs ++ ", " ++
+								value.cs ++ ");").radpost.interpret;
+						}, {
+							"Fx argument doesn't exist".warn;
+						});
+					}, {
+						("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ fxArg.cs ++ ", " ++
+							value.cs ++ ");").radpost.interpret;
+					});
+					server.sync;
+					this.updateFxWin(ndefKey);
+				}.fork(AppClock);
+			});
 		}, {
-			Ndef(filters[filterNum-1][0]).controlKeys.postln;
+			this.fxWarn(filterNum, {|ndefKey|
+				Ndef(ndefKey).controlKeys.postln;
+			});
 		});
 	}
 
@@ -3617,16 +3655,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 								value.cs ++ ");").radpost.interpret;
 						});
 						server.sync;
-						this.updateFXWin(ndefKey);
+						this.updateFxWin(ndefKey);
 					}.fork(AppClock);
 				}, {
 					Ndef(ndefKey).controlKeys.postln;
 				});
 			}, {
-				"no filter matches specified track and slot numbers".warn;
+				"No filter matches specified track and slot numbers".warn;
 			});
 		}, {
-			"no filters are active".warn;
+			"No filters are active".warn;
 		});
 	}
 
@@ -3634,15 +3672,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		func, mul=1, add=0, min, val, warp, lag, thisSpec;
 		var typeKey, ndefKey;
 		if(modArg.notNil, {
-			{
-				ndefKey = filters[filterNum-1][0];
-				this.modFunc(ndefKey, modArg, modType, extraArgs, func,
-					mul, add, min, val, warp, lag, thisSpec);
-				server.sync;
-				this.updateFXWin(ndefKey);
-			}.fork(AppClock);
+			this.fxWarn(filterNum, {|ndefKey|
+				{
+					this.modFunc(ndefKey, modArg, modType, extraArgs, func,
+						mul, add, min, val, warp, lag, thisSpec);
+					server.sync;
+					this.updateFxWin(ndefKey);
+				}.fork(AppClock);
+			});
 		}, {
-			Ndef(filters[filterNum-1][0]).controlKeys.postln;
+			this.fxWarn(filterNum, {|ndefKey|
+			Ndef(ndefKey).controlKeys.postln;
+			});
 		});
 	}
 
@@ -3658,16 +3699,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						this.modFunc(ndefKey, modArg, modType, extraArgs, func,
 							mul=1, add=0, min, val, warp, lag, thisSpec);
 						server.sync;
-						this.updateFXWin(ndefKey);
+						this.updateFxWin(ndefKey);
 					}.fork(AppClock);
 				}, {
 					Ndef(ndefKey).controlKeys.postln;
 				});
 			}, {
-				"no filter matches specified track and slot numbers".warn;
+				"No filter matches specified track and slot numbers".warn;
 			});
 		}, {
-			"no filters are active".warn;
+			"No filters are active".warn;
 		});
 	}
 
@@ -3711,7 +3752,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			}.fork(AppClock);
 		}, {
-			"track and slot numers don't match active send".warn;
+			"Track and slot numers don't match active send".warn;
 		});
 	}
 
@@ -3736,13 +3777,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	unmapFx {arg filterNum, modArg, value=0;
-		var ndefKey;
+		this.fxWarn(filterNum, {|ndefKey|
 		{
-			ndefKey = filters[filterNum-1][0];
 			ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 			server.sync;
-			this.updateFXWin(ndefKey);
+			this.updateFxWin(ndefKey);
 		}.fork(AppClock);
+		});
 	}
 
 	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value=0;
@@ -3752,7 +3793,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
 			ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 			server.sync;
-			this.updateFXWin(ndefKey);
+			this.updateFxWin(ndefKey);
 		}.fork(AppClock);
 	}
 
@@ -3775,7 +3816,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 			}.fork(AppClock);
 		}, {
-			"track and slot numers don't match active send".warn;
+			"Track and slot numers don't match active send".warn;
 		});
 	}
 
@@ -3829,7 +3870,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	rawFilterPreset {arg filterKey;
+	rawFxPreset {arg filterKey;
 		var mods, keyValues, arr, arr2, arr3, rawWrite, thisKey;
 		Ndef(filterKey).getKeysValues.do{|item|
 			var modArr;
@@ -3872,9 +3913,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^[thisKey, rawWrite];
 	}
 
-	writeFilterPreset {arg filterKey, presetName;
+	writeFxPreset {arg filterKey, presetName;
 		var presetArr, extraArgs, hasMod, newArr, dataArr;
-		presetArr = this.rawFilterPreset(filterKey);
+		presetArr = this.rawFxPreset(filterKey);
 		presetArr[1].do{|item, index|
 			item[1].do{|it|
 				if(it[1][0].cs.find("mod").notNil, {
@@ -3893,7 +3934,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		PresetFile.write(\filter, presetName, dataArr);
 	}
 
-	listFilterPresets {arg filterType=\pch;
+	listFxPresets {arg filterType=\pch;
 		if(filterType.isNil, {
 			PresetFile.post(\filter);
 		}, {
@@ -3901,32 +3942,61 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	loadRawFilterPreset {arg newFilterNdef, presetName;
+	loadRawFxPreset {arg newFilterNdef, presetName, filterType=\pch;
 		var dataArr, newArr, hasMod, filterArgs, firstNdef;
-		{
-			dataArr = PresetFile.read(\filter, presetName);
-			newArr = dataArr[1];
-			hasMod = dataArr[2];
-			//set intitial filter preset arguments
-			filterArgs = newArr[0];
-			newFilterNdef ?? {newFilterNdef = filterArgs[0]};
-			("Ndef(" ++ newFilterNdef.cs ++ ").set" ++
-				filterArgs[1].cs.replace("[", "(").replace("]", ")")++ ";").radpost.interpret;
-			server.sync;
-			//set modulations
-			firstNdef = Ndef(newFilterNdef);
-			if(hasMod.notNil, {
-				hasMod.do{|item|
-					firstNdef = ModMap.map(firstNdef, item[1][0], item[1][1][1], item[1][1][2],
-						item[1][1][3], item[1][1][4], item[1][1][5], item[1][1][6], item[1][1][7],
-						item[1][1][8], item[1][1][9], item[1][1][10]);
-					if(item[0].cs.find("filter").notNil, {
-						firstNdef = Ndef(newFilterNdef);
-					});
-					server.sync;
-				};
+		dataArr = PresetFile.read(\filter, presetName);
+		if(dataArr.notNil, {
+			if(dataArr[0] == filterType, {
+				newArr = dataArr[1];
+				hasMod = dataArr[2];
+				//set intitial filter preset arguments
+				filterArgs = newArr[0];
+				newFilterNdef ?? {newFilterNdef = filterArgs[0]};
+				("Ndef(" ++ newFilterNdef.cs ++ ").set" ++
+					filterArgs[1].cs.replace("[", "(").replace("]", ")")++ ";").radpost.interpret;
+				server.sync;
+				//set modulations
+				firstNdef = Ndef(newFilterNdef);
+				if(hasMod.notNil, {
+					hasMod.do{|item|
+						firstNdef = ModMap.map(firstNdef, item[1][0], item[1][1][1], item[1][1][2],
+							item[1][1][3], item[1][1][4], item[1][1][5], item[1][1][6], item[1][1][7],
+							item[1][1][8], item[1][1][9], item[1][1][10]);
+						if(item[0].cs.find("filter").notNil, {
+							firstNdef = Ndef(newFilterNdef);
+						});
+						server.sync;
+					};
+				});
+			}, {
+				"Wrong filter type for preset".warn;
 			});
-		}.fork;
+		});
+	}
+
+	loadFxPreset {arg filterNum, presetName;
+		var ndefKey, filterType, filterInfo;
+		this.fxWarn(filterNum, {|ndefKeym filterType|
+			{
+				this.loadRawFxPreset(ndefKey, presetName, filterType);
+				server.sync;
+				this.updateFxWin(ndefKey);
+			}.fork(AppClock);
+		});
+	}
+
+	loadFilterTrackPreset {
+
+	}
+
+	fxLags {arg filterNum, lag=nil;
+		this.fxWarn(filterNum, {|ndefKey, filterType|
+			this.filterLags(ndefKey, lag);
+		});
+	}
+
+	fxTrackLags {arg filterNdefKey, lag=nil;
+
 	}
 
 }
