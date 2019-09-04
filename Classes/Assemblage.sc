@@ -982,7 +982,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(thisFilterIndex.notNil, {
 
 				//get rid of modulation ndefs in filters
-				modArr = ModMap.modNodes;
+				this.ndefModClear(thisSlot);
+/*				modArr = ModMap.modNodes;
 				if(modArr.notNil, {
 					if(modArr.notEmpty, {
 						keyArr = this.convFilterTag(thisSlot);
@@ -991,7 +992,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							this.unmapFxTrack(keyArr[0], keyArr[1], keyArr[2], item, nil);
 						};
 					});
-				});
+				});*/
 
 				ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 				ndefCS.radpost.interpret;
@@ -3543,7 +3544,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	fxTrackWarn {arg trackType, trackNum, trackSlot, action;
+	fxTrackWarn {arg trackType, trackNum, trackSlot, action, post=true;
 		var ndefKey;
 		ndefKey = (\filter ++ trackType.asString.capitalise ++
 			"_" ++ trackNum ++ "_" ++ trackSlot).asSymbol;
@@ -3551,10 +3552,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(filters.flop[0].includes(ndefKey), {
 				action.(ndefKey);
 			}, {
+				if(post, {
 				"No filter matches specified track and slot numbers".warn;
+				});
 			});
 		}, {
+			if(post, {
 			"No filters are active".warn;
+			});
 		});
 	}
 
@@ -3775,7 +3780,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value=0;
+	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value=0, post=true;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			if(modArg.notNil, {
 				{
@@ -3784,7 +3789,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
 			});
-		});
+		}, post: post);
 	}
 
 	unmapSend {arg trackType, trackNum, sendSlot, value=0;
@@ -3904,7 +3909,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		^[thisKey, rawWrite];
 	}
 
-	writeFxPreset {arg filterKey, presetName;
+	prepareWriteFxPreset {arg filterKey;
 		var presetArr, extraArgs, hasMod, newArr, dataArr;
 		presetArr = this.rawFxPreset(filterKey);
 		presetArr[1].do{|item, index|
@@ -3923,6 +3928,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			item[1][1][3] = newArr.flop[1][newArr.flop[0].indexOf(item[1][1][0])];
 		};
 		dataArr = [presetArr[0], newArr, hasMod];
+		^dataArr;
+	}
+
+	writeFxPreset {arg filterKey, presetName;
+		var dataArr;
+		dataArr = this.prepareWriteFxPreset(filterKey);
 		PresetFile.write(\filter, presetName, dataArr);
 	}
 
@@ -3936,6 +3947,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	loadRawFxPreset {arg newFilterNdef, presetName, filterType=\pch;
 		var dataArr, newArr, hasMod, filterArgs, firstNdef;
+		//remove mods if active at the moment...
+		this.ndefModClear(newFilterNdef);
+		server.sync;
 		dataArr = PresetFile.read(\filter, presetName);
 		if(dataArr.notNil, {
 			if(dataArr[0] == filterType, {
@@ -3949,12 +3963,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				firstNdef = Ndef(newFilterNdef);
 				if(hasMod.notNil, {
 					hasMod.do{|item|
-						firstNdef = ModMap.map(firstNdef, item[1][0], item[1][1][1], item[1][1][2],
-							item[1][1][3], item[1][1][4], item[1][1][5], item[1][1][6], item[1][1][7],
-							item[1][1][8], item[1][1][9], item[1][1][10]);
 						if(item[0].cs.find("filter").notNil, {
 							firstNdef = Ndef(newFilterNdef);
 						});
+						firstNdef = ModMap.map(firstNdef, item[1][0], item[1][1][1], item[1][1][2],
+							item[1][1][3], item[1][1][4], item[1][1][5], item[1][1][6], item[1][1][7],
+							item[1][1][8], item[1][1][9], item[1][1][10]);
 						server.sync;
 					};
 				});
@@ -3998,6 +4012,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			this.filterLags(ndefKey, lag);
 		});
+	}
+
+	ndefModClear {arg ndefKey;
+		var modArr, keyArr, activeMods;
+		{
+			modArr = ModMap.modNodes;
+			if(modArr.notNil, {
+				if(modArr.notEmpty, {
+					keyArr = this.convFilterTag(ndefKey);
+					activeMods = ModMap.modNodes.select({|item| item[1].key == ndefKey });
+					if(activeMods.notNil, {
+						activeMods.flop[2].do{|item|
+							this.unmapFxTrack(keyArr[0], keyArr[1], keyArr[2], item, nil, false);
+						};
+						server.sync;
+						ModMap.clearLooseMods;
+					});
+				});
+			});
+		}.fork;
 	}
 
 }

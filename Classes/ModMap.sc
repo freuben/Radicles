@@ -7,7 +7,7 @@ ModMap : Radicles {
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
-				(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost.interpret;
+		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost.interpret;
 		modNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
 			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
 			modNodes.remove(item);
@@ -142,6 +142,24 @@ ModMap : Radicles {
 			}),
 			(newNdef ++ ".set(" ++ arr[4] ++ ", " ++ "Ndef(" ++ arr[0] ++ "));";)
 		]
+	}
+
+	*clearLooseMods {var unmap;
+		{
+			unmap = [true];
+			while ({unmap.includes(true);}, {
+				unmap = [];
+				this.modNodes.do{|item|
+					if(item[1].source.isNil, {
+						this.unmap(item[0], item[2], nil);
+						unmap = unmap.add(true);
+					}, {
+						unmap = unmap.add(false);
+					});
+					server.sync;
+				};
+			});
+		}.fork;
 	}
 
 }
