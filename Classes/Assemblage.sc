@@ -1188,7 +1188,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var tagString, tagIndex;
 		tagString = "filter" ++ type.asString.capitalise ++ "_" ++ arg1 ++ "_" ++ arg2;
 		tagString = tagString.asSymbol;
+		if(filters.notNil, {
 		tagIndex = filters.flop[0].indexOf(tagString);
+		});
 		if(tagIndex.notNil, {
 			^filters.flop[0][tagIndex]
 		}, {
@@ -2804,8 +2806,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
-		data, remove=false, action, insert=false, refreshUI=true;
-		var refreshFunc;
+		data, remove=false, action, refreshUI=true;
+		var refreshFunc, insert=false;
 		refreshFunc = {
 			if(mixerWin.notNil, {
 				if(mixerWin.visible.notNil, {
@@ -2818,6 +2820,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		if(remove, {
 			this.removeFilter(trackType, num, slot, {refreshFunc.(); action.();} );
 		}, {
+			if(this.findFilterTag(trackType, num, slot).isNil, {
+				insert = false;
+			}, {
+				insert = true;
+			});
 			this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
 				{refreshFunc.()}.defer;
 				action.();
