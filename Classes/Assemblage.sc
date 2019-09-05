@@ -205,7 +205,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}
 	}
 
-	autoRoute {arg trackInfo, replace=false;
+	autoRoute {arg trackInfo, action={};
 		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
 		{
 			newArr = trackInfo.reverse;
@@ -228,7 +228,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				});
 				intArr = intArr.add(ndefCS);
 			};
-			intArr.reverse.do{|item| item.radpost.interpret; server.sync }; }.fork;
+			intArr.reverse.do{|item| item.radpost.interpret; server.sync };
+			action.();
+		}.fork;
 	}
 
 	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
@@ -829,11 +831,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs, buffer, data, action;
+	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs, buffer, data, action, insert=false;
 		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
 		setTag, filterIndex, startNdefs, filterSpecs, trackTags, convString, routArr1,
-		replaceString, cond, bufIndex, bufFunc, ndefNumChan, ndefSpace;
-
+		replaceString, cond, bufIndex, bufFunc, ndefNumChan, ndefSpace, routInd;
 		//still some work to do with buffer alloc
 		{
 			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ num ++ "_" ++ slot).asSymbol;
@@ -855,12 +856,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				bufFunc = {
 				};
 			});
-
 			ndefArr = this.getThisTrack(type, num);
-
 			ndefSpace = ndefArr.last;
 			ndefArr = ndefArr.copyRange(0, ndefArr.size-2);
-
 			ndefNumChan = Ndef(ndefArr[0][0]).numChannels;
 			startNdefs = {
 				ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefNumChan ++ ");";
@@ -879,7 +877,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			filterInfo = [filterTag, SynthFile.read(\filter, filter);];
 			filterSpecs = [filterTag, SpecFile.read(\filter, filter, false)];
 			cond = Condition(false);
-			cond.test = false;
 			if(data.notNil, {
 				if(data[0] == \convrev, {
 					convString = filterInfo[1].cs;
@@ -897,41 +894,31 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				cond.test = true;
 				cond.signal;
 			});
-
 			cond.wait;
-
 			if(ndefArr.size > 2, {
 				arr1 = [ndefArr[0], ndefArr.last];
 				arr2 = ndefArr.copyRange(1, ndefArr.size-2);
 				arr3 = arr2.flop[0];
-
 				if(arr3.includes(filterTag), {
 					arr2[arr3.indexOf(filterTag)] = filterInfo;
 					filterIndex = filters.flop[0].indexOf(filterTag);
 					filters[filterIndex] = [filterTag, filter];
 				}, {
-
 					arr2 = arr2.add(filterInfo);
 					arr2.sort({arg a, b; a[0] <= b[0] });
-
 					filters = filters.add([filterTag, filter]);
 					filters.sort({arg a, b; a[0] <= b[0] });
 				});
-
 				arr1.insert(1, arr2);
 				arrSize = (arr1.flat.size/2);
 				arr1 = arr1.reshape(arrSize.asInteger, 2)
-
 			}, {
-
 				filters = filters.add([filterTag, filter]);
 				filters.sort({arg a, b; a[0] <= b[0] });
-
 				arr1 = ndefArr;
 				arr2 = filterInfo;
 				arr1.insert(1, arr2);
 			});
-
 			if(extraArgs.notNil, {
 				extraArgs.pairsDo{|it1, it2|
 					Ndef(filterTag).set(it1, it2);
@@ -942,10 +929,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			}, {
 				setTag = (type ++ num).asSymbol;
 			});
-
 			routArr1 = arr1;
 			arr1 = arr1 ++ [ndefSpace];
-
 			setArr = this.findTrackArr(setTag);
 			tracks[setArr[0]] = arr1;
 			masterNdefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
@@ -957,8 +942,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					filterSpecs;
 				});
 			};
-
-			this.autoRoute(routArr1, true);
+			if(insert, {
+				routInd = routArr1.flop[0].indexOf(filterTag);
+								("Ndef(" ++ routArr1[routInd][0].cs ++ ", " ++
+				routArr1[1][1].filterFunc(Ndef(routArr1[routInd-1][0])).cs
+					++ ");").radpost.interpret;
+			}, {
+			cond.test = false;
+			this.autoRoute(routArr1, {cond.test = true; cond.signal; });
+			cond.wait;
+			});
 			server.sync;
 			bufFunc.();
 			server.sync;
@@ -2811,12 +2804,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
-		data, remove=false, action;
+		data, remove=false, action, insert=false, refreshUI=true;
 		var refreshFunc;
 		refreshFunc = {
 			if(mixerWin.notNil, {
 				if(mixerWin.visible.notNil, {
+					if(refreshUI, {
 					this.refreshMixGUI;
+					});
 				});
 			});
 		};
@@ -2826,8 +2821,38 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
 				{refreshFunc.()}.defer;
 				action.();
-			});
+			}, insert);
 		});
+	}
+
+	setFxs {	arg settingsArr;
+		var cond, refreshUI, refreshFunc;
+		refreshFunc = {
+			if(mixerWin.notNil, {
+				if(mixerWin.visible.notNil, {
+					if(refreshUI, {
+					this.refreshMixGUI;
+					});
+				});
+			});
+		};
+		cond = Condition.new;
+		{
+		settingsArr.do{|item, index|
+				 cond.test = false;
+				if(item.isNil, {
+					this.removeFilter(	item[0], item[1], item[2], {
+
+					});
+				}, {
+				this.filter(item[0], item[1], item[2], item[3], item[4], item[5], item[6], {
+				cond.test = true; cond.signal;
+			});
+				});
+			cond.wait;
+		};
+			{refreshFunc.();}.defer;
+		}.fork;
 	}
 
 	getMixTrackIndex {arg trackType=\track, num=1;
@@ -3987,9 +4012,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	loadRawFilterPreset {arg newFilterNdef, dataArr, filterType;
 		var newArr, hasMod, filterArgs, firstNdef;
-		//remove mods if active at the moment...
-		this.ndefModClear(newFilterNdef);
-		server.sync;
 		if(dataArr.notNil, {
 			if(dataArr[0] == filterType, {
 				newArr = dataArr[1];
@@ -4019,6 +4041,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	loadRawFxPreset {arg newFilterNdef, presetName, filterType=\pch;
 		var dataArr;
+		//remove mods if active at the moment...
+		this.ndefModClear(newFilterNdef);
+		server.sync;
 		dataArr = PresetFile.read(\filter, presetName);
 		this.loadRawFilterPreset(newFilterNdef, dataArr, filterType);
 	}
