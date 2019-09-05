@@ -983,16 +983,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 				//get rid of modulation ndefs in filters
 				this.ndefModClear(thisSlot);
-/*				modArr = ModMap.modNodes;
-				if(modArr.notNil, {
-					if(modArr.notEmpty, {
-						keyArr = this.convFilterTag(thisSlot);
-						activeMods = ModMap.modNodes.select({|item| item[1].key == thisSlot });
-						activeMods.flop[2].do{|item|
-							this.unmapFxTrack(keyArr[0], keyArr[1], keyArr[2], item, nil);
-						};
-					});
-				});*/
 
 				ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 				ndefCS.radpost.interpret;
@@ -2821,7 +2811,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
-		data, remove=false;
+		data, remove=false, action;
 		var refreshFunc;
 		refreshFunc = {
 			if(mixerWin.notNil, {
@@ -2831,10 +2821,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 		if(remove, {
-			this.removeFilter(trackType, num, slot, {refreshFunc.()} );
+			this.removeFilter(trackType, num, slot, {refreshFunc.(); action.();} );
 		}, {
 			this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
 				{refreshFunc.()}.defer;
+				action.();
 			});
 		});
 	}
@@ -3513,10 +3504,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	updateFxWin {arg ndefKey;
-		var convTag;
+		var convTag, getWin;
 		if(filtersWindow.notNil, {
 			if(filtersWindow.notEmpty, {
-				filtersWindow.detect({|item, index| item.name.find(ndefKey.asString).notNil }).close;
+				getWin = filtersWindow.detect({|item, index|
+					item.name.find(ndefKey.asString).notNil });
+				if(getWin.notNil, {
+					getWin.close;
+				});
 				server.sync;
 				convTag = this.convFilterTag(ndefKey);
 				this.filterGUI(convTag[0], convTag[1], convTag[2]);
@@ -3553,13 +3548,35 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				action.(ndefKey);
 			}, {
 				if(post, {
-				"No filter matches specified track and slot numbers".warn;
+					"No filter matches specified track and slot numbers".warn;
 				});
 			});
 		}, {
 			if(post, {
-			"No filters are active".warn;
+				"No filters are active".warn;
 			});
+		});
+	}
+
+	prepArrArg {arg fxArg, ndefKey, type=\set, value;
+		var newArr1, newArr2, thisArg;
+		if(fxArg.isArray, {
+			if(fxArg.rank == 2, {fxArg = fxArg.flat});
+			if(fxArg.select({|item| item.isSymbol }).isEmpty, {
+				newArr1 = fxArg.reshape((fxArg.size/2).asInt,2);
+				newArr2 = newArr1.flop[0].collect{|item| Ndef(ndefKey).controlKeys[item-1] };
+				thisArg = [newArr2, newArr1.flop[1]].flop.flat;
+				("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
+					thisArg.cs.replace("[", "").replace("]", "") ++
+					");").radpostcont.interpret;
+			}, {
+				("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
+					fxArg.cs.replace("[", "").replace("]", "") ++
+					");").radpostcont.interpret;
+			});
+		}, {
+			("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
+				fxArg.cs ++ ", " ++ value.cs ++ ");").radpostcont.interpret;
 		});
 	}
 
@@ -3580,6 +3597,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					}, {
 						("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
 							value.cs ++ ");").radpostcont.interpret;
+						this.prepArrArg(fxArg, ndefKey, \set, value);
 					});
 					server.sync;
 					this.updateFxWin(ndefKey);
@@ -3590,8 +3608,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	setFxArgTrack {arg trackType, trackNum, trackSlot, fxArg, value;
-		var ndefKey, thisArg, index;
+	setFxArgTrack {arg trackType, trackNum, trackSlot, fxArg, value, update=true;
+		var ndefKey, thisArg, index, newArr1, newArr2;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			if(fxArg.notNil, {
 				{
@@ -3605,11 +3623,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
-						("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
-							value.cs ++ ");").radpostcont.interpret;
+						this.prepArrArg(fxArg, ndefKey, \set, value);
 					});
 					server.sync;
-					this.updateFxWin(ndefKey);
+					if(update, {
+						this.updateFxWin(ndefKey);
+					});
 				}.fork(AppClock);
 			}, {
 				Ndef(ndefKey).controlKeys.postln;
@@ -3632,8 +3651,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
-						("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ fxArg.cs ++ ", " ++
-							value.cs ++ ");").radpost.interpret;
+						this.prepArrArg(fxArg, ndefKey, \lag, value);
 					});
 					server.sync;
 					this.updateFxWin(ndefKey);
@@ -3659,8 +3677,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
-						("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ fxArg.cs ++ ", " ++
-							value.cs ++ ");").radpost.interpret;
+						this.prepArrArg(fxArg, ndefKey, \lag, value);
 					});
 					server.sync;
 					this.updateFxWin(ndefKey);
@@ -3934,7 +3951,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	writeFxPreset {arg filterKey, presetName;
 		var dataArr;
 		dataArr = this.prepareWriteFxPreset(filterKey);
-		PresetFile.write(\filter, presetName, dataArr);
+		if(presetName.notNil, {
+			PresetFile.write(\filter, presetName, dataArr);
+		});
+	}
+
+	writeTrackPreset {arg trackType=\track, trackNum=1, presetName;
+		var dataArr, labelStr, filterKeyArr;
+		labelStr = ("filter" ++ trackType.asString.capitalise ++ "_" ++ trackNum);
+		filterKeyArr = filters.flop[0].select{|item| item.cs.find(labelStr).notNil };
+		filterKeyArr.do{|item|
+			dataArr = dataArr.add(this.prepareWriteFxPreset(item));
+		};
+		if(presetName.notNil, {
+			dataArr.postln;
+			PresetFile.write(\track, presetName, [trackType, dataArr]);
+		});
 	}
 
 	listFxPresets {arg filterType=\pch;
@@ -3945,12 +3977,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	loadRawFxPreset {arg newFilterNdef, presetName, filterType=\pch;
-		var dataArr, newArr, hasMod, filterArgs, firstNdef;
+	listTrackPresets {arg trackType=\track;
+		if(trackType.isNil, {
+			PresetFile.post(\track);
+		}, {
+			PresetFile.readAll(\track).select{|item| item[1][0] == trackType }.flop[0].cs.postln;
+		});
+	}
+
+	loadRawFilterPreset {arg newFilterNdef, dataArr, filterType;
+		var newArr, hasMod, filterArgs, firstNdef;
 		//remove mods if active at the moment...
 		this.ndefModClear(newFilterNdef);
 		server.sync;
-		dataArr = PresetFile.read(\filter, presetName);
 		if(dataArr.notNil, {
 			if(dataArr[0] == filterType, {
 				newArr = dataArr[1];
@@ -3976,6 +4015,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				"Wrong filter type for preset".warn;
 			});
 		});
+	}
+
+	loadRawFxPreset {arg newFilterNdef, presetName, filterType=\pch;
+		var dataArr;
+		dataArr = PresetFile.read(\filter, presetName);
+		this.loadRawFilterPreset(newFilterNdef, dataArr, filterType);
 	}
 
 	loadFxPreset {arg filterNum, presetName;
