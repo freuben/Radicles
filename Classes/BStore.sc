@@ -142,8 +142,10 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		}.fork;
 	}
 
-	*remove {arg type, format, settings;
-		var bstoreIDs, bstoreIndex, bstores, thisBStore, freeBufArr;
+	*remove {arg type, format, settings, action;
+		var bstoreIDs, bstoreIndex, bstores, thisBStore, freeBufArr, cond;
+		{
+		cond = Condition(false);
 		bstoreIDs = this.bstoreIDs;
 		bstores = this.bstores;
 		if(type == \alloc, {
@@ -153,11 +155,14 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		});
 		if(bstoreIndex.notNil, {
 			thisBStore = bstores[bstoreIndex];
-
 			case
 			{ [\play, \alloc, \cue, \ir].includes(type)} {
-				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore));
-				this.removeAt(bstoreIndex);
+				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore), {
+						cond.test = true; cond.signal;
+					});
+					this.removeAt(bstoreIndex);
+					cond.wait;
+					action.();
 			}
 			{type == \sampler} {
 				thisBStore.do{|item|
@@ -165,10 +170,15 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 						freeBufArr = freeBufArr.add(BufferSystem.bufferArray.indexOf(item));
 					});
 				};
-				BufferSystem.freeAtAll(freeBufArr.sort);
-				this.removeAt(bstoreIndex);
+				BufferSystem.freeAtAll(freeBufArr.sort, {
+						cond.test = true; cond.signal;
+					});
+					this.removeAt(bstoreIndex);
+					cond.wait;
+					action.();
 			}
 		});
+	}.fork;
 	}
 
 	*removeID {arg ids;

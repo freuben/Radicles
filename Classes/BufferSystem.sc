@@ -554,15 +554,27 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 		});
 	}
 
-	*freeAt {arg index;
+	*freeAt {arg index, action;
+		var freeFunc;
 		if(bufferArray.notNil, {
 			if(bufferArray.isEmpty.not, {
 				if(bufferArray[index].notNil, {
-					(globVarArray[index] ++ ".free;").radpost.interpret;
+					freeFunc = 		{
+						(globVarArray[index] ++ ".free;").radpost.interpret;
 					(globVarArray[index] ++ " = nil").interpret;
 					bufferArray.removeAt(index);
 					globVarArray.removeAt(index);
 					tags.removeAt(index);
+					};
+					if(action.isNil, {
+						freeFunc.();
+					}, {
+					{
+						freeFunc.();
+						server.sync;
+						action.();
+					}.fork;
+					});
 				}, {
 					"Index not found".warn;
 				});
@@ -574,9 +586,12 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 		});
 	}
 
-	*freeAtAll {arg indexArr;
+	*freeAtAll {arg indexArr, action;
 		var count=0;
-		indexArr.do{|index| this.freeAt(index - count); count = count + 1};
+		{
+		indexArr.do{|index| this.freeAt(index - count); server.sync; count = count + 1};
+			action.();
+		}.fork;
 	}
 
 	*free {arg tag;
