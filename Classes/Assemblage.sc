@@ -3988,7 +3988,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	prepareWriteFxPreset {arg filterKey;
-		var presetArr, extraArgs, hasMod, newArr, dataArr, bufData, dataData;
+		var presetArr, extraArgs, hasMod, newArr, dataArr, bufData, dataData, trackArrInd;
 		presetArr = this.rawFxPreset(filterKey);
 		presetArr[1].do{|item, index|
 			item[1].do{|it|
@@ -4000,17 +4000,23 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		} };
 		if(trackBufferArr.notNil, {
 			if(trackBufferArr.notEmpty, {
-				bufData = trackBufferArr.flop[1][trackBufferArr.flop[0].indexOf(filterKey)];
+				trackArrInd = trackBufferArr.flop[0].indexOf(filterKey);
+				if(trackArrInd.notNil, {
+				bufData = trackBufferArr.flop[1][trackArrInd];
+				});
 			});
 		});
 		if(trackDataArr.notNil, {
 			if(trackDataArr.notEmpty, {
-				dataData = trackDataArr.flop[1][trackDataArr.flop[0].indexOf(filterKey)];
+				trackArrInd = trackDataArr.flop[0].indexOf(filterKey);
+				if(trackArrInd.notNil, {
+				dataData = trackDataArr.flop[1][trackArrInd];
+				});
 			});
 		});
 		presetArr[1].flop[0].do{|item|
 			newArr = newArr.add( [item, extraArgs.flop[1].atAll(
-				extraArgs.flop[0].indicesOfEqual(item)).flat;, bufData, dataData] );
+				extraArgs.flop[0].indicesOfEqual(item)).flat, bufData, dataData] );
 		};
 		hasMod.do{|item|
 			item[1][1][3] = newArr.flop[1][newArr.flop[0].indexOf(item[1][1][0])];
