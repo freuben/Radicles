@@ -968,7 +968,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
-	removeFilter {arg type=\track, num= 1, slot=1, action;
+	removeFilter {arg type=\track, num= 1, slot=1, action, actionBuf;
 		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd, thisFilterTag, thisFilterIndex,
 		keyArr, activeMods, modArr, cond, cond2;
 		this.globFadeTime;
@@ -1009,7 +1009,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 									cond.wait;
 									server.sync;
 								};
-								action.();
+								actionBuf.();
 								filterBuff.removeAt(bufArrInd);
 							});
 						});
@@ -1024,13 +1024,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					});
 					cond2.wait;
 					server.sync;
-					if(filterBuff.notNil, {
+					/*if(filterBuff.notNil, {
 						if(filterBuff.isEmpty, {
 							action.();
 						});
-					}, {
+					}, {*/
 						action.();
-					});
+					/*});*/
 				}.fork(AppClock);
 			}, {
 				"Filter slot not found".warn;
@@ -2835,7 +2835,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
-		data, remove=false, action;
+		data, remove=false, action, actionBuf;
 		var refreshFunc, insert, newFilterNdef;
 		refreshFunc = {
 			if(mixerWin.notNil, {
@@ -2845,7 +2845,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			});
 		};
 		if(remove, {
-			this.removeFilter(trackType, num, slot, {refreshFunc.(); action.();} );
+			this.removeFilter(trackType, num, slot, {refreshFunc.(); action.();}, {actionBuf.()} );
 		}, {
 			/*newFilterNdef = this.argToFilterTag(trackType, num, slot);
 			this.ndefModClear(newFilterNdef);*/
@@ -4093,23 +4093,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				hasMod = dataArr[2];
 				filterArgs = newArr[0];
 				newFilterNdef ?? {newFilterNdef = filterArgs[0]};
-				filterArgs.postln;
-				filterArgs[3].postln;
-				if(filterArgs[3].isNil, {
+				if([filterArgs[2], filterArgs[3]].detect({|item| item.notNil }).isNil, {
 					("Ndef(" ++ newFilterNdef.cs ++ ").set" ++
 						filterArgs[1].cs.replace("[", "(").replace("]", ")")++ ";").radpost.interpret;
 					server.sync;
 				}, {
 					tagArr = this.convFilterTag(newFilterNdef);
 					cond = Condition(false);
-					this.removeFilter(tagArr[0], tagArr[1], tagArr[2], action: {
+					this.removeFilter(tagArr[0], tagArr[1], tagArr[2], actionBuf: {
 						cond.test = true; cond.signal;
 					});
 					cond.wait;
 					server.sync;
 					cond.test = false;
 					[tagArr[0], tagArr[1], tagArr[2], filterType, filterArgs[1], filterArgs[3]].postln;
-					this.setFx(tagArr[0], tagArr[1], tagArr[2], filterType, filterArgs[1], data: filterArgs[3], action: {
+					this.setFx(tagArr[0], tagArr[1], tagArr[2], filterType, filterArgs[1], filterArgs[2],
+						filterArgs[3], action: {
 						cond.test = true; cond.signal;
 					});
 					cond.wait;
