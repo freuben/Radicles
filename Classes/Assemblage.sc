@@ -968,8 +968,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		var cond, bufArrInd;
 		cond = Condition(false);
 		{
-						server.sync;
-				fadeTime.wait;
+			server.sync;
+			fadeTime.wait;
 			if(filterBuff.notNil, {
 				if(filterBuff.notEmpty, {
 					bufArrInd = filterBuff.flop[0].indexOf(thisSlot);
@@ -1003,27 +1003,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			thisFilterIndex = thisTrack.flop[0].indexOf(thisSlot);
 			if(thisFilterIndex.notNil, {
 				{
-				this.ndefModClear(thisSlot);
-				ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
-				ndefCS.radpost.interpret;
+					this.ndefModClear(thisSlot);
+					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
+					ndefCS.radpost.interpret;
 
-				thisTrack.removeAt(thisFilterIndex);
-				if(type == \master, {num=""});
-				setArr = this.findTrackArr((type ++ num).asSymbol);
-				masterNdefs[setArr[0]].removeAt(thisFilterIndex);
-				specs[setArr[0]].removeAt(thisFilterIndex);
+					thisTrack.removeAt(thisFilterIndex);
+					if(type == \master, {num=""});
+					setArr = this.findTrackArr((type ++ num).asSymbol);
+					masterNdefs[setArr[0]].removeAt(thisFilterIndex);
+					specs[setArr[0]].removeAt(thisFilterIndex);
 
-				this.removeBufFromFilter(thisSlot, actionBuf);
-				filters = filters.reject({|item| item[0] == thisSlot });
-				trackDataArr = trackDataArr.reject({|item| item[0] == thisSlot });
-				trackBufferArr = trackBufferArr.reject({|item| item[0] == thisSlot });
-				cond = Condition(false);
+					this.removeBufFromFilter(thisSlot, actionBuf);
+					filters = filters.reject({|item| item[0] == thisSlot });
+					trackDataArr = trackDataArr.reject({|item| item[0] == thisSlot });
+					trackBufferArr = trackBufferArr.reject({|item| item[0] == thisSlot });
+					cond = Condition(false);
 
 					this.autoRoute(thisTrack, {
 						cond.test = true; cond.signal;
 					});
 					cond.wait;
-/*					server.sync;*/
+					/*					server.sync;*/
 					action.();
 				}.fork(AppClock);
 			}, {
@@ -1069,9 +1069,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 						});
 					});
 					if(bufBool.not, {
-					action.();
+						action.();
 						if(refresh, {
-						{this.refreshFunc;}.defer;
+							{this.refreshFunc;}.defer;
 						});
 					});
 				}.fork;
@@ -1085,9 +1085,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					};
 					if(bufBool, {
 						condBuf.wait;
-					action.();
+						action.();
 						if(refresh, {
-						{this.refreshFunc;}.defer;
+							{this.refreshFunc;}.defer;
 						});
 					});
 				}.fork;
@@ -2865,10 +2865,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 	refreshFunc {
 		if(mixerWin.notNil, {
-				if(mixerWin.visible.notNil, {
-					this.refreshMixGUI;
-				});
+			if(mixerWin.visible.notNil, {
+				this.refreshMixGUI;
 			});
+		});
 	}
 
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
@@ -3768,6 +3768,30 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
+	setFxArgs {arg arr;
+			arr.do{|item|
+				this.setFxArg(item[0], item[1]);
+			};
+	}
+
+	setFxArgTracks {arg arr;
+			arr.do{|item|
+				this.setFxArgTrack(item[0], item[1], item[2], item[3]);
+			};
+	}
+
+	lagFxArgs {arg arr;
+			arr.do{|item|
+				this.lagFxArg(item[0], item[1]);
+			};
+	}
+
+	lagFxArgTracks {arg arr;
+			arr.do{|item|
+				this.lagFxArgTrack(item[0], item[1], item[2], item[3]);
+			};
+	}
+
 	modFx {arg filterNum, modArg, modType, extraArgs,
 		func, mul=1, add=0, min, val, warp, lag, thisSpec;
 		var typeKey, ndefKey;
@@ -3834,7 +3858,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					mul, add, min, val, warp, lag, thisSpec);
 				modSendArr = modSendArr.add([trackType, trackNum, sendSlot, modNdef]);
 				server.sync;
-			this.refreshFunc;
+				this.refreshFunc;
 			}.fork(AppClock);
 		}, {
 			"Track and slot numers don't match active send".warn;
@@ -4165,6 +4189,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
+	loadFxPresets {arg arr;
+		arr.do{|item|
+			this.loadFxPreset(item[0], item[1]);
+		};
+	}
+
+	loadFxTrackPresets {arg arr;
+		arr.do{|item|
+			this.loadFxTrackPreset(item[0], item[1], item[2], item[3]);
+		}
+	}
+
 	loadTrackPresets {arg trackType, trackNum, presetName;
 		var dataArr, fxSettings, modSettings, cond, newFilterNdef, bufData, dataData;
 		{
@@ -4218,6 +4254,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			this.filterLags(ndefKey, lag);
 		});
 	}
+
+	fxsLags {arg arr;
+		arr.do{|item|
+			this.fxLags(item[0], item[1]);
+		}
+	}
+
+	fxTracksLags {arg arr;
+		arr.do{|item|
+			this.fxTrackLags(item[0], item[1], item[2], item[3]);
+		};
+	}
+
 
 	ndefModClear {arg ndefKey;
 		var modArr, keyArr, activeMods;
