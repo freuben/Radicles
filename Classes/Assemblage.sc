@@ -206,7 +206,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}
 	}
 
-	autoRoute {arg trackInfo, action={};
+	autoRoute {arg trackInfo, action;
 		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
 		{
 			newArr = trackInfo.reverse;
@@ -234,7 +234,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
-	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action={};
+	autoAddTrack {arg type=\track, chanNum, spaceType, trackSynth, trackSpecs, action;
 		var trackInfo, insertInd;
 		{
 			if(soloStates.notNil, {
@@ -255,11 +255,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			server.sync;
 			this.inputMaster;
 			server.sync;
-			if(mixerWin.notNil, {
-				if(mixerWin.notClosed, {
-					{this.refreshMixGUI;}.defer;
-				});
-			});
+			{this.refreshFunc}.defer;
 			server.sync;
 			action.();
 		}.fork;
@@ -968,69 +964,67 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		}.fork;
 	}
 
+	removeBufFromFilter {arg thisSlot, actionBuf;
+		var cond, bufArrInd;
+		cond = Condition(false);
+		{
+						server.sync;
+				fadeTime.wait;
+			if(filterBuff.notNil, {
+				if(filterBuff.notEmpty, {
+					bufArrInd = filterBuff.flop[0].indexOf(thisSlot);
+					if(bufArrInd.notNil, {
+						filterBuff.flop[1][bufArrInd].do{|item|
+							BStore.remove(item[0], item[1], item[2], {
+								cond.test = true; cond.signal;
+							});
+							cond.wait;
+						};
+						actionBuf.();
+						filterBuff.removeAt(bufArrInd);
+					});
+				}, {
+					actionBuf.();
+				});
+			}, {
+				actionBuf.();
+			});
+		}.fork;
+	}
+
 	removeFilter {arg type=\track, num= 1, slot=1, action, actionBuf;
-		var thisTrack, thisSlot, ndefCS, setArr, bufArrInd, thisFilterTag, thisFilterIndex,
-		keyArr, activeMods, modArr, cond, cond2;
+		var thisTrack, thisSlot, ndefCS, setArr, thisFilterTag, thisFilterIndex,
+		keyArr, activeMods, modArr, cond;
 		this.globFadeTime;
-
 		thisTrack = this.getThisTrack(type, num);
-
 		if(thisTrack.size > 2, {
-
 			thisFilterTag = this.findFilterTag(type, num, slot);
 			thisSlot = this.findFilterTag(type, num, slot);
 			thisFilterIndex = thisTrack.flop[0].indexOf(thisSlot);
-
 			if(thisFilterIndex.notNil, {
-
-				//get rid of modulation ndefs in filters
+				{
 				this.ndefModClear(thisSlot);
-
 				ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 				ndefCS.radpost.interpret;
+
 				thisTrack.removeAt(thisFilterIndex);
 				if(type == \master, {num=""});
 				setArr = this.findTrackArr((type ++ num).asSymbol);
 				masterNdefs[setArr[0]].removeAt(thisFilterIndex);
 				specs[setArr[0]].removeAt(thisFilterIndex);
-				cond = Condition(false);
-				cond2 = Condition(false);
-				{
-					server.sync;
-					fadeTime.wait;
-					if(filterBuff.notNil, {
-						if(filterBuff.notEmpty, {
-							bufArrInd = filterBuff.flop[0].indexOf(thisSlot);
-							if(bufArrInd.notNil, {
-								filterBuff.flop[1][bufArrInd].do{|item|
-									BStore.remove(item[0], item[1], item[2], {
-										cond.test = true; cond.signal;
-									});
-									cond.wait;
-									server.sync;
-								};
-								actionBuf.();
-								filterBuff.removeAt(bufArrInd);
-							});
-						});
-					});
-				}.fork;
+
+				this.removeBufFromFilter(thisSlot, actionBuf);
 				filters = filters.reject({|item| item[0] == thisSlot });
 				trackDataArr = trackDataArr.reject({|item| item[0] == thisSlot });
 				trackBufferArr = trackBufferArr.reject({|item| item[0] == thisSlot });
-				{
+				cond = Condition(false);
+
 					this.autoRoute(thisTrack, {
-						cond2.test = true; cond2.signal;
+						cond.test = true; cond.signal;
 					});
-					cond2.wait;
-					server.sync;
-					/*if(filterBuff.notNil, {
-						if(filterBuff.isEmpty, {
-							action.();
-						});
-					}, {*/
-						action.();
-					/*});*/
+					cond.wait;
+/*					server.sync;*/
+					action.();
 				}.fork(AppClock);
 			}, {
 				"Filter slot not found".warn;
@@ -1040,34 +1034,69 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	removeTrackFilters {arg type=\track, num= 1, post=true, clear=false;
-		var thisTrack, thisSlot, ndefCS, arr1, arr2, setArr;
+	removeTrackFilters {arg type=\track, num= 1, post=true, clear=false, action, refresh=true;
+		var thisTrack, thisSlot, ndefCS, arr1, arr2, setArr, cond, condBuf, bufBool=false;
 		thisTrack = this.getThisTrack(type, num);
 		if(thisTrack.notNil, {
 			thisTrack = thisTrack.copyRange(0, thisTrack.size-2);
 			if(thisTrack.size > 2, {
 				arr1 = [thisTrack[0], thisTrack.last];
 				arr2 = thisTrack.copyRange(1, thisTrack.size-2);
-				arr2.do{|item|
-					this.ndefModClear(item[0]);
-
-					ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
-					ndefCS.radpost.interpret;
-					thisTrack.remove(item);
-					if(type == \master, {num=""});
-					setArr = this.findTrackArr((type ++ num).asSymbol);
-					masterNdefs[setArr[0]].remove(Ndef(item[0]));
-					specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
-					tracks[setArr[0]] = tracks[setArr[0]].reject({|it| it[0] == item[0] });
-					filters = filters.reject({|it| it[0] == item[0] });
-				};
-				if(clear.not, {
-					this.autoRoute(arr1);
+				if(filterBuff.notNil, {
+					bufBool = filterBuff.flop[0].detect({|item|
+						item.cs.find(type.asString.capitalise ++ "_" ++ num).notNil; }).notNil;
 				});
+				{
+					arr2.do{|item|
+						this.ndefModClear(item[0]);
+						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
+						ndefCS.radpost.interpret;
+						thisTrack.remove(item);
+						if(type == \master, {num=""});
+						setArr = this.findTrackArr((type ++ num).asSymbol);
+						masterNdefs[setArr[0]].remove(Ndef(item[0]));
+						specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
+						tracks[setArr[0]] = tracks[setArr[0]].reject({|it| it[0] == item[0] });
+						filters = filters.reject({|it| it[0] == item[0] });
+						trackDataArr = trackDataArr.reject({|it| it[0] == item[0] });
+						trackBufferArr = trackBufferArr.reject({|it| it[0] == item[0] });
+						server.sync;
+					};
+					if(clear.not, {
+						cond = Condition.new;
+						this.autoRoute(arr1, {
+							cond.test=true; cond.signal;
+						});
+					});
+					if(bufBool.not, {
+					action.();
+						if(refresh, {
+						{this.refreshFunc;}.defer;
+						});
+					});
+				}.fork;
+				{
+					condBuf = Condition.new;
+					arr2.flop[0].do{|item|
+						condBuf.test = false;
+						this.removeBufFromFilter(item, {
+							condBuf.test = true; condBuf.signal;
+						});
+					};
+					if(bufBool, {
+						condBuf.wait;
+					action.();
+						if(refresh, {
+						{this.refreshFunc;}.defer;
+						});
+					});
+				}.fork;
+
 			}, {
 				if(post, {
 					"No filters to remove".warn;
 				});
+				action.();
 			});
 		});
 	}
@@ -1090,7 +1119,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					}, {
 						num = item.last[0].asString.last.asString.interpret;
 					});
-					this.removeTrackFilters(type, num, false);
+					this.removeTrackFilters(type, num, false, refresh: false);
 				};
 			}, {
 				if(post, {
@@ -2834,18 +2863,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		SynthFile.read(\filter).sort.radpost;
 	}
 
-	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
-		data, remove=false, action, actionBuf;
-		var refreshFunc, insert, newFilterNdef;
-		refreshFunc = {
-			if(mixerWin.notNil, {
+	refreshFunc {
+		if(mixerWin.notNil, {
 				if(mixerWin.visible.notNil, {
 					this.refreshMixGUI;
 				});
 			});
-		};
+	}
+
+	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
+		data, remove=false, action, actionBuf;
+		var insert, newFilterNdef;
 		if(remove, {
-			this.removeFilter(trackType, num, slot, {refreshFunc.(); action.();}, {actionBuf.()} );
+			this.removeFilter(trackType, num, slot, {this.refreshFunc; action.();}, {actionBuf.()} );
 		}, {
 			/*newFilterNdef = this.argToFilterTag(trackType, num, slot);
 			this.ndefModClear(newFilterNdef);*/
@@ -2855,21 +2885,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				insert = true;
 			});
 			this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
-				{refreshFunc.()}.defer;
+				{this.refreshFunc}.defer;
 				action.();
 			}, insert);
 		});
 	}
 
-	setFxs {	arg settingsArr, action={};
-		var cond, refreshUI, refreshFunc, insert, newFilterNdef;
-		refreshFunc = {
-			if(mixerWin.notNil, {
-				if(mixerWin.visible.notNil, {
-					this.refreshMixGUI;
-				});
-			});
-		};
+	setFxs {	arg settingsArr, action;
+		var cond, refreshUI, insert, newFilterNdef;
 		cond = Condition.new;
 		{
 			settingsArr.do{|item, index|
@@ -2887,7 +2910,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 
 				cond.wait;
 			};
-			{refreshFunc.();}.defer;
+			{this.refreshFunc;}.defer;
 			action.();
 		}.fork;
 	}
@@ -3557,11 +3580,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			this.modFunc(ndefKey, modArg, modType, extraArgs, func,
 				mul, add, min, val, warp, lag, thisSpec);
 			server.sync;
-			if(mixerWin.notNil, {
-				if(mixerWin.visible.notNil, {
-					this.refreshMixGUI;
-				});
-			});
+			this.refreshFunc;
 		}.fork(AppClock);
 	}
 
@@ -3581,7 +3600,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	fxWarn {arg filterNum, action={};
+	fxWarn {arg filterNum, action;
 		var ndefKey, filterType, filterInfo;
 		if(filters.notNil, {
 			filterInfo = filters[filterNum-1];
@@ -3815,11 +3834,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					mul, add, min, val, warp, lag, thisSpec);
 				modSendArr = modSendArr.add([trackType, trackNum, sendSlot, modNdef]);
 				server.sync;
-				if(mixerWin.notNil, {
-					if(mixerWin.visible.notNil, {
-						this.refreshMixGUI;
-					});
-				});
+			this.refreshFunc;
 			}.fork(AppClock);
 		}, {
 			"Track and slot numers don't match active send".warn;
@@ -3838,11 +3853,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			ndefKey = ndefKey.asSymbol;
 			ModMap.unmap(Ndef(ndefKey), modArg, value);
 			server.sync;
-			if(mixerWin.notNil, {
-				if(mixerWin.visible.notNil, {
-					this.refreshMixGUI;
-				});
-			});
+			this.refreshFunc;
 		}.fork(AppClock);
 	}
 
@@ -3882,11 +3893,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					if(it == [trackType, trackNum, sendSlot], {modSendArr.removeAt(ind);});
 				};
 				server.sync;
-				if(mixerWin.notNil, {
-					if(mixerWin.visible.notNil, {
-						this.refreshMixGUI;
-					});
-				});
+				this.refreshFunc;
 			}.fork(AppClock);
 		}, {
 			"Track and slot numers don't match active send".warn;
@@ -4002,7 +4009,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(trackBufferArr.notEmpty, {
 				trackArrInd = trackBufferArr.flop[0].indexOf(filterKey);
 				if(trackArrInd.notNil, {
-				bufData = trackBufferArr.flop[1][trackArrInd];
+					bufData = trackBufferArr.flop[1][trackArrInd];
 				});
 			});
 		});
@@ -4010,7 +4017,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 			if(trackDataArr.notEmpty, {
 				trackArrInd = trackDataArr.flop[0].indexOf(filterKey);
 				if(trackArrInd.notNil, {
-				dataData = trackDataArr.flop[1][trackArrInd];
+					dataData = trackDataArr.flop[1][trackArrInd];
 				});
 			});
 		});
@@ -4073,7 +4080,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		});
 	}
 
-	modRawPreset {arg newFilterNdef, hasMod, action={};
+	modRawPreset {arg newFilterNdef, hasMod, action;
 		var firstNdef;
 		firstNdef = Ndef(newFilterNdef);
 		if(hasMod.notNil, {
@@ -4115,7 +4122,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 					[tagArr[0], tagArr[1], tagArr[2], filterType, filterArgs[1], filterArgs[3]].postln;
 					this.setFx(tagArr[0], tagArr[1], tagArr[2], filterType, filterArgs[1], filterArgs[2],
 						filterArgs[3], action: {
-						cond.test = true; cond.signal;
+							cond.test = true; cond.signal;
 					});
 					cond.wait;
 				});
@@ -4159,11 +4166,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	loadTrackPresets {arg trackType, trackNum, presetName;
-		var dataArr, fxSettings, modSettings, cond, newFilterNdef;
+		var dataArr, fxSettings, modSettings, cond, newFilterNdef, bufData, dataData;
 		{
-			this.removeTrackFilters(trackType, trackNum, false);
-			server.sync;
-			dataArr = PresetFile.read(trackType, presetName);
+			cond = Condition(false);
+
+			this.removeTrackFilters(trackType, trackNum, false, action: {
+				cond.test = true; cond.signal;
+			}, refresh: false);
+			cond.wait;
+
+			dataArr = PresetFile.read(\track, presetName);
 			dataArr[1].do{|item, index|
 				var slot, filterType, refresh, extraArgs, modArgs;
 				if(index == (dataArr[1].size-1), {
@@ -4174,20 +4186,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 				slot = this.convFilterTag(item[1][0][0]).last;
 				filterType = item[0];
 				extraArgs = item[1][0][1];
+				bufData = item[1][0][2];
+				dataData = item[1][0][3];
 				modArgs = item[2];
-				fxSettings = fxSettings.add([trackType, trackNum, slot, filterType, extraArgs]);
+				fxSettings = fxSettings.add([trackType, trackNum, slot, filterType, extraArgs, bufData, dataData]);
 				newFilterNdef = this.argToFilterTag(trackType, trackNum, slot);
 				modSettings = modSettings.add([newFilterNdef, modArgs]);
 				this.ndefModClear(newFilterNdef);
 			};
+			fxSettings.postln;
 			this.setFxs(fxSettings, {
-				cond = Condition(false);
+				cond.test = false;
 				modSettings.do{|item|
 					server.sync;
 					this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
 					cond.wait;
 				}
 			});
+
 		}.fork
 	}
 
