@@ -3769,27 +3769,27 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 	}
 
 	setFxArgs {arg arr;
-			arr.do{|item|
-				this.setFxArg(item[0], item[1]);
-			};
+		arr.do{|item|
+			this.setFxArg(item[0], item[1]);
+		};
 	}
 
 	setFxArgTracks {arg arr;
-			arr.do{|item|
-				this.setFxArgTrack(item[0], item[1], item[2], item[3]);
-			};
+		arr.do{|item|
+			this.setFxArgTrack(item[0], item[1], item[2], item[3]);
+		};
 	}
 
 	lagFxArgs {arg arr;
-			arr.do{|item|
-				this.lagFxArg(item[0], item[1]);
-			};
+		arr.do{|item|
+			this.lagFxArg(item[0], item[1]);
+		};
 	}
 
 	lagFxArgTracks {arg arr;
-			arr.do{|item|
-				this.lagFxArgTrack(item[0], item[1], item[2], item[3]);
-			};
+		arr.do{|item|
+			this.lagFxArgTrack(item[0], item[1], item[2], item[3]);
+		};
 	}
 
 	modFx {arg filterNum, modArg, modType, extraArgs,
@@ -4267,6 +4267,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs, <livetracks,
 		};
 	}
 
+	fxsTrackLags {arg trackType, trackNum, lag=nil;
+		var arr;
+		if(filters.notNil, {
+			if(filters.notEmpty, {
+				filters.flop[0].do({|item, index|
+					if(item.cs.find((trackType.asString.capitalise ++ "_" ++ trackNum)).notNil, {
+						arr = 	arr.add((index+1));
+					});
+				});
+				if(arr.notNil, {
+				this.fxsLags([arr, lag!arr.size].flop);
+				});
+			});
+		});
+	}
 
 	ndefModClear {arg ndefKey;
 		var modArr, keyArr, activeMods;
