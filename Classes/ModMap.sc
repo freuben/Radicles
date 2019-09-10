@@ -151,7 +151,8 @@ ModMap : Radicles {
 		]
 	}
 
-	*clearLooseMods {var unmap;
+	*clearLooseMods {arg action;
+		var unmap, resultArr;
 		{
 			unmap = [true];
 			while ({unmap.includes(true);}, {
@@ -159,6 +160,7 @@ ModMap : Radicles {
 				this.modNodes.do{|item|
 					if(item[1].source.isNil, {
 						this.unmap(item[0], item[2], nil);
+						resultArr = resultArr.add(item[0]);
 						unmap = unmap.add(true);
 					}, {
 						unmap = unmap.add(false);
@@ -166,6 +168,7 @@ ModMap : Radicles {
 					server.sync;
 				};
 			});
+			action.(resultArr);
 		}.fork;
 	}
 

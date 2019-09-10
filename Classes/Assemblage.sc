@@ -295,20 +295,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 
-				server.sync;
-				this.garbage(fadeTime);
-
 				this.clearModTrackNdefs(trackType, trackNum);
 
 				tracks.remove(tracks.detect{|item| item.flat.includes(realTrack); });
 				specs.remove(specs.detect{|item| item.flat.includes(inTrack); });
-
+				masterNdefs.remove(masterNdefs.detect{|item|
+					item.flat.collect({|item| item.key}).includes(realTrack) };);
 				space.remove(space.detect{|item| item.flat.includes(spaceTrack);});
 				trackNames.remove(realTrack);
 				mixTrackNames.remove(realTrack);
 				mixTrackNdefs.remove(mixTrackNdefs.detect{|item| item == Ndef(realTrack)};);
-				masterNdefs.remove(masterNdefs.detect{|item|
-					item.flat.collect({|item| item.key}).includes(realTrack) });
 				outputSettings.removeAt(indexTrack);
 				soloStates.removeAt(indexTrack);
 				muteStates.removeAt(indexTrack);
@@ -1011,8 +1007,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					this.ndefModClear(thisSlot);
 					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 					ndefCS.radpost.interpret;
-					server.sync;
-					this.garbage(fadeTime);
+
 					thisTrack.removeAt(thisFilterIndex);
 					if(type == \master, {num=""});
 					setArr = this.findTrackArr((type ++ num).asSymbol);
@@ -1060,15 +1055,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						thisTrack.remove(item);
 						if(type == \master, {num=""});
 						setArr = this.findTrackArr((type ++ num).asSymbol);
-						server.sync;
-						this.garbage(fadeTime);
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));
 						specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
 						tracks[setArr[0]] = tracks[setArr[0]].reject({|it| it[0] == item[0] });
 						filters = filters.reject({|it| it[0] == item[0] });
 						trackDataArr = trackDataArr.reject({|it| it[0] == item[0] });
 						trackBufferArr = trackBufferArr.reject({|it| it[0] == item[0] });
-
+						server.sync;
 					};
 					if(clear.not, {
 						cond = Condition.new;
@@ -3463,12 +3456,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}.fork;
 	}
 
-	garbage {arg wait=0;
+	garbage {arg wait, extraArr;
 		var keys, envir;
 		keys = masterNdefs.flat.collect({|item| item.key });
-		keys = keys ++ ['masterOut', 'AssembladgeGUI'];
-		{wait.yield;
-			envir = Ndef.all[Server.default.asSymbol];
+		keys = keys ++ ['masterOut', 'AssembladgeGUI'] ++ extraArr;
+		envir = Ndef.all[server.asSymbol];
+		{
+			wait.yield;
 			keys.do{|item|
 				if(envir[item].source.isNil, {
 					envir.removeAt(item);
@@ -4396,8 +4390,31 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		trackCount=1; busCount=1; winRefresh=false;
 	}
 
-	resetNdefs {
-
+	clearNdefs {var modArr, keys, modNdefs, cond;
+		{
+			cond = Condition(false);
+			if(ModMap.modNodes.notNil, {
+				modArr = masterNdefs.flat.collect{|item|
+					ModMap.modNodes.flop[1].indicesOfEqual(item);
+				};
+				ModMap.modNodes.atAll(modArr.select({|item| item.notNil }).flat;).do{|item|
+					ModMap.unmap(item[0], item[2], nil);
+					modNdefs = modNdefs.add(item[0]);
+					server.sync;
+				};
+				ModMap.clearLooseMods({|item| cond.test = true; cond.signal;
+					(modNdefs = modNdefs ++ item) });
+				cond.wait;
+			});
+			keys = masterNdefs.flat.collect({|item| item.key });
+			keys = keys ++ ['masterOut', 'AssembladgeGUI'];
+			modNdefs = modNdefs.collect({|item| item.key });
+			keys.do({|item| ("Ndef(" ++ item.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
+				server.sync;
+			});
+			server.sync;
+			this.garbage(fadeTime, modNdefs);
+		}.fork;
 	}
 
 }
