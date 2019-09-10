@@ -3951,7 +3951,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			};
 			^[thisKey, rawWrite];
 		}, {
-			^rawWrite
+			^[ndefKey, rawWrite];
 		});
 
 	}
@@ -4315,7 +4315,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	mixControlKeyValues {
 		var dataArr, inPreset, trackPreset, spacePreset, hasMod, extraArgs, addFunc;
 		addFunc = {arg presetArr;
-			presetArr.do{|item, index|
+			presetArr[1].do{|item, index|
 				item[1].do{|it|
 					if(it[1][0].cs.find("mod").notNil, {
 						hasMod = hasMod.add([item[0], it]);
@@ -4332,6 +4332,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			inPreset = this.rawFxPreset(in, false);
 			trackPreset = this.rawFxPreset(item, false);
 			spacePreset = this.rawFxPreset(space, false);
+			/*prepareWriteFxPreset*/
 			addFunc.(inPreset);
 			addFunc.(trackPreset);
 			addFunc.(spacePreset);
