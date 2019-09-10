@@ -295,15 +295,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 
+				server.sync;
+				this.garbage(fadeTime);
+
 				this.clearModTrackNdefs(trackType, trackNum);
 
 				tracks.remove(tracks.detect{|item| item.flat.includes(realTrack); });
 				specs.remove(specs.detect{|item| item.flat.includes(inTrack); });
-				masterNdefs.remove(masterNdefs.detect{|item| item.flat.includes(Ndef(realTrack))};);
+
 				space.remove(space.detect{|item| item.flat.includes(spaceTrack);});
 				trackNames.remove(realTrack);
 				mixTrackNames.remove(realTrack);
 				mixTrackNdefs.remove(mixTrackNdefs.detect{|item| item == Ndef(realTrack)};);
+				masterNdefs.remove(masterNdefs.detect{|item|
+					item.flat.collect({|item| item.key}).includes(realTrack) });
 				outputSettings.removeAt(indexTrack);
 				soloStates.removeAt(indexTrack);
 				muteStates.removeAt(indexTrack);
@@ -1006,7 +1011,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					this.ndefModClear(thisSlot);
 					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 					ndefCS.radpost.interpret;
-
+					server.sync;
+					this.garbage(fadeTime);
 					thisTrack.removeAt(thisFilterIndex);
 					if(type == \master, {num=""});
 					setArr = this.findTrackArr((type ++ num).asSymbol);
@@ -1054,13 +1060,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						thisTrack.remove(item);
 						if(type == \master, {num=""});
 						setArr = this.findTrackArr((type ++ num).asSymbol);
+						server.sync;
+						this.garbage(fadeTime);
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));
 						specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
 						tracks[setArr[0]] = tracks[setArr[0]].reject({|it| it[0] == item[0] });
 						filters = filters.reject({|it| it[0] == item[0] });
 						trackDataArr = trackDataArr.reject({|it| it[0] == item[0] });
 						trackBufferArr = trackBufferArr.reject({|it| it[0] == item[0] });
-						server.sync;
+
 					};
 					if(clear.not, {
 						cond = Condition.new;
@@ -3455,8 +3463,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}.fork;
 	}
 
-	garbage {
-		Ndef.all[server.asSymbol].clean; //garbage collection
+	garbage {arg wait=0;
+		var keys, envir;
+		keys = masterNdefs.flat.collect({|item| item.key });
+		keys = keys ++ ['masterOut', 'AssembladgeGUI'];
+		{wait.yield;
+			envir = Ndef.all[Server.default.asSymbol];
+			keys.do{|item|
+				if(envir[item].source.isNil, {
+					envir.removeAt(item);
+				});
+			}; //garbage collection
+		}.fork;
 	}
 
 	modFunc {arg ndefKey, argIn, type, extraArgs, func,
@@ -4329,7 +4347,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(hasMod.notNil, {
 				if(hasMod.notEmpty, {
 					hasMod2 = hasMod2.add([hasMod[0][0], hasMod]);
-			hasMod = [];
+					hasMod = [];
 				});
 			});
 		};
@@ -4362,6 +4380,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		};
 		arr4 = arr3.collect{|item| arr[0].flop[1][item].flat }
 		^[arr2 ,arr4].flop;
+	}
+
+	resetVars {
+		tracks=nil;
+		tracks=nil; specs=nil; inputs=nil; space=nil; masterNdefs=nil; masterSynth=nil;
+		trackNames=nil; masterInput=nil; busArr=nil; filters=nil; filterBuff=nil; mixerWin=nil;
+		setVolSlider=nil; mixTrackNames=nil; systemChanNum=nil; mixTrackNdefs=nil;
+		basicFont=nil; sysChans=nil; sysPan=nil; setBusIns=nil; setKnobIns=nil; setPanKnob=nil;
+		outputSettings=nil; filtersWindow=nil; scrollPoint=nil; fxsNum=nil; soloStates=nil;
+		muteStates=nil; recStates=nil; recBStoreArr=nil; mastOutArr=nil; screenBounds=nil;
+		mastOutWin=nil; oiIns=nil; oiOuts=nil; recInputArr=nil; winDirRec=nil; muteButArr=nil;
+		recButArr=nil; soloButArr=nil; spaceButArr=nil; recordingButton=nil; recordingValBut=nil;
+		setOutputMenu=nil; setInputMenu=nil; modSendArr=nil; trackDataArr=nil; trackBufferArr=nil;
+		trackCount=1; busCount=1; winRefresh=false;
+	}
+
+	resetNdefs {
+
 	}
 
 }
