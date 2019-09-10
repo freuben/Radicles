@@ -4069,7 +4069,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		firstNdef = Ndef(newNdef);
 		if(hasMod.notNil, {
 			hasMod.do{|item|
-				firstNdef = Ndef(newNdef);
 				server.sync;
 				firstNdef = ModMap.map(firstNdef, item[1][0], item[1][1][1], item[1][1][2],
 					item[1][1][3], item[1][1][4], item[1][1][5], item[1][1][6], item[1][1][7],
@@ -4236,11 +4235,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				item[1].cs.replace("[", "(").replace("]", ")") ).radpost.interpret;
 			server.sync;
 			});
-			/*mixSettings[1].do{|item|
+			mixSettings[1].flop[1].do{|item|
 				cond.test = false;
-				this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
+				this.modRawPreset(item[0][0], item, {cond.test = true; cond.signal;});
 				cond.wait;
-			};*/
+			};
 			this.setFxs(fxSettings, {
 				cond.test = false;
 				modSettings.do{|item|
@@ -4313,7 +4312,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	mixControlKeyValues {
-		var dataArr, inPreset, trackPreset, spacePreset, hasMod, extraArgs, addFunc;
+		var dataArr, inPreset, trackPreset, spacePreset, hasMod, extraArgs,
+		addFunc, newArr, hasMod2, hasModFunc;
 		addFunc = {arg presetArr;
 			presetArr[1].do{|item, index|
 				item[1].do{|it|
@@ -4325,6 +4325,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}
 			};
 		};
+		hasModFunc = {
+			if(hasMod.notNil, {
+				if(hasMod.notEmpty, {
+					hasMod2 = hasMod2.add([hasMod[0][0], hasMod]);
+			hasMod = [];
+				});
+			});
+		};
 		mixTrackNames.do({|item|
 			var in, space;
 			in = ("in" ++ item.asString.capitalise).asSymbol;
@@ -4334,11 +4342,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			spacePreset = this.rawFxPreset(space, false);
 			/*prepareWriteFxPreset*/
 			addFunc.(inPreset);
+			hasModFunc.();
 			addFunc.(trackPreset);
+			hasModFunc.();
 			addFunc.(spacePreset);
+			hasModFunc.();
 
 		});
-		dataArr = [extraArgs, hasMod];
+		dataArr = [extraArgs, hasMod2];
 		^dataArr;
 	}
 
