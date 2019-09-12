@@ -2325,7 +2325,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			outputMenuArr[index].value = value;
 		};
 
-		Ndef("AssembladgeGUI", {
+		Ndef('AssemblageGUI', {
 			var in, imp;
 			in = sysChans.collect({|item, index|
 				if(item == 1, {
@@ -2337,7 +2337,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			});
 			in = in.flat;
 			imp = Impulse.ar(10);
-			SendReply.ar(imp, "/AssembladgeGUI",
+			SendReply.ar(imp, '/AssemblageGUI',
 				[
 					RunningSum.ar(in.squared, server.sampleRate / 10),
 					Peak.ar(in, Delay1.ar(imp)).lag(0, 3)
@@ -2346,7 +2346,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 
 		oscDefFunc = {
-			OSCdef(\AssembladgeGUI, {|msg, time, addr, recvPort|
+			OSCdef(\AssemblageGUI, {|msg, time, addr, recvPort|
 				var dBLow, array, numRMSSampsRecip, numRMSSamps, peakVal, peakAmp, peakArr;
 				numRMSSamps = server.sampleRate / updateFreq;
 				numRMSSampsRecip = 1 / numRMSSamps;
@@ -2403,7 +2403,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						if(error.isKindOf(PrimitiveFailedError).not) { error.throw }
 					};
 				}.defer;
-			}, \AssembladgeGUI);
+			}, \AssemblageGUI);
 		};
 
 		oscDefFunc.();
@@ -2412,8 +2412,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			/*levelTextArr = nil;*/
 			/*mixerWin = nil;*/
 
-			OSCdef(\AssembladgeGUI).free;
-			Ndef("AssembladgeGUI").clear;
+			OSCdef(\AssemblageGUI).free;
+			{
+				nodeTime.yield;
+				if(mixerWin.visible.isNil, {
+					Ndef('AssemblageGUI').clear;
+				});
+			}.fork(AppClock);
 
 			levelTextArr = nil;
 
@@ -3459,7 +3464,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	garbage {arg wait, extraArr;
 		var keys, envir;
 		keys = masterNdefs.flat.collect({|item| item.key });
-		keys = keys ++ ['masterOut', 'AssembladgeGUI'] ++ extraArr;
+		keys = keys ++ ['masterOut', 'AssemblageGUI'] ++ extraArr;
 		envir = Ndef.all[server.asSymbol];
 		{
 			wait.yield;
@@ -4352,7 +4357,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			inPreset = this.rawFxPreset(in, false);
 			trackPreset = this.rawFxPreset(item, false);
 			spacePreset = this.rawFxPreset(space, false);
-			/*prepareWriteFxPreset*/
 			addFunc.(inPreset);
 			hasModFunc.();
 			addFunc.(trackPreset);
@@ -4377,7 +4381,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	resetVars {
-		tracks=nil;
 		tracks=nil; specs=nil; inputs=nil; space=nil; masterNdefs=nil; masterSynth=nil;
 		trackNames=nil; masterInput=nil; busArr=nil; filters=nil; filterBuff=nil; mixerWin=nil;
 		setVolSlider=nil; mixTrackNames=nil; systemChanNum=nil; mixTrackNdefs=nil;
@@ -4390,8 +4393,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		trackCount=1; busCount=1; winRefresh=false;
 	}
 
-	clearNdefs {var modArr, keys, modNdefs, cond;
+	clearNdefs {var modArr, keys, modNdefs, cond, busNdefs;
 		{
+			if(mixerWin.notNil, {
+				{mixerWin.close}.defer;
+			});
 			cond = Condition(false);
 			if(ModMap.modNodes.notNil, {
 				modArr = masterNdefs.flat.collect{|item|
@@ -4407,13 +4413,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				cond.wait;
 			});
 			keys = masterNdefs.flat.collect({|item| item.key });
-			keys = keys ++ ['masterOut', 'AssembladgeGUI'];
+			keys = keys ++ ['masterOut', 'AssemblageGUI'];
+			if(busArr.notNil, {
+				busArr.flop[0].do{|item|
+					if(item.notNil, {
+						busNdefs = busNdefs.add(item);
+					});
+				};
+				keys = keys ++ busNdefs;
+			});
 			modNdefs = modNdefs.collect({|item| item.key });
 			keys.do({|item| ("Ndef(" ++ item.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 				server.sync;
 			});
 			server.sync;
-			this.garbage(fadeTime, modNdefs);
+			nodeTime.yield;
+			this.garbage(fadeTime, (modNdefs ++ busNdefs).postln);
 		}.fork;
 	}
 
