@@ -950,22 +950,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					routArr1[routInd][1].filterFunc(Ndef(routArr1[routInd-1][0])).cs
 					++ ");").radpost.interpret;
 				if(extraArgs.notNil, {
-				("Ndef(" ++ routArr1[routInd][0].cs ++ ").set" ++
-					extraArgs.cs.replace("[", "(").replace("]", ");")).radpost.interpret;
+					("Ndef(" ++ routArr1[routInd][0].cs ++ ").set" ++
+						extraArgs.cs.replace("[", "(").replace("]", ");")).radpost.interpret;
 				}, {
 					[routArr1[routInd][1].argNames, routArr1[routInd][1].defaultArgs]
 					.flop.do{|item|
 						Ndef(filterTag).set(item[0], item[1]);
-				};
+					};
 				});
 			}, {
 				"insert is false".postln;
 				if(extraArgs.notNil, {
-				extraArgs.postln;
 					extraArgs.pairsDo{|it1, it2|
-					Ndef(filterTag).set(it1, it2);
-				};
-			});
+						Ndef(filterTag).set(it1, it2);
+					};
+				});
 				cond.test = false;
 				this.autoRoute(routArr1.postln, {cond.test = true; cond.signal; });
 				cond.wait;
@@ -2843,24 +2842,39 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	setFxs {	arg settingsArr, action;
-		var cond, refreshUI, insert, newFilterNdef;
+		var cond, refreshUI, insert, newFilterNdef, thisTracks, arr, thisInfo, dest;
 		cond = Condition.new;
 		{
 			settingsArr.do{|item, index|
 				cond.test = false;
 				/*newFilterNdef = this.argToFilterTag(item[0], item[1], item[2]);
 				this.ndefModClear(newFilterNdef);*/
-				if(this.findFilterTag(item[0], item[1], item[2]).isNil, {
-					insert = true;
+				/*if(this.findFilterTag(item[0], item[1], item[2]).isNil, {
+				insert = false;
 				}, {
-					insert = false;
-				});
+				insert = true;
+				});*/
 				this.filter(item[0], item[1], item[2], item[3], item[4], item[5], item[6], {
 					cond.test = true; cond.signal;
-				}, insert);
+				}, true);
 
 				cond.wait;
 			};
+
+			thisTracks = settingsArr.collect({|item|
+				if(item[0] == \master, {item[0]}, {
+				(item[0] ++ item[1]).asSymbol;
+				});
+				}).rejectSame;
+			thisTracks.do{|item|
+				arr = this.findTrackArr(item);
+				thisInfo = tracks[arr[0]][arr[1]];
+				dest = tracks[arr[0]][arr[1]-1][0];
+				("Ndef(" ++ item.cs ++ ", " ++ thisInfo[1].filterFunc(Ndef(dest ) ).cs
+					++ ");").radpost.interpret;
+				server.sync;
+			};
+
 			{this.refreshFunc;}.defer;
 			action.();
 		}.fork;
