@@ -925,11 +925,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				arr2 = filterInfo;
 				arr1.insert(1, arr2);
 			});
-			if(extraArgs.notNil, {
-				extraArgs.pairsDo{|it1, it2|
-					Ndef(filterTag).set(it1, it2);
-				};
-			});
 			if(type == \master, {
 				setTag = type.asSymbol;
 			}, {
@@ -949,13 +944,30 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 			};
 			if(insert, {
+				"insert is true".postln;
 				routInd = routArr1.flop[0].indexOf(filterTag);
 				("Ndef(" ++ routArr1[routInd][0].cs ++ ", " ++
-					routArr1[1][1].filterFunc(Ndef(routArr1[routInd-1][0])).cs
+					routArr1[routInd][1].filterFunc(Ndef(routArr1[routInd-1][0])).cs
 					++ ");").radpost.interpret;
+				if(extraArgs.notNil, {
+				("Ndef(" ++ routArr1[routInd][0].cs ++ ").set" ++
+					extraArgs.cs.replace("[", "(").replace("]", ");")).radpost.interpret;
+				}, {
+					[routArr1[routInd][1].argNames, routArr1[routInd][1].defaultArgs]
+					.flop.do{|item|
+						Ndef(filterTag).set(item[0], item[1]);
+				};
+				});
 			}, {
+				"insert is false".postln;
+				if(extraArgs.notNil, {
+				extraArgs.postln;
+					extraArgs.pairsDo{|it1, it2|
+					Ndef(filterTag).set(it1, it2);
+				};
+			});
 				cond.test = false;
-				this.autoRoute(routArr1, {cond.test = true; cond.signal; });
+				this.autoRoute(routArr1.postln, {cond.test = true; cond.signal; });
 				cond.wait;
 			});
 			server.sync;
@@ -2839,9 +2851,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				/*newFilterNdef = this.argToFilterTag(item[0], item[1], item[2]);
 				this.ndefModClear(newFilterNdef);*/
 				if(this.findFilterTag(item[0], item[1], item[2]).isNil, {
-					insert = false;
-				}, {
 					insert = true;
+				}, {
+					insert = false;
 				});
 				this.filter(item[0], item[1], item[2], item[3], item[4], item[5], item[6], {
 					cond.test = true; cond.signal;
@@ -4249,7 +4261,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			};
 			extraArgs = this.prepMixSettings(mixSettings);
 			extraArgs.do({|item| ("Ndef(" ++ item[0].cs ++ ").set" ++
-				item[1].cs.replace("[", "(").replace("]", ")") ).radpost.interpret;
+				item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
 			server.sync;
 			});
 			mixSettings[1].flop[1].do{|item|
