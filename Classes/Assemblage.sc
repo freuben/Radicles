@@ -2847,20 +2847,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{
 			settingsArr.do{|item, index|
 				cond.test = false;
-				/*newFilterNdef = this.argToFilterTag(item[0], item[1], item[2]);
-				this.ndefModClear(newFilterNdef);*/
-				/*if(this.findFilterTag(item[0], item[1], item[2]).isNil, {
-				insert = false;
-				}, {
-				insert = true;
-				});*/
 				this.filter(item[0], item[1], item[2], item[3], item[4], item[5], item[6], {
 					cond.test = true; cond.signal;
 				}, true);
-
 				cond.wait;
 			};
-
 			thisTracks = settingsArr.collect({|item|
 				if(item[0] == \master, {item[0]}, {
 				(item[0] ++ item[1]).asSymbol;
@@ -2874,7 +2865,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					++ ");").radpost.interpret;
 				server.sync;
 			};
-
 			{this.refreshFunc;}.defer;
 			action.();
 		}.fork;
