@@ -1,5 +1,5 @@
 CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
-	var <>recordHistory, startTime, historyPath, <keyFunc;
+	var <>recordHistory, startTime, historyPath, <keyFunc, <callwin;
 
 	*new {arg window, bounds, font, qpalette, settings,
 		postWhere, postType, postWin;
@@ -22,6 +22,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 			("You must provide a window as first argument, " ++
 				"otherwise use the .window class method").warn;
 		}, {
+			callwin = window;
 			text = TextView(window.asView, bounds).focus(true);
 			text.font_(font).palette_(qpalette);
 

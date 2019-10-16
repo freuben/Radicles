@@ -33,7 +33,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					chanTrack = chanNum[0];
 					chanBus = chanNum[1];
+					if(chanNum[2].isNil, {
+						chanMaster = 2;
+					}, {
 					chanMaster = chanNum[2];
+					});
 					systemChanNum = chanNum[2];
 				});
 				if(spaceType.isArray.not, {
@@ -195,9 +199,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	addTracks {arg number, type=\track, chanNum, spaceType, trackSynth;
 		var thisChan, thisDest;
+		if(chanNum.isArray, {
+		number.do{|index|
+				this.addTrack(type, chanNum[index], spaceType, trackSynth);
+		};
+		}, {
 		number.do{
 			this.addTrack(type, chanNum, spaceType, trackSynth);
 		};
+		});
 	}
 
 	addAlltracks {arg arr;
@@ -4446,6 +4456,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			nodeTime.yield;
 			this.garbage(fadeTime, (modNdefs ++ busNdefs).postln);
 		}.fork;
+	}
+
+	nomixer {
+		if(mixerWin.notNil, {
+				{mixerWin.close}.defer;
+			});
 	}
 
 }
