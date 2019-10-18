@@ -9,10 +9,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	}
 
 	initCallWindow {arg window, bounds, font, qpalette, settings,
-		postWhere=\ide, postType=\ln, postWin, postBool, storeSize=10;
-
-		~callWindowGlobVar = this;
-		varString = "~callWindowGlobVar";
+		postWhere=\ide, postType=\ln, postWin, postBool, storeSize=10, startup=true;
 
 		storeArr=[]!storeSize;
 		lang=\cmd;
@@ -59,7 +56,9 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			};
 
 			text.keyDownAction_({arg text, key, modifiers, keycode;
-				keyFunc.(keycode);
+				if(lang == \cmd, {
+					keyFunc.(keycode);
+				});
 				if(recordHistory, {
 					SystemClock.sched(0.0, {arg time;
 						this.writeHistory(\keyDownAction, time, key);
@@ -74,6 +73,9 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 			if(settings.notNil, {
 				this.addSettings(settings.asString);
+			});
+			if(startup, {
+				this.loadStartUp;
 			});
 		});
 	}
@@ -91,7 +93,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 	callFunc {arg string, postWin, postWhere=\both, postType=\ln, postBool=true, callIndex;
 		var inputArr, typeArr, index, selectArr, selectItem, funcArr;
-		var arrString, arrInterpret, finalArr;
+		var arrString, arrInterpret, finalArr, callInd;
 		if(lang != \sc, {
 			if((string.contains("(").and(string.contains(")")))
 				.or(string.contains("{").and(string.contains("}"))), {
@@ -175,16 +177,33 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 				/*"this a string containing brackets".postln;*/
 				if(string.contains("(").and(string.contains(")")), {
 					/*"round brackets".postln;*/
+					string.last.cs.postln;
+					if(string.last == $), {
+						callInd = 0;
+					}, {
+						"not base".postln;
+						callInd = string.last.asString.interpret;
+						inputArr = inputArr.copyRange(0, inputArr.size-3);
+						inputArr.postln;
+					});
+
 					if(inputArr.contains("->"), {
-					/*	"association string".postln;*/
-						this.association(inputArr.asString);
+						/*	"association string".postln;*/
+						this.association(inputArr, callInd);
+					}, {
+						("~callWindowGlobVar.add" ++ inputArr).radpost.interpret;
 					});
 				}, {
 					"function brackets".postln;
 				});
 			});
 		}, {
-			string.interpret;
+			if(string == "cmd", {
+				[\cmd].radpost;
+				lang = \cmd;
+			}, {
+				string.interpret;
+			});
 		});
 	}
 
@@ -414,11 +433,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		cmd4B = cmd3B;
 		varSel.do{|item, index|
 			var concStr;
-			if(index == (varSel.size-1), {
-				concStr = (argSel[index] ++ " ++ " ++ "\"" ++ "\"" );
-			}, {
 				concStr =  (argSel[index] ++ " ++ " ++ "\"" ++ " "++ "\"" );
-			});
 			cmd4B[cmd4B.indexOfEqual(item)] = concStr;
 		};
 		cmd5B	= cmd4B.collect({|item| if(item.find("++").isNil, {
@@ -429,7 +444,9 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		});
 		cmd5B	= cmd5B.collect({|item, index|
 			if(cmd5B.size-1 == index, {
-				item.replace(" ++ " ++ "\"" ++ "\"" , "").replace(" ", "");
+				"replace".postln;
+				item.postln;
+				item.replace(" ++ " ++ "\"" ++ " " ++ "\"" , "").replace(" ", "");
 			}, {
 				(item ++ " ++ ");
 			});
@@ -437,14 +454,30 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		^[cmd3A, varArr, cmd5B];
 	}
 
-	association {arg cmd;
+	association {arg cmd, callIndex;
 		var assoArr, firstFunc;
 		assoArr = this.associationFunc(cmd);
 		firstFunc =	varString ++ ".add(" ++ assoArr[0][0].asSymbol.cs ++ ", " ++ assoArr[1].flop[0].cs
 		++ ", {arg" ++ assoArr[1].flop[1].asString.replace("[", "").replace(" ]", ";") ++ ($\n
 			++ varString ++ ".callFunc(" ++ assoArr[2].asString.replace("[", "(").replace("]", ")").replace(",", "")
-			++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : " ++ assoArr[1].flop[0] ++ "\");";
+			++ ", callIndex: " ++ callIndex ++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : "
+		++ assoArr[1].flop[0] ++ "\");";
 		firstFunc.radpost.interpret;
+	}
+
+	loadStartUp {
+		~callWindowGlobVar = this;
+		varString = "~callWindowGlobVar";
+		this.add(\sc, [\str], {arg str; lang = \sc;}, "switch to sclang");
+		(0..9).do{|dim|
+			storeIndex = dim;
+			(0..9).do{|index|
+				this.add(index.asSymbol, [\num], {|num|
+					storeIndex = num.asInt;
+				});
+			};
+		};
+		storeIndex = 0;
 	}
 
 }
