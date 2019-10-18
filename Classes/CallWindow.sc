@@ -1,6 +1,6 @@
 CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=true, <>rootDir;
 	var <>recordHistory, startTime, historyPath, <keyFunc, <callwin, <backgroundColor,
-	<>varString;
+	<>varString, <>replace=false;
 
 	*new {arg window, bounds, font, qpalette, settings,
 		postWhere, postType, postWin, postBool, storeSize;
@@ -181,12 +181,11 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 					if(string.last == $), {
 						callInd = 0;
 					}, {
-						"not base".postln;
+						/*"not base".postln;*/
 						callInd = string.last.asString.interpret;
 						inputArr = inputArr.copyRange(0, inputArr.size-3);
-						inputArr.postln;
+						/*inputArr.postln;*/
 					});
-
 					if(inputArr.contains("->"), {
 						/*	"association string".postln;*/
 						this.association(inputArr, callInd);
@@ -198,19 +197,13 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 				});
 			});
 		}, {
-			if(string == "cmd", {
-				[\cmd].radpost;
-				lang = \cmd;
-			}, {
 				string.interpret;
-			});
 		});
 	}
 
 	add {arg cmdID=\test, cmdTypes=[\str], function={"test".postln},
 		description="test command", replace=false;
 		var conflict;
-
 		if([\array, \number].includes(cmdID), {
 			this.add((cmdID ++ \ID).asSymbol, ([\str] ++ cmdTypes),
 				function, description, replace);
@@ -456,21 +449,24 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 	association {arg cmd, callIndex;
 		var assoArr, firstFunc;
+		callIndex ?? {callIndex = 0};
 		assoArr = this.associationFunc(cmd);
 		firstFunc =	varString ++ ".add(" ++ assoArr[0][0].asSymbol.cs ++ ", " ++ assoArr[1].flop[0].cs
 		++ ", {arg" ++ assoArr[1].flop[1].asString.replace("[", "").replace(" ]", ";") ++ ($\n
 			++ varString ++ ".callFunc(" ++ assoArr[2].asString.replace("[", "(").replace("]", ")").replace(",", "")
 			++ ", callIndex: " ++ callIndex ++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : "
-		++ assoArr[1].flop[0] ++ "\");";
+		++ assoArr[1].flop[0] ++ "\", replace: " ++ replace.cs ++ ");";
 		firstFunc.radpost.interpret;
 	}
 
 	loadStartUp {
 		~callWindowGlobVar = this;
 		varString = "~callWindowGlobVar";
-		this.add(\sc, [\str], {arg str; lang = \sc;}, "switch to sclang");
 		(0..9).do{|dim|
 			storeIndex = dim;
+			this.add(\sc, [\str], {arg str; lang = \sc;}, "switch to sclang");
+			this.add(\ls, [\str], {arg str; this.listSettings.radpost}, "post list settings");
+			this.add(\replace, [\str, \str], {arg str1, str2; replace = str2.asString.interpret}, "replace cmds");
 			(0..9).do{|index|
 				this.add(index.asSymbol, [\num], {|num|
 					storeIndex = num.asInt;
