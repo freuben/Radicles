@@ -2,7 +2,7 @@ Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
-	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField;
+	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>callWin;
 
 	*new {
 		colorCritical = Color.new255(211, 14, 14);
@@ -70,6 +70,12 @@ Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 			thisResult = thisSpec.unmap(unmapVal);
 		});
 		^thisResult;
+	}
+
+	*callWindow {arg name;
+		name ?? {name = "Call Window";
+		callWin = CallWindow.window(name);
+	}
 	}
 
 }

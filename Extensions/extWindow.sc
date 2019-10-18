@@ -33,7 +33,7 @@
 		^rect;
 	}
 
-	*win4BottomLeft {arg fullScreen, menuSpacer=40, winBorder=15;
+	*win4TopLeft {arg fullScreen, menuSpacer=40, winBorder=15;
 		var rect, halfHeight;
 		fullScreen ?? {fullScreen = this.screenBounds};
 		halfHeight = (fullScreen.height - menuSpacer) / 2;
@@ -41,7 +41,7 @@
 		^rect;
 	}
 
-	*win4TopLeft {arg fullScreen, menuSpacer=40, winBorder=15;
+	*win4BottomLeft {arg fullScreen, menuSpacer=40, winBorder=15;
 		var rect, halfHeight;
 		fullScreen ?? {fullScreen = this.screenBounds};
 		halfHeight = (fullScreen.height - menuSpacer) / 2;
@@ -49,7 +49,7 @@
 		^rect;
 	}
 
-	*win4BottomRight {arg fullScreen, menuSpacer=40, winBorder=15;
+	*win4TopRight {arg fullScreen, menuSpacer=40, winBorder=15;
 		var rect, halfHeight;
 		fullScreen ?? {fullScreen = this.screenBounds};
 		halfHeight = (fullScreen.height - menuSpacer) / 2;
@@ -57,7 +57,7 @@
 		^rect;
 	}
 
-		*win4TopRight {arg fullScreen, menuSpacer=40, winBorder=15;
+		*win4BottomRight {arg fullScreen, menuSpacer=40, winBorder=15;
 		var rect, halfHeight;
 		fullScreen ?? {fullScreen = this.screenBounds};
 		halfHeight = (fullScreen.height - menuSpacer) / 2;

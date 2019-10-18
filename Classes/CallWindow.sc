@@ -1,22 +1,22 @@
-CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
-	var <>recordHistory, startTime, historyPath, <keyFunc, <callwin;
+CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=true, <>rootDir;
+	var <>recordHistory, startTime, historyPath, <keyFunc, <callwin, <backgroundColor;
 
 	*new {arg window, bounds, font, qpalette, settings,
-		postWhere, postType, postWin;
+		postWhere, postType, postWin, postBool, storeSize;
 		^super.new.initCallWindow(window, bounds, font, qpalette,
-			settings, postWhere, postType, postWin);
+			settings, postWhere, postType, postWin, postBool, storeSize);
 	}
 
 	initCallWindow {arg window, bounds, font, qpalette, settings,
-		postWhere=\ide, postType=\ln, postWin;
+		postWhere=\ide, postType=\ln, postWin, postBool, storeSize=10;
 
-		storeArr=[];
+		storeArr=[]!storeSize;
 		lang=\cmd;
 		recordHistory = false;
 
 		bounds ?? {bounds = Window.win2Right};
 		font ?? {font=Font("Monaco", 12)};
-		qpalette ?? {qpalette = QPalette.dark};
+		qpalette ?? {qpalette = QPalette.dark; backgroundColor = Color.black};
 
 		if(window.isNil, {
 			("You must provide a window as first argument, " ++
@@ -24,8 +24,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 		}, {
 			callwin = window;
 			text = TextView(window.asView, bounds).focus(true);
-			text.font_(font).palette_(qpalette);
-
+			text.font_(font).palette_(qpalette).background_(backgroundColor);
 			keyFunc = {arg keycode, input=\keyboard;
 				var string;
 				case
@@ -37,14 +36,14 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 						string = text.currentLine;
 						text.addString($\r);
 					});
-					string.postln;
+					/*string.postln;*/
 					if(string != "", {
 						string.do({arg char, i;
 							if(char.ascii == 10, {
 								string = string.copyRange(0, string.size-2);
 							}); //if you get return in string, get rid of it
 						});
-						this.callFunc(string, postWin, postWhere, postType);
+						this.callFunc(string, postWin, postWhere, postType, postBool);
 					});
 				}
 				{keycode == 67} {
@@ -76,32 +75,41 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 	}
 
 	*window {arg name="Call Window", bounds, font, qpalette, settings,
-		postWhere, postType, postWin;
+		postWhere, postType, postWin, postBool, storeSize=10;
 		var window;
 
 		bounds ?? {bounds = Window.win2Right};
 
 		window = Window.new(name, bounds.asRect).front;
 		^this.new(window, Rect(0,0,bounds.width, bounds.height), font, qpalette,
-			settings, postWhere, postType, postWin);
+			settings, postWhere, postType, postWin, postBool, storeSize);
 	}
 
-	callFunc {arg string, postWin, postWhere=\both, postType=\ln;
+	callFunc {arg string, postWin, postWhere=\both, postType=\ln, postBool=true, callIndex;
 		var inputArr, typeArr, index, selectArr, selectItem, funcArr;
 		var arrString, arrInterpret, finalArr;
 
 		if(lang != \sc, {
 
+			if((string.contains("(").and(string.contains(")")))
+				.or(string.contains("{").and(string.contains("}"))), {
+				inputArr = string;
+			}, {
 			inputArr = string.split($ ); //split string by the space and convert as array
+		});
 
+			if(postBool, {
 			if(postWin.notNil, {
 				inputArr.postin(postWhere, postType, postWin);
 			}, {
 				inputArr.postln;
 			}); //post in any 'post' window
+			});
 
+			if(inputArr.isString.not, {
 			inputArr.do({|item|
-				if((item.isStringNumber).or(item.contains("-")).or((item.contains("["))
+				if((item.isStringNumber).or(item.contains("-"))
+					.or((item.contains("["))
 					.and(item.contains("]")))
 					.or((item.contains("{"))
 						.and(item.contains("}"))), {
@@ -128,39 +136,59 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 					{(item.contains("{")).and(item.contains("}"))} {
 						typeArr = typeArr.add(\func);
 						funcArr = funcArr.add(item.interpret);
-					}; //note: brackets
+					}
+					; //note: brackets
 
 				}, {
 					typeArr = typeArr.add(\str);
 					funcArr = funcArr.add(item.asSymbol);
 				});
 			});
+			});
 
+			if(funcArr.notNil, {
 			//look for commands
-			selectArr = storeArr.select({|item| item[0] == inputArr[0].asSymbol});
+			callIndex ?? {callIndex = storeIndex};
+			selectArr = storeArr[callIndex].select({|item| item[0] == inputArr[0].asSymbol});
 
 			if(selectArr.isEmpty, {
 				if((funcArr[0].isArray).or(funcArr[0].isNumber), {
 					case
 					{funcArr[0].isArray
 					} {
-						this.callFunc(("arrayID " ++ string), postWin, postWhere, postType);
+						this.callFunc(("arrayID " ++ string), postWin, postWhere, postType, postBool);
 					}
 					{funcArr[0].isNumber
 					} {
-						this.callFunc(("numberID " ++ string), postWin, postWhere, postType);
+						this.callFunc(("numberID " ++ string), postWin, postWhere, postType, postBool);
 					};
 				}, {
 					"Command not Found 1".warn;
 				});
 			}, {
-
 				selectItem = selectArr.select({|item| item[1] == typeArr}).unbubble;
-
 				if(selectItem.isNil, {
 					"Command not Found 2".warn;
 				}, {
 					selectItem[2].valueArray(funcArr);
+				});
+
+			});
+
+			}, {
+				"this a string containing brackets".postln;
+
+				if(string.contains("(").and(string.contains(")")), {
+								"round brackets".postln;
+				if(inputArr.contains("->"), {
+				typeArr = typeArr.add(\asso);
+					"association string".postln;
+					inputArr.postln;
+
+				});
+
+				}, {
+					"function brackets".postln;
 				});
 
 			});
@@ -181,18 +209,18 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 			if((cmdTypes.isArray).and(cmdID.asCompileString.contains("'"))
 				.and(function.isFunction).and(description.isString), {
 					if(replace, {
-						if(storeArr.select({|item| item.atAll([0,1]) == [cmdID, cmdTypes]}).isEmpty, {
+						if(storeArr[storeIndex].select({|item| item.atAll([0,1]) == [cmdID, cmdTypes]}).isEmpty, {
 							"Command doesn't exist - try without replacing".warn;
 						}, {
-							storeArr.do({|item, index|
+							storeArr[storeIndex].do({|item, index|
 								if(item.atAll([0,1]) == [cmdID, cmdTypes], {
-									storeArr[index] = [cmdID, cmdTypes, function, description];
+									storeArr[storeIndex][index] = [cmdID, cmdTypes, function, description];
 								});
 							});
 						});
 					}, {
-						if(storeArr.select({|item| item.atAll([0,1]) == [cmdID, cmdTypes]}).isEmpty, {
-							storeArr = storeArr.add([cmdID, cmdTypes, function, description]);
+						if(storeArr[storeIndex].select({|item| item.atAll([0,1]) == [cmdID, cmdTypes]}).isEmpty, {
+							storeArr[storeIndex] = storeArr[storeIndex].add([cmdID, cmdTypes, function, description]);
 						}, {
 							([cmdID, cmdTypes].asString ++
 								" - command already exists - remove old command to add new one").warn;
@@ -205,7 +233,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 	}
 
 	removeAt {arg index=0;
-		storeArr.removeAt(index);
+		storeArr[storeIndex].removeAt(index);
 	}
 
 	clearWindow {
@@ -259,7 +287,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 	stringArr {
 		var newArr;
 		newArr=[];
-		storeArr.do{|item|
+		storeArr[storeIndex].do{|item|
 			newArr = newArr.add([item[0], item[1], item[2].postString, item[3]])
 		};
 		^newArr;
@@ -360,6 +388,56 @@ CallWindow : Radicles {var <text, <>storeArr, <>lang, <>post=true, <>rootDir;
 
 	listHistoryFiles {
 		this.arrHistoryFiles.do{|item| item.postln};
+	}
+
+	associationFunc {arg cmdString;
+	var cmd2, cmd3A, cmd3B, varArr, secondInd, argSel, cmd4B, cmd5B, varSel;
+	cmd2 = cmdString.replace("(", "").replace(")","").replace("->", "|").split($|);
+	cmd3A = cmd2[1].split($ );
+	cmd3B = cmd2[0].split($ );
+	cmd3A = cmd3A.reject({|item| item == "" });
+	cmd3B = cmd3B.reject({|item| item == "" });
+	varArr = 	cmd3A.collect({|item|
+		if(item.find("$").notNil, {
+			case
+			{item.find("$n").notNil} {[\num, ("num" ++ item.replace("$n", ""))]}
+			{item.find("$s").notNil} {[\str, ("str" ++ item.replace("$s", ""))]}
+			{item.find("$a").notNil} {[\arr, ("arr" ++ item.replace("$a", ""))]}
+			{item.find("$f").notNil} {[\func, ("func" ++ item.replace("$f", ""))]};
+		}, {
+			case
+			{item.isNumber} {[\num, "num"]}
+			{item.isSymbol} {[\str, "str"]}
+			{item.isString} {[\str, "str"]}
+			{item.isArray} {[\arr, "arr"]}
+			{item.isFunction} {[\func, "func"]};
+		});
+	});
+	secondInd = [];
+	cmd3B.do{|item|
+		if(item.asString.find("$").notNil, {
+			secondInd = secondInd.add(cmd3A.indexOfEqual(item.asString););
+		});
+	};
+	varSel = cmd3A.atAll(secondInd);
+	argSel = varArr.flop[1].atAll(secondInd);
+	cmd4B = cmd3B;
+	varSel.do{|item, index|
+		var concStr;
+		if(index == (varSel.size-1), {
+			concStr = ("++ " ++ argSel[index]);
+		}, {
+			concStr =  ("++ " ++ argSel[index] ++ " ++ ");
+		});
+		cmd4B[cmd4B.indexOfEqual(item)] = concStr;
+	};
+	cmd5B	= cmd4B.collect({|item| if(item.find("++").isNil, {
+		("\"" ++ item ++ " \"");
+	}, {
+		item;
+	});
+	});
+	^[cmd3A, varArr, cmd5B];
 	}
 
 }
