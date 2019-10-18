@@ -1,5 +1,6 @@
 CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=true, <>rootDir;
-	var <>recordHistory, startTime, historyPath, <keyFunc, <callwin, <backgroundColor;
+	var <>recordHistory, startTime, historyPath, <keyFunc, <callwin, <backgroundColor,
+	<>varString;
 
 	*new {arg window, bounds, font, qpalette, settings,
 		postWhere, postType, postWin, postBool, storeSize;
@@ -9,6 +10,9 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 	initCallWindow {arg window, bounds, font, qpalette, settings,
 		postWhere=\ide, postType=\ln, postWin, postBool, storeSize=10;
+
+		~callWindowGlobVar = this;
+		varString = "~callWindowGlobVar";
 
 		storeArr=[]!storeSize;
 		lang=\cmd;
@@ -88,111 +92,97 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	callFunc {arg string, postWin, postWhere=\both, postType=\ln, postBool=true, callIndex;
 		var inputArr, typeArr, index, selectArr, selectItem, funcArr;
 		var arrString, arrInterpret, finalArr;
-
 		if(lang != \sc, {
-
 			if((string.contains("(").and(string.contains(")")))
 				.or(string.contains("{").and(string.contains("}"))), {
-				inputArr = string;
-			}, {
-			inputArr = string.split($ ); //split string by the space and convert as array
-		});
-
+					inputArr = string;
+				}, {
+					inputArr = string.split($ ); //split string by the space and convert as array
+			});
 			if(postBool, {
-			if(postWin.notNil, {
-				inputArr.postin(postWhere, postType, postWin);
-			}, {
-				inputArr.postln;
-			}); //post in any 'post' window
-			});
-
-			if(inputArr.isString.not, {
-			inputArr.do({|item|
-				if((item.isStringNumber).or(item.contains("-"))
-					.or((item.contains("["))
-					.and(item.contains("]")))
-					.or((item.contains("{"))
-						.and(item.contains("}"))), {
-					case
-					{item.isStringNumber} {
-						typeArr = typeArr.add(\num);
-						funcArr = funcArr.add(item.interpret);			}
-					{item.contains("-")} {
-						typeArr = typeArr.add(\dash);
-						arrString = nil;
-						arrString = item.replace("-", ",");
-						arrString = arrString.insert(0, "[");
-						arrString = arrString.insert(arrString.size, "]");
-						arrInterpret = nil;
-						arrInterpret = arrString.interpret;
-						finalArr = nil;
-						finalArr = Array.series(arrInterpret[1]-arrInterpret[0]+1, arrInterpret[0], 1);
-						funcArr = funcArr.add(finalArr);
-					}
-					{(item.contains("[")).and(item.contains("]"))} {
-						typeArr = typeArr.add(\arr);
-						funcArr = funcArr.add(item.interpret);
-					}
-					{(item.contains("{")).and(item.contains("}"))} {
-						typeArr = typeArr.add(\func);
-						funcArr = funcArr.add(item.interpret);
-					}
-					; //note: brackets
-
+				if(postWin.notNil, {
+					inputArr.postin(postWhere, postType, postWin);
 				}, {
-					typeArr = typeArr.add(\str);
-					funcArr = funcArr.add(item.asSymbol);
-				});
-			});
-			});
-
-			if(funcArr.notNil, {
-			//look for commands
-			callIndex ?? {callIndex = storeIndex};
-			selectArr = storeArr[callIndex].select({|item| item[0] == inputArr[0].asSymbol});
-
-			if(selectArr.isEmpty, {
-				if((funcArr[0].isArray).or(funcArr[0].isNumber), {
-					case
-					{funcArr[0].isArray
-					} {
-						this.callFunc(("arrayID " ++ string), postWin, postWhere, postType, postBool);
-					}
-					{funcArr[0].isNumber
-					} {
-						this.callFunc(("numberID " ++ string), postWin, postWhere, postType, postBool);
-					};
-				}, {
-					"Command not Found 1".warn;
-				});
-			}, {
-				selectItem = selectArr.select({|item| item[1] == typeArr}).unbubble;
-				if(selectItem.isNil, {
-					"Command not Found 2".warn;
-				}, {
-					selectItem[2].valueArray(funcArr);
-				});
-
-			});
-
-			}, {
-				"this a string containing brackets".postln;
-
-				if(string.contains("(").and(string.contains(")")), {
-								"round brackets".postln;
-				if(inputArr.contains("->"), {
-				typeArr = typeArr.add(\asso);
-					"association string".postln;
 					inputArr.postln;
-
+				}); //post in any 'post' window
+			});
+			if(inputArr.isString.not, {
+				inputArr.do({|item|
+					if((item.isStringNumber).or(item.contains("-"))
+						.or((item.contains("["))
+							.and(item.contains("]")))
+						.or((item.contains("{"))
+							.and(item.contains("}"))), {
+							case
+							{item.isStringNumber} {
+								typeArr = typeArr.add(\num);
+								funcArr = funcArr.add(item.interpret);			}
+							{item.contains("-")} {
+								typeArr = typeArr.add(\dash);
+								arrString = nil;
+								arrString = item.replace("-", ",");
+								arrString = arrString.insert(0, "[");
+								arrString = arrString.insert(arrString.size, "]");
+								arrInterpret = nil;
+								arrInterpret = arrString.interpret;
+								finalArr = nil;
+								finalArr = Array.series(arrInterpret[1]-arrInterpret[0]+1, arrInterpret[0], 1);
+								funcArr = funcArr.add(finalArr);
+							}
+							{(item.contains("[")).and(item.contains("]"))} {
+								typeArr = typeArr.add(\arr);
+								funcArr = funcArr.add(item.interpret);
+							}
+							{(item.contains("{")).and(item.contains("}"))} {
+								typeArr = typeArr.add(\func);
+								funcArr = funcArr.add(item.interpret);
+							}
+							; //note: brackets
+						}, {
+							typeArr = typeArr.add(\str);
+							funcArr = funcArr.add(item.asSymbol);
+					});
 				});
+			});
+			if(funcArr.notNil, {
+				//look for commands
+				callIndex ?? {callIndex = storeIndex};
+				selectArr = storeArr[callIndex].select({|item| item[0] == inputArr[0].asSymbol});
 
+				if(selectArr.isEmpty, {
+					if((funcArr[0].isArray).or(funcArr[0].isNumber), {
+						case
+						{funcArr[0].isArray
+						} {
+							this.callFunc(("arrayID " ++ string), postWin, postWhere, postType, postBool);
+						}
+						{funcArr[0].isNumber
+						} {
+							this.callFunc(("numberID " ++ string), postWin, postWhere, postType, postBool);
+						};
+					}, {
+						"Command not Found 1".warn;
+					});
+				}, {
+					selectItem = selectArr.select({|item| item[1] == typeArr}).unbubble;
+					if(selectItem.isNil, {
+						"Command not Found 2".warn;
+					}, {
+						selectItem[2].valueArray(funcArr);
+					});
+				});
+			}, {
+				/*"this a string containing brackets".postln;*/
+				if(string.contains("(").and(string.contains(")")), {
+					/*"round brackets".postln;*/
+					if(inputArr.contains("->"), {
+					/*	"association string".postln;*/
+						this.association(inputArr.asString);
+					});
 				}, {
 					"function brackets".postln;
 				});
-
 			});
-
 		}, {
 			string.interpret;
 		});
@@ -304,13 +294,13 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 		writeHistoryFunc = {
 			file = File(historyPath, "a+");
-		file.close;
-		recordHistory = true;
-		text.front;
-		SystemClock.sched(0.0, {arg time;
-			startTime = time;
-			nil;
-		});
+			file.close;
+			recordHistory = true;
+			text.front;
+			SystemClock.sched(0.0, {arg time;
+				startTime = time;
+				nil;
+			});
 		};
 		if(File.existsCaseSensitive(historyPath), {
 			if(replace.not, {
@@ -373,8 +363,8 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 				if(item[1].ascii == 127, {
 					text.backspace;
 				}, {
-				text.addString(item[1]);
-				keyFunc.(item[1].ascii, \file);
+					text.addString(item[1]);
+					keyFunc.(item[1].ascii, \file);
 				});
 			};
 		}.fork(AppClock);
@@ -391,53 +381,70 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	}
 
 	associationFunc {arg cmdString;
-	var cmd2, cmd3A, cmd3B, varArr, secondInd, argSel, cmd4B, cmd5B, varSel;
-	cmd2 = cmdString.replace("(", "").replace(")","").replace("->", "|").split($|);
-	cmd3A = cmd2[1].split($ );
-	cmd3B = cmd2[0].split($ );
-	cmd3A = cmd3A.reject({|item| item == "" });
-	cmd3B = cmd3B.reject({|item| item == "" });
-	varArr = 	cmd3A.collect({|item|
-		if(item.find("$").notNil, {
-			case
-			{item.find("$n").notNil} {[\num, ("num" ++ item.replace("$n", ""))]}
-			{item.find("$s").notNil} {[\str, ("str" ++ item.replace("$s", ""))]}
-			{item.find("$a").notNil} {[\arr, ("arr" ++ item.replace("$a", ""))]}
-			{item.find("$f").notNil} {[\func, ("func" ++ item.replace("$f", ""))]};
+		var cmd2, cmd3A, cmd3B, varArr, secondInd, argSel, cmd4B, cmd5B, varSel;
+		cmd2 = cmdString.replace("(", "").replace(")","").replace("->", "|").split($|);
+		cmd3A = cmd2[1].split($ );
+		cmd3B = cmd2[0].split($ );
+		cmd3A = cmd3A.reject({|item| item == "" });
+		cmd3B = cmd3B.reject({|item| item == "" });
+		varArr = 	cmd3A.collect({|item|
+			if(item.find("$").notNil, {
+				case
+				{item.find("$n").notNil} {[\num, ("num" ++ item.replace("$n", ""))]}
+				{item.find("$s").notNil} {[\str, ("str" ++ item.replace("$s", ""))]}
+				{item.find("$a").notNil} {[\arr, ("arr" ++ item.replace("$a", ""))]}
+				{item.find("$f").notNil} {[\func, ("func" ++ item.replace("$f", ""))]};
+			}, {
+				case
+				{item.isNumber} {[\num, "num"]}
+				{item.isSymbol} {[\str, "str"]}
+				{item.isString} {[\str, "str"]}
+				{item.isArray} {[\arr, "arr"]}
+				{item.isFunction} {[\func, "func"]};
+			});
+		});
+		secondInd = [];
+		cmd3B.do{|item|
+			if(item.asString.find("$").notNil, {
+				secondInd = secondInd.add(cmd3A.indexOfEqual(item.asString););
+			});
+		};
+		varSel = cmd3A.atAll(secondInd);
+		argSel = varArr.flop[1].atAll(secondInd);
+		cmd4B = cmd3B;
+		varSel.do{|item, index|
+			var concStr;
+			if(index == (varSel.size-1), {
+				concStr = (argSel[index] ++ " ++ " ++ "\"" ++ "\"" );
+			}, {
+				concStr =  (argSel[index] ++ " ++ " ++ "\"" ++ " "++ "\"" );
+			});
+			cmd4B[cmd4B.indexOfEqual(item)] = concStr;
+		};
+		cmd5B	= cmd4B.collect({|item| if(item.find("++").isNil, {
+			("\"" ++ item ++ " \"");
 		}, {
-			case
-			{item.isNumber} {[\num, "num"]}
-			{item.isSymbol} {[\str, "str"]}
-			{item.isString} {[\str, "str"]}
-			{item.isArray} {[\arr, "arr"]}
-			{item.isFunction} {[\func, "func"]};
+			item;
 		});
-	});
-	secondInd = [];
-	cmd3B.do{|item|
-		if(item.asString.find("$").notNil, {
-			secondInd = secondInd.add(cmd3A.indexOfEqual(item.asString););
 		});
-	};
-	varSel = cmd3A.atAll(secondInd);
-	argSel = varArr.flop[1].atAll(secondInd);
-	cmd4B = cmd3B;
-	varSel.do{|item, index|
-		var concStr;
-		if(index == (varSel.size-1), {
-			concStr = ("++ " ++ argSel[index]);
-		}, {
-			concStr =  ("++ " ++ argSel[index] ++ " ++ ");
+		cmd5B	= cmd5B.collect({|item, index|
+			if(cmd5B.size-1 == index, {
+				item.replace(" ++ " ++ "\"" ++ "\"" , "").replace(" ", "");
+			}, {
+				(item ++ " ++ ");
+			});
 		});
-		cmd4B[cmd4B.indexOfEqual(item)] = concStr;
-	};
-	cmd5B	= cmd4B.collect({|item| if(item.find("++").isNil, {
-		("\"" ++ item ++ " \"");
-	}, {
-		item;
-	});
-	});
-	^[cmd3A, varArr, cmd5B];
+		^[cmd3A, varArr, cmd5B];
+	}
+
+	association {arg cmd;
+		var assoArr, firstFunc;
+		assoArr = this.associationFunc(cmd);
+		firstFunc =	varString ++ ".add(" ++ assoArr[0][0].asSymbol.cs ++ ", " ++ assoArr[1].flop[0].cs
+		++ ", {arg" ++ assoArr[1].flop[1].asString.replace("[", "").replace(" ]", ";") ++ ($\n
+			++ varString ++ ".callFunc(" ++ assoArr[2].asString.replace("[", "(").replace("]", ")").replace(",", "")
+			++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : " ++ assoArr[1].flop[0] ++ "\");";
+		firstFunc.radpost.interpret;
 	}
 
 }

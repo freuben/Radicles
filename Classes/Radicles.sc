@@ -74,8 +74,8 @@ Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 
 	*callWindow {arg name;
 		name ?? {name = "Call Window";
-		callWin = CallWindow.window(name);
-	}
+		callWin = CallWindow.window(name, Window.win4TopRight, postBool: true);
+	};
 	}
 
 }
