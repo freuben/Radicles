@@ -133,4 +133,8 @@ sig = sig * 3;
 ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))	
 } ], [ 'sclip', {arg vol=0 ;
 	(\in*vol.dbamp).softclip;
- } ] ]
+ } ], [ 'pch5', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+	PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion)*SinOsc.ar(440);
+} ] ]

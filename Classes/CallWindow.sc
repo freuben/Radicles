@@ -120,6 +120,10 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 								typeArr = typeArr.add(\num);
 								funcArr = funcArr.add(item.interpret);			}
 							{item.contains("-")} {
+								if(item[0] == $-, {
+								typeArr = typeArr.add(\num);
+								funcArr = funcArr.add(item.interpret);
+								}, {
 								typeArr = typeArr.add(\dash);
 								arrString = nil;
 								arrString = item.replace("-", ",");
@@ -130,6 +134,8 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 								finalArr = nil;
 								finalArr = Array.series(arrInterpret[1]-arrInterpret[0]+1, arrInterpret[0], 1);
 								funcArr = funcArr.add(finalArr);
+								});
+
 							}
 							{(item.contains("[")).and(item.contains("]"))} {
 								typeArr = typeArr.add(\arr);
@@ -177,7 +183,6 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 				/*"this a string containing brackets".postln;*/
 				if(string.contains("(").and(string.contains(")")), {
 					/*"round brackets".postln;*/
-					string.last.cs.postln;
 					if(string.last == $), {
 						callInd = 0;
 					}, {
@@ -437,8 +442,6 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		});
 		cmd5B	= cmd5B.collect({|item, index|
 			if(cmd5B.size-1 == index, {
-				"replace".postln;
-				item.postln;
 				item.replace(" ++ " ++ "\"" ++ " " ++ "\"" , "").replace(" ", "");
 			}, {
 				(item ++ " ++ ");
@@ -470,7 +473,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			(0..9).do{|index|
 				this.add(index.asSymbol, [\num], {|num|
 					storeIndex = num.asInt;
-				});
+			}, ("dimension: " ++ index));
 			};
 		};
 		storeIndex = 0;
