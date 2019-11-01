@@ -81,7 +81,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	}
 
 	*window {arg name="Call Window", bounds, font, qpalette, settings,
-		postWhere, postType, postWin, postBool, storeSize=10;
+		postWhere, postType, postWin, postBool=true, storeSize=10;
 		var window;
 
 		bounds ?? {bounds = Window.win2Right};
@@ -93,11 +93,25 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 	callFunc {arg string, postWin, postWhere=\both, postType=\ln, postBool=true, callIndex;
 		var inputArr, typeArr, index, selectArr, selectItem, funcArr;
-		var arrString, arrInterpret, finalArr, callInd;
+		var arrString, arrInterpret, finalArr, callInd, thisStringArr, thisReplaceString;
 		if(lang != \sc, {
 			if((string.contains("(").and(string.contains(")")))
-				.or(string.contains("{").and(string.contains("}"))), {
-					inputArr = string;
+				.or(string.contains("{").and(string.contains("}")))
+				.or((string.contains("[")).and(string.contains("]"))), {
+					case
+					{string.contains("(").and(string.contains(")"))} {
+						inputArr = string;
+					}
+					{string.contains("[").and(string.contains("]"))} {
+						thisStringArr = (string.copyRange(string.find("["), string.findBackwards("]");));
+						thisReplaceString = string.replace(thisStringArr, "%");
+						inputArr = thisReplaceString.split($ );
+						inputArr[inputArr.indexOfEqual("%")] = thisStringArr;
+					}
+					{string.contains("{").and(string.contains("}"))} {
+						"func".postln;
+						string.cs.postln;
+					};
 				}, {
 					inputArr = string.split($ ); //split string by the space and convert as array
 			});
@@ -110,20 +124,23 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			});
 			if(inputArr.isString.not, {
 				inputArr.do({|item|
-					if((item.isStringNumber).or(item.contains("-"))
-						.or((item.contains("["))
-							.and(item.contains("]")))
-						.or((item.contains("{"))
-							.and(item.contains("}"))), {
-							case
-							{item.isStringNumber} {
-								typeArr = typeArr.add(\num);
-								funcArr = funcArr.add(item.interpret);			}
-							{item.contains("-")} {
-								if(item[0] == $-, {
+					if((item.isStringNumber).or(item.contains("-")).or(
+						item.contains("[").and(item.contains("]")))
+						, {
+						case
+						{item.isStringNumber} {
+							typeArr = typeArr.add(\num);
+							funcArr = funcArr.add(item.interpret);
+						}
+						{item.contains("[").and(item.contains("]"))} {
+							typeArr = typeArr.add(\arr);
+							funcArr = funcArr.add(item.interpret);
+						}
+						{item.contains("-")} {
+							if(item[0] == $-, {
 								typeArr = typeArr.add(\num);
 								funcArr = funcArr.add(item.interpret);
-								}, {
+							}, {
 								typeArr = typeArr.add(\dash);
 								arrString = nil;
 								arrString = item.replace("-", ",");
@@ -134,21 +151,11 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 								finalArr = nil;
 								finalArr = Array.series(arrInterpret[1]-arrInterpret[0]+1, arrInterpret[0], 1);
 								funcArr = funcArr.add(finalArr);
-								});
-
-							}
-							{(item.contains("[")).and(item.contains("]"))} {
-								typeArr = typeArr.add(\arr);
-								funcArr = funcArr.add(item.interpret);
-							}
-							{(item.contains("{")).and(item.contains("}"))} {
-								typeArr = typeArr.add(\func);
-								funcArr = funcArr.add(item.interpret);
-							}
-							; //note: brackets
-						}, {
-							typeArr = typeArr.add(\str);
-							funcArr = funcArr.add(item.asSymbol);
+							});
+						}
+					}, {
+						typeArr = typeArr.add(\str);
+						funcArr = funcArr.add(item.asSymbol);
 					});
 				});
 			});
@@ -156,7 +163,6 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 				//look for commands
 				callIndex ?? {callIndex = storeIndex};
 				selectArr = storeArr[callIndex].select({|item| item[0] == inputArr[0].asSymbol});
-
 				if(selectArr.isEmpty, {
 					if((funcArr[0].isArray).or(funcArr[0].isNumber), {
 						case
@@ -180,29 +186,32 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 					});
 				});
 			}, {
-				/*"this a string containing brackets".postln;*/
-				if(string.contains("(").and(string.contains(")")), {
-					/*"round brackets".postln;*/
+				case
+				{string.contains("(").and(string.contains(")"))} {
 					if(string.last == $), {
 						callInd = 0;
 					}, {
-						/*"not base".postln;*/
 						callInd = string.last.asString.interpret;
 						inputArr = inputArr.copyRange(0, inputArr.size-3);
-						/*inputArr.postln;*/
 					});
 					if(inputArr.contains("->"), {
-						/*	"association string".postln;*/
 						this.association(inputArr, callInd);
 					}, {
 						("~callWindowGlobVar.add" ++ inputArr).radpost.interpret;
 					});
-				}, {
-					"function brackets".postln;
-				});
+				}
+				/*{string.contains("[").and(string.contains("]"))} {
+				"square".postln;
+				inputArr = string.cs.postln;
+				(string.copyRange(string.find("["), string.findBackwards("]");)).interpret;
+				}*/
+				/*{string.contains("{").and(string.contains("}"))} {
+				"func".postln;
+				string.cs.postln;
+				}*/
 			});
 		}, {
-				string.interpret;
+			string.interpret;
 		});
 	}
 
@@ -431,7 +440,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		cmd4B = cmd3B;
 		varSel.do{|item, index|
 			var concStr;
-				concStr =  (argSel[index] ++ " ++ " ++ "\"" ++ " "++ "\"" );
+			concStr =  (argSel[index] ++ " ++ " ++ "\"" ++ " "++ "\"" );
 			cmd4B[cmd4B.indexOfEqual(item)] = concStr;
 		};
 		cmd5B	= cmd4B.collect({|item| if(item.find("++").isNil, {
@@ -473,7 +482,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			(0..9).do{|index|
 				this.add(index.asSymbol, [\num], {|num|
 					storeIndex = num.asInt;
-			}, ("dimension: " ++ index));
+				}, ("dimension: " ++ index));
 			};
 		};
 		storeIndex = 0;
