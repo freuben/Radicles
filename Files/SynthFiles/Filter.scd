@@ -137,4 +137,12 @@ sig = sig * 3;
  , winSize=0.02
  ;
 	PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion)*SinOsc.ar(440);
+} ], [ 'pchmod', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+	, modFreq=100 , shape=0 ;
+	PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion)*
+	Select.ar(shape, [
+	SinOsc.ar(modFreq), 
+	Saw.ar(modFreq), 
+		Pulse.ar(modFreq)]);
 } ] ]
