@@ -16,8 +16,7 @@ Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	}
 
 	initRadicles {arg doc=false;
-		mainPath = ("~/Library/Application Support/SuperCollider/" ++
-			"Extensions/Radicles/").standardizePath;
+		mainPath = (Platform.userExtensionDir ++ "/Radicles/");
 		server = Server.default;
 	}
 
