@@ -2626,7 +2626,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}, {
 			value = val;
 		});
+		if(trackType == \master, {
+			trackIndex = mixTrackNames.indexOf(trackType.asSymbol);
+		}, {
 		trackIndex = mixTrackNames.indexOf((trackType ++ trackNum).asSymbol);
+		});
 		if(trackIndex.notNil, {
 			if(lag.isNil, {
 				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
@@ -2646,8 +2650,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	setVolumeLag {arg trackType=\track, trackNum=1, lag=0;
-		var ndefCS;
-		ndefCS = ("Ndef(" ++ (trackType ++ trackNum).asSymbol.cs ++
+		var ndefCS, symString;
+	if(trackType == \master, {
+	symString = trackType;
+	}, {
+		symString = (trackType ++ trackNum);
+	});
+		ndefCS = ("Ndef(" ++  symString.asSymbol.cs ++
 			").set('lagTime', " ++ lag ++ ");");
 		ndefCS.radpostcont.interpret;
 	}
@@ -2780,20 +2789,34 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	setPanLag {arg trackType=\track, trackNum=1, lag=0, panTag=\pan;
-		var tag, ndefCS;
-		tag = ("space" ++ trackType.asString.capitalise ++ trackNum).asSymbol;
+		var tag, ndefCS, symString;
+		if(trackType == \master, {
+		symString = trackType.asString.capitalise;
+		}, {
+		symString = trackType.asString.capitalise ++ trackNum;
+		});
+		tag = ("space" ++ symString).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++panTag.cs ++ ", " ++ lag ++ ");";
 		ndefCS.radpost.interpret;
 	}
 
 	setPan {arg trackType=\track, trackNum=1, val=0, panTag=\pan;
-		var tag, ndefCS, trackKey;
-		tag = ("space" ++ trackType.asString.capitalise ++ trackNum).asSymbol;
+		var tag, ndefCS, trackKey, symString;
+		if(trackType == \master, {
+		symString = trackType.asString.capitalise;
+		}, {
+		symString = trackType.asString.capitalise ++ trackNum;
+		});
+		tag = ("space" ++ symString).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++panTag.cs ++ ", " ++ val ++ ");";
 		ndefCS.radpost.interpret;
 		if(mixerWin.notNil, {
 			if(mixerWin.notClosed, {
-				trackKey = (trackType ++ trackNum).asSymbol;
+					if(trackType == \master, {
+				trackKey = trackType.asSymbol;
+				}, {
+					trackKey = (trackType ++ trackNum).asSymbol;
+				});
 				if(panTag == \pan, {
 					setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val);
 				}, {
