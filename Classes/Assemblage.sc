@@ -73,8 +73,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	get {arg trackType = \track;
-		/*^tracks.select{|item|
-		item.last[0].asString.find(trackType.asString).notNil; };*/
 		^tracks.select{|item|
 			item[item.size-2][0].asString.find(trackType.asString).notNil; };
 	}

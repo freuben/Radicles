@@ -8,17 +8,22 @@ ModFile : Radicles {var <filePath;
 		var dir, existFiles, fileName, classString, modPath;
 
 		case
-		{file == \synth} { modPath = "Files/SynthFiles/"}
-		{file == \spec} { modPath = "Files/SpecFiles/"}
-		{file == \control} { modPath = "Files/ControlFiles/"}
-		{file == \data} { modPath = "Files/DataFiles/"}
-		{file == \description} { modPath = "Files/DescriptionFiles/"}
-		{file == \synthdef} { modPath = "Files/SynthDefFiles/"}
+		{file == \synth} { modPath = "SynthFiles/"}
+		{file == \synth} { modPath = "SynthFiles/"}
+		{file == \spec} { modPath = "SpecFiles/"}
+		{file == \control} { modPath = "ControlFiles/"}
+		{file == \data} { modPath = "DataFiles/"}
+		{file == \description} { modPath = "DescriptionFiles/"}
+		{file == \synthdef} { modPath = "SynthDefFiles/"}
 		{file == \preset} { modPath = "Settings/Presets/"}
-
 		;
 
-		dir = (mainPath ++ modPath);
+		if(file == \preset, {
+			dir = (mainPath ++ modPath);
+		}, {
+		dir = (fileExtFile ++ modPath);
+		});
+
 		PathName(dir).files.do{|item|
 			existFiles = existFiles.add(item.fileNameWithoutDoubleExtension.asSymbol);
 		};
