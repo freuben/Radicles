@@ -7,7 +7,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
-	<trackDataArr, <trackBufferArr;
+	<trackDataArr, <trackBufferArr, <setInKnob;
 
 	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
@@ -36,7 +36,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(chanNum[2].isNil, {
 						chanMaster = 2;
 					}, {
-					chanMaster = chanNum[2];
+						chanMaster = chanNum[2];
 					});
 					systemChanNum = chanNum[2];
 				});
@@ -198,13 +198,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	addTracks {arg number, type=\track, chanNum, spaceType, trackSynth;
 		var thisChan, thisDest;
 		if(chanNum.isArray, {
-		number.do{|index|
+			number.do{|index|
 				this.addTrack(type, chanNum[index], spaceType, trackSynth);
-		};
+			};
 		}, {
-		number.do{
-			this.addTrack(type, chanNum, spaceType, trackSynth);
-		};
+			number.do{
+				this.addTrack(type, chanNum, spaceType, trackSynth);
+			};
 		});
 	}
 
@@ -1774,8 +1774,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 					smenu.items = [""] ++ sendItems.collect({|item| "bus" ++ item });
 
-					/*smenu.items = [""] ++numBuses.collect{|item| "bus" ++ (item+1)};*/
-
 					smenu.background_(Color.black).stringColor_(Color.white)
 					.font_(basicFont);
 					sknob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
@@ -2041,6 +2039,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 				panKnobTextArr[index][indXY].string_(value);
 			});
+		};
+
+		setInKnob = {|index, value|
+			var trimSpec, trimKey;
+			trimKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
+			trimSpec = this.getSpec(trimKey, \trim).asSpec;
+			inKnobArr[index].value = trimSpec.unmap(value);
 		};
 
 		levelArr.do{|it| it.do{|item|
@@ -2627,7 +2632,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(trackType == \master, {
 			trackIndex = mixTrackNames.indexOf(trackType.asSymbol);
 		}, {
-		trackIndex = mixTrackNames.indexOf((trackType ++ trackNum).asSymbol);
+			trackIndex = mixTrackNames.indexOf((trackType ++ trackNum).asSymbol);
 		});
 		if(trackIndex.notNil, {
 			if(lag.isNil, {
@@ -2649,11 +2654,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	setVolumeLag {arg trackType=\track, trackNum=1, lag=0;
 		var ndefCS, symString;
-	if(trackType == \master, {
-	symString = trackType;
-	}, {
-		symString = (trackType ++ trackNum);
-	});
+		if(trackType == \master, {
+			symString = trackType;
+		}, {
+			symString = (trackType ++ trackNum);
+		});
 		ndefCS = ("Ndef(" ++  symString.asSymbol.cs ++
 			").set('lagTime', " ++ lag ++ ");");
 		ndefCS.radpostcont.interpret;
@@ -2789,9 +2794,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	setPanLag {arg trackType=\track, trackNum=1, lag=0, panTag=\pan;
 		var tag, ndefCS, symString;
 		if(trackType == \master, {
-		symString = trackType.asString.capitalise;
+			symString = trackType.asString.capitalise;
 		}, {
-		symString = trackType.asString.capitalise ++ trackNum;
+			symString = trackType.asString.capitalise ++ trackNum;
 		});
 		tag = ("space" ++ symString).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++panTag.cs ++ ", " ++ lag ++ ");";
@@ -2801,17 +2806,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	setPan {arg trackType=\track, trackNum=1, val=0, panTag=\pan;
 		var tag, ndefCS, trackKey, symString;
 		if(trackType == \master, {
-		symString = trackType.asString.capitalise;
+			symString = trackType.asString.capitalise;
 		}, {
-		symString = trackType.asString.capitalise ++ trackNum;
+			symString = trackType.asString.capitalise ++ trackNum;
 		});
 		tag = ("space" ++ symString).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++panTag.cs ++ ", " ++ val ++ ");";
 		ndefCS.radpost.interpret;
 		if(mixerWin.notNil, {
 			if(mixerWin.notClosed, {
-					if(trackType == \master, {
-				trackKey = trackType.asSymbol;
+				if(trackType == \master, {
+					trackKey = trackType.asSymbol;
 				}, {
 					trackKey = (trackType ++ trackNum).asSymbol;
 				});
@@ -2826,6 +2831,40 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 			});
 		});
+	}
+
+	setTrim {arg trackType=\track, trackNum=1, val=0;
+		var tag, ndefCS, trackKey, symString;
+		if(trackType == \master, {
+			symString = trackType.asString.capitalise;
+		}, {
+			symString = trackType.asString.capitalise ++ trackNum;
+		});
+		tag = ("in" ++ symString).asSymbol;
+		ndefCS = "Ndef(" ++ tag.cs ++ ").set('trim', " ++ val ++ ");";
+		ndefCS.radpost.interpret;
+		if(mixerWin.notNil, {
+			if(mixerWin.notClosed, {
+				if(trackType == \master, {
+					trackKey = trackType.asSymbol;
+				}, {
+					trackKey = (trackType ++ trackNum).asSymbol;
+				});
+				setInKnob.(mixTrackNames.indexOfEqual(trackKey), val);
+			});
+		});
+	}
+
+	setTrimLag {arg trackType=\track, trackNum=1, val=0;
+		var tag, ndefCS, trackKey, symString;
+		if(trackType == \master, {
+			symString = trackType.asString.capitalise;
+		}, {
+			symString = trackType.asString.capitalise ++ trackNum;
+		});
+		tag = ("in" ++ symString).asSymbol;
+		ndefCS = "Ndef(" ++ tag.cs ++ ").lag('trim', " ++ val ++ ");";
+		ndefCS.radpost.interpret;
 	}
 
 	busMix {arg bus=1, slot=1, mix=0, lag;
@@ -2885,9 +2924,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			};
 			thisTracks = settingsArr.collect({|item|
 				if(item[0] == \master, {item[0]}, {
-				(item[0] ++ item[1]).asSymbol;
+					(item[0] ++ item[1]).asSymbol;
 				});
-				}).rejectSame;
+			}).rejectSame;
 			thisTracks.do{|item|
 				arr = this.findTrackArr(item);
 				thisInfo = tracks[arr[0]][arr[1]];
@@ -4481,8 +4520,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	nomixer {
 		if(mixerWin.notNil, {
-				{mixerWin.close}.defer;
-			});
+			{mixerWin.close}.defer;
+		});
 	}
 
 }

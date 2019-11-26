@@ -156,4 +156,13 @@
 		^[this.replace(nums, ""), nums.interpret];
 	}
 
+	interpretRad {var str, str2, arrStr, arrStr2;
+		str = this;
+		str2 = str.select{|item|
+		("0123456789[](){},.".ascii).includes(item.ascii).not;};
+		arrStr = str2.split($ ).reject({|item| item == "" });
+		arrStr2 = arrStr.do{|item|  str = str.replace(item, item.asSymbol.cs) };
+		^str.interpret;
+	}
+
 }
