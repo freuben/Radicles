@@ -94,9 +94,21 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	callFunc {arg string, postWin, postWhere=\both, postType=\ln, postBool=true, callIndex;
 		var inputArr, typeArr, index, selectArr, selectItem, funcArr;
 		var arrString, arrInterpret, finalArr, callInd, thisStringArr, thisReplaceString;
+		var arr1, arr2, arr3, arr4, arr5;
 		if(lang != \sc, {
+
+			if(string.contains("{").and(string.contains("}")), {
+
+				arr1 = string.findAll("{");
+				arr2 = string.findAll("}");
+				arr3 = ([arr1] ++ [arr2]).flop;
+				arr4 = arr3.collect{|item| string.copyRange(item[0], item[1]) };
+				arr5 = arr4.collect{|item| item.interpret.() };
+				arr4.do{|item, index| string = string.replace(item, arr5[index].asString) };
+		});
+
 			if((string.contains("(").and(string.contains(")")))
-				.or(string.contains("{").and(string.contains("}")))
+				/*.or(string.contains("{").and(string.contains("}")))*/
 				.or((string.contains("[")).and(string.contains("]"))), {
 					case
 					{string.contains("(").and(string.contains(")"))} {
@@ -108,13 +120,11 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 						inputArr = thisReplaceString.split($ );
 						inputArr[inputArr.indexOfEqual("%")] = thisStringArr;
 					}
-					{string.contains("{").and(string.contains("}"))} {
-						"func".postln;
-						string.cs.postln;
-					};
+					;
 				}, {
 					inputArr = string.split($ ); //split string by the space and convert as array
 			});
+
 			if(postBool, {
 				if(postWin.notNil, {
 					inputArr.postin(postWhere, postType, postWin);
