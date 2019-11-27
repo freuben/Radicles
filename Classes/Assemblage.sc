@@ -2904,6 +2904,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			}, {
 				insert = true;
 			});
+			if(extraArgs.notNil, {
+				if(extraArgs.select{|item| item.isSymbol}.isEmpty, {
+					extraArgs = extraArgs.collect({|item, index| if(index.even, {
+						item = SynthFile.read('filter', filter).argNames[item];
+					}, {
+						item = item;
+					});
+					});
+				});
+			});
 			this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
 				{this.refreshFunc}.defer;
 				action.();
