@@ -285,7 +285,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		^result;
 	}
 
-	removeTrack {arg trackType=\track, trackNum=1;
+	removeTrack {arg trackType=\track, trackNum=1, action={};
 		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums, indArrBusIn;
 
 		if(trackType != \master, {
@@ -356,7 +356,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						{this.refreshMixGUI;}.defer;
 					});
 				});
-
+				action.();
 			}.fork;
 
 		}, {

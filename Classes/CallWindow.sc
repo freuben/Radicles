@@ -134,10 +134,8 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 						}
 						{item.contains("[").and(item.contains("]"))} {
 							typeArr = typeArr.add(\arr);
-							arrInterpret = item.replace(" ", ", ").interpretRad;
-							/*arrInterpret = arrInterpret.collect({|item|
-								if(item.isString, {item = item.asSymbol}, {item = item});
-							});*/
+							arrInterpret = item.interpretRad;
+							/*arrInterpret = item.replace(" ", ", ").interpretRad;*/
 							funcArr = funcArr.add(arrInterpret);
 						}
 						{item.contains("-")} {
