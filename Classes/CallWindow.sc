@@ -98,17 +98,15 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		if(lang != \sc, {
 
 			if(string.contains("{").and(string.contains("}")), {
-
 				arr1 = string.findAll("{");
 				arr2 = string.findAll("}");
 				arr3 = ([arr1] ++ [arr2]).flop;
 				arr4 = arr3.collect{|item| string.copyRange(item[0], item[1]) };
 				arr5 = arr4.collect{|item| item.interpret.() };
 				arr4.do{|item, index| string = string.replace(item, arr5[index].asString) };
-		});
+			});
 
 			if((string.contains("(").and(string.contains(")")))
-				/*.or(string.contains("{").and(string.contains("}")))*/
 				.or((string.contains("[")).and(string.contains("]"))), {
 					case
 					{string.contains("(").and(string.contains(")"))} {
@@ -446,79 +444,79 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 		cmd3A.do({|item|
 
-				case
-				{(item.find("$n").notNil).or(item.isNumber)}
+			case
+			{(item.find("$n").notNil).or(item.isNumber)}
 			{varArr = 	varArr.add([\num, "num" ++ ncount]);
-					ncount = ncount + 1}
-				{(item.find("$s").notNil).or(item.isString).or((item.isSymbol))}
+				ncount = ncount + 1}
+			{(item.find("$s").notNil).or(item.isString).or((item.isSymbol))}
 			{varArr = 	varArr.add([\str, "str" ++ scount]);
-					scount = scount + 1}
-				{(item.find("$a").notNil).or(item.isArray)}
+				scount = scount + 1}
+			{(item.find("$a").notNil).or(item.isArray)}
 			{varArr = 	varArr.add([\arr, "arr" ++ acount]);
-					acount = acount + 1}
-				{(item.find("$f").notNil).or(item.isFunction)}
+				acount = acount + 1}
+			{(item.find("$f").notNil).or(item.isFunction)}
 			{varArr = 	varArr.add([\func, "func" ++ fcount]);
-					fcount = fcount + 1};
+				fcount = fcount + 1};
 		});
-			"varArr".postln;
-			varArr.flop[1].postln;
-			secondInd = [];
-			cmd3B.do{|item|
-				if(item.asString.find("$").notNil, {
-					secondInd = secondInd.add(cmd3A.indexOfEqual(item.asString););
-				});
-			};
-			varSel = cmd3A.atAll(secondInd);
-			argSel = varArr.flop[1].atAll(secondInd);
-			cmd4B = cmd3B;
-			varSel.do{|item, index|
-				var concStr;
-				concStr =  (argSel[index] ++ " ++ " ++ "\"" ++ " "++ "\"" );
-				cmd4B[cmd4B.indexOfEqual(item)] = concStr;
-			};
-			cmd5B	= cmd4B.collect({|item| if(item.find("++").isNil, {
-				("\"" ++ item ++ " \"");
+		"varArr".postln;
+		varArr.flop[1].postln;
+		secondInd = [];
+		cmd3B.do{|item|
+			if(item.asString.find("$").notNil, {
+				secondInd = secondInd.add(cmd3A.indexOfEqual(item.asString););
+			});
+		};
+		varSel = cmd3A.atAll(secondInd);
+		argSel = varArr.flop[1].atAll(secondInd);
+		cmd4B = cmd3B;
+		varSel.do{|item, index|
+			var concStr;
+			concStr =  (argSel[index] ++ " ++ " ++ "\"" ++ " "++ "\"" );
+			cmd4B[cmd4B.indexOfEqual(item)] = concStr;
+		};
+		cmd5B	= cmd4B.collect({|item| if(item.find("++").isNil, {
+			("\"" ++ item ++ " \"");
+		}, {
+			item;
+		});
+		});
+		cmd5B	= cmd5B.collect({|item, index|
+			if(cmd5B.size-1 == index, {
+				item.replace(" ++ " ++ "\"" ++ " " ++ "\"" , "").replace(" ", "");
 			}, {
-				item;
+				(item ++ " ++ ");
 			});
-			});
-			cmd5B	= cmd5B.collect({|item, index|
-				if(cmd5B.size-1 == index, {
-					item.replace(" ++ " ++ "\"" ++ " " ++ "\"" , "").replace(" ", "");
-				}, {
-					(item ++ " ++ ");
-				});
-			});
-			^[cmd3A, varArr, cmd5B];
-		}
+		});
+		^[cmd3A, varArr, cmd5B];
+	}
 
-		association {arg cmd, callIndex;
-			var assoArr, firstFunc;
-			callIndex ?? {callIndex = 0};
-			assoArr = this.associationFunc(cmd);
-			firstFunc =	varString ++ ".add(" ++ assoArr[0][0].asSymbol.cs ++ ", " ++ assoArr[1].flop[0].cs
-			++ ", {arg" ++ assoArr[1].flop[1].asString.replace("[", "").replace(" ]", ";") ++ ($\n
-				++ varString ++ ".callFunc(" ++ assoArr[2].asString.replace("[", "(").replace("]", ")").replace(",", "")
-				++ ", callIndex: " ++ callIndex ++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : "
-			++ assoArr[1].flop[0] ++ "\", replace: " ++ replace.cs ++ ");";
-			firstFunc.radpost.interpret;
-		}
+	association {arg cmd, callIndex;
+		var assoArr, firstFunc;
+		callIndex ?? {callIndex = 0};
+		assoArr = this.associationFunc(cmd);
+		firstFunc =	varString ++ ".add(" ++ assoArr[0][0].asSymbol.cs ++ ", " ++ assoArr[1].flop[0].cs
+		++ ", {arg" ++ assoArr[1].flop[1].asString.replace("[", "").replace(" ]", ";") ++ ($\n
+			++ varString ++ ".callFunc(" ++ assoArr[2].asString.replace("[", "(").replace("]", ")").replace(",", "")
+			++ ", callIndex: " ++ callIndex ++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : "
+		++ assoArr[1].flop[0] ++ "\", replace: " ++ replace.cs ++ ");";
+		firstFunc.radpost.interpret;
+	}
 
-		loadStartUp {
-			~callWindowGlobVar = this;
-			varString = "~callWindowGlobVar";
-			(0..9).do{|dim|
-				storeIndex = dim;
-				this.add(\sc, [\str], {arg str; lang = \sc;}, "switch to sclang");
-				this.add(\ls, [\str], {arg str; this.listSettings.radpost}, "post list settings");
-				this.add(\replace, [\str, \str], {arg str1, str2; replace = str2.asString.interpret}, "replace cmds");
-				(0..9).do{|index|
-					this.add(index.asSymbol, [\num], {|num|
-						storeIndex = num.asInt;
-					}, ("dimension: " ++ index));
-				};
+	loadStartUp {
+		~callWindowGlobVar = this;
+		varString = "~callWindowGlobVar";
+		(0..9).do{|dim|
+			storeIndex = dim;
+			this.add(\sc, [\str], {arg str; lang = \sc;}, "switch to sclang");
+			this.add(\ls, [\str], {arg str; this.listSettings.radpost}, "post list settings");
+			this.add(\replace, [\str, \str], {arg str1, str2; replace = str2.asString.interpret}, "replace cmds");
+			(0..9).do{|index|
+				this.add(index.asSymbol, [\num], {|num|
+					storeIndex = num.asInt;
+				}, ("dimension: " ++ index));
 			};
-			storeIndex = 0;
-		}
+		};
+		storeIndex = 0;
+	}
 
-		}
+}

@@ -2897,8 +2897,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(remove, {
 			this.removeFilter(trackType, num, slot, {this.refreshFunc; action.();}, {actionBuf.()} );
 		}, {
-			/*newFilterNdef = this.argToFilterTag(trackType, num, slot);
-			this.ndefModClear(newFilterNdef);*/
 			if(this.findFilterTag(trackType, num, slot).isNil, {
 				insert = false;
 			}, {
