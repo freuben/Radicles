@@ -133,8 +133,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			if(inputArr.isString.not, {
 				inputArr.do({|item|
 					if((item.isStringNumber).or(item.contains("-")).or(
-						item.contains("[").and(item.contains("]")))
-					, {
+						item.contains("[").and(item.contains("]"))), {
 						case
 						{item.isStringNumber} {
 							typeArr = typeArr.add(\num);
@@ -143,7 +142,6 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 						{item.contains("[").and(item.contains("]"))} {
 							typeArr = typeArr.add(\arr);
 							arrInterpret = item.interpretRad;
-							/*arrInterpret = item.replace(" ", ", ").interpretRad;*/
 							funcArr = funcArr.add(arrInterpret);
 						}
 						{item.contains("-")} {
@@ -493,6 +491,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	association {arg cmd, callIndex;
 		var assoArr, firstFunc;
 		callIndex ?? {callIndex = 0};
+		/*if((cmd.contains("[")).and(cmd.contains("]")), {"has array".postln});*/
 		assoArr = this.associationFunc(cmd);
 		firstFunc =	varString ++ ".add(" ++ assoArr[0][0].asSymbol.cs ++ ", " ++ assoArr[1].flop[0].cs
 		++ ", {arg" ++ assoArr[1].flop[1].asString.replace("[", "").replace(" ]", ";") ++ ($\n

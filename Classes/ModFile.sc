@@ -332,10 +332,10 @@ DescriptionFile : ModFile {
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\filter, key;
+	* read {arg class=\filter, key, warn=true;
 		var synthFile;
 		synthFile = this.new(\description, class);
-		^synthFile.read(key);
+		^synthFile.read(key, warn);
 	}
 
 	* post {arg class=\filter, key;

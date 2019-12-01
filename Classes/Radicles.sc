@@ -346,7 +346,8 @@ Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWi
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "assemblage: ['vol', 'vollag', 'pan', 'panlag', 'trim', 'trimlag', 'fxset', 'fxremove', 'mute', 'rec', 'solo', 'snd', 'sndry', 'setsnd']");
+		}, "assemblage: ['vol', 'vollag', 'pan', 'panlag', 'trim', 'trimlag', 'fxset', 'fxremove', 'mute',
+'rec', 'solo', 'snd', 'sndry', 'setsnd']");
 
 		cW.add(\asm, [\str, \str, \str, \num, \str], {|str1, str2, str3, num, str4|
 			if(aZ.notNil, {

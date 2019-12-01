@@ -2893,7 +2893,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
 		data, remove=false, action, actionBuf;
-		var insert, newFilterNdef;
+		var insert, newFilterNdef, extraArgsBool;
 		if(remove, {
 			this.removeFilter(trackType, num, slot, {this.refreshFunc; action.();}, {actionBuf.()} );
 		}, {
@@ -2903,19 +2903,28 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				insert = true;
 			});
 			if(extraArgs.notNil, {
+				extraArgsBool = extraArgs.select({|item, index| index.even.and(item == 0) }).isEmpty;
+				if(extraArgsBool, {
 				if(extraArgs.select{|item| item.isSymbol}.isEmpty, {
 					extraArgs = extraArgs.collect({|item, index| if(index.even, {
-						item = SynthFile.read('filter', filter).argNames[item];
+						item = SynthFile.read('filter', filter).argNames[item-1];
 					}, {
 						item = item;
 					});
 					});
 				});
+				}, {
+					"wrong arg number, should be numbers starting with 1".warn;
+				});
+			}, {
+				extraArgsBool = true;
 			});
+			if(extraArgsBool, {
 			this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
 				{this.refreshFunc}.defer;
 				action.();
 			}, insert);
+			});
 		});
 	}
 
@@ -3747,7 +3756,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
+						if(fxArg.select({|item, index| index.even.and(item == 0) }).isEmpty, {
 						this.prepArrArg(fxArg, ndefKey, \set, value);
+						}, {
+							"wrong arg number, should be numbers starting with 1".warn;
+						});
 					});
 					server.sync;
 					if(update, {

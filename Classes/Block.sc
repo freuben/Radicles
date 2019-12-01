@@ -106,9 +106,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*play {arg block=1, blockName, buffer, extraArgs, data, sync=false, xfade=true, action;
-		var blockFunc, blockIndex, newArgs, ndefCS, blockFuncString,
+		var blockFunc, blockIndex, ndefCS, blockFuncString,
 		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize,
-		pattArr, extraPattCount, bufIndex, bufString, bufIDs;
+		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool;
 		if(block >= 1, {
 			blockIndex = block-1;
 			if(ndefs[blockIndex].notNil, {
@@ -255,14 +255,24 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					if((blockName == 'pattern').not, {
 						if(extraArgs.notNil, {
 							if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
-								newArgs = extraArgs;
 							}, {
-								newArgs = [blockFunc.argNames, extraArgs].flop.flat;
+								extraArgsBool = extraArgs.select({|item, index|
+									index.even.and(item == 0) }).isEmpty;
+								if(extraArgsBool, {
+									extraArgs = extraArgs.collect({|item, index| if(index.even, {
+										item = blockFunc.argNames[item-1];
+									}, {
+										item = item;
+									});
+									});
+								}, {
+									"wrong arg number, should be numbers starting with 1".warn;
+								});
 							});
 							if(xfade, {
-								this.xset(block, newArgs);
+								this.xset(block, extraArgs);
 							}, {
-								this.set(block, newArgs);
+								this.set(block, extraArgs);
 							});
 						});
 					}, {
@@ -278,7 +288,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 					server.sync;
 					//replace out with cs string using presetToNdef
-					ndefs[blockIndex].put(0, blockFunc, extraArgs: newArgs);
+					ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
 					action.();
 				}.fork;
@@ -571,7 +581,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						blockFuncString ++ ");").radpost;
 					//replace out with cs string using presetToNdef
 					recNdefs[blockIndex].put(0, blockFunc);
-						if(xfade, {
+					if(xfade, {
 						setArg = ".xset";
 					}, {
 						setArg = ".set";
