@@ -241,6 +241,16 @@ Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWi
 			});
 		}, "assemblage: ['setfx']");
 
+		cW.add(\asm, [\str, \str, \num, \arr], {|str1, str2, num1, arr1|
+			if(aZ.notNil, {
+				case
+				{str2 == 'setfx'} {aZ.setFxArg(num1, arr1); }
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "assemblage: ['setfx']");
+
 		cW.add(\asm, [\str, \str, \arr, \str], {|str1, str2, arr1, str3|
 			var cond;
 			cond = Condition.new(false);
@@ -346,8 +356,29 @@ Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWi
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "assemblage: ['vol', 'vollag', 'pan', 'panlag', 'trim', 'trimlag', 'fxset', 'fxremove', 'mute',
-'rec', 'solo', 'snd', 'sndry', 'setsnd']");
+		}, "assemblage: ['vol', 'vollag', 'pan', 'panlag', 'trim', 'trimlag', 'fxset', 'fxremove', 'mute', 'rec', 'solo', 'snd', 'sndry', 'setsnd']");
+
+		cW.add(\asm, [\str, \str, \str, \num, \arr], {|str1, str2, str3, num1, arr|
+			if(aZ.notNil, {
+				case
+				{str2 == 'fxset'} {
+					aZ.setFxArgTrack(str3, num1, 1, arr);
+				};
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "assemblage: ['fxset']");
+
+		cW.add(\asm, [\str, \str, \str, \num, \num, \arr], {|str1, str2, str3, num1, num2, arr|
+			if(aZ.notNil, {
+				case
+				{str2 == 'fxset'} {
+					aZ.setFxArgTrack(str3, num1, num2, arr);
+				};
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "assemblage: ['fxset']");
 
 		cW.add(\asm, [\str, \str, \str, \num, \str], {|str1, str2, str3, num, str4|
 			if(aZ.notNil, {
@@ -669,8 +700,30 @@ Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWi
 			});
 		}, "fx: mixTrackNum, filter");
 
+		cW.add(\fxset, [\str, \str, \num, \arr], {|str1, str2, num1, arr1|
+			if(aZ.notNil, {
+				case
+				{str2 == 'm'} {
+					aZ.setFxArgTrack(\master, 1, num1, arr1);
+				};
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "fx: trackType, trackNum, fxArg");
 
-		cW.add(\fxs, [\str], {|str1|
+		cW.add(\fxset, [\str, \str, \num, \num, \arr], {|str1, str2, num1, num2, arr1|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} { aZ.setFxArgTrack(\track, num1, num2, arr1);}
+				{str2 == 'b'} { aZ.setFxArgTrack(\bus, num1, num2, arr1);}
+				{str2 == 'm'} {aZ.setFxArgTrack(\master, 1, num2, arr1);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "fx: trackType, trackNum, slotNum, fxArg, val");
+
+		cW.add(\setfx, [\str], {|str1|
 			if(aZ.notNil, {
 				if(aZ.filters.notNil, {
 					aZ.filters.collect{|item| [aZ.convFilterTag(item[0]), item[1] ].flat;}.dopostln;
@@ -680,7 +733,19 @@ Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWi
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "fxs");
+		}, "setfx: posts active filters");
+
+		cW.add(\fxs, [\str], {|str1|
+			var synthFile;
+			synthFile = SynthDefFile.read(\filter);
+			synthFile.do{|item|
+				var desc;
+				desc = DescriptionFile.read(\filter, item, false);
+				if(desc.isNil, {desc = "??"});
+				(item ++ " -> " ++ desc).radpost;
+			};
+			synthFile.radpost;
+		}, "fxs: posts available filters");
 
 		cW.add(\setfx, [\str, \num], {|str1, num1|
 			if(aZ.notNil, {
@@ -709,6 +774,14 @@ Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWi
 		cW.add(\setfx, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			if(aZ.notNil, {
 				aZ.setFxArg(num1, str2, num2);
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "setfx: filterNum, fxArg, val");
+
+		cW.add(\setfx, [\str, \num, \arr], {|str1, num1, arr1|
+			if(aZ.notNil, {
+				aZ.setFxArg(num1, arr1);
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -2256,6 +2329,18 @@ Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWi
 				});
 			});
 		});
+
+		//shortcut associations
+		cW.callFunc("(blk ply $n1 play $s1 -> pl $n1 $s1)");
+		cW.callFunc("(blk ply $n1 loop $s1 -> lp $n1 $s1)");
+		/*cW.callFunc("(blk ply $n1 play $s1 $a1 -> pl $n1 $s1 $a1)");*/
+		cW.add(\pl, [\str,  \num, \str, \arr], {|str1, num1, str2, arr1|
+			Block.play(num1, \play, str2, arr1);
+		}, "pl: buffer, extraArgs]");
+		/*cW.callFunc("(blk ply $n1 loop $s1 $a1 -> lp $n1 $s1 $a1)");*/
+		cW.add(\lp, [\str,  \num, \str, \arr], {|str1, num1, str2, arr1|
+			Block.play(num1, \loop, str2, arr1);
+		}, "lp: buffer, extraArgs]");
 
 		//base associations
 		(0..9).do{|dim|
