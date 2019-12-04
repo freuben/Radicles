@@ -1227,12 +1227,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	getFilterKeys {arg filterTag, type=\args;
-		var result;
+		var result, getKey, controlKeys, ratesFor;
 		Ndef(filterTag).cleanNodeMap;
 		case
 		{type == \args} { result = Ndef(filterTag).controlKeys; }
 		{type == \vals} { result = Ndef(filterTag).controlKeysValues;}
-		{type == \pairs} { result = Ndef(filterTag).getKeysValues;};
+		{type == \pairs} { result = Ndef(filterTag).getKeysValues;}
+		{type == \lags} {
+			getKey = filterTag;
+			controlKeys = Ndef(getKey).controlKeys;
+			ratesFor = Ndef(getKey).nodeMap.ratesFor(
+				controlKeys);
+			if(ratesFor.notNil, {
+				ratesFor.do{|item, index|
+					if(item.notNil, {
+						result = result.add([controlKeys[index], item]);
+					});
+				};
+				result = result.flat;
+			});
+		};
 		^result;
 	}
 
@@ -2905,14 +2919,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(extraArgs.notNil, {
 				extraArgsBool = extraArgs.select({|item, index| index.even.and(item == 0) }).isEmpty;
 				if(extraArgsBool, {
-				if(extraArgs.select{|item| item.isSymbol}.isEmpty, {
-					extraArgs = extraArgs.collect({|item, index| if(index.even, {
-						item = SynthFile.read('filter', filter).argNames[item-1];
-					}, {
-						item = item;
+					if(extraArgs.select{|item| item.isSymbol}.isEmpty, {
+						extraArgs = extraArgs.collect({|item, index| if(index.even, {
+							item = SynthFile.read('filter', filter).argNames[item-1];
+						}, {
+							item = item;
+						});
+						});
 					});
-					});
-				});
 				}, {
 					"wrong arg number, should be numbers starting with 1".warn;
 				});
@@ -2920,10 +2934,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				extraArgsBool = true;
 			});
 			if(extraArgsBool, {
-			this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
-				{this.refreshFunc}.defer;
-				action.();
-			}, insert);
+				this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
+					{this.refreshFunc}.defer;
+					action.();
+				}, insert);
 			});
 		});
 	}
@@ -3757,7 +3771,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						});
 					}, {
 						if(fxArg.select({|item, index| index.even.and(item == 0) }).isEmpty, {
-						this.prepArrArg(fxArg, ndefKey, \set, value);
+							this.prepArrArg(fxArg, ndefKey, \set, value);
 						}, {
 							"wrong arg number, should be numbers starting with 1".warn;
 						});
