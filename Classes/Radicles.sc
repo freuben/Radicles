@@ -1,4 +1,4 @@
-Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWin=nil,
+Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ;
@@ -16,7 +16,6 @@ Radicles {classvar <>mainPath, <>fileExtFile, <>nodeTime=0.08, <server, <>postWi
 
 	initRadicles {arg doc=false;
 		mainPath = (Platform.userExtensionDir ++ "/Radicles/");
-		fileExtFile ?? {fileExtFile = mainPath ++ "Files/"};
 		server = Server.default;
 	}
 

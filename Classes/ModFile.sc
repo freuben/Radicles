@@ -1,28 +1,29 @@
-ModFile : Radicles {var <filePath;
+ModFile : Radicles {var <filePath, <libArr;
 
 	* new {arg file=\synth, class=\filter;
-		^super.new.initSynthFile(file, class);
+		^super.new.initFile(file, class);
 	}
 
-	initSynthFile {arg file, class;
+	initFile {arg file, class;
+		filePath =  this.whichFile(file, class);
+		libArr = this.loadLibs(file, class);
+	}
+
+	whichFile {arg file, class, thisPath;
 		var dir, existFiles, fileName, classString, modPath;
 
 		case
-		{file == \synth} { modPath = "SynthFiles/"}
-		{file == \synth} { modPath = "SynthFiles/"}
-		{file == \spec} { modPath = "SpecFiles/"}
-		{file == \control} { modPath = "ControlFiles/"}
-		{file == \data} { modPath = "DataFiles/"}
-		{file == \description} { modPath = "DescriptionFiles/"}
-		{file == \synthdef} { modPath = "SynthDefFiles/"}
+		{file == \synth} { modPath = "Files/SynthFiles/"}
+		{file == \synth} { modPath = "Files/SynthFiles/"}
+		{file == \spec} { modPath = "Files/SpecFiles/"}
+		{file == \control} { modPath = "Files/ControlFiles/"}
+		{file == \data} { modPath = "Files/DataFiles/"}
+		{file == \description} { modPath = "Files/DescriptionFiles/"}
+		{file == \synthdef} { modPath = "Files/SynthDefFiles/"}
 		{file == \preset} { modPath = "Settings/Presets/"}
 		;
-
-		if(file == \preset, {
-			dir = (mainPath ++ modPath);
-		}, {
-		dir = (fileExtFile ++ modPath);
-		});
+		thisPath ?? {thisPath = mainPath};
+		dir = (thisPath ++ modPath);
 
 		PathName(dir).files.do{|item|
 			existFiles = existFiles.add(item.fileNameWithoutDoubleExtension.asSymbol);
@@ -32,14 +33,26 @@ ModFile : Radicles {var <filePath;
 
 		if(existFiles.includes(classString.asSymbol), {
 			fileName = (class.asString.firstToUpper ++ ".scd");
-			filePath = (dir ++ fileName);
+			^(dir ++ fileName);
 		}, {
 			"Class not found".warn;
 		});
 	}
 
-	array {
-		^filePath.loadPath;
+	array {var resultArr, mainLib;
+		mainLib = filePath.loadPath;
+		resultArr = mainLib;
+		if(libArr.notNil, {
+			if(libArr.notEmpty, {
+				libArr.do{|item|
+					resultArr = resultArr ++ item.loadPath;
+				};
+				resultArr = resultArr.atAll(resultArr.flop[0].rejectSame.collect{|item|
+					resultArr.flop[0].indicesOfEqual(item)[0]}
+				);
+			});
+		});
+		^resultArr;
 	}
 
 	keys {var arr;
@@ -61,7 +74,7 @@ ModFile : Radicles {var <filePath;
 					result = arr[index][1];
 				}, {
 					if(warn, {
-					"Key not found".warn;
+						"Key not found".warn;
 					});
 				});
 			}, {result = nil});
@@ -135,6 +148,17 @@ ModFile : Radicles {var <filePath;
 		PathName.new(file.dirname).files.do{|item|
 			arr = arr.add(item.fileNameWithoutExtension.toLower.asSymbol)};
 		^arr
+	}
+
+	loadLibs {arg file, class;
+		var libsFolder, libsFiles;
+		libsFolder = PathName(Platform.userExtensionDir ++ "/RadiclesLibs").folders;
+		if(libsFolder.notEmpty, {
+			libsFiles = libsFolder.collect{|item|
+				this.whichFile(file, class, item.pathOnly;);
+			};
+			^libsFiles;
+		});
 	}
 
 }
@@ -451,13 +475,13 @@ SynthDefFile : ModFile {
 		var synthFile;
 		synthFile = this.new(\synthdef, class);
 		if(dataArr.specArr.notNil, {
-		^synthFile.write(key, dataArr, true, {
-			SynthFile.write(class, key, dataArr.specFunc, false);
-			SpecFile.write(class, key, dataArr.specArr, false);
-			if(desc.notNil, {
-				DescriptionFile.write(class, key, desc, false);
+			^synthFile.write(key, dataArr, true, {
+				SynthFile.write(class, key, dataArr.specFunc, false);
+				SpecFile.write(class, key, dataArr.specArr, false);
+				if(desc.notNil, {
+					DescriptionFile.write(class, key, desc, false);
+				});
 			});
-		});
 		}, {
 			"You need to provide at least one argument and spec".warn;
 		});
