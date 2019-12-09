@@ -168,4 +168,8 @@ sig = sig * 3;
 } ], [ 'grain1', {arg impulse=10 -> [0.1, 50, {|val|val.round(0.1)}], dur=1 -> [0.0001, 0.1, {|val|val.round(0.0001)}];
 	var trigger = Impulse.kr(impulse);
 	GrainIn.ar(1, trigger, dur, \in);
+} ], [ 'pch_testfilter', {arg pitchRatio=1.0 -> [ -12, 12, {|val| val.round(0.4).midiratio }], pitchDispertion=0.0 -> [ 0.01, 2.01, \exp, {|val| (val-0.01)} ], timeDispersion=0.0001
+ -> [ 0.01, 2.01, \exp, {|val| (val-0.01)} ], winSize=0.02
+ -> [ 0.01, 3 ];
+		PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion);
 } ] ]

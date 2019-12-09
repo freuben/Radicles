@@ -1,4 +1,4 @@
-Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
+Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ;
@@ -16,6 +16,7 @@ Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 
 	initRadicles {arg doc=false;
 		mainPath = (Platform.userExtensionDir ++ "/Radicles/");
+		libPath = (Platform.userExtensionDir ++ "/RadiclesLibs");
 		server = Server.default;
 	}
 
@@ -69,6 +70,12 @@ Radicles {classvar <>mainPath, <>nodeTime=0.08, <server, <>postWin=nil,
 			thisResult = thisSpec.unmap(unmapVal);
 		});
 		^thisResult;
+	}
+
+	*plugs {var result;
+		this.new;
+		result = PathName(libPath).folders.collect{|item| item.folderName };
+		^result;
 	}
 
 	*callWindow {arg name;

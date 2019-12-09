@@ -39,6 +39,10 @@ ModFile : Radicles {var <filePath, <libArr;
 		});
 	}
 
+	writeArray {arg path;
+		^path.loadPath;
+	}
+
 	array {var resultArr, mainLib;
 		mainLib = filePath.loadPath;
 		resultArr = mainLib;
@@ -86,18 +90,23 @@ ModFile : Radicles {var <filePath, <libArr;
 		this.read(key).cs.postln;
 	}
 
-	writeFunc  {arg arr;
-		var path, file;
-		path = filePath;
+	writeFunc  {arg arr, path, post=true;
+		var file;
 		file = File(path, "w+");
 		file.write(arr.cs);
 		file.close;
+		if(post, {
 		"Updated file".postln;
+		});
 	}
 
-	write {arg key, dataArr, window=true, func;
+	write {arg key, dataArr, window=true, func, path, post=true;
 		var arrayFromFile, writeFunc, keyIndex;
-		arrayFromFile = this.array;
+		path ?? {path = filePath};
+		if(path.isNumber, {
+			path = libArr[path];
+		});
+		arrayFromFile = this.writeArray(path);
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
 			if(keyIndex.notNil, {
@@ -105,16 +114,16 @@ ModFile : Radicles {var <filePath, <libArr;
 					Window.warnQuestion(("This key already exists: " ++
 						"Are you sure you want to replace it?"), {
 						arrayFromFile[keyIndex] = [key, dataArr];
-						this.writeFunc(arrayFromFile);
+						this.writeFunc(arrayFromFile, path, post);
 						func.();
 					});
 				}, {
 					arrayFromFile[keyIndex] = [key, dataArr];
-					this.writeFunc(arrayFromFile);
+					this.writeFunc(arrayFromFile, path, post);
 				});
 			}, {
 				arrayFromFile = arrayFromFile.add([key, dataArr]);
-				this.writeFunc(arrayFromFile);
+				this.writeFunc(arrayFromFile, path, post);
 				func.();
 			});
 		}, {^arrayFromFile});
@@ -152,7 +161,7 @@ ModFile : Radicles {var <filePath, <libArr;
 
 	loadLibs {arg file, class;
 		var libsFolder, libsFiles;
-		libsFolder = PathName(Platform.userExtensionDir ++ "/RadiclesLibs").folders;
+		libsFolder = PathName(libPath).folders;
 		if(libsFolder.notEmpty, {
 			libsFiles = libsFolder.collect{|item|
 				this.whichFile(file, class, item.pathOnly;);
@@ -187,10 +196,10 @@ SynthFile : ModFile {
 		^synthFile.post(key);
 	}
 
-	* write {arg class=\filter, key, dataArr, win=true;
+	* write {arg class=\filter, key, dataArr, win=true, path, post=true;
 		var synthFile;
 		synthFile = this.new(\synth, class);
-		^synthFile.write(key, dataArr, win);
+		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
 	* remove {arg class=\filter, key, win=true;
@@ -231,10 +240,10 @@ SpecFile : ModFile {classvar specArr;
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\filter, key, dataArr, win=true;
+	* write {arg class=\filter, key, dataArr, win=true, path, post=true;
 		var synthFile;
 		synthFile = this.new(\spec, class);
-		^synthFile.write(key, dataArr, win);
+		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
 	* remove {arg class=\filter, key, win=true;
@@ -284,10 +293,10 @@ ControlFile : ModFile {
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\map, key, dataArr, win=true;
+	* write {arg class=\map, key, dataArr, win=true, path, post=true;
 		var synthFile;
 		synthFile = this.new(\control, class);
-		^synthFile.write(key, dataArr, win);
+		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
 	* remove {arg class=\map, key, win=true;
@@ -328,10 +337,10 @@ DataFile : ModFile {
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\sampler, key, dataArr, win=true;
+	* write {arg class=\sampler, key, dataArr, win=true, path, post=true;
 		var synthFile;
-		synthFile = this.new(\data, class, win);
-		^synthFile.write(key, dataArr);
+		synthFile = this.new(\data, class);
+		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
 	* remove {arg class=\sampler, key, win=true;
@@ -372,10 +381,10 @@ DescriptionFile : ModFile {
 		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
 	}
 
-	* write {arg class=\filter, key, dataArr, win=true;
+	* write {arg class=\filter, key, dataArr, win=true, path, post=true;
 		var synthFile;
 		synthFile = this.new(\description, class);
-		^synthFile.write(key, dataArr, win);
+		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
 	* remove {arg class=\filter, key, win=true;
@@ -420,10 +429,10 @@ PresetFile : ModFile {
 		^this.read(class).collect{|item| [item, this.read(class, item)] }
 	}
 
-	* write {arg class=\bstore, key, dataArr, win=true;
+	* write {arg class=\bstore, key, dataArr, win=true, path, post=true;
 		var presetFile;
 		presetFile = this.new(\preset, class);
-		^presetFile.write(key, dataArr, win);
+		^presetFile.write(key, dataArr, win, path: path, post: post);
 	}
 
 	* remove {arg class=\bstore, key, win=true;
@@ -471,17 +480,17 @@ SynthDefFile : ModFile {
 		^string;
 	}
 
-	* write {arg class=\filter, key, dataArr, desc;
+	* write {arg class=\filter, key, dataArr, desc, path, post=true;
 		var synthFile;
 		synthFile = this.new(\synthdef, class);
 		if(dataArr.specArr.notNil, {
 			^synthFile.write(key, dataArr, true, {
-				SynthFile.write(class, key, dataArr.specFunc, false);
-				SpecFile.write(class, key, dataArr.specArr, false);
+				SynthFile.write(class, key, dataArr.specFunc, false, path, false);
+				SpecFile.write(class, key, dataArr.specArr, false, path, false);
 				if(desc.notNil, {
-					DescriptionFile.write(class, key, desc, false);
+					DescriptionFile.write(class, key, desc, false, path, false);
 				});
-			});
+			}, path: path, post: post);
 		}, {
 			"You need to provide at least one argument and spec".warn;
 		});
