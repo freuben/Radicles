@@ -191,6 +191,8 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				case
 				{str2 == 'fxsetn'} {aZ.setFxArgTracks(arr1)  }
 				{str2 == 'fxlagn'} {aZ.lagFxArgTracks(arr1) }
+				{str2 == 'dirinrec'} {aZ.setDirInRec(arr1-1) }
+				{str2 == 'mapouts'} {aZ.mapOuts(arr1) }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -227,9 +229,16 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, "assemblage: [addn]");
 
 		cW.add(\asm, [\str, \str, \num], {|str1, str2, num1|
+			var trackArr;
 			if(aZ.notNil, {
 				case
-				{str2 == 'setfx'} {aZ.setFxArg(num1); }
+				{str2 == 'setfx'} {aZ.setFxArg(1, num1); }
+				{str2 == 'inmenu'} {aZ.setTrackIn(num1, 0); }
+				{str2 == 'getinmenu'} {aZ.getTrackInItem(num1); }
+				{str2 == 'getoutmenu'} {
+					trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr}[num1-1];
+					aZ.getTrackOutItem(trackArr[0], trackArr[1]);
+				}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -237,7 +246,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, "assemblage: ['setfx']");
 
 		cW.add(\asm, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			var getKey, controlKeys, ratesFor;
+			var getKey, controlKeys, ratesFor, trackArr;
 			if(aZ.notNil, {
 				case
 				{str2 == 'setfx'} {
@@ -252,6 +261,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 						[controlKeys[num2-1],
 							ratesFor[num2-1]].radpost;
 					});
+				}
+				{str2 == 'inmenu'} {aZ.setTrackIn(num1, num2-1); }
+				{str2 == 'outmenu'} {
+					trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr}[num1-1];
+					aZ.setTrackOut(trackArr[0], trackArr[1], num2);
 				}
 				;
 			}, {
@@ -320,20 +334,23 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "assemblage: [addn]");
 		//
-		cW.add(\asm, [\str, \str, \str, \num], {|str1, str2, str3, num|
+		cW.add(\asm, [\str, \str, \str, \num], {|str1, str2, str3, num1|
 			if(aZ.notNil, {
 				case
 				{str2 == 'in'} {
-					aZ.input(Ndef(str3), \track, num);
+					aZ.input(Ndef(str3), \track, num1);
 				}
 				{str2 == 'add'} {
-					aZ.autoAddTrack(str3, num);
+					aZ.autoAddTrack(str3, num1);
 				}
 				{str2 == 'remove'} {
-					aZ.removeTrack(str3, num);
+					aZ.removeTrack(str3, num1);
 				}
 				{str2 == 'fxclear'} {
-					aZ.setFx(str3, num, 1, remove: true);
+					aZ.setFx(str3, num1, 1, remove: true);
+				}
+				{str2 == 'getoutmenu'} {
+					aZ.getTrackOutItem(str3, num1);
 				}
 				;
 			}, {
@@ -388,6 +405,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				}
 				{str2 == 'setsnd'} {
 					aZ.setSendKnob(str3, num1, 1, num2);
+				}
+				{str2 == 'outmenu'} {
+					aZ.setTrackOut(str3, num1, num2);
 				}
 				;
 			}, {
@@ -654,19 +674,6 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "fxclear: mixTrackNum, filter");
 
-		cW.add(\clearfx, [\str, \num], {|str1, num1|
-			var filterTag, filterTagArr;
-			if(aZ.notNil, {
-				filterTag = aZ.filters[num1-1][0];
-				if(filterTag.notNil, {
-					filterTagArr = aZ.convFilterTag(filterTag).postln;
-					aZ.setFx(filterTagArr[0].asSymbol, filterTagArr[1],
-						filterTagArr[2], remove: true);
-				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "clearfx: filterNum");
 		cW.add(\clearfx, [\str, \num], {|str1, num1|
 			var filterTag, filterTagArr;
 			if(aZ.notNil, {
@@ -1692,6 +1699,12 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			{str2 == 'doc'} {Radicles.document;}
 			{str2 == 'fade'} {Radicles.fadeTime.postln};
 		}, "radicles: ['doc', 'fade']");
+
+		cW.add(\rad, [\str, \str, \num], {|str1, str2, num1|
+			case
+			{str2 == 'fade'} {Radicles.fadeTime = num1};
+		}, "radicles: ['fade']");
+
 		//blocks
 		cW.add(\blk, [\str, \str], {|str1, str2|
 			case
@@ -2899,7 +2912,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					aZ.setMute(trackArr[0], trackArr[1], 1);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "mute: masterTrackNums");
 
@@ -2911,7 +2924,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					aZ.setMute(trackArr[0], trackArr[1], 0);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "unmute: masterTrackNums");
 
@@ -2923,7 +2936,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					aZ.setRec(trackArr[0], trackArr[1], 1);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "recen: masterTrackNums");
 
@@ -2935,7 +2948,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					aZ.setRec(trackArr[0], trackArr[1], 0);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "recdis: masterTrackNums");
 
@@ -2947,7 +2960,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					aZ.setSolo(trackArr[0], trackArr[1], 1);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "solo: masterTrackNums");
 
@@ -2959,14 +2972,104 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					aZ.setSolo(trackArr[0], trackArr[1], 0);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "unsolo: masterTrackNums");
+
+		cW.add(\inmenu, [\str, \num], {|str, num1|
+			var trackArr;
+			if(aZ.notNil, {
+				aZ.setTrackIn(num1, 0);
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "inmenu: masterTrackNums");
+
+		cW.add(\getinmenu, [\str, \num], {|str, num1|
+			var trackArr;
+			if(aZ.notNil, {
+				aZ.getTrackInItem(num1);
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "getinmenu: masterTrackNums");
+
+		cW.add(\inmenu, [\str, \num, \num], {|str, num1, num2|
+			var trackArr;
+			if(aZ.notNil, {
+				aZ.setTrackIn(num1, num2-1);
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "inmenu: masterTrackNums");
+
+		cW.add(\getoutmenu, [\str, \num], {|str1, num1|
+			var trackArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr}[num1-1];
+				aZ.getTrackOutItem(trackArr[0], trackArr[1]);
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "getoutmenu: [mixTrackNum]");
+
+		cW.add(\getoutmenu, [\str, \str, \num], {|str1, str2, num1|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.getTrackOutItem(\track, num1);}
+				{str2 == 'b'} {aZ.getTrackOutItem(\bus, num1);}
+				{str2 == 'm'} {aZ.getTrackOutItem(\master, num1);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "getoutmenu: [trackType, trackNum]");
+
+		cW.add(\outmenu, [\str, \num, \num], {|str1, num1, num2|
+			var trackArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr}[num1-1];
+				aZ.setTrackOut(trackArr[0], trackArr[1], num2);
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "outmenu: [mixTrackNum, index]");
+
+		cW.add(\outmenu, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.setTrackOut(\track, num1, num2);}
+				{str2 == 'b'} {aZ.setTrackOut(\bus, num1, num2);}
+				{str2 == 'm'} {aZ.setTrackOut(\master, num1, num2);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "outmenu: [trackType, trackNum, index]");
+
+		cW.add(\dirinrec, [\str, \arr], {|str1, arr1|
+			var trackArr;
+			if(aZ.notNil, {
+				aZ.setDirInRec(arr1-1);
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "dirinrec: drInArr");
+
+		cW.add(\mapouts, [\str, \arr], {|str1, arr1|
+			var trackArr;
+			if(aZ.notNil, {
+				aZ.mapOuts(arr1);
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "mapouts: outArr");
 		//rounting blocks to assemblage
 		cW.add('blk', [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			if(str2 == '<>', {
 				if(aZ.notNil, {
 					aZ.input(Block.ndefs[num1-1], \track, num2);
+					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
 					"could not find assemblage".warn;
 				});
@@ -2978,6 +3081,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(aZ.notNil, {
 					ndefArr = arr.collect{|item| Block.ndefs[item-1] };
 					aZ.input(ndefArr, \track, num2);
+					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
 					"could not find assemblage".warn;
 				});
@@ -2990,23 +3094,67 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					arr1.do{|item, index|
 						aZ.input(Block.ndefs[item-1], \track, arr2[index]);
 					};
+					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
 					"could not find assemblage".warn;
 				});
 			});
 		});
 
-		//shortcut associations
-		cW.callFunc("(blk ply $n1 play $s1 -> pl $n1 $s1)");
-		cW.callFunc("(blk ply $n1 loop $s1 -> lp $n1 $s1)");
-		/*cW.callFunc("(blk ply $n1 play $s1 $a1 -> pl $n1 $s1 $a1)");*/
+		cW.add(\ndef, [\str, \str, \str, \num], {|str1, str2, str3, num1|
+			if(str3 == '<>', {
+				if(aZ.notNil, {
+					aZ.input(Ndef(str2), \track, num1);
+				}, {
+					"could not find assemblage".warn;
+				});
+			});
+		}, "ndef into assemblage");
+
+		//modulation
+
+		cW.add(\modspec, [\str], {|str1, str2, str3, str4|
+			SpecFile.read('modulation').postln;
+		}, "modspec: posts modulation specfile");
+
+		cW.add(\mods, [\str], {|str1, str2, str3, str4|
+			ControlFile.read(\modulation).postln;
+		}, "mods: posts mod types");
+
+		cW.add(\mod, [\str, \str, \str, \str], {|str1, str2, str3, str4|
+			ModMap.map(Ndef(str2), str3, str4);
+		}, "modMap: ndef, key, type");
+
+		cW.add(\mod, [\str, \str, \str, \str, \str], {|str1, str2, str3, str4, str5|
+			ModMap.map(Ndef(str2), str3, str4, str5);
+		}, "modMap: ndef, key, type, spec");
+
+		cW.add(\mod, [\str, \str, \str, \str, \arr], {|str1, str2, str3, str4, arr1|
+			ModMap.map(Ndef(str2), str3, str4, arr1);
+		}, "modMap: ndef, key, type, spec");
+
+		cW.add(\mod, [\str, \str, \str, \str, \arr, \arr], {|str1, str2, str3, str4, arr1, arr2|
+			ModMap.map(Ndef(str2), str3, str4, arr1, arr2);
+		}, "modMap: ndef, key, type, spec");
+
+		cW.add(\mod, [\str, \str, \str, \str, \str, \arr], {|str1, str2, str3, str4, str5, arr1|
+			ModMap.map(Ndef(str2), str3, str4, str5, arr1);
+		}, "modMap: ndef, key, type, spec");
+
+		//blk shortcuts
+
+		cW.add(\pl, [\str, \num, \str], {|str1, num1, str2|
+			Block.play(num1, \play, str2);
+		}, "pl: block, buffer");
+		cW.add(\lp, [\str, \num, \str], {|str1, num1, str2|
+			Block.play(num1, \loop, str2);
+		}, "lp: block, buffer");
 		cW.add(\pl, [\str,  \num, \str, \arr], {|str1, num1, str2, arr1|
 			Block.play(num1, \play, str2, arr1);
-		}, "pl: buffer, extraArgs]");
-		/*cW.callFunc("(blk ply $n1 loop $s1 $a1 -> lp $n1 $s1 $a1)");*/
+		}, "pl: block, buffer, extraArgs]");
 		cW.add(\lp, [\str,  \num, \str, \arr], {|str1, num1, str2, arr1|
 			Block.play(num1, \loop, str2, arr1);
-		}, "lp: buffer, extraArgs]");
+		}, "lp: block, buffer, extraArgs]");
 
 		//base associations
 		(0..9).do{|dim|

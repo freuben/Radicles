@@ -57,7 +57,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 			text.keyDownAction_({arg text, key, modifiers, keycode;
 				if(lang == \cmd, {
-					if(modifiers == 1048576, {
+					if(modifiers == 524288, {
 						keyFunc.(13);
 					}, {
 						keyFunc.(keycode);
