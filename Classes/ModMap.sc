@@ -55,7 +55,7 @@ ModMap : Radicles {
 
 	*getFile {arg type=\sin, spec=[-1,1], extraArgs, func;
 		var ndefString, compile, ndef, fileData, fileFuncDef, getArgString, getFuncArgs;
-		fileData = ControlFile.read(\map, type);
+		fileData = ControlFile.read(\modulation, type);
 		if(fileData.notNil, {
 			modIndex = modIndex + 1;
 			ndefString = fileData.cs.replace(".map", spec.mapSpec);
@@ -119,11 +119,11 @@ ModMap : Radicles {
 	}
 
 	*list {
-		ControlFile.read(\map).postln;
+		ControlFile.read(\modulation).postln;
 	}
 
 	*read {arg type;
-		ControlFile.read(\map, type).cs.postln;
+		ControlFile.read(\modulation, type).cs.postln;
 	}
 
 	*getPresets {var result;

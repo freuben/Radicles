@@ -57,8 +57,13 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 
 			text.keyDownAction_({arg text, key, modifiers, keycode;
 				if(lang == \cmd, {
+					if(modifiers == 1048576, {
+					keyFunc.(13);
+					}, {
 					keyFunc.(keycode);
+					});
 				});
+
 				if(recordHistory, {
 					SystemClock.sched(0.0, {arg time;
 						this.writeHistory(\keyDownAction, time, key);

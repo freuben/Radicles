@@ -348,13 +348,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					busCount = this.updateTrackCount(trackType);
 				});
-
 				//refresh win if open
-				if(mixerWin.notNil, {
-					if(mixerWin.notClosed, {
+				this.mixWinBool({
 						nodeTime.yield;
 						{this.refreshMixGUI;}.defer;
-					});
 				});
 				action.();
 			}.fork;
@@ -362,6 +359,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}, {
 			"You can\'t remove the master track".warn;
 		});
+	}
+
+	mixWinBool {arg action={};
+		if(mixerWin.notNil, {
+					if(mixerWin.notClosed, {
+				action.();
+					});
+				});
 	}
 
 	ndefPrepare {arg ndef, func;
@@ -2532,10 +2537,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		label = this.inputLablesFunc(mixTrackIndex, mixTrackNames);
 		if(mixTrackIndex.notNil, {
 			this.labelsToInFunc([\track, trackNum], label[0][inIndex]);
-			if(mixerWin.notNil, {
-				if(mixerWin.notClosed, {
+			this.mixWinBool({
 					setInputMenu.(mixTrackIndex, inIndex);
-				});
 			});
 		}, {
 			"Track not found".warn;
@@ -2601,10 +2604,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(mixTrackIndex.notNil, {
 			outputSettings[mixTrackIndex] = label;
 			this.outputMasterFunc;
-			if(mixerWin.notNil, {
-				if(mixerWin.notClosed, {
+			this.mixWinBool({
 					setOutputMenu.(mixTrackIndex, inIndex);
-				});
 			});
 		}, {
 			"Track not found".warn;
@@ -2656,11 +2657,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
 					value ++ ", 'lagTime', " ++ lag ++ ");").radpostcont.interpret;
 			});
-			if(mixerWin.notNil, {
-				if(mixerWin.notClosed, {
+			this.mixWinBool({
 					setVolSlider.(trackIndex, val);
 				});
-			});
 		}, {
 			"Track not found".warn;
 		});
@@ -2764,10 +2763,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(thisResult.notNil, {
 						thisResult.(value, lagTime);
 					});
-					if(mixerWin.notNil, {
-						if(mixerWin.notClosed, {
+					this.mixWinBool({
 							setKnobIns.(trackIndex, (slotNum-1), val);
-						});
 					});
 				}, {
 					/*"No buses in this track".warn;*/
@@ -2827,8 +2824,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		tag = ("space" ++ symString).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++panTag.cs ++ ", " ++ val ++ ");";
 		ndefCS.radpost.interpret;
-		if(mixerWin.notNil, {
-			if(mixerWin.notClosed, {
+		this.mixWinBool({
 				if(trackType == \master, {
 					trackKey = trackType.asSymbol;
 				}, {
@@ -2843,7 +2839,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 1);
 					});
 				});
-			});
 		});
 	}
 
@@ -2857,8 +2852,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		tag = ("in" ++ symString).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set('trim', " ++ val ++ ");";
 		ndefCS.radpost.interpret;
-		if(mixerWin.notNil, {
-			if(mixerWin.notClosed, {
+		this.mixWinBool({
 				if(trackType == \master, {
 					trackKey = trackType.asSymbol;
 				}, {
@@ -2866,7 +2860,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 				setInKnob.(mixTrackNames.indexOfEqual(trackKey), val);
 			});
-		});
 	}
 
 	setTrimLag {arg trackType=\track, trackNum=1, val=0;
