@@ -9,7 +9,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob;
 
-	*new {arg trackNum=1, busNum=0, chanNum=2, spaceType;
+	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
 	}
 

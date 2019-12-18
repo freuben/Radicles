@@ -58,9 +58,9 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			text.keyDownAction_({arg text, key, modifiers, keycode;
 				if(lang == \cmd, {
 					if(modifiers == 1048576, {
-					keyFunc.(13);
+						keyFunc.(13);
 					}, {
-					keyFunc.(keycode);
+						keyFunc.(keycode);
 					});
 				});
 
@@ -99,7 +99,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	callFunc {arg string, postWin, postWhere=\both, postType=\ln, postBool=true, callIndex;
 		var inputArr, typeArr, index, selectArr, selectItem, funcArr;
 		var arrString, arrInterpret, finalArr, callInd, thisStringArr, thisReplaceString;
-		var arr1, arr2, arr3, arr4, arr5;
+		var arr1, arr2, arr3, arr4, arr5, arrArr, arrArr2;
 		if(lang != \sc, {
 
 			if(string.contains("{").and(string.contains("}")), {
@@ -118,10 +118,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 						inputArr = string;
 					}
 					{string.contains("[").and(string.contains("]"))} {
-						thisStringArr = (string.copyRange(string.find("["), string.findBackwards("]");));
-						thisReplaceString = string.replace(thisStringArr, "%");
-						inputArr = thisReplaceString.split($ );
-						inputArr[inputArr.indexOfEqual("%")] = thisStringArr;
+						inputArr = string.split2($ , ", ");
 					}
 					;
 				}, {

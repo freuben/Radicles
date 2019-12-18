@@ -166,4 +166,51 @@
 		^str.interpret;
 	}
 
+		split2 { arg separator=$/, exception;
+		var indArr;
+		var word="";
+		var array=[];
+		indArr = this.findAll(exception);
+		if(indArr.notNil, {
+		indArr = indArr.collect({|item| (item, item+1..(item+exception.size-1)) });
+		indArr = indArr.flat;
+		separator=separator.ascii;
+
+		this.do({arg let,i;
+			if((let.ascii != separator).or(indArr.includes(i)) ,{
+				word=word++let;
+			},{
+				array=array.add(word);
+				word="";
+			});
+		});
+		^array.add(word);
+		}, {
+			^this.split(separator);
+		});
+	}
+
+	split3 { arg separator=$/, exceptions;
+		var indArr, indArr2;
+		var word="";
+		var array=[];
+		exceptions.do{|it|
+		indArr = this.findAll(it);
+		indArr = indArr.collect({|item| (item, item+1..(item+it.size-1)) });
+			indArr2 = indArr2.add(indArr);
+		};
+		indArr2 = indArr2.flat;
+		separator=separator.ascii;
+
+		this.do({arg let,i;
+			if((let.ascii != separator).or(indArr2.includes(i)) ,{
+				word=word++let;
+			},{
+				array=array.add(word);
+				word="";
+			});
+		});
+		^array.add(word);
+	}
+
 }
