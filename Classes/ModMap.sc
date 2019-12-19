@@ -2,7 +2,7 @@ ModMap : Radicles {
 	classvar <modNodes, <modInfoArr, modIndex=0, <lagArr;
 
 	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag;
-		var modMap;
+		var modMap, keyVals, defaultVal;
 		if(spec.isSymbol, {spec = SpecFile.read(\modulation, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
 		if(modNodes.isNil, {
@@ -12,6 +12,9 @@ ModMap : Radicles {
 				modIndex=0;
 			});
 		});
+		keyVals = ndef.getKeysValues;
+		defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];
+
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
 		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost.interpret;
@@ -20,7 +23,7 @@ ModMap : Radicles {
 			modNodes.remove(item);
 			modInfoArr.removeAt(index);
 		}); };
-		modNodes = modNodes.add([modMap, ndef, key]);
+		modNodes = modNodes.add([modMap, ndef, key, defaultVal]);
 		modInfoArr = modInfoArr.add([modMap.key, type, spec, extraArgs, func, mul, add, min, val, warp, lag]);
 		if(lag.notNil, {
 			this.lag(ndef.key.asString.divNumStr[1], key, lag);
@@ -28,16 +31,16 @@ ModMap : Radicles {
 		^modMap;
 	}
 
-	*unmap {arg ndef, key, value=0;
+	*unmap {arg ndef, key, value;
 		var indexNodes, thisArr, num;
+
 		if(key.isInteger, {
 			key = ndef.controlKeys[key];
 		});
 		modNodes.do{|item, index| if( item.indexOfAll([ndef, key]).reject({|item| item == nil}).size == 2,
 			{
-				if(value.notNil, {
+				value ?? {value = modNodes[index][3]};
 					(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;
-				});
 				(modNodes[index][0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
 				modNodes.removeAt(index);
 				modInfoArr.removeAt(index);
@@ -47,7 +50,7 @@ ModMap : Radicles {
 
 	*unmapAt {arg index;
 		if((modNodes.isNil).or(modNodes.isEmpty).not, {
-			this.unmap(modNodes[0][1], modNodes[0][2]);
+			this.unmap(modNodes[index][1], modNodes[index][2]);
 		}, {
 			"no maps left".warn;
 		});
