@@ -115,7 +115,11 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 				.or((string.contains("[")).and(string.contains("]"))), {
 					case
 					{string.contains("(").and(string.contains(")"))} {
+						if(string.contains("_"), {
+						inputArr = string.split2($ , ", ");
+						}, {
 						inputArr = string;
+						});
 					}
 					{string.contains("[").and(string.contains("]"))} {
 						inputArr = string.split2($ , ", ");
@@ -204,10 +208,15 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 						callInd = string.last.asString.interpret;
 						inputArr = inputArr.copyRange(0, inputArr.size-3);
 					});
+					if(inputArr.contains("_"), {
+						/*inputArr = inputArr.split2($ , ", ");*/
+						/*inputArr.cs.postln;*/
+					}, {
 					if(inputArr.contains("->"), {
 						this.association(inputArr, callInd);
 					}, {
 						("~callWindowGlobVar.add" ++ inputArr).radpost.interpret;
+					});
 					});
 				}
 				/*{string.contains("[").and(string.contains("]"))} {
