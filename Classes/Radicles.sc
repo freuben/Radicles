@@ -764,6 +764,32 @@ cW.add(\fxset, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
 	});
 }, "fxset: trackType, trackNum, fxArg, val");
 
+cW.add(\fxset, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
+	var modArgs;
+	if(aZ.notNil, {
+		modArgs = str3.asString.radStringMod;
+		case
+		{str2 == 'm'} {
+			aZ.modFxTrack(\master, 1, num1, num2, modArgs[0], modArgs[1]);
+		};
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: trackType, trackNum, fxArg, modType");
+
+cW.add(\fxset, [\str, \str, \num, \str, \str], {|str1, str2, num1, str3, str4|
+	var modArgs;
+	if(aZ.notNil, {
+		modArgs = str4.asString.radStringMod;
+		case
+		{str2 == 'm'} {
+			aZ.modFxTrack(\master, 1, num1, str3, modArgs[0], modArgs[1]);
+		};
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: trackType, trackNum, fxArg, modType");
+
 cW.add(\fxlag, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
 	var getKey, controlKeys, ratesFor;
 	if(aZ.notNil, {
@@ -808,6 +834,34 @@ cW.add(\fxset, [\str, \str, \num, \num, \num, \num], {|str1, str2, num1, num2, n
 		"could not find assemblage".warn;
 	});
 }, "fxset: trackType, trackNum, slotNum, fxArg, val");
+
+cW.add(\fxset, [\str, \str, \num, \num, \num, \str], {|str1, str2, num1, num2, num3, str3|
+	var modArgs;
+	if(aZ.notNil, {
+		modArgs = str3.asString.radStringMod;
+		case
+		{str2 == 't'} {aZ.modFxTrack(\track, num1, num2, num3, modArgs[0], modArgs[1]);}
+		{str2 == 'b'} {aZ.modFxTrack(\bus, num1, num2, num3, modArgs[0], modArgs[1]);}
+		{str2 == 'm'} {aZ.modFxTrack(\master, 1, num2, num3, modArgs[0], modArgs[1]);}
+		;
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: trackType, trackNum, slotNum, fxArg, modType");
+
+cW.add(\fxset, [\str, \str, \num, \num, \str, \str], {|str1, str2, num1, num2, str3, str4|
+	var modArgs;
+	if(aZ.notNil, {
+		modArgs = str4.asString.radStringMod;
+		case
+		{str2 == 't'} {aZ.modFxTrack(\track, num1, num2, str3, modArgs[0], modArgs[1]);}
+		{str2 == 'b'} {aZ.modFxTrack(\bus, num1, num2, str3, modArgs[0], modArgs[1]);}
+		{str2 == 'm'} {aZ.modFxTrack(\master, 1, num2, str3, modArgs[0], modArgs[1]);}
+		;
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: trackType, trackNum, slotNum, fxArg, modType");
 
 cW.add(\fxlag, [\str, \str, \num, \num, \num, \num], {|str1, str2, num1, num2, num3, num4|
 	if(aZ.notNil, {
@@ -948,6 +1002,40 @@ cW.add(\fxset, [\str, \num, \num, \num, \num], {|str1, num1, num2, num3, num4|
 			thisArr = trackArr[num1-1];
 			if(thisArr[1].isNil, {thisArr[1] = 1});
 			aZ.setFxArgTrack(thisArr[0].asSymbol, thisArr[1], num2, num3, num4);
+		}, {
+			"track not found".warn;
+		});
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: mixTrackNum, filter");
+
+cW.add(\fxset, [\str, \num, \num, \num, \str], {|str1, num1, num2, num3, str2|
+	var trackArr, thisArr, modArgs;
+	if(aZ.notNil, {
+		trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+		modArgs = str2.asString.radStringMod;
+		if(num1 <= (trackArr.size), {
+			thisArr = trackArr[num1-1];
+			if(thisArr[1].isNil, {thisArr[1] = 1});
+			aZ.modFxTrack(thisArr[0].asSymbol, thisArr[1], num2, num3, modArgs[0], modArgs[1]);
+		}, {
+			"track not found".warn;
+		});
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: mixTrackNum, filter");
+
+cW.add(\fxset, [\str, \num, \num, \str, \str], {|str1, num1, num2, str2, str3|
+	var trackArr, thisArr, modArgs;
+	if(aZ.notNil, {
+		trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+		modArgs = str3.asString.radStringMod;
+		if(num1 <= (trackArr.size), {
+			thisArr = trackArr[num1-1];
+			if(thisArr[1].isNil, {thisArr[1] = 1});
+			aZ.modFxTrack(thisArr[0].asSymbol, thisArr[1], num2, str2, modArgs[0], modArgs[1]);
 		}, {
 			"track not found".warn;
 		});
@@ -1202,6 +1290,26 @@ cW.add(\setfx, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 		"could not find assemblage".warn;
 	});
 }, "setfx: filterNum, fxArg, val");
+
+cW.add(\setfx, [\str, \num, \num, \str], {|str1, num1, num2, str2|
+	var modArgs;
+	if(aZ.notNil, {
+		modArgs = str2.asString.radStringMod;
+		aZ.modFx(num1, num2, modArgs[0], modArgs[1]);
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "setfx: filterNum, fxArg, mod");
+
+cW.add(\setfx, [\str, \num, \str, \str], {|str1, num1, str2, str3|
+	var modArgs;
+	if(aZ.notNil, {
+		modArgs = str3.asString.radStringMod;
+		aZ.modFx(num1, str2, modArgs[0], modArgs[1]);
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "setfx: filterNum, fxArg, mod");
 
 cW.add(\lagfx, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 	if(aZ.notNil, {

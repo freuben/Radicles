@@ -159,32 +159,32 @@
 	interpretRad {var str, str2, arrStr, arrStr2;
 		str = this.replace(",", ", ");
 		str2 = str.select{|item|
-		("0123456789[](){},.".ascii).includes(item.ascii).not;};
+			("0123456789[](){},.".ascii).includes(item.ascii).not;};
 		arrStr = str2.split($ ).reject({|item| item == "" });
 		arrStr2 = arrStr.rejectSame;
 		arrStr2.do{|item|  str = str.replace(item, item.asSymbol.cs) };
 		^str.interpret;
 	}
 
-		split2 { arg separator=$/, exception;
+	split2 { arg separator=$/, exception;
 		var indArr;
 		var word="";
 		var array=[];
 		indArr = this.findAll(exception);
 		if(indArr.notNil, {
-		indArr = indArr.collect({|item| (item, item+1..(item+exception.size-1)) });
-		indArr = indArr.flat;
-		separator=separator.ascii;
+			indArr = indArr.collect({|item| (item, item+1..(item+exception.size-1)) });
+			indArr = indArr.flat;
+			separator=separator.ascii;
 
-		this.do({arg let,i;
-			if((let.ascii != separator).or(indArr.includes(i)) ,{
-				word=word++let;
-			},{
-				array=array.add(word);
-				word="";
+			this.do({arg let,i;
+				if((let.ascii != separator).or(indArr.includes(i)) ,{
+					word=word++let;
+				},{
+					array=array.add(word);
+					word="";
+				});
 			});
-		});
-		^array.add(word);
+			^array.add(word);
 		}, {
 			^this.split(separator);
 		});
@@ -195,8 +195,8 @@
 		var word="";
 		var array=[];
 		exceptions.do{|it|
-		indArr = this.findAll(it);
-		indArr = indArr.collect({|item| (item, item+1..(item+it.size-1)) });
+			indArr = this.findAll(it);
+			indArr = indArr.collect({|item| (item, item+1..(item+it.size-1)) });
 			indArr2 = indArr2.add(indArr);
 		};
 		indArr2 = indArr2.flat;
@@ -211,6 +211,19 @@
 			});
 		});
 		^array.add(word);
+	}
+
+	radStringMod {
+		var modString, modStr1, modStr2, result;
+		modString = this;
+		if(modString.contains("_"), {
+			modStr1 = modString.split($_);
+			modStr2 =	modStr1[1].replaceAt("[", 0).replaceAt("]", modStr1[1].size-1).interpretRad;
+			result = [modStr1[0].asSymbol, modStr2];
+		}, {
+			result = [modString.asSymbol, nil];
+		});
+		^result;
 	}
 
 }
