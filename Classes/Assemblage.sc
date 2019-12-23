@@ -350,8 +350,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 				//refresh win if open
 				this.mixWinBool({
-						nodeTime.yield;
-						{this.refreshMixGUI;}.defer;
+					nodeTime.yield;
+					{this.refreshMixGUI;}.defer;
 				});
 				action.();
 			}.fork;
@@ -363,10 +363,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	mixWinBool {arg action={};
 		if(mixerWin.notNil, {
-					if(mixerWin.notClosed, {
+			if(mixerWin.notClosed, {
 				action.();
-					});
-				});
+			});
+		});
 	}
 
 	ndefPrepare {arg ndef, func;
@@ -2538,7 +2538,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(mixTrackIndex.notNil, {
 			this.labelsToInFunc([\track, trackNum], label[0][inIndex]);
 			this.mixWinBool({
-					setInputMenu.(mixTrackIndex, inIndex);
+				setInputMenu.(mixTrackIndex, inIndex);
 			});
 		}, {
 			"Track not found".warn;
@@ -2605,7 +2605,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			outputSettings[mixTrackIndex] = label;
 			this.outputMasterFunc;
 			this.mixWinBool({
-					setOutputMenu.(mixTrackIndex, inIndex);
+				setOutputMenu.(mixTrackIndex, inIndex);
 			});
 		}, {
 			"Track not found".warn;
@@ -2658,8 +2658,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					value ++ ", 'lagTime', " ++ lag ++ ");").radpostcont.interpret;
 			});
 			this.mixWinBool({
-					setVolSlider.(trackIndex, val);
-				});
+				setVolSlider.(trackIndex, val);
+			});
 		}, {
 			"Track not found".warn;
 		});
@@ -2764,7 +2764,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						thisResult.(value, lagTime);
 					});
 					this.mixWinBool({
-							setKnobIns.(trackIndex, (slotNum-1), val);
+						setKnobIns.(trackIndex, (slotNum-1), val);
 					});
 				}, {
 					/*"No buses in this track".warn;*/
@@ -2825,20 +2825,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++panTag.cs ++ ", " ++ val ++ ");";
 		ndefCS.radpost.interpret;
 		this.mixWinBool({
-				if(trackType == \master, {
-					trackKey = trackType.asSymbol;
+			if(trackType == \master, {
+				trackKey = trackType.asSymbol;
+			}, {
+				trackKey = (trackType ++ trackNum).asSymbol;
+			});
+			if(panTag == \pan, {
+				setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val);
+			}, {
+				if(panTag == \panx, {
+					setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 0);
 				}, {
-					trackKey = (trackType ++ trackNum).asSymbol;
+					setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 1);
 				});
-				if(panTag == \pan, {
-					setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val);
-				}, {
-					if(panTag == \panx, {
-						setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 0);
-					}, {
-						setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 1);
-					});
-				});
+			});
 		});
 	}
 
@@ -2853,13 +2853,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set('trim', " ++ val ++ ");";
 		ndefCS.radpost.interpret;
 		this.mixWinBool({
-				if(trackType == \master, {
-					trackKey = trackType.asSymbol;
-				}, {
-					trackKey = (trackType ++ trackNum).asSymbol;
-				});
-				setInKnob.(mixTrackNames.indexOfEqual(trackKey), val);
+			if(trackType == \master, {
+				trackKey = trackType.asSymbol;
+			}, {
+				trackKey = (trackType ++ trackNum).asSymbol;
 			});
+			setInKnob.(mixTrackNames.indexOfEqual(trackKey), val);
+		});
 	}
 
 	setTrimLag {arg trackType=\track, trackNum=1, val=0;
@@ -2901,6 +2901,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
 		data, remove=false, action, actionBuf;
 		var insert, newFilterNdef, extraArgsBool;
+		if(SynthDefFile.read(\filter).includes(filter), {
 		if(remove, {
 			this.removeFilter(trackType, num, slot, {this.refreshFunc; action.();}, {actionBuf.()} );
 		}, {
@@ -2932,6 +2933,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					action.();
 				}, insert);
 			});
+		});
+		}, {
+			"filter doesn't exist or is not loaded".warn;
 		});
 	}
 
@@ -3967,6 +3971,55 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}.fork(AppClock);
 			});
 		}, post: post);
+	}
+
+	findFxModNdef {arg trackType, trackNum, trackSlot, trackArg;
+		var fxTag, findMods, findModArr, modIndex, modKey, modInfo, result;
+		fxTag = this.findFilterTag(trackType, trackNum, trackSlot);
+		if(fxTag.notNil, {
+			modInfo = ModMap.modNodes;
+			if(modInfo.notNil, {
+				findMods = ModMap.modNodes.flop[1].indicesOfEqual(Ndef(fxTag));
+				if(findMods.notNil, {
+					findModArr = ModMap.modNodes.atAll(findMods);
+					if(trackArg.isSymbol, {
+						modIndex = findModArr.flop[2].indexOf(trackArg);
+					}, {
+						modKey = 	findModArr.flop[1][0].controlKeys[trackArg-1];
+						modIndex = findModArr.flop[2].indexOf(modKey);
+					});
+					if(modIndex.notNil, {
+						result = findModArr.flop[0][modIndex];
+					}, {
+						"key not found".warn;
+					});
+				}, {
+					"no modulation in this filter".warn;
+				});
+			}, {
+				"no modulation in this filter".warn;
+			});
+		}, {
+			"filter doesn't exist".warn;
+		});
+		^result;
+	}
+
+	setFxMod {arg trackType, trackNum, trackSlot, trackArg, extraArgs;
+		var ndefString;
+		ndefString = this.findFxModNdef(trackType, trackNum, trackSlot, trackArg);
+		if(ndefString.notNil, {
+			(ndefString.cs ++ ".setn" ++ extraArgs.cs.replaceAt("(",0)
+				.replaceAt(")", extraArgs.cs.size-1)).radpost.interpret;
+		});
+	}
+
+	getFxMod {arg trackType, trackNum, trackSlot, trackArg, extraArgs;
+		var ndefString;
+		ndefString = this.findFxModNdef(trackType, trackNum, trackSlot, trackArg);
+		if(ndefString.notNil, {
+			ndefString.controlKeysValues.radpost;
+		});
 	}
 
 	unmapSend {arg trackType, trackNum, sendSlot, value=0;

@@ -87,6 +87,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			server.boot;
 		});
 
+		this.loadCmds;
+	}
+
+	*loadCmds {
 //assemblage
 cW.add(\asm, [\str, \num], {|str, num|
 	if(aZ.isNil, {
@@ -1358,19 +1362,19 @@ cW.add(\fxget, [\str, \str, \num], {|str1, str2, num1|
 		{str2 == 't'} {
 			filterTag = aZ.findFilterTag(\track, num1, 1);
 			if(filterTag.notNil, {
-				aZ.getFilterKeys(aZ.findFilterTag(\track, num1, 1), \vals).postln;
+				aZ.getFilterKeys(aZ.findFilterTag(\track, num1, 1), \pairs).postln;
 			});
 		}
 		{str2 == 'b'} {
 			filterTag = aZ.findFilterTag(\bus, num1, 1);
 			if(filterTag.notNil, {
-				aZ.getFilterKeys(filterTag, \vals).postln;
+				aZ.getFilterKeys(filterTag, \pairs).postln;
 			});
 		}
 		{str2 == 'm'} {
 			filterTag = aZ.findFilterTag(\master, num1, 1);
 			if(filterTag.notNil, {
-				aZ.getFilterKeys(filterTag, \vals).postln;
+				aZ.getFilterKeys(filterTag, \pairs).postln;
 			});
 		};
 	}, {
@@ -1379,19 +1383,115 @@ cW.add(\fxget, [\str, \str, \num], {|str1, str2, num1|
 }, "fxset: trackType, trackNum, fxArg");
 
 cW.add(\fxget, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-	var filterTag;
+	var filterTag, result;
 	if(aZ.notNil, {
 		case
 		{str2 == 't'} {
 			filterTag = aZ.findFilterTag(\track, num1, num2);
 			if(filterTag.notNil, {
-				aZ.getFilterKeys(filterTag, \vals).postln;
+				aZ.getFilterKeys(filterTag, \pairs).postln;
 			});
 		}
 		{str2 == 'b'} {
 			filterTag = aZ.findFilterTag(\bus, num1, num2);
 			if(filterTag.notNil, {
-				aZ.getFilterKeys(filterTag, \vals).postln;
+				aZ.getFilterKeys(filterTag, \pairs).postln;
+			});
+		}
+		{str2 == 'm'} {
+			filterTag = aZ.findFilterTag(\master, num1, 1);
+			if(filterTag.notNil, {
+				result = aZ.getFilterKeys(filterTag, \pairs)[num2-1][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
+			});
+		}
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: trackType, trackNum, fxArg");
+
+cW.add(\fxget, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+	var filterTag, result, index;
+	if(aZ.notNil, {
+		case
+		{str2 == 'm'} {
+			filterTag = aZ.findFilterTag(\master, num1, 1);
+			if(filterTag.notNil, {
+				index = Ndef(filterTag).controlKeys.indexOf(str3);
+				result = aZ.getFilterKeys(filterTag, \pairs)[index][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
+			});
+		}
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: trackType, trackNum, fxArg");
+
+cW.add(\fxget, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+	var filterTag, result;
+	if(aZ.notNil, {
+		case
+		{str2 == 't'} {
+			filterTag = aZ.findFilterTag(\track, num1, num2);
+			if(filterTag.notNil, {
+				result = aZ.getFilterKeys(filterTag, \pairs)[num3-1][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
+			});
+		}
+		{str2 == 'b'} {
+			filterTag = aZ.findFilterTag(\bus, num1, num2);
+			if(filterTag.notNil, {
+				result = aZ.getFilterKeys(filterTag, \pairs)[num3-1][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
+			});
+		}
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: trackType, trackNum, fxArg");
+
+cW.add(\fxget, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
+	var filterTag, result, index;
+	if(aZ.notNil, {
+		case
+		{str2 == 't'} {
+			filterTag = aZ.findFilterTag(\track, num1, num2);
+			if(filterTag.notNil, {
+				index = Ndef(filterTag).controlKeys.indexOf(str3);
+				result = aZ.getFilterKeys(filterTag, \pairs)[index][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
+			});
+		}
+		{str2 == 'b'} {
+			filterTag = aZ.findFilterTag(\bus, num1, num2);
+			if(filterTag.notNil, {
+					index = Ndef(filterTag).controlKeys.indexOf(str3);
+				result = aZ.getFilterKeys(filterTag, \pairs)[index-1][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
 			});
 		}
 	}, {
@@ -1456,7 +1556,7 @@ cW.add(\fxget, [\str, \num], {|str1, num1|
 			if(thisArr[1].isNil, {thisArr[1] = 1});
 			filterTag = aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], 1);
 			if(filterTag.notNil, {
-				aZ.getFilterKeys(filterTag, \vals).postln;
+				aZ.getFilterKeys(filterTag, \pairs).postln;
 			});
 		}, {
 			"track not found".warn;
@@ -1475,7 +1575,56 @@ cW.add(\fxget, [\str, \num, \num], {|str1, num1, num2|
 			if(thisArr[1].isNil, {thisArr[1] = 1});
 			filterTag = aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
 			if(filterTag.notNil, {
-				aZ.getFilterKeys(filterTag, \vals).postln;
+				aZ.getFilterKeys(filterTag, \pairs).postln;
+			});
+		}, {
+			"track not found".warn;
+		});
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: mixTrackNum, filter");
+
+cW.add(\fxget, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+	var trackArr, thisArr, filterTag, result;
+	if(aZ.notNil, {
+		trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+		if(num1 <= (trackArr.size), {
+			thisArr = trackArr[num1-1];
+			if(thisArr[1].isNil, {thisArr[1] = 1});
+			filterTag = aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
+			if(filterTag.notNil, {
+				result = aZ.getFilterKeys(filterTag, \pairs)[num3-1][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
+			});
+		}, {
+			"track not found".warn;
+		});
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "fxset: mixTrackNum, filter");
+
+cW.add(\fxget, [\str, \num, \num, \str], {|str1, num1, num2, str2|
+	var trackArr, thisArr, filterTag, result, index;
+	if(aZ.notNil, {
+		trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+		if(num1 <= (trackArr.size), {
+			thisArr = trackArr[num1-1];
+			if(thisArr[1].isNil, {thisArr[1] = 1});
+			filterTag = aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
+			if(filterTag.notNil, {
+				index = Ndef(filterTag).controlKeys.indexOf(str2);
+				result = aZ.getFilterKeys(filterTag, \pairs)[index][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
 			});
 		}, {
 			"track not found".warn;
@@ -1528,8 +1677,43 @@ cW.add(\getfx, [\str, \num], {|str1, num1|
 	if(aZ.notNil, {
 		filterTag = aZ.filters[num1-1][0];
 		if(filterTag.notNil, {
-			aZ.getFilterKeys(filterTag, \vals).postln;
+			aZ.getFilterKeys(filterTag, \pairs).postln;
 		});
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "getfx: filterNum");
+
+cW.add(\getfx, [\str, \num, \num], {|str1, num1, num2|
+	var filterTag, result;
+	if(aZ.notNil, {
+		filterTag = aZ.filters[num1-1][0];
+		if(filterTag.notNil, {
+				result = aZ.getFilterKeys(filterTag, \pairs)[num2-1][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
+			});
+	}, {
+		"could not find assemblage".warn;
+	});
+}, "getfx: filterNum");
+
+cW.add(\getfx, [\str, \num, \str], {|str1, num1, str2|
+	var filterTag, result, index;
+	if(aZ.notNil, {
+		filterTag = aZ.filters[num1-1][0];
+		if(filterTag.notNil, {
+				index = Ndef(filterTag).controlKeys.indexOf(str2);
+				result = aZ.getFilterKeys(filterTag, \pairs)[index][1];
+				if(result.cs.contains("Ndef"), {
+					result.key.postln;
+				}, {
+					result.postln;
+				});
+			});
 	}, {
 		"could not find assemblage".warn;
 	});
@@ -3219,6 +3403,11 @@ aZ.input(Ndef(str2), \track, num1);
 	});
 }, "ndef into assemblage");
 
+cW.add(\ndefset, [\str, \str, \arr], {|str1, str2, arr1|
+	 ("Ndef(" ++ str2.cs ++ ").setn" ++
+	 arr1.cs.replaceAt("(", 0).replaceAt(")", arr1.cs.size-1);
+	 ).radpost.interpret;
+}, "ndef set");
 //modulation
 
 cW.add(\modspec, [\str], {|str1, str2, str3, str4|
