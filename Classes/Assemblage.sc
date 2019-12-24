@@ -4014,7 +4014,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	getFxMod {arg trackType, trackNum, trackSlot, trackArg, extraArgs;
+	getFxMod {arg trackType, trackNum, trackSlot, trackArg;
 		var ndefString;
 		ndefString = this.findFxModNdef(trackType, trackNum, trackSlot, trackArg);
 		if(ndefString.notNil, {

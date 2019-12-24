@@ -709,4 +709,124 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		^result;
 	}
 
+	//modulation
+	*getSpec {arg blkNum, argIn;
+		var ndefKey, spec, index, liveBlks;
+		ndefKey = ("block" ++ blkNum).asSymbol;
+		if(argIn.isNumber, {
+			index = argIn-1;
+		}, {
+			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
+		});
+		if(index.notNil, {
+			liveBlks = Block.liveBlocks;
+			spec = SpecFile.read(\block,
+				liveBlks.flop[1][liveBlks.flop[0].indexOf(ndefKey);]
+			)[index][1];
+			if(spec.isNil, {spec = [-1,1] });
+			^spec;
+		}, {
+			"Argument doesn't match synth".warn;
+		});
+	}
+
+	*modFunc {arg ndefKey, argIn, type, extraArgs, func,
+		mul=1, add=0, min, val, warp, lag, thisSpec;
+		var filterType, index, keyValues, spec, liveBlks;
+		if(argIn.isNumber, {
+			index = argIn-1;
+		}, {
+			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
+		});
+		if(index.notNil, {
+			keyValues = Ndef(ndefKey).getKeysValues[index];
+			liveBlks = Block.liveBlocks;
+			spec = SpecFile.read(\block,
+				liveBlks.flop[1][liveBlks.flop[0].indexOf(ndefKey);]
+			)[index][1];
+			if(spec.isNil, {spec = [-1,1] });
+			^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
+				func, mul, add, min, val, warp, lag);
+		}, {
+			"Argument doesn't match synth".warn;
+		});
+	}
+
+	*modBlk {arg blkNum, modArg, modType, extraArgs,
+		func, mul=1, add=0, min, val, warp, lag, thisSpec;
+		var typeKey, ndefKey;
+		ndefKey = ("block" ++ blkNum).asSymbol;
+		if(modArg.notNil, {
+			/*{*/
+			this.modFunc(ndefKey, modArg, modType, extraArgs, func,
+				mul, add, min, val, warp, lag, thisSpec);
+			/*server.sync;
+			this.updateFxWin(ndefKey);
+			}.fork(AppClock);*/
+		}, {
+			Ndef(ndefKey).controlKeys.postln;
+		});
+	}
+
+	*	unmapBlk {arg blkNum, modArg, value=0;
+		var ndefKey;
+		ndefKey = ("block" ++ blkNum).asSymbol;
+		if(modArg.notNil, {
+			/*{*/
+			ModMap.unmap(Ndef(ndefKey), modArg-1, value);
+			/*server.sync;
+			this.updateFxWin(ndefKey);
+			}.fork(AppClock);*/
+		});
+	}
+
+	*findBlkModNdef {arg blkNum, trackArg;
+		var blkTag, findMods, findModArr, modIndex, modKey, modInfo, result;
+		blkTag = ("block" ++ blkNum).asSymbol;
+		if(blkTag.notNil, {
+			modInfo = ModMap.modNodes;
+			if(modInfo.notNil, {
+				findMods = ModMap.modNodes.flop[1].indicesOfEqual(Ndef(blkTag));
+				if(findMods.notNil, {
+					findModArr = ModMap.modNodes.atAll(findMods);
+					if(trackArg.isSymbol, {
+						modIndex = findModArr.flop[2].indexOf(trackArg);
+					}, {
+						modKey = 	findModArr.flop[1][0].controlKeys[trackArg-1];
+						modIndex = findModArr.flop[2].indexOf(modKey);
+					});
+					if(modIndex.notNil, {
+						result = findModArr.flop[0][modIndex];
+					}, {
+						"key not found".warn;
+					});
+				}, {
+					"no modulation in this block".warn;
+				});
+			}, {
+				"no modulation in this block".warn;
+			});
+		}, {
+			"block doesn't exist".warn;
+		});
+		^result;
+	}
+
+	*setBlkMod {arg blkNum, trackArg, extraArgs;
+		var ndefString;
+		ndefString = this.findBlkModNdef(blkNum, trackArg);
+		if(ndefString.notNil, {
+			(ndefString.cs ++ ".setn" ++ extraArgs.cs.replaceAt("(",0)
+				.replaceAt(")", extraArgs.cs.size-1)).radpost.interpret;
+		});
+	}
+
+	*getBlkMod {arg blkNum, trackArg;
+		var ndefString;
+		ndefString = this.findBlkModNdef(blkNum, trackArg);
+		if(ndefString.notNil, {
+			ndefString.controlKeysValues.radpost;
+		});
+	}
+
 }
