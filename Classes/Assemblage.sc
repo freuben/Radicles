@@ -2317,7 +2317,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(menu.string == "", {
 						fltMenuWindow = Window.new("", thisBounds, border: false).front;
 						fltMenuWindow.background_(Color.black);
-						thisitemArr = ([""] ++ SynthFile.read(\filter).sort );
+						thisitemArr = ([""] ++ SynthFile.read(\filter, exclude: excludeLibs).sort );
 						thisListView = ListView(fltMenuWindow,Rect(0,0,(thisArrBounds[2]),
 							(thisArrBounds[3])))
 						.items_(thisitemArr)
@@ -2887,7 +2887,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	listFx {
-		SynthFile.read(\filter).sort.radpost;
+		SynthFile.read(\filter, exclude: excludeLibs).sort.radpost;
 	}
 
 	refreshFunc {
@@ -2901,7 +2901,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	setFx {arg trackType=\track, num=1, slot=1, filter=\pch, extraArgs, buffer,
 		data, remove=false, action, actionBuf;
 		var insert, newFilterNdef, extraArgsBool;
-		if(SynthDefFile.read(\filter).includes(filter), {
+		if(SynthDefFile.read(\filter, exclude: excludeLibs).includes(filter), {
 		if(remove, {
 			this.removeFilter(trackType, num, slot, {this.refreshFunc; action.();}, {actionBuf.()} );
 		}, {
@@ -2915,7 +2915,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				if(extraArgsBool, {
 					if(extraArgs.select{|item| item.isSymbol}.isEmpty, {
 						extraArgs = extraArgs.collect({|item, index| if(index.even, {
-							item = SynthFile.read('filter', filter).argNames[item-1];
+							item = SynthFile.read('filter', filter, exclude: excludeLibs).argNames[item-1];
 						}, {
 							item = item;
 						});

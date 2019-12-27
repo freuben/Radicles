@@ -156,14 +156,26 @@
 		^[this.replace(nums, ""), nums.interpret];
 	}
 
-	interpretRad {var str, str2, arrStr, arrStr2;
-		str = this.replace(",", ", ");
-		str2 = str.select{|item|
-			("0123456789[](){},.-".ascii).includes(item.ascii).not;};
-		arrStr = str2.split($ ).reject({|item| item == "" });
-		arrStr2 = arrStr.rejectSame;
-		arrStr2.do{|item|  str = str.replace(item, item.asSymbol.cs) };
-		^str.interpret;
+	/*	interpretRad {var str, str2, arrStr, arrStr2;
+	str = this.replace(",", ", ");
+	str2 = str.select{|item|
+	("0123456789[](){},.-".ascii).includes(item.ascii).not;};
+	arrStr = str2.split($ ).reject({|item| item == "" });
+	arrStr2 = arrStr.rejectSame;
+	arrStr2.do{|item|  str = str.replace(item, item.asSymbol.cs) };
+	^str.interpret;
+	}*/
+
+	interpretRad {var str, strArr, bla, str2, arr, arr2, arr3;
+		str = this;
+		strArr = str.ascii.collect({|item| if("[], ".ascii.includes(item), {item}, {48}) });
+		bla = strArr.asAscii.interpret;
+		str2 = str.replace(",", ", ").replace("[", "").replace("]", "");
+		str2 = str2.replace(" ", "");
+		arr = str2.split($,);
+		arr2 = arr.collect({|item| if(item.isStringNumber, {item.interpret}, {item.asSymbol}); });
+		arr3 = arr2.reshapeLike(bla);
+		^arr3.cs.interpret;
 	}
 
 	split2 { arg separator=$/, exception;

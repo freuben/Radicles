@@ -1,12 +1,18 @@
 ModFile : Radicles {var <filePath, <libArr;
 
-	* new {arg file=\synth, class=\filter;
-		^super.new.initFile(file, class);
+	* new {arg file=\synth, class=\filter, exclude;
+		^super.new.initFile(file, class, exclude);
 	}
 
-	initFile {arg file, class;
+	initFile {arg file, class, exclude;
+		if(exclude.isNil, {
 		filePath =  this.whichFile(file, class);
-		libArr = this.loadLibs(file, class);
+		}, {
+		if(exclude.indexOfEqual("Main").notNil.not, {
+		filePath =  this.whichFile(file, class);
+		});
+		});
+		libArr = this.loadLibs(file, class, exclude);
 	}
 
 	whichFile {arg file, class, thisPath;
@@ -96,7 +102,7 @@ ModFile : Radicles {var <filePath, <libArr;
 		file.write(arr.cs);
 		file.close;
 		if(post, {
-		"Updated file".postln;
+			"Updated file".postln;
 		});
 	}
 
@@ -159,13 +165,32 @@ ModFile : Radicles {var <filePath, <libArr;
 		^arr
 	}
 
-	loadLibs {arg file, class;
+	/*	loadLibs {arg file, class;
+	var libsFolder, libsFiles;
+	libsFolder = PathName(libPath).folders;
+	if(libsFolder.notEmpty, {
+	libsFiles = libsFolder.collect{|item|
+	this.whichFile(file, class, item.pathOnly;);
+	};
+	^libsFiles;
+	});
+	}*/
+
+	loadLibs {arg file, class, exclude;
 		var libsFolder, libsFiles;
 		libsFolder = PathName(libPath).folders;
 		if(libsFolder.notEmpty, {
-			libsFiles = libsFolder.collect{|item|
-				this.whichFile(file, class, item.pathOnly;);
-			};
+			if(exclude.isNil, {
+				libsFiles = libsFolder.collect{|item|
+					this.whichFile(file, class, item.pathOnly;);
+				};
+			}, {
+				libsFolder.do{|item|
+					if(exclude.indexOfEqual(item.folderName).notNil.not, {
+						libsFiles = libsFiles.add(this.whichFile(file, class, item.pathOnly;););
+					});
+				}
+			});
 			^libsFiles;
 		});
 	}
@@ -174,25 +199,25 @@ ModFile : Radicles {var <filePath, <libArr;
 
 SynthFile : ModFile {
 
-	*path {arg class=\filter;
+	*path {arg class=\filter, exclude;
 		var synthFile;
-		synthFile = this.new(\synth, class);
+		synthFile = this.new(\synth, class, exclude);
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\filter, key;
+	* read {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synth, class);
+		synthFile = this.new(\synth, class, exclude);
 		^synthFile.read(key);
 	}
 
-	* postAll {arg class=\filter;
-		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	* postAll {arg class=\filter, exclude;
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
 	}
 
-	* post {arg class=\filter, key;
+	* post {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synth, class);
+		synthFile = this.new(\synth, class, exclude);
 		^synthFile.post(key);
 	}
 
@@ -202,15 +227,15 @@ SynthFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true;
+	* remove {arg class=\filter, key, win=true, exclude;
 		var synthFile;
-		synthFile = this.new(\synth, class);
+		synthFile = this.new(\synth, class, exclude);
 		^synthFile.remove(key, win);
 	}
 
-	* string {arg class=\filter, key;
+	* string {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synth, class);
+		synthFile = this.new(\synth, class, exclude);
 		^synthFile.read(key).cs;
 	}
 
@@ -218,26 +243,26 @@ SynthFile : ModFile {
 
 SpecFile : ModFile {classvar specArr;
 
-	*path {arg class=\filter;
+	*path {arg class=\filter, exclude;
 		var synthFile;
-		synthFile = this.new(\spec, class);
+		synthFile = this.new(\spec, class, exclude);
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\filter, key, warn=true;
+	* read {arg class=\filter, key, warn=true, exclude;
 		var synthFile;
-		synthFile = this.new(\spec, class);
+		synthFile = this.new(\spec, class, exclude);
 		^synthFile.read(key, warn);
 	}
 
-	* post {arg class=\filter, key;
+	* post {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\spec, class);
+		synthFile = this.new(\spec, class, exclude);
 		^synthFile.post(key);
 	}
 
-	* postAll {arg class=\filter;
-		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	* postAll {arg class=\filter, exclude;
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
 	}
 
 	* write {arg class=\filter, key, dataArr, win=true, path, post=true;
@@ -246,24 +271,24 @@ SpecFile : ModFile {classvar specArr;
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true;
+	* remove {arg class=\filter, key, win=true, exclude;
 		var synthFile;
-		synthFile = this.new(\spec, class);
+		synthFile = this.new(\spec, class, exclude);
 		^synthFile.remove(key, win);
 	}
 
-	*specs {arg class=\filter, key;
-		specArr = this.read(class, key).collect{ |item| item.funcSpec };
-		^super.new(\spec, class);
+	*specs {arg class=\filter, key, exclude;
+		specArr = this.read(class, key, exclude).collect{ |item| item.funcSpec };
+		^super.new(\spec, class, exclude);
 	}
 
 	map {arg index, value;
 		^specArr[index].(value);
 	}
 
-	* string {arg class=\filter, key;
+	* string {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\spec, class);
+		synthFile = this.new(\spec, class, exclude);
 		^synthFile.read(key).cs;
 	}
 
@@ -271,26 +296,26 @@ SpecFile : ModFile {classvar specArr;
 
 ControlFile : ModFile {
 
-	*path {arg class=\map;
+	*path {arg class=\map, exclude;
 		var synthFile;
-		synthFile = this.new(\control, class);
+		synthFile = this.new(\control, class, exclude);
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\map, key;
+	* read {arg class=\map, key, exclude;
 		var synthFile;
-		synthFile = this.new(\control, class);
+		synthFile = this.new(\control, class, exclude);
 		^synthFile.read(key);
 	}
 
-	* post {arg class=\map, key;
+	* post {arg class=\map, key, exclude;
 		var synthFile;
-		synthFile = this.new(\control, class);
+		synthFile = this.new(\control, class, exclude);
 		^synthFile.post(key);
 	}
 
-	* postAll {arg class=\map;
-		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	* postAll {arg class=\map, exclude;
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
 	}
 
 	* write {arg class=\map, key, dataArr, win=true, path, post=true;
@@ -299,15 +324,15 @@ ControlFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\map, key, win=true;
+	* remove {arg class=\map, key, win=true, exclude;
 		var synthFile;
-		synthFile = this.new(\control, class);
+		synthFile = this.new(\control, class, exclude);
 		^synthFile.remove(key, win);
 	}
 
-	* string {arg class=\map, key;
+	* string {arg class=\map, key, exclude;
 		var synthFile;
-		synthFile = this.new(\control, class);
+		synthFile = this.new(\control, class, exclude);
 		^synthFile.read(key).cs;
 	}
 
@@ -315,26 +340,26 @@ ControlFile : ModFile {
 
 DataFile : ModFile {
 
-	*path {arg class=\sampler;
+	*path {arg class=\sampler, exclude;
 		var synthFile;
-		synthFile = this.new(\data, class);
+		synthFile = this.new(\data, class, exclude);
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\sampler, key;
+	* read {arg class=\sampler, key, exclude;
 		var synthFile;
-		synthFile = this.new(\data, class);
+		synthFile = this.new(\data, class, exclude);
 		^synthFile.read(key);
 	}
 
-	* post {arg class=\sampler, key;
+	* post {arg class=\sampler, key, exclude;
 		var synthFile;
 		synthFile = this.new(\data, class);
 		^synthFile.post(key);
 	}
 
-	* postAll {arg class=\sampler;
-		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	* postAll {arg class=\sampler, exclude;
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
 	}
 
 	* write {arg class=\sampler, key, dataArr, win=true, path, post=true;
@@ -343,15 +368,15 @@ DataFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\sampler, key, win=true;
+	* remove {arg class=\sampler, key, win=true, exclude;
 		var synthFile;
-		synthFile = this.new(\data, class);
+		synthFile = this.new(\data, class, exclude);
 		^synthFile.remove(key, win);
 	}
 
-	* string {arg class=\filter, key;
+	* string {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\data, class);
+		synthFile = this.new(\data, class, exclude);
 		^synthFile.read(key).cs;
 	}
 
@@ -359,26 +384,26 @@ DataFile : ModFile {
 
 DescriptionFile : ModFile {
 
-	*path {arg class=\filter;
+	*path {arg class=\filter, exclude;
 		var synthFile;
-		synthFile = this.new(\description, class);
+		synthFile = this.new(\description, class, exclude);
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\filter, key, warn=true;
+	* read {arg class=\filter, key, warn=true, exclude;
 		var synthFile;
-		synthFile = this.new(\description, class);
+		synthFile = this.new(\description, class, exclude);
 		^synthFile.read(key, warn);
 	}
 
-	* post {arg class=\filter, key;
+	* post {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\description, class);
+		synthFile = this.new(\description, class, exclude);
 		^synthFile.post(key);
 	}
 
-	* postAll {arg class=\filter;
-		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	* postAll {arg class=\filter, exclude;
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
 	}
 
 	* write {arg class=\filter, key, dataArr, win=true, path, post=true;
@@ -387,15 +412,15 @@ DescriptionFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true;
+	* remove {arg class=\filter, key, win=true, exclude;
 		var synthFile;
-		synthFile = this.new(\description, class);
+		synthFile = this.new(\description, class, exclude);
 		^synthFile.remove(key, win);
 	}
 
-	* string {arg class=\filter, key;
+	* string {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\description, class);
+		synthFile = this.new(\description, class, exclude);
 		^synthFile.read(key).cs;
 	}
 
@@ -403,30 +428,30 @@ DescriptionFile : ModFile {
 
 PresetFile : ModFile {
 
-	*path {arg class=\bstore;
+	*path {arg class=\bstore, exclude;
 		var presetFile;
-		presetFile = this.new(\preset, class);
+		presetFile = this.new(\preset, class, exclude);
 		^presetFile.filePath;
 	}
 
-	* read {arg class=\bstore, key;
+	* read {arg class=\bstore, key, exclude;
 		var presetFile;
-		presetFile = this.new(\preset, class);
+		presetFile = this.new(\preset, class, exclude);
 		^presetFile.read(key);
 	}
 
-	* post {arg class=\bstore, key;
+	* post {arg class=\bstore, key, exclude;
 		var presetFile;
-		presetFile = this.new(\preset, class);
+		presetFile = this.new(\preset, class, exclude);
 		^presetFile.post(key);
 	}
 
-	* postAll {arg class=\bstore;
-		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	* postAll {arg class=\bstore, exclude;
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
 	}
 
-	* readAll {arg class=\bstore;
-		^this.read(class).collect{|item| [item, this.read(class, item)] }
+	* readAll {arg class=\bstore, exclude;
+		^this.read(class, exclude: exclude).collect{|item| [item, this.read(class, item, exclude)] }
 	}
 
 	* write {arg class=\bstore, key, dataArr, win=true, path, post=true;
@@ -435,15 +460,15 @@ PresetFile : ModFile {
 		^presetFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\bstore, key, win=true;
+	* remove {arg class=\bstore, key, win=true, exclude;
 		var presetFile;
-		presetFile = this.new(\preset, class);
+		presetFile = this.new(\preset, class, exclude);
 		^presetFile.remove(key, win);
 	}
 
-	* string {arg class=\filter, key;
+	* string {arg class=\filter, key, exclude;
 		var presetFile;
-		presetFile = this.new(\preset, class);
+		presetFile = this.new(\preset, class, exclude);
 		^presetFile.read(key).cs;
 	}
 
@@ -451,31 +476,31 @@ PresetFile : ModFile {
 
 SynthDefFile : ModFile {
 
-	*path {arg class=\filter;
+	*path {arg class=\filter, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class);
+		synthFile = this.new(\synthdef, class, exclude);
 		^synthFile.filePath;
 	}
 
-	* read {arg class=\filter, key;
+	* read {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class);
+		synthFile = this.new(\synthdef, class, exclude);
 		^synthFile.read(key);
 	}
 
-	* postAll {arg class=\filter;
-		this.read(class).do{|item| (item.cs ++ " -> ").post; this.post(class, item) }
+	* postAll {arg class=\filter, exclude;
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
 	}
 
-	* post {arg class=\filter, key;
+	* post {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class);
+		synthFile = this.new(\synthdef, class, exclude);
 		^synthFile.post(key);
 	}
 
-	* info {arg class=\filter, key;
+	* info {arg class=\filter, key, exclude;
 		var string;
-		string = [class, key, this.read(class, key), DescriptionFile.read(class, key)].cs;
+		string = [class, key, this.read(class, key, exclude), DescriptionFile.read(class, key, exclude: exclude)].cs;
 		string = string.replaceAt("(", 0).replaceAt(")", string.size-1);
 		^string;
 	}
@@ -496,19 +521,19 @@ SynthDefFile : ModFile {
 		});
 	}
 
-	* remove {arg class=\filter, key;
+	* remove {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class);
+		synthFile = this.new(\synthdef, class, exclude);
 		^synthFile.remove(key, true, {
-			SynthFile.remove(class, key, false);
-			SpecFile.remove(class, key, false);
-			DescriptionFile.remove(class, key, false);
+			SynthFile.remove(class, key, false, exclude);
+			SpecFile.remove(class, key, false, exclude);
+			DescriptionFile.remove(class, key, false, exclude);
 		});
 	}
 
-	* string {arg class=\filter, key;
+	* string {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class);
+		synthFile = this.new(\synthdef, class, exclude);
 		^synthFile.read(key).cs;
 	}
 
