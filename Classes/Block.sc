@@ -768,7 +768,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		});
 	}
 
-	*	unmapBlk {arg blkNum, modArg, value=0;
+	*	unmapBlk {arg blkNum, modArg, value;
 		var ndefKey;
 		ndefKey = ("block" ++ blkNum).asSymbol;
 		if(modArg.notNil, {

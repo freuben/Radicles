@@ -159,7 +159,7 @@
 	interpretRad {var str, str2, arrStr, arrStr2;
 		str = this.replace(",", ", ");
 		str2 = str.select{|item|
-			("0123456789[](){},.".ascii).includes(item.ascii).not;};
+			("0123456789[](){},.-".ascii).includes(item.ascii).not;};
 		arrStr = str2.split($ ).reject({|item| item == "" });
 		arrStr2 = arrStr.rejectSame;
 		arrStr2.do{|item|  str = str.replace(item, item.asSymbol.cs) };

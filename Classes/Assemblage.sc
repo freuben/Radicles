@@ -1332,7 +1332,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 		thisSpec = 	specArr[specArr.flop[0].indexOf(argIndex)];
 		this.modFilterTag(filterTag, thisSpec[0], modType, thisSpec[1], extraArgs,
-			thisSpec[2], mul=1, add=0, min, val, warp, lag);
+			thisSpec[2], mul, add, min, val, warp, lag);
 	}
 
 	modFilterCode {arg type, num, slot, argument, modType=\sin, extraArgs,
@@ -3609,6 +3609,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					if(specInd.notEmpty, {
 						spec =specInd.detect({|item| item[0] == keyValues[0] });
+						func ?? {if(spec[2].notNil, {func = spec[2] }) };
 						spec = spec[1];
 						if(spec.includes(\db), {
 							spec = spec.copyFromStart(1);
@@ -3631,7 +3632,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modMix {arg trackType, trackNum, modArg, modType, extraArgs,
-		func, mul=1, add=0, min, val, warp, lag, thisSpec;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func;
 		var typeKey, ndefKey;
 		typeKey = trackType.asString;
 		case
@@ -3861,7 +3862,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modFx {arg filterNum, modArg, modType, extraArgs,
-		func, mul=1, add=0, min, val, warp, lag, thisSpec;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func;
 		var typeKey, ndefKey;
 		this.fxWarn(filterNum, {|ndefKey|
 			if(modArg.notNil, {
@@ -3877,13 +3878,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	modFxTrack {arg trackType, trackNum, trackSlot, modArg, modType, extraArgs, func,
-		mul=1, add=0, min, val, warp, lag, thisSpec;
+	modFxTrack {arg trackType, trackNum, trackSlot, modArg, modType, extraArgs,
+		mul=1, add=0, min, val, warp, lag, thisSpec, func;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			if(modArg.notNil, {
 				{
 					this.modFunc(ndefKey, modArg, modType, extraArgs, func,
-						mul=1, add=0, min, val, warp, lag, thisSpec);
+						mul, add, min, val, warp, lag, thisSpec);
 					server.sync;
 					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
@@ -3915,7 +3916,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
-		func, mul=1, add=0, min, val, warp, lag, thisSpec;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn, modNdef;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
@@ -3933,7 +3934,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	unmapMix {arg trackType, trackNum, modArg, value=0;
+	unmapMix {arg trackType, trackNum, modArg, value;
 		var typeKey, ndefKey;
 		{
 			typeKey = trackType.asString;
@@ -3949,7 +3950,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}.fork(AppClock);
 	}
 
-	unmapFx {arg filterNum, modArg, value=0;
+	unmapFx {arg filterNum, modArg, value;
 		this.fxWarn(filterNum, {|ndefKey|
 			if(modArg.notNil, {
 				{
@@ -3961,7 +3962,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value=0, post=true;
+	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value, post=true;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			if(modArg.notNil, {
 				{
@@ -4022,7 +4023,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	unmapSend {arg trackType, trackNum, sendSlot, value=0;
+	unmapSend {arg trackType, trackNum, sendSlot, value;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {

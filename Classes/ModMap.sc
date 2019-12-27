@@ -14,7 +14,6 @@ ModMap : Radicles {
 		});
 		keyVals = ndef.getKeysValues;
 		defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];
-
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
 		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost.interpret;
