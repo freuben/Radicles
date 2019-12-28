@@ -17,7 +17,6 @@ ModFile : Radicles {var <filePath, <libArr;
 
 	whichFile {arg file, class, thisPath;
 		var dir, existFiles, fileName, classString, modPath;
-
 		case
 		{file == \synth} { modPath = "/Files/SynthFiles/"}
 		{file == \synth} { modPath = "/Files/SynthFiles/"}
@@ -30,13 +29,10 @@ ModFile : Radicles {var <filePath, <libArr;
 		;
 		thisPath ?? {thisPath = mainPath};
 		dir = (thisPath ++ modPath);
-
 		PathName(dir).files.do{|item|
 			existFiles = existFiles.add(item.fileNameWithoutDoubleExtension.asSymbol);
 		};
-
 		classString = class.asString.firstToUpper;
-
 		if(existFiles.includes(classString.asSymbol), {
 			fileName = (class.asString.firstToUpper ++ ".scd");
 			^(dir ++ fileName);
@@ -110,18 +106,22 @@ ModFile : Radicles {var <filePath, <libArr;
 		var arrayFromFile, writeFunc, keyIndex;
 		path ?? {path = filePath};
 		if(path.isNumber, {
-			path = libArr[path];
+			path = ([filePath] ++ libArr)[path];
 		});
 		arrayFromFile = this.writeArray(path);
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
-			if(keyIndex.notNil, {
+			if(this.array.flop[0].includes(key).notNil, {
 				if(window, {
 					Window.warnQuestion(("This key already exists: " ++
 						"Are you sure you want to replace it?"), {
+						if(keyIndex.notNil, {
 						arrayFromFile[keyIndex] = [key, dataArr];
 						this.writeFunc(arrayFromFile, path, post);
 						func.();
+						}, {
+							"This fx name already exists in another library".warn;
+						});
 					});
 				}, {
 					arrayFromFile[keyIndex] = [key, dataArr];
@@ -138,7 +138,6 @@ ModFile : Radicles {var <filePath, <libArr;
 	remove {arg key, window=true, func;
 		var arrayFromFile, writeFunc, keyIndex, file;
 		arrayFromFile = this.array;
-
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
 			if(keyIndex.notNil, {
@@ -165,29 +164,22 @@ ModFile : Radicles {var <filePath, <libArr;
 		^arr
 	}
 
-	/*	loadLibs {arg file, class;
-	var libsFolder, libsFiles;
-	libsFolder = PathName(libPath).folders;
-	if(libsFolder.notEmpty, {
-	libsFiles = libsFolder.collect{|item|
-	this.whichFile(file, class, item.pathOnly;);
-	};
-	^libsFiles;
-	});
-	}*/
-
 	loadLibs {arg file, class, exclude;
-		var libsFolder, libsFiles;
+		var libsFolder, libsFiles, libFolderPath;
 		libsFolder = PathName(libPath).folders;
 		if(libsFolder.notEmpty, {
 			if(exclude.isNil, {
 				libsFiles = libsFolder.collect{|item|
-					this.whichFile(file, class, item.pathOnly;);
+					libFolderPath  = item.pathOnly;
+					libFolderPath = libFolderPath.copyFromStart(libFolderPath.size-2);
+					this.whichFile(file, class, libFolderPath;);
 				};
 			}, {
 				libsFolder.do{|item|
 					if(exclude.indexOfEqual(item.folderName).notNil.not, {
-						libsFiles = libsFiles.add(this.whichFile(file, class, item.pathOnly;););
+						libFolderPath  = item.pathOnly;
+					libFolderPath = libFolderPath.copyFromStart(libFolderPath.size-2);
+						libsFiles = libsFiles.add(this.whichFile(file, class, libFolderPath;););
 					});
 				}
 			});
@@ -262,7 +254,8 @@ SpecFile : ModFile {classvar specArr;
 	}
 
 	* postAll {arg class=\filter, exclude;
-		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
+			this.post(class, item, exclude) }
 	}
 
 	* write {arg class=\filter, key, dataArr, win=true, path, post=true;
@@ -315,7 +308,8 @@ ControlFile : ModFile {
 	}
 
 	* postAll {arg class=\map, exclude;
-		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
+			this.post(class, item, exclude) }
 	}
 
 	* write {arg class=\map, key, dataArr, win=true, path, post=true;
@@ -359,7 +353,8 @@ DataFile : ModFile {
 	}
 
 	* postAll {arg class=\sampler, exclude;
-		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
+			this.post(class, item, exclude) }
 	}
 
 	* write {arg class=\sampler, key, dataArr, win=true, path, post=true;
@@ -403,7 +398,8 @@ DescriptionFile : ModFile {
 	}
 
 	* postAll {arg class=\filter, exclude;
-		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
+			this.post(class, item, exclude) }
 	}
 
 	* write {arg class=\filter, key, dataArr, win=true, path, post=true;
@@ -447,11 +443,13 @@ PresetFile : ModFile {
 	}
 
 	* postAll {arg class=\bstore, exclude;
-		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
+			this.post(class, item, exclude) }
 	}
 
 	* readAll {arg class=\bstore, exclude;
-		^this.read(class, exclude: exclude).collect{|item| [item, this.read(class, item, exclude)] }
+		^this.read(class, exclude: exclude).collect{|item|
+			[item, this.read(class, item, exclude)] }
 	}
 
 	* write {arg class=\bstore, key, dataArr, win=true, path, post=true;
@@ -489,7 +487,8 @@ SynthDefFile : ModFile {
 	}
 
 	* postAll {arg class=\filter, exclude;
-		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
+			this.post(class, item, exclude) }
 	}
 
 	* post {arg class=\filter, key, exclude;
@@ -500,7 +499,8 @@ SynthDefFile : ModFile {
 
 	* info {arg class=\filter, key, exclude;
 		var string;
-		string = [class, key, this.read(class, key, exclude), DescriptionFile.read(class, key, exclude: exclude)].cs;
+		string = [class, key, this.read(class, key, exclude),
+			DescriptionFile.read(class, key, exclude: exclude)].cs;
 		string = string.replaceAt("(", 0).replaceAt(")", string.size-1);
 		^string;
 	}

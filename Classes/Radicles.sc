@@ -28,6 +28,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		postDoc = Document.new("Radicles: " ++ Date.getDate.asString);
 	}
 
+	*libraries {
+		this.new;
+		(["Main"] ++ PathName(libPath).folders.collect({|item| item.folderName })).radpostwarn;
+	}
+
 	*clock {var clock, tclock;
 		clock = "Ndef('metronome').proxyspace.makeTempoClock(1.0)";
 		clock.radpost;
