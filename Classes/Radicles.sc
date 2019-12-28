@@ -30,7 +30,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 	*libraries {
 		this.new;
-		(["Main"] ++ PathName(libPath).folders.collect({|item| item.folderName })).radpostwarn;
+		^(["Main"] ++ PathName(libPath).folders.collect({|item| item.folderName }));
 	}
 
 	*clock {var clock, tclock;

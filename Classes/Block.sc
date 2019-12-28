@@ -108,14 +108,16 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	*play {arg block=1, blockName, buffer, extraArgs, data, sync=false, xfade=true, action;
 		var blockFunc, blockIndex, ndefCS, blockFuncString,
 		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize,
-		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool;
+		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool, thisExcludeLibs;
 		if(block >= 1, {
 			blockIndex = block-1;
 			if(ndefs[blockIndex].notNil, {
 				{
 					this.initCond(block);
 					if((blockName == 'pattern').not, {
-						blockFunc = SynthFile.read(\block, blockName);
+						thisExcludeLibs = excludeLibs;
+						thisExcludeLibs = thisExcludeLibs.select({|item| item != "Main"});
+						blockFunc = SynthFile.read(\block, blockName, thisExcludeLibs);
 						blockFuncString = blockFunc.cs;
 						if(blockFuncString.includesString("\\buffer")
 							.or(blockFuncString.includesString("'buffer'")), {
@@ -190,17 +192,17 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 												if(data.isArray, {
 													/*	"this data is an array".postln;*/
 													data.do{|item, index|
-														(DataFile.read(\wavetables, item).cs ++ ".(" ++
+														(DataFile.read(\wavetables, item, excludeLibs).cs ++ ".(" ++
 															bufString[index].cs ++	");").radpost;
-														DataFile.read(\wavetables, item).(buf[index]);
+														DataFile.read(\wavetables, item, excludeLibs).(buf[index]);
 													};
 												}, {
 													/*"this data is a symbol".postln;*/
 													buf.do{|item, index|
-														(DataFile.read(\wavetables, data).cs ++ ".(" ++
+														(DataFile.read(\wavetables, data, excludeLibs).cs ++ ".(" ++
 															bufString[index] ++ "," ++ (buf.size+1) ++ ", " ++
 															index ++ ");").radpost;
-														DataFile.read(\wavetables, data).(item, buf.size+1, index);
+														DataFile.read(\wavetables, data, excludeLibs).(item, buf.size+1, index);
 													};
 												});
 											});
@@ -218,7 +220,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						/*"this is a pattern hurray".postln;*/
 						/*blockFunc = this.blockPattern(block, extraArgs, data);*/
 						if(extraArgs.isArray.not, {
-							blockFunc = this.pattData(DataFile.read(\pattern, extraArgs), data)
+							blockFunc = this.pattData(DataFile.read(\pattern, extraArgs, excludeLibs), data)
 							.toPattern(pattCount);
 						}, {
 							if(extraArgs.collect({|item| item.isArray}).includes(true), {
@@ -229,7 +231,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 								extraPattCount = 1;
 								blockFunc = extraArgs.do{|item|
 									pattArr = pattArr.add(
-										this.pattData(DataFile.read(\pattern, item), data)
+										this.pattData(DataFile.read(\pattern, item, excludeLibs), data)
 										.toPattern(pattCount.cs ++ "_" ++ extraPattCount));
 									extraPattCount = extraPattCount + 1;
 								};
@@ -655,14 +657,14 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		bufString = BufferSystem.getGlobVar(buf);
 		/*bufIndex = BufferSystem.bufferArray.indexOf(buf);
 		bufString = BufferSystem.globVarArray[bufIndex];*/
-		(DataFile.read(\wavetables, data).cs ++ ".(" ++
+		(DataFile.read(\wavetables, data, excludeLibs).cs ++ ".(" ++
 			bufString ++	");").radpost.interpret;
 	}
 
 	*blockPattern {arg block, extraArgs, data;
 		var extraPattCount, blockFunc, pattArr;
 		if(extraArgs.isArray.not, {
-			blockFunc = this.pattData(DataFile.read(\pattern, extraArgs), data)
+			blockFunc = this.pattData(DataFile.read(\pattern, extraArgs, excludeLibs), data)
 			.toPattern(pattCount);
 		}, {
 			if(extraArgs.collect({|item| item.isArray}).includes(true), {
@@ -673,7 +675,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 				extraPattCount = 1;
 				blockFunc = extraArgs.do{|item|
 					pattArr = pattArr.add(
-						this.pattData(DataFile.read(\pattern, item), data)
+						this.pattData(DataFile.read(\pattern, item, excludeLibs), data)
 						.toPattern(pattCount.cs ++ "_" ++ extraPattCount));
 					extraPattCount = extraPattCount + 1;
 				};
