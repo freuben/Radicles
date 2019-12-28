@@ -238,7 +238,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	*getDirPath {arg format=\audio, directory, subDir;
 		var folderPath, fileIndex, selectedPath;
 		this.new;
-		playPath = this.mainPath ++ directory;
+		playPath = this.soundFilePath ++ directory;
 
 		if([\audio, \scpv].includes(format), {
 			if(format == \audio, {
@@ -255,17 +255,17 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	}
 
 	*getPlayPath {arg format=\audio, fileName=\test;
-		^this.getDirPath(format, "SoundFiles/Play/", playFolder);
+		^this.getDirPath(format, "Play/", playFolder);
 	}
 
 	*getSamplerPath {arg format=\audio, samplerName=\str;
-		^this.getDirPath(format, "SoundFiles/Sampler/", "");
+		^this.getDirPath(format, "Sampler/", "");
 	}
 
 		*getIRPath {arg format=\audio, samplerName=\str;
 		var irpath;
 		this.new;
-		irpath = this.mainPath ++ "SoundFiles/IR/"
+		irpath = this.soundFilePath ++ "IR/"
 		^irpath;
 	}
 

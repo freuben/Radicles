@@ -175,4 +175,10 @@
 		});
 	}
 
+	radpostwarn {arg type=\ln;
+		var string;
+		string = this.asString.lineFormat(Radicles.lineSize);
+		string.postin(\ide, type);
+	}
+
 }

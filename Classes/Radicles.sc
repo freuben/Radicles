@@ -1,7 +1,8 @@
 Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
-	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs;
+	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
+	<>soundFilePath;
 
 	*new {
 		colorCritical = Color.new255(211, 14, 14);
@@ -17,6 +18,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	initRadicles {arg doc=false;
 		mainPath = (Platform.userExtensionDir ++ "/Radicles/");
 		libPath = (Platform.userExtensionDir ++ "/RadiclesLibs");
+		soundFilePath = (Platform.userExtensionDir ++ "/RadiclesSFs/");
 		server = Server.default;
 	}
 
@@ -166,7 +168,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					aZ.nomixer;
 				}
 				{str2 == 'names'} {
-					aZ.mixTrackNames.radpost;
+					aZ.mixTrackNames.radpostwarn;
 				}
 				{str2 == 'preprec'} {
 					aZ.prepareRecording;
@@ -273,7 +275,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			if(aZ.notNil, {
 				case
 				{str2 == 'setfx'} {
-					Ndef(aZ.filters[num1-1][0]).getKeysValues[num2-1].radpost;
+					Ndef(aZ.filters[num1-1][0]).getKeysValues[num2-1].radpostwarn;
 				}
 				{str2 == 'lagfx'} {
 					getKey = aZ.filters[num1-1][0];
@@ -282,7 +284,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 						controlKeys);
 					if(ratesFor.notNil, {
 						[controlKeys[num2-1],
-							ratesFor[num2-1]].radpost;
+							ratesFor[num2-1]].radpostwarn;
 					});
 				}
 				{str2 == 'inmenu'} {aZ.setTrackIn(num1, num2-1); }
@@ -530,7 +532,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 							controlKeys);
 						if(ratesFor.notNil, {
 							[controlKeys[num3-1],
-								ratesFor[num3-1]].radpost;
+								ratesFor[num3-1]].radpostwarn;
 						});
 					});
 				}
@@ -814,7 +816,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				{str2 == 't'} {aZ.setFxArgTrack(\track, num1, num2);}
 				{str2 == 'b'} {aZ.setFxArgTrack(\bus, num1, num2);}
 				{str2 == 'm'} {aZ.fxTrackWarn(\master, 1, num1, {|item|
-					Ndef(item).getKeysValues[num2-1].radpost;
+					Ndef(item).getKeysValues[num2-1].radpostwarn;
 
 				});
 				};
@@ -836,7 +838,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 						controlKeys);
 					if(ratesFor.notNil, {
 						[controlKeys[num2-1],
-							ratesFor[num2-1]].radpost;
+							ratesFor[num2-1]].radpostwarn;
 					});
 				});
 				};
@@ -849,10 +851,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {aZ.fxTrackWarn(\track, num1, num2, {|item|
-					Ndef(item).getKeysValues[num3-1].radpost;
+					Ndef(item).getKeysValues[num3-1].radpostwarn;
 				});}
 				{str2 == 'b'} {aZ.fxTrackWarn(\bus, num1, num2, {|item|
-					Ndef(item).getKeysValues[num3-1].radpost;
+					Ndef(item).getKeysValues[num3-1].radpostwarn;
 				});}
 				{str2 == 'm'} {
 					aZ.setFxArgTrack(\master, 1, num1, num2, num3);
@@ -873,7 +875,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 						controlKeys);
 					if(ratesFor.notNil, {
 						[controlKeys[num3-1],
-							ratesFor[num3-1]].radpost;
+							ratesFor[num3-1]].radpostwarn;
 					});
 
 				});}
@@ -884,7 +886,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 						controlKeys);
 					if(ratesFor.notNil, {
 						[controlKeys[num3-1],
-							ratesFor[num3-1]].radpost;
+							ratesFor[num3-1]].radpostwarn;
 					});
 				});}
 				{str2 == 'm'} {
@@ -1003,7 +1005,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
 					aZ.fxTrackWarn(thisArr[0].asSymbol, thisArr[1], num2, {|item|
-						Ndef(item).getKeysValues[num3-1].radpost;
+						Ndef(item).getKeysValues[num3-1].radpostwarn;
 					});
 				}, {
 					"track not found".warn;
@@ -1027,7 +1029,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 							controlKeys);
 						if(ratesFor.notNil, {
 							[controlKeys[num3-1],
-								ratesFor[num3-1]].radpost;
+								ratesFor[num3-1]].radpostwarn;
 						});
 					});
 				}, {
@@ -1248,9 +1250,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				var desc;
 				desc = DescriptionFile.read(\filter, item, false, Radicles.excludeLibs);
 				if(desc.isNil, {desc = "??"});
-				(item ++ " -> " ++ desc).radpost;
+				(item ++ " -> " ++ desc).radpostwarn;
 			};
-			synthFile.radpost;
+			synthFile.radpostwarn;
 		}, "fxs: posts available filters");
 
 		cW.add(\setfx, [\str, \num], {|str1, num1|
@@ -1271,7 +1273,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 		cW.add(\setfx, [\str, \num, \num], {|str1, num1, num2|
 			if(aZ.notNil, {
-				Ndef(aZ.filters[num1-1][0]).getKeysValues[num2-1].radpost;
+				Ndef(aZ.filters[num1-1][0]).getKeysValues[num2-1].radpostwarn;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1286,7 +1288,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					controlKeys);
 				if(ratesFor.notNil, {
 					[controlKeys[num2-1],
-						ratesFor[num2-1]].radpost;
+						ratesFor[num2-1]].radpostwarn;
 				});
 			}, {
 				"could not find assemblage".warn;
@@ -1724,7 +1726,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				{str2 == 'm'} {
 					filterTag = aZ.findFilterTag(\master, 1, num1);
 					thisArg = Ndef(filterTag).controlKeys[num2-1];
-					aZ.getSpec(filterTag, thisArg).radpost;
+					aZ.getSpec(filterTag, thisArg).radpostwarn;
 				};
 			}, {
 				"could not find assemblage".warn;
@@ -1737,7 +1739,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				case
 				{str2 == 'm'} {
 					filterTag = aZ.findFilterTag(\master, 1, num1);
-					aZ.getSpec(filterTag, str3).radpost;
+					aZ.getSpec(filterTag, str3).radpostwarn;
 				};
 			}, {
 				"could not find assemblage".warn;
@@ -1753,7 +1755,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				{str2 == 'm'} {trackType = \master};
 				filterTag = aZ.findFilterTag(trackType, num1, num2);
 				thisArg = Ndef(filterTag).controlKeys[num3-1];
-				aZ.getSpec(filterTag, thisArg).radpost;
+				aZ.getSpec(filterTag, thisArg).radpostwarn;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1767,7 +1769,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				{str2 == 'b'} {trackType = \bus}
 				{str2 == 'm'} {trackType = \master};
 				filterTag = aZ.findFilterTag(trackType, num1, num2);
-				aZ.getSpec(filterTag, str3).radpost;
+				aZ.getSpec(filterTag, str3).radpostwarn;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1782,7 +1784,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					if(thisArr[1].isNil, {thisArr[1] = 1});
 					filterTag = aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
 					thisArg = Ndef(filterTag).controlKeys[num3-1];
-					aZ.getSpec(filterTag, thisArg).radpost;
+					aZ.getSpec(filterTag, thisArg).radpostwarn;
 				}, {
 					"track not found".warn;
 				});
@@ -1799,7 +1801,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
 					filterTag = aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
-					aZ.getSpec(filterTag, str2).radpost;
+					aZ.getSpec(filterTag, str2).radpostwarn;
 				}, {
 					"track not found".warn;
 				});
@@ -1813,7 +1815,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			if(aZ.notNil, {
 				filterTag = aZ.filters[num1-1][0];
 				thisArg = Ndef(filterTag).controlKeys[num2-1];
-				aZ.getSpec(filterTag, thisArg).radpost;
+				aZ.getSpec(filterTag, thisArg).radpostwarn;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1823,7 +1825,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			var filterTag;
 			if(aZ.notNil, {
 				filterTag = aZ.filters[num1-1][0];
-				aZ.getSpec(filterTag, str2).radpost;
+				aZ.getSpec(filterTag, str2).radpostwarn;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -4336,13 +4338,13 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\blkset, [\str, \num], {|str1, num1|
 			var thisIndex, thisKey;
 			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
-			thisKey = Block.ndefs[thisIndex].getKeysValues.radpost;
+			thisKey = Block.ndefs[thisIndex].getKeysValues.radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num], {|str1, num1, num2|
 			var thisIndex, thisKey;
 			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
-			thisKey = Block.ndefs[thisIndex].getKeysValues[num2-1][1].radpost;
+			thisKey = Block.ndefs[thisIndex].getKeysValues[num2-1][1].radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
@@ -4419,11 +4421,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			var thisIndex, thisKey;
 			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
-			Block.getSpec(num1, thisKey).radpost;
+			Block.getSpec(num1, thisKey).radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkgetspec, [\str, \num, \str], {|str1, num1, str2|
-			Block.getSpec(num1, str2).radpost;
+			Block.getSpec(num1, str2).radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\unmodblk, [\str, \num, \num], {|str1, num1, num2|
