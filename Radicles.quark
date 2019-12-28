@@ -8,7 +8,7 @@
 	\country: 		"uk",
 	\since: 		"2019",
 	\ext_dependency: "see helpfile",
-	\helpdoc:		"ixi help/help.html",
+	\helpdoc:		"ixi help/Radicles.html",
 	\url:           "https://www.federicoreuben.com/",
 	\dependencies: ["RadiclesLibs", "wslib"]
 )
