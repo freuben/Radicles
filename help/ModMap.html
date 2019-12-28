@@ -1,0 +1,143 @@
+<html><head><title>ModMap</title>
+<link rel='stylesheet' href='./../scdoc.css' type='text/css' />
+<link rel='stylesheet' href='./../frontend.css' type='text/css' />
+<link rel='stylesheet' href='./../custom.css' type='text/css' />
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<script src='./../scdoc.js' type='text/javascript'></script>
+<script src='./../docmap.js' type='text/javascript'></script>
+<script src='./../prettify.js' type='text/javascript'></script>
+<script src='./../lang-sc.js' type='text/javascript'></script>
+<script type='text/javascript'>var helpRoot='./..';</script>
+</head>
+<ul id='menubar'></ul>
+<body onload='fixTOC();prettyPrint()'>
+<div class='contents'>
+<div class='header'>
+<div id='label'>SuperCollider CLASSES (extension)</div>
+<div id='categories'><a href='./../Browse.html#Libraries>Radicles'>Libraries>Radicles</a></div>
+<h1>ModMap</h1>
+<div id='summary'>A tool for modulating Ndefs</div>
+</div>
+<div class='subheader'>
+<div id='filename'>Source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/ModMap.sc'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/ModMap.sc</a></div><div id='superclasses'>Inherits from: <a href="../Classes/Radicles.html">Radicles</a> : <a href="../Classes/Object.html">Object</a></div>
+<div id='related'>See also: <a href="./../Classes/Ndef.html">Ndef</a></div>
+</div>
+<div id='toc'>
+<ul class='toc'><li class='toc1'><a href='#description'>Description</a></li>
+<ul class='toc'></ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*new'>new</a> </li>
+<li class='toc2'><a href='#Inherited%20class%20methods'>Inherited class methods</a></li>
+<li class='toc2'><a href='#Undocumented%20class%20methods'>Undocumented class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*clearLooseMods'>clearLooseMods</a> </li>
+<li class='toc3'><a href='#*getFile'>getFile</a> </li>
+<li class='toc3'><a href='#*getPresets'>getPresets</a> </li>
+<li class='toc3'><a href='#*lag'>lag</a> </li>
+<li class='toc3'><a href='#*lagArr'>lagArr</a> </li>
+<li class='toc3'><a href='#*list'>list</a> </li>
+<li class='toc3'><a href='#*map'>map</a> </li>
+<li class='toc3'><a href='#*modInfoArr'>modInfoArr</a> </li>
+<li class='toc3'><a href='#*modNodes'>modNodes</a> </li>
+<li class='toc3'><a href='#*ndefs'>ndefs</a> </li>
+<li class='toc3'><a href='#*presetToCode'>presetToCode</a> </li>
+<li class='toc3'><a href='#*read'>read</a> </li>
+<li class='toc3'><a href='#*set'>set</a> </li>
+<li class='toc3'><a href='#*unmap'>unmap</a> </li>
+<li class='toc3'><a href='#*unmapAt'>unmapAt</a> </li>
+<li class='toc3'><a href='#*xset'>xset</a> </li>
+</ul></ul><li class='toc1'><a href='#instancemethods'>Instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-map'>map</a> </li>
+<li class='toc2'><a href='#Inherited%20instance%20methods'>Inherited instance methods</a></li>
+</ul><li class='toc1'><a href='#examples'>Examples</a></li>
+<ul class='toc'></ul></ul></div><h2><a class='anchor' name='description'>Description</a></h2>
+
+<p>A tool for modulating Ndefs with predetermined ControlFiles and Specs.<h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*new' href='./../Overviews/Methods.html#new'>new</a> </h3>
+<div class='supmethod'>From superclass: <a href='./../Classes/Radicles.html'>Radicles</a></div>
+<div class='method'>
+<p>Create a new ModMap to modulate Ndefs.<h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>(arg1)<td class='argumentdesc'>
+<p>Fade time for ModMap.</table></div><h3><a class='anchor' name='Inherited%20class%20methods'>Inherited class methods</a></h3>
+<div id='inheritedclassmets'></div><h3><a class='anchor' name='Undocumented%20class%20methods'>Undocumented class methods</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*clearLooseMods' href='./../Overviews/Methods.html#clearLooseMods'>clearLooseMods</a> (<span class='argstr'>action</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getFile' href='./../Overviews/Methods.html#getFile'>getFile</a> (<span class='argstr'>type: 'sin'</span>, <span class='argstr'>spec</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getPresets' href='./../Overviews/Methods.html#getPresets'>getPresets</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*lag' href='./../Overviews/Methods.html#lag'>lag</a> (<span class='argstr'>modNum: 1</span>, <span class='argstr'>key</span>, <span class='argstr'>value</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*lagArr' href='./../Overviews/Methods.html#lagArr'>lagArr</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*list' href='./../Overviews/Methods.html#list'>list</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*map' href='./../Overviews/Methods.html#map'>map</a> (<span class='argstr'>ndef</span>, <span class='argstr'>key: 'freq'</span>, <span class='argstr'>type: 'sin'</span>, <span class='argstr'>spec</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*modInfoArr' href='./../Overviews/Methods.html#modInfoArr'>modInfoArr</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*modNodes' href='./../Overviews/Methods.html#modNodes'>modNodes</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*ndefs' href='./../Overviews/Methods.html#ndefs'>ndefs</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*presetToCode' href='./../Overviews/Methods.html#presetToCode'>presetToCode</a> (<span class='argstr'>arr</span>, <span class='argstr'>newNdef</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*read' href='./../Overviews/Methods.html#read'>read</a> (<span class='argstr'>type</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*set' href='./../Overviews/Methods.html#set'>set</a> (<span class='argstr'>modNum: 1</span>, <span class='argstr'>key</span>, <span class='argstr'>value</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*unmap' href='./../Overviews/Methods.html#unmap'>unmap</a> (<span class='argstr'>ndef</span>, <span class='argstr'>key</span>, <span class='argstr'>value</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*unmapAt' href='./../Overviews/Methods.html#unmapAt'>unmapAt</a> (<span class='argstr'>index</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*xset' href='./../Overviews/Methods.html#xset'>xset</a> (<span class='argstr'>modNum: 1</span>, <span class='argstr'>key</span>, <span class='argstr'>value</span>)</h3>
+<h2><a class='anchor' name='instancemethods'>Instance Methods</a></h2>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-map' href='./../Overviews/Methods.html#map'>map</a>: METHOD NOT FOUND!</h3>
+<div class='method'>
+<p><h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'><td class='argumentdesc'>
+<p>Input Ndef<tr><td class='argumentname'><td class='argumentdesc'>
+<p>key for argument to be modulated<tr><td class='argumentname'><td class='argumentdesc'>
+<p>key for type of modulation from ControlFiles<tr><td class='argumentname'><td class='argumentdesc'>
+<p>spec array<tr><td class='argumentname'><td class='argumentdesc'>
+<p>extraArguments for modulating signal (for example to control modulation frequency)<tr><td class='argumentname'><td class='argumentdesc'>
+<p>lag time<tr><td class='argumentname'><td class='argumentdesc'>
+<p>where to post?</table></div><h3><a class='anchor' name='Inherited%20instance%20methods'>Inherited instance methods</a></h3>
+<div id='inheritedinstmets'></div><h2><a class='anchor' name='examples'>Examples</a></h2>
+<pre class='code prettyprint lang-sc'>s.boot;
+
+Ndef(\play1, {arg freq=300; SinOsc.ar(freq, 0, 0.2) }).play;
+ModMap.map(Ndef(\play1), \freq, \sin, \freq1, [\freq, 1]);
+ModMap.lag(1, \freq, 5);
+ModMap.set(1, \freq, 10);
+ModMap.set(1, \freq, 0.1);
+ModMap.unmap(Ndef(\play1), \freq);
+
+//same if you don't want to keep track
+a = ModMap.map(Ndef(\play1), \freq, \sin, \freq1, [\freq, 1]);
+
+a.lag(\freq, 10);
+a.set(\freq, rrand(1,10.0).postln)
+a.set(\freq, 0.1);
+a.set(\freq, 10);
+
+Ndef(\play2, {arg freq=300; Saw.ar(freq, 0.2) }).play;
+ModMap.map(Ndef(\play2), \freq, \sin, \freq1, [\freq, 1]);
+ModMap.ndefs;
+ModMap.lag(1, \freq, 1);
+ModMap.set(1, \freq, rrand(1,10.0).postln);
+
+ModMap.unmap(Ndef(\play1), \freq);
+
+ModMap.map(Ndef(\play1), \freq, \sin, \freq1, [\freq, rrand(1,10.0).postln]);
+
+ModMap.unmap(Ndef(\play2), \freq, 1000);
+
+ModMap.unmapAt(0);
+
+SpecFile.all
+SpecFile.postAll(\space)
+
+Ndef(\play3, {arg freq=300, pan=0; Pan2.ar(SinOsc.ar(freq, 0, 0.2), pan) }).play;
+ModMap.map(Ndef(\play3), \pan, \sin, [\space, \pan], [\freq, 1]);
+
+ModMap.map(Ndef(\play3), \freq, ControlFile.read(\map).choose.postln, \freq1, [\freq, 1]); //try different times for different mapings
+
+ModMap.map(Ndef(\play3), \freq, \sin, \freq1, [\freq, 1], mul: [0.25,0.5,1,2].choose.postln); //notice mul factors to change spec min and max values
+
+ModMap.map(Ndef(\play3), \freq, \sin, \freq1, [\freq, 1], mul: 0.1, add: -12); //change mul and add factors
+
+Ndef.clear(5);
+
+ControlSpec
+
+efSet 1 1 -&gt; sin(0.2) //mul
+prt -&gt; lfn1(0.2,100,\lin) //mul, add, warp
+prt -&gt; lfn1[400,440,\exp] //minval, maxval, warp
+efSet 1 1 500</pre>
+<div class='doclink'>helpfile source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/ModMap.schelp'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/ModMap.schelp</a><br>link::Classes/ModMap::<br>sc version: 3.8.0</div></div></body></html>

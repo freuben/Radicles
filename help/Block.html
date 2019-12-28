@@ -1,0 +1,945 @@
+<html><head><title>Block</title>
+<link rel='stylesheet' href='./../scdoc.css' type='text/css' />
+<link rel='stylesheet' href='./../frontend.css' type='text/css' />
+<link rel='stylesheet' href='./../custom.css' type='text/css' />
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<script src='./../scdoc.js' type='text/javascript'></script>
+<script src='./../docmap.js' type='text/javascript'></script>
+<script src='./../prettify.js' type='text/javascript'></script>
+<script src='./../lang-sc.js' type='text/javascript'></script>
+<script type='text/javascript'>var helpRoot='./..';</script>
+</head>
+<ul id='menubar'></ul>
+<body onload='fixTOC();prettyPrint()'>
+<div class='contents'>
+<div class='header'>
+<div id='label'>SuperCollider CLASSES (extension)</div>
+<div id='categories'><a href='./../Browse.html#Libraries>Radicles'>Libraries>Radicles</a></div>
+<h1>Block</h1>
+<div id='summary'>A Block</div>
+</div>
+<div class='subheader'>
+<div id='filename'>Source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/Block.sc'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/Block.sc</a></div><div id='superclasses'>Inherits from: <a href="../Classes/Radicles.html">Radicles</a> : <a href="../Classes/Object.html">Object</a></div>
+<div id='related'>See also: <a href="./../Classes/Ndef.html">Ndef</a>, <a href="./../Classes/BufferSystem.html">BufferSystem</a>, <a href="./../Classes/Pattern.html">Pattern</a></div>
+</div>
+<div id='toc'>
+<ul class='toc'><li class='toc1'><a href='#description'>Description</a></li>
+<ul class='toc'></ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*add'>add</a> </li>
+<li class='toc3'><a href='#*addNum'>addNum</a> </li>
+<li class='toc2'><a href='#Inherited%20class%20methods'>Inherited class methods</a></li>
+<li class='toc2'><a href='#Undocumented%20class%20methods'>Undocumented class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*addAll'>addAll</a> </li>
+<li class='toc3'><a href='#*addRec'>addRec</a> </li>
+<li class='toc3'><a href='#*addRecArr'>addRecArr</a> </li>
+<li class='toc3'><a href='#*addRecNdefs'>addRecNdefs</a> </li>
+<li class='toc3'><a href='#*addRecNum'>addRecNum</a> </li>
+<li class='toc3'><a href='#*allSync'>allSync</a> </li>
+<li class='toc3'><a href='#*blockCount'>blockCount</a> </li>
+<li class='toc3'><a href='#*blockPattern'>blockPattern</a> </li>
+<li class='toc3'><a href='#*blocks'>blocks</a> </li>
+<li class='toc3'><a href='#*buffree'>buffree</a> </li>
+<li class='toc3'><a href='#*clear'>clear</a> </li>
+<li class='toc3'><a href='#*findBlkModNdef'>findBlkModNdef</a> </li>
+<li class='toc3'><a href='#*getBlkMod'>getBlkMod</a> </li>
+<li class='toc3'><a href='#*getRecBStoreIDs'>getRecBStoreIDs</a> </li>
+<li class='toc3'><a href='#*getRecBuf'>getRecBuf</a> </li>
+<li class='toc3'><a href='#*getSpec'>getSpec</a> </li>
+<li class='toc3'><a href='#*initCond'>initCond</a> </li>
+<li class='toc3'><a href='#*lag'>lag</a> </li>
+<li class='toc3'><a href='#*liveBlocks'>liveBlocks</a> </li>
+<li class='toc3'><a href='#*loopTimer'>loopTimer</a> </li>
+<li class='toc3'><a href='#*modBlk'>modBlk</a> </li>
+<li class='toc3'><a href='#*modFunc'>modFunc</a> </li>
+<li class='toc3'><a href='#*ndefs'>ndefs</a> </li>
+<li class='toc3'><a href='#*pattCount'>pattCount</a> </li>
+<li class='toc3'><a href='#*pattData'>pattData</a> </li>
+<li class='toc3'><a href='#*play'>play</a> </li>
+<li class='toc3'><a href='#*playAll'>playAll</a> </li>
+<li class='toc3'><a href='#*playNdefs'>playNdefs</a> </li>
+<li class='toc3'><a href='#*readWavetable'>readWavetable</a> </li>
+<li class='toc3'><a href='#*rec'>rec</a> </li>
+<li class='toc3'><a href='#*recBlockCount'>recBlockCount</a> </li>
+<li class='toc3'><a href='#*recBlocks'>recBlocks</a> </li>
+<li class='toc3'><a href='#*recBuf'>recBuf</a> </li>
+<li class='toc3'><a href='#*recBufInfo'>recBufInfo</a> </li>
+<li class='toc3'><a href='#*recNdefs'>recNdefs</a> </li>
+<li class='toc3'><a href='#*recNow'>recNow</a> </li>
+<li class='toc3'><a href='#*recTimer'>recTimer</a> </li>
+<li class='toc3'><a href='#*recbuffers'>recbuffers</a> </li>
+<li class='toc3'><a href='#*remove'>remove</a> </li>
+<li class='toc3'><a href='#*removeAll'>removeAll</a> </li>
+<li class='toc3'><a href='#*removeAllRec'>removeAllRec</a> </li>
+<li class='toc3'><a href='#*removeArr'>removeArr</a> </li>
+<li class='toc3'><a href='#*removeRec'>removeRec</a> </li>
+<li class='toc3'><a href='#*set'>set</a> </li>
+<li class='toc3'><a href='#*setBlkMod'>setBlkMod</a> </li>
+<li class='toc3'><a href='#*setFadeTime'>setFadeTime</a> </li>
+<li class='toc3'><a href='#*stop'>stop</a> </li>
+<li class='toc3'><a href='#*stopAll'>stopAll</a> </li>
+<li class='toc3'><a href='#*syncStart'>syncStart</a> </li>
+<li class='toc3'><a href='#*timecond'>timecond</a> </li>
+<li class='toc3'><a href='#*unmapBlk'>unmapBlk</a> </li>
+<li class='toc3'><a href='#*xset'>xset</a> </li>
+</ul></ul><li class='toc1'><a href='#instancemethods'>Instance methods</a></li>
+<ul class='toc'><li class='toc2'><a href='#Inherited%20instance%20methods'>Inherited instance methods</a></li>
+</ul><li class='toc1'><a href='#examples'>Examples</a></li>
+<ul class='toc'></ul></ul></div><h2><a class='anchor' name='description'>Description</a></h2>
+
+<p>A class that automises Ndef, Pattern and Buffer functionality.<h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*add' href='./../Overviews/Methods.html#add'>add</a> (<span class='argstr'>channels: 1</span>)</h3>
+<div class='method'>
+<p>Create new Blocks.<h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>channels<td class='argumentdesc'>
+<p>Number of channels</table></div><h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addNum' href='./../Overviews/Methods.html#addNum'>addNum</a> (<span class='argstr'>number</span>, <span class='argstr'>channels: 1</span>)</h3>
+<div class='method'>
+<p><h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>number<td class='argumentdesc'>
+<p>Number of blocks<tr><td class='argumentname'>channels<td class='argumentdesc'>
+<p>Number of channels</table></div><h3><a class='anchor' name='Inherited%20class%20methods'>Inherited class methods</a></h3>
+<div id='inheritedclassmets'></div><h3><a class='anchor' name='Undocumented%20class%20methods'>Undocumented class methods</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addAll' href='./../Overviews/Methods.html#addAll'>addAll</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addRec' href='./../Overviews/Methods.html#addRec'>addRec</a> (<span class='argstr'>seconds: 1</span>, <span class='argstr'>channels: 1</span>, <span class='argstr'>format: 'audio'</span>, <span class='argstr'>frameSize: 2048</span>, <span class='argstr'>hopSize: 0.5</span>, <span class='argstr'>func</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addRecArr' href='./../Overviews/Methods.html#addRecArr'>addRecArr</a> (<span class='argstr'>argArr</span>, <span class='argstr'>func</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addRecNdefs' href='./../Overviews/Methods.html#addRecNdefs'>addRecNdefs</a> (<span class='argstr'>channels: 1</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addRecNum' href='./../Overviews/Methods.html#addRecNum'>addRecNum</a> (<span class='argstr'>number: 1</span>, <span class='argstr'>seconds: 1</span>, <span class='argstr'>channels: 1</span>, <span class='argstr'>format: 'audio'</span>, <span class='argstr'>frameSize: 2048</span>, <span class='argstr'>hopSize: 0.5</span>, <span class='argstr'>func</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*allSync' href='./../Overviews/Methods.html#allSync'>allSync</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*blockCount' href='./../Overviews/Methods.html#blockCount'>blockCount</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*blockPattern' href='./../Overviews/Methods.html#blockPattern'>blockPattern</a> (<span class='argstr'>block</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>data</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*blocks' href='./../Overviews/Methods.html#blocks'>blocks</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*buffree' href='./../Overviews/Methods.html#buffree'>buffree</a> (<span class='argstr'>blockIndex: 0</span>, <span class='argstr'>fadeOut</span>, <span class='argstr'>func</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*clear' href='./../Overviews/Methods.html#clear'>clear</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*findBlkModNdef' href='./../Overviews/Methods.html#findBlkModNdef'>findBlkModNdef</a> (<span class='argstr'>blkNum</span>, <span class='argstr'>trackArg</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getBlkMod' href='./../Overviews/Methods.html#getBlkMod'>getBlkMod</a> (<span class='argstr'>blkNum</span>, <span class='argstr'>trackArg</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getRecBStoreIDs' href='./../Overviews/Methods.html#getRecBStoreIDs'>getRecBStoreIDs</a> (<span class='argstr'>number: 1</span>, <span class='argstr'>seconds: 1</span>, <span class='argstr'>channels: 1</span>, <span class='argstr'>format: 'audio'</span>, <span class='argstr'>frameSize: 2048</span>, <span class='argstr'>hopSize: 0.5</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getRecBuf' href='./../Overviews/Methods.html#getRecBuf'>getRecBuf</a> (<span class='argstr'>recblock: 1</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getSpec' href='./../Overviews/Methods.html#getSpec'>getSpec</a> (<span class='argstr'>blkNum</span>, <span class='argstr'>argIn</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*initCond' href='./../Overviews/Methods.html#initCond'>initCond</a> (<span class='argstr'>block: 1</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*lag' href='./../Overviews/Methods.html#lag'>lag</a> (<span class='argstr'>block</span>, <span class='argstr'>argArr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*liveBlocks' href='./../Overviews/Methods.html#liveBlocks'>liveBlocks</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*loopTimer' href='./../Overviews/Methods.html#loopTimer'>loopTimer</a> (<span class='argstr'>block: 1</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*modBlk' href='./../Overviews/Methods.html#modBlk'>modBlk</a> (<span class='argstr'>blkNum</span>, <span class='argstr'>modArg</span>, <span class='argstr'>modType</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>, <span class='argstr'>thisSpec</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*modFunc' href='./../Overviews/Methods.html#modFunc'>modFunc</a> (<span class='argstr'>ndefKey</span>, <span class='argstr'>argIn</span>, <span class='argstr'>type</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>, <span class='argstr'>thisSpec</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*ndefs' href='./../Overviews/Methods.html#ndefs'>ndefs</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*pattCount' href='./../Overviews/Methods.html#pattCount'>pattCount</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*pattData' href='./../Overviews/Methods.html#pattData'>pattData</a> (<span class='argstr'>pattern</span>, <span class='argstr'>data</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*play' href='./../Overviews/Methods.html#play'>play</a> (<span class='argstr'>block: 1</span>, <span class='argstr'>blockName</span>, <span class='argstr'>buffer</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>data</span>, <span class='argstr'>sync: false</span>, <span class='argstr'>xfade: true</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*playAll' href='./../Overviews/Methods.html#playAll'>playAll</a> (<span class='argstr'>blockArr</span>, <span class='argstr'>blockName</span>, <span class='argstr'>buffer</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>data</span>, <span class='argstr'>sync: false</span>, <span class='argstr'>xfade: false</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*playNdefs' href='./../Overviews/Methods.html#playNdefs'>playNdefs</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*readWavetable' href='./../Overviews/Methods.html#readWavetable'>readWavetable</a> (<span class='argstr'>data</span>, <span class='argstr'>buf</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*rec' href='./../Overviews/Methods.html#rec'>rec</a> (<span class='argstr'>recblock: 1</span>, <span class='argstr'>input: 1</span>, <span class='argstr'>loop: 0</span>, <span class='argstr'>recLevel</span>, <span class='argstr'>preLevel</span>, <span class='argstr'>xfade: false</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*recBlockCount' href='./../Overviews/Methods.html#recBlockCount'>recBlockCount</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*recBlocks' href='./../Overviews/Methods.html#recBlocks'>recBlocks</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*recBuf' href='./../Overviews/Methods.html#recBuf'>recBuf</a> (<span class='argstr'>bufnum: 1</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*recBufInfo' href='./../Overviews/Methods.html#recBufInfo'>recBufInfo</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*recNdefs' href='./../Overviews/Methods.html#recNdefs'>recNdefs</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*recNow' href='./../Overviews/Methods.html#recNow'>recNow</a> (<span class='argstr'>seconds: 1</span>, <span class='argstr'>channels: 1</span>, <span class='argstr'>format: 'audio'</span>, <span class='argstr'>input: 1</span>, <span class='argstr'>loop: 0</span>, <span class='argstr'>recLevel: 1</span>, <span class='argstr'>preLevel: 0</span>, <span class='argstr'>frameSize: 2048</span>, <span class='argstr'>hopSize: 0.5</span>, <span class='argstr'>timer: false</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*recTimer' href='./../Overviews/Methods.html#recTimer'>recTimer</a> (<span class='argstr'>recblock: 1</span>, <span class='argstr'>input: 1</span>, <span class='argstr'>loop: 0</span>, <span class='argstr'>recLevel</span>, <span class='argstr'>preLevel</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*recbuffers' href='./../Overviews/Methods.html#recbuffers'>recbuffers</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*remove' href='./../Overviews/Methods.html#remove'>remove</a> (<span class='argstr'>block: 1</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*removeAll' href='./../Overviews/Methods.html#removeAll'>removeAll</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*removeAllRec' href='./../Overviews/Methods.html#removeAllRec'>removeAllRec</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*removeArr' href='./../Overviews/Methods.html#removeArr'>removeArr</a> (<span class='argstr'>blockArr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*removeRec' href='./../Overviews/Methods.html#removeRec'>removeRec</a> (<span class='argstr'>recbuf: 1</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*set' href='./../Overviews/Methods.html#set'>set</a> (<span class='argstr'>block</span>, <span class='argstr'>argArr</span>, <span class='argstr'>post: true</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*setBlkMod' href='./../Overviews/Methods.html#setBlkMod'>setBlkMod</a> (<span class='argstr'>blkNum</span>, <span class='argstr'>trackArg</span>, <span class='argstr'>extraArgs</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*setFadeTime' href='./../Overviews/Methods.html#setFadeTime'>setFadeTime</a> (<span class='argstr'>newFadeTime</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*stop' href='./../Overviews/Methods.html#stop'>stop</a> (<span class='argstr'>block: 1</span>, <span class='argstr'>fadeOut</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*stopAll' href='./../Overviews/Methods.html#stopAll'>stopAll</a> (<span class='argstr'>fadeOut</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*syncStart' href='./../Overviews/Methods.html#syncStart'>syncStart</a> (<span class='argstr'>block: 1</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*timecond' href='./../Overviews/Methods.html#timecond'>timecond</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*unmapBlk' href='./../Overviews/Methods.html#unmapBlk'>unmapBlk</a> (<span class='argstr'>blkNum</span>, <span class='argstr'>modArg</span>, <span class='argstr'>value</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*xset' href='./../Overviews/Methods.html#xset'>xset</a> (<span class='argstr'>block</span>, <span class='argstr'>argArr</span>, <span class='argstr'>post: true</span>)</h3>
+<h2><a class='anchor' name='instancemethods'>Instance Methods</a></h2>
+<h3><a class='anchor' name='Inherited%20instance%20methods'>Inherited instance methods</a></h3>
+<div id='inheritedinstmets'></div><h2><a class='anchor' name='examples'>Examples</a></h2>
+<pre class='code prettyprint lang-sc'>//ideas for commands for blocks
+pl 1 marylin1 //play soundfile marylin1
+pl 1 2 marylin2 //play, bus 1, slot 2, file
+lp 2 ant
+
+pn 1 rave //pattern in block 1 called rave
+sn 1 textures //synth in block 1 called textures
+
+sn 1 {SinOsc.ar(440)} //create temp synth def
+pn 1 Pbind(\note, [1,3,4]) //create temp pattern
+
+routing
+blk 1 -&gt; pln 1
+
+blk 4 //creates 4 blocks (ndefs) to put synths/patterns in
+blk 1 -&gt; pln 1 //plug block 1 to plane 1
+blk 2-4 -&gt; blkbus 1-3 //plug blocs 2 to 4 into block buses 1 to 3
+
+
+
+Pdef(\x, Pbind(\note, [1,3,4]) ).play
+
+sn 1 audioin /2 2 //synth def called audio in in block 1, with default args (2,2)
+
+a = "(2 2 )".replace("(", "").replace(")", "").split($ )
+a = a.asString.interpret;
+a[1];
+
+sn 1 audioin /input 3 mul 2 //with name of argumnets
+
+////////////////////////////////////
+
+SynthFile.post(\block);
+
+SynthFile.post(\block, \play)
+
+SynthFile.post(\filter, \pch)
+
+SynthFile.post(\block, \sine)
+SynthFile.postAll(\block)
+
+
+SynthFile.postAll(\block);
+
+DataFile.write(\pattern, \test3, [ [ \note, \seq, [ 7, 7, 7, 6 ] ], [ \dur, \seq, [ 0.5, 0.5, 0.25, 0.5 ] ] ]);
+///////
+b = DataFile.read(\pattern, \test1);
+
+b.toPattern(1,0).play; //pattern number, quant
+
+SynthFile.read(\point).do{|item| SynthFile.read(\point, item).toSynthDef(\perkysine).add;};
+
+b.patternInst(\perkysine).toPattern(1).play;
+
+
+
+c = DataFile.read(\pattern, \test2).patternInst(\seq, [\perkysine, \default]);
+
+c.toPattern(2).play
+
+[b.toPattern(1), c.toPattern(2)].ppar.play
+
+d = DataFile.read(\pattern, \test3).patternInst(\perkysine);
+
+d.toPattern(1,0).play
+
+[d.toPattern(1), d.toPattern(2)].ppar(2).play
+
+Pdefn(\note1, Pseq([9,1,6,\rest], 1));
+Pdefn(\note2, Pseq([\rest,2,1,0, 2], 1));
+
+
+SynthFile.postAll(\point);
+SynthFile.read(\point).do{|item| SynthFile.read(\point, item).toSynthDef.add;};
+
+Pdefn(\patt1).quant = 4;
+Pdefn(\instrument1, \perkysine);
+
+Pdefn(\note1, Pseq([\rest,1,3,-3], inf));
+
+Pdefn(\instrument2, \perkysine);
+Pdefn(\instrument2).quant = 4;
+Pdefn(\instrument2, \default);
+
+SynthFile.post(\block, \loop);
+
+SynthFile.postAll(\pattern);
+
+TempoClock.default.tempo = 2.0; //a way to change global tempo
+
+TempoClock.default.tempo = 1.0;
+
+SynthFile.read(\point, \perkysine).toSynthDef(\synth1);
+
+SynthFile.write(\point, \perkysine, {arg freq=400, amp=1;
+    var osc;
+    osc = SinOsc.ar( [freq,freq+0.05.rand] ) * EnvGen.ar(
+        Env.perc, doneAction: 2) * 0.2;
+    osc*amp;
+}
+);
+
+SynthFile.postAll(\block);
+
+//////////
+//BLOCKS!!!!
+//patterns
+Radicles.document;
+
+(
+Block.clock; //start metronome
+Block.tempo(80); //set tempo
+Block.addNum(4, 1, 1 );
+Block.playNdefs;
+)
+
+Block.bpm;
+
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata); //block, block name, buffer, extraArgs, data
+
+Block.liveBlocks
+
+Block.play(1, \pattern, \nobuf, \test1); //block, block name, buffer, extraArgs, data
+
+
+Block.setFadeTime(5);
+
+Block.play(1, \pattern, \nobuf, [[\note, \seq, [10,10,10,10]], [\dur, 0.5] ], [\instrument, \perkysine]);
+
+Block.play(1, \pattern, \nobuf, [[\note, \seq, [10,6,2,2]], [\dur, 0.5] ], [\instrument, \perkysine]);
+
+Block.bpm;
+Block.tempo(60);
+
+~thisPatt = {arg key=\note; (key.asString ++ (Block.pattCount-1) ).asSymbol};
+Pdefn(~thisPatt.(\note)).quant = 4;
+Pdefn(~thisPatt.(\note), Pseq([ 0, 6, 2, 'rest', 11], inf) );
+
+Pdefn(~thisPatt.(\dur), 0.05);
+
+
+Pdefn(~thisPatt.(\note), Prand([ 0, 6, 2, 'rest', 11], inf) );
+
+Pdefn(~thisPatt.(\dur), 0.25);
+
+
+Block.play(1, \pattern, \nobuf, \test3);
+Block.play(1, \pattern, \nobuf, \test3, [[\instrument, \perkysine], [\ctranspose, \rand, [-6, 11, 0, -12]], [\amp, \seq, [0.1,0.4,0.8]]]);
+
+Block.play(1, \pattern, \nobuf, [\test2, \test1, \test3], [[\quant, 4], [\instrument, \default], [\legato, \rand, [0.1,1,0.05, 0.015, 0.02, 0.8, 0.5]]]); //parallel patterns
+
+Block.schedAction({"boom".postln});
+Block.schedDiv = 0.5;
+
+Block.play(1, \pattern, \nobuf, \test1);
+Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \perkysine]);
+Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \perkysine]);
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);
+
+
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);
+
+(
+Block.schedCount({|count| if(count == 5, {
+    Block.play(1, \pattern, \nobuf, \test1);
+    Block.play(4, \pattern, \nobuf, \test1, [\ctranspose, -12]);}); count.postln; }, 1, 5);
+)
+
+//sync!
+(
+Block.add;
+Block.playNdefs;
+)
+
+Block.play(5, \pattern, \nobuf, [[\note, \seq, [15,15,15,15]], [\dur, 0.5], [\amp, 0.8] ], [\instrument, \perkysine]);
+
+//stop gradually
+(
+Block.schedDiv = 4; //release every 6 bars
+Block.schedCount({|count| Block.stop(count); count.postln }, 1, 5);
+)
+
+//scheduling
+Radicles.new;
+Radicles.schedFunc = {|a,b| [a,b].postln};
+Radicles.schedAction({"boom".postln}); //although if you set a clock ndefs will synch automatically so no need for this
+Radicles.schedCount({|a| a.postln}, 1, 4);
+Radicles.schedCount({|a| a.postln}, 10, 14, true); //loop
+
+(
+Block.add;
+Block.playNdefs;
+)
+//set synth and wait
+Block.play(1, \loop, \SinedPink, [\rate, 2, \mul, 0.1], sync: true); //block, slot, block name, buffer, extraArgs
+
+//start synth
+Block.syncStart;
+
+
+Types of Blocks
+
+block amount of channels,
+requiring buffer(s) or not
+pattern or synth
+output of blocks (destination - input for planes, or for )
+blocks that requiere external data (arryas, patterns) and blocks that dont
+block for recording
+
+Radicles.document;
+
+Block.add //add 1 block with one channel
+
+Block.ndefs;
+Block.blocks;
+
+//until here?
+
+Block.addNum(4, 2) //amount of blocks,channels
+Block.ndefs.dopostln;
+Block.blocks;
+
+Block.addAll([1,2,3,4]); //each block with different channels
+
+Block.blocks.dopostln;
+
+Block.remove(1); //remove block number 1
+Block.remove(5); //remove block number 1
+Block.removeArr([1,3, 5]); //remove array of blocks
+
+Block.removeAll;
+
+Block.ndefs.dopostln;
+Block.blocks;
+//////
+
+Block.addNum(4, 1);
+
+Block.playNdefs;
+
+SynthFile.postAll(\block);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata); //block, block name, buffer, extraArgs, data
+
+//blk 1 sine \ 200 0 0.4
+//blk 1 sine \ freq 220 amp 0.2
+//blk 2 sine \ 100
+//sin 1 \amp 0.1
+//sin 1 \100 299 399
+
+pl 1 1
+pl 1 2
+pl 1 3
+pl 1 4
+
+Block.lag(1, [\freq, 0.5]);
+Block.set(1, [\freq, rrand(50, 1800.0).postln]);
+
+
+
+ModMap.map(Block.ndefs[0], \freq, \sin, \freq1, [\freq, 1], lag: [\freq, 1]);
+
+ModMap.set(1, \freq, rrand(1,10.0).postln);
+
+ModMap.lag(1, \freq, 5); //lag mod when changed
+
+
+
+ModMap.set(1, \freq, rrand(1,10.0).postln);
+ModMap.set(1, \freq, 20);
+ModMap.set(1, \freq, 0.1);
+
+SpecFile.postAll(\modulation);
+ControlFile.postAll(\map);
+
+Block.play(2, \sine, \nobuf, [1220,0,0.4]);
+
+ModMap.map(Block.ndefs[1], \freq, \lfn1, \freq1, [\freq, 20], 3, 2); //notice spec with mul 3 and add 2
+
+
+Block.lag(2, [\freq, 2]);
+
+Block.set(2, [\freq, rrand(50, 1800.0).postln]);
+Block.set(1, [\freq, rrand(50, 1800.0).postln]);
+
+Block.lag(1, [\freq, nil]);
+
+Block.set(1, [\freq, rrand(50, 1800.0).postln]);
+
+Block.lag(2, [\freq, nil]);
+Block.set(2, [\freq, rrand(50, 1800.0).postln]);
+
+
+Block.stop(1,5); //block, slot, fadeOut
+Block.stop(2);
+
+
+Block.play(1, \sine, extraArgs: [220,0,0.4]);
+
+Block.clear;
+
+//wavetables
+Radicles.document;
+
+Block.add;
+Block.ndefs;
+Block.playNdefs;
+DataFile.postAll(\wavetables)
+
+Block.play(1, \osc1, 512, [\freq, 200], \sine1harm6); //block, buffer, extraArgs, data
+Block.set(1, [\freq, 100]);
+Block.lag(1, [\freq, 5]);
+Block.set(1, [\freq, 800]);
+
+ModMap.map(Block.ndefs[0], \freq, \sin, \freq1, [\freq, 2], 0.25, -4.5); //notice spec with mul 3 and add 2
+ModMap.lag(1, \freq, 3);
+ModMap.set(1, \freq, 5);
+ModMap.set(1, \freq, 3);
+
+Block.play(1, \osc1, 512, [\freq, 800], \sine2harm2);
+
+Block.play(1, \shaperSine, 512, [\freq, 440], \chebyEx1);
+Stethoscope.new
+
+BStore.bstores[0].plot
+
+Block.clear;
+
+//add blocks with different channel numbers
+Block.addNum(4, [1,2,2,1]);
+Block.clear;
+
+
+//alloc 4 blocks with 1 channel each
+Block.addNum(4);
+Block.playNdefs;
+
+Block.play(1, \loop, \marilyn1, [\rate, 2, \mul, 0.8]); //block, slot, block name, buffer, extraArgs
+Block.play(2, \loop, \marilyn1, [\rate, 0.5]); //block, slot, block name, buffer, extraArgs
+Block.play(3, \loop, \marilyn1, [\rate, 1.2]);
+Block.play(4, \loop, \marilyn1, [\rate, 4.2]);
+
+Block.xset(1, [\rate, 2]);
+Block.xset(2, [\rate, 1]);
+Block.xset(3, [\rate, 1]);
+Block.xset(4, [\rate, 1]);
+
+Block.lag(1, [\rate, 2]);
+Block.lag(2, [\rate, 2]);
+Block.lag(3, [\rate, 2]);
+Block.lag(4, [\rate, 2]);
+
+Block.set(1, [\rate, rrand(0.5, 3)], true);
+Block.set(2, [\rate, rrand(0.5, 1)], true);
+Block.set(3, [\rate, rrand(0.5, 1)], true);
+Block.set(4, [\rate, rrand(0.5, 3)], true);
+
+Block.play(1, \loop, \SinedPink, [\rate, 2, \mul, 0.8]);
+
+//blocks with more buffers represented as array:
+Block.play(1, \loopAll, [\marilyn1, \SinedPink], [\rate, 1, \mul, 0.8]); //block, slot, block name, buffer, extra
+
+Block.stop(1);
+Block.stop(2 ,2);
+
+Block.stop(3 ,1);
+Block.stop(4 ,1);
+
+Block.play(2, \sine);
+
+Block.play(1, \loop, \marilyn1, [\rate, 2, \mul, 0.8]);
+
+Block.stop(2);
+
+BStore.bstoreIDs;
+//alloc buffer
+Block.play(1, \loop, \marilyn1, [\mul, 0, \trigger, 0]);
+//play buf from start
+Block.set(1, [\trigger, 1, \startPos, 0, \mul, 1]);
+
+
+Block.blocks;
+
+BStore.bstoreIDs;
+
+Block.liveBlocks[0][2];
+BStore.bstoreIDs[0];
+
+Block.ndefs[0].controlKeysValues;
+
+Block.addNum(4);
+
+// Ndef('pan1', {Pan2.ar(Mix(Block.ndefs[0].ar), 0) });
+// Ndef('pan1').play;
+
+Block.play(1, \cue, \marilyn1, [\mul, 1]);
+
+Block.play(1, \looppv, \parsifal, [\rate, 1, \mul, 4]);
+Block.set(1, [\rate, 10, \mul, 4], true);
+Block.set(1, [\rate, 0.03], true);
+
+Block.play(1, \loop, \marilyn1, [2, 0.8]); //block, slot, block name, buffer
+
+BStore.bstoreIDs;
+
+SynthFile.postAll(\block);
+SynthFile.post(\block, \play);
+
+
+///////
+//record buffers
+s.boot;
+
+Radicles.document;
+
+Block.addRec(10, func: {|buf| buf.postln; }); //add a buffer of 10 seconds
+Block.addRecNum(4,1) //add 4 buffers of 1 second
+//get rid of rec nums;
+Block.removeRec(1)
+Block.removeAllRec;
+BStore.bstoreIDs;
+
+//let's record something!
+Block.addRecArr([ [1,2,\audio],[2,1,\audio], [3,1,\scpv] ]); //add array of buffers of differnet types
+
+Block.recNdefs;
+Block.recBlocks;
+Block.recbuffers.dopostln;
+Block.recBufInfo.dopostln; //returns rec buffer info: seconds, channels, format, frameSize, hopSize
+
+Block.recBuf(1); //get rec buf 1
+Block.recbuffers;
+Block.recBuf(2); //get rec buf 2
+
+
+Block.addRecNum(2,1);
+
+Block.rec(2); //record into 2nd recbuffer
+Block.recBuf(2);
+Block.getRecBuf(2).plot;
+
+Block.add; //add a block
+Block.play(1, \loop, Block.recBuf(2));
+Block.playNdefs; //play blocks
+
+Block.removeAllRec;
+
+Block.addRecNum(1, channels: 2);
+~buffer = Block.getRecBuf(1)
+//record in recbuf 1, inputs 1 and 2, loop 0
+Block.rec(1, [1,2], 0); //record more than one channel as array
+
+~buffer.plot;
+
+Block.add(channels: 2);
+Block.play(1, \playbuf, Block.recBuf(1); );
+Block.playNdefs; //play blocks
+
+//overdub
+Block.rec(1,[1,2], 0, 0.75, 0.25); //recblock, inputs, loop, recLevel, preLevel
+
+Block.addRecNum(1);
+Block.rec(2, 1); //record into 2nd recbuffer , using input 1
+Block.getRecBuf(2).plot;
+
+Block.add;
+Block.play(1, \loop, Block.recBuf(2); );
+
+Block.getRecBuf(2).plot;
+
+
+//overdub with ndef as input
+Ndef('sine', {SinOsc.ar(CuspL.ar(40).range(200,400) ) * 0.1 });
+Block.rec(2, Ndef('sine'), 0, 0.5, 0.5);
+Block.getRecBuf(2).plot;
+//now with phase vocoder
+Block.addRec(1, format: \pv);
+Block.recBufInfo.dopostln; //make sure it's the right bufer
+Block.recBuf(3);
+
+//start recording
+Block.rec(3);
+Block.getRecBuf(3);
+Block.getRecBuf(3).plot;
+
+SynthFile.postAll(\block);
+
+Block.add;
+Block.playNdefs; //play blocks
+
+Block.play(3, \looppv, Block.recBuf(3); );
+Block.set(3, [\rate, 0.2, \mul, 3]);
+
+
+Ndef('noise', {LPF.ar(PinkNoise.ar(1), SinOsc.kr(1).range(1200,14000))*0.4});
+
+//input to record from any ndef
+Block.set(3, [\mul, 2])
+Block.rec(3, Ndef('noise'));
+
+Block.set(3, [\rate, 0.1]);
+Block.set(3, [\rate, 1.1]);
+Block.set(3, [\rate, 6]);
+
+Block.stop(1);
+Block.stop(2);
+Block.stop(3);
+
+Block.removeAllRec;
+
+//loop recording with timing
+(
+Block.addRecNum(3, 10);
+Block.addNum(4);
+Block.playNdefs
+)
+
+Block.recTimer(1);
+Block.loopTimer(1); //which block to play it in
+
+Block.recTimer(2, recLevel: 0.5, preLevel: 0.1);
+Block.loopTimer(2); //which block
+
+Block.recTimer(3);
+Block.loopTimer(3); //which block
+
+Block.set(1, [\rate, 1]);
+Block.set(2, [\rate, 2]);
+Block.set(3, [\rate, 0.35]);
+
+Block.set(1, [\mul, 4]);
+Block.set(2, [\mul, 4]);
+Block.set(3, [\mul, 2]);
+
+Block.removeAll;
+
+//
+
+"blk addrec 2" //hard coding
+"@ 2" //record buffer 2 seconds long
+Block.addRec(2);
+"pv" //change buffers to pv
+"@2 2 1 512 0.1" //add recbuffer 2 seconds in pv with frameSize and hop
+Block.addRec(2, frameSize: 512, hop: 0.1);
+
+"@" //list all record buffers
+Block.recbuffers.dopostln;
+
+"sr 1" //start record (loop: 0) in recbuffer 1
+Block.rec(1) //record into recbuffer number 1
+
+~buffer = Block.getRecBuf(1);
+~buffer.plot;
+{PlayBuf.ar(~buffer.numChannels, ~buffer, loop: 1)}.play;
+
+"lr 1 1" //loop record (loop: 1) in recbuffer 1, input 1
+Block.rec(1, 1, 1) //record into recbuffer number 1
+
+"or 1 0.5 0.5" //overdrive (loop: 0) in recbuffer 1, with 0.5 rec, 0.5 pre.
+Block.rec(1, 1, 0, 0.5, 0.5) //record into recbuffer number 1
+
+"ol 1" //overdub loop
+Block.rec(1, 1, 1)
+
+
+a = "lp 1 @1" //loop bus 1, at recbuf 1
+"lp 2 @2" //loop bus 2, at recbuf 2
+(
+~bufString = a.split($ )[2];
+if(~bufString.notNil, {
+    ~recBufNum = ~bufString.copyRange(1, ~bufString.size-1).interpret
+});
+)
+Block.recBuf(~recBufNum);
+Block.getRecBuf(~recBufNum).plot;
+
+Block.removeAllRec;
+
+/////
+
+Block.addNum(4);
+Block.playNdefs;
+
+
+
+///////
+
+~arr = "lp 2 marilyn1 (2,3)".split($ );
+
+~args = ~arr[3].replace("(", "[").replace(")", "]").interpret;
+Block.play(~arr[1].interpret,\loop, ~arr[2].asSymbol, ~args);
+
+Block.ndefs
+Block.blocks.dopostln
+Block.liveBlocks.dopostln
+
+BStore.bstoreIDs
+BStore.removeID([\play, \audio, \marilyn1]);
+
+
+"first dimention"
+"hard coding" the blocks
+blk add 10
+blk ply 1 sine
+blk ply 1 play adam 3
+blk ply 1 loop adam
+blk set 1 freq 500
+blk set 2 0.4 10
+blk rec 1 10
+etc.
+
+
+"second dimention"
+block play cmds:
+lp //loop
+pl //play
+pn //pattern
+sd //synth def
+
+
+lp 1 2 adam /2 //loop in bock 1, slot 2, bufferName adam, at rate 2
+pn 2 groove //pattern in block 2, slot 1, pattern name groove
+sd 2 2 sine /300, 0.4 //synth in block 2, slot 2, sine synth with 300 and 0.4 as args
+mk 1 /1 //mic 1 1
+
+//rec buffers
+@ 5 1 512 0.5 //add recordbuf of 5 secs, 1 channels 512 frames, 0.5 hop
+4@ 5 //add 4 recordbufs of 5 seconds
+x@5 //free record buffer 5
+x@ //free all record buffers
+@ //list rec bufs
+
+//recoding
+r@1 2//record in buffer 1, from input 2
+r @1 //same as above
+r@3 //record in buffer 2
+r @3 /1 5 //buffer 3, inputs 1 and 5
+lr@1 //loop record in buffer 1
+lr @1
+o@1 //overdub in buffer 1
+o@3 1 0.2 0.8 //overdub in buffer 1 from input 1, 0.2rec, 0.8pre
+ol@1 //loop overdub
+rt@1 //record with timer
+lt //loop timer
+
+//playback
+pl@1 //play in block 1, slot 1, recbuf 1
+pl @1 //play in block 1, slot 1, recbuf 1
+pl 1 @1 //play in block 1, slot 1, recbuf 1
+lp 1 2 @2 //play in block 1, slot 2, recbuf 2
+lp 2 @3 //loop in block 2, slot 1, recbuf 3
+
+//synth def
+sd 1 textures /1 2 3
+sd 1 textures /1 2 freq 100
+
+sd 1 sine /440 0 1
+sd 2 saw /880 0.5 1 lpf 200
+st 1 //stop block 1
+
+//pattern
+pn 3 groove3 /rate 1 hpf 100
+bset 3 /rate 2 mul 1
+bset 3 /0.4 2 3
+blag 3 /freq 0.5
+blag 2 /0.5
+
+bset //block set
+fset //filter set
+pset //plane set
+
+mk 1 2 /1 //mic
+mk 2 /2 //mic
+
+sd //synth def
+pn //pattern
+
+lp 1 marylin1 /rate: 2
+lp 1 ant /1 2
+
+bset 1 1
+blag 3 /freq 2
+
+
+/////////////////////////////////
+//multiple buffers
+
+DataFile.postAll(\wavetables);
+
+
+Radicles.document;
+
+Block.addNum(4);
+Block.playNdefs;
+
+Block.play(1, \vosc, 512!12, [\freq, 200], \varsquared);
+
+Block.play(1, \vosc, 512!8, [\freq, 100], \varsquared);
+
+Block.set(1, [\freq, rrand(100, 200.0).postln])
+
+Block.play(1, \vosc, 512!2, [\freq, 100], \varsquared);
+
+Block.play(1, \vosc, 512!2, [\freq, 150], [\sine1harm6, \sine2harm2]);
+
+
+
+Block.play(1, \loop, \marilyn1);
+Block.play(2, \loop, \marilyn1, [\rate, 0.5]); //block, slot, block name, buffer, extraArgs
+Block.play(3, \loop, \marilyn1, [\rate, 1.2]);
+Block.play(4, \loop, \marilyn1, [\rate, 4.2]);
+
+
+
+Block.liveBlocks
+
+Block.stopAll(5);
+
+Block.clear
+////////
+
+
+Block.addNum(4);
+Block.playNdefs;
+Block.playAll([1,2,3,4], \loop, \marilyn1, [ [\rate, 2, \mul, 0.8], [\rate, 0.5], [\rate, 1.2], [\rate, 4.2] ]); //block, slot, block name, buffer, extraArgs
+
+Block.playAll([1,2,3,4], \loop, \marilyn1, [\rate, 2], sync: true);
+
+Block.allSync;
+
+Block.set(1, [\rate, 1.2]);
+Block.set(2, [\rate, 2.2]);
+Block.set(3, [\rate, 5.2]);
+Block.set(4, [\rate, 15.2]);
+
+Block.playAll([1,2,3,4], \loop, \SinedPink, [\rate, 2], sync: true);
+
+Block.allSync;
+
+
+Block.playAll([1,2], \vosc, [512!12, 512!8], [[\freq, 200], [\freq, 100]], \varsquared, true);
+Block.allSync;
+
+Block.play(1, \vosc, 512!12, [\freq, 200], \varsquared);
+
+Block.play(2, \vosc, 512!8, [\freq, 100], \varsquared);
+
+Block.playAll([1,2], \vosc, [512!12, 512!8], [[\freq, 100], [\freq, 200]], \varsquared, true);
+Block.allSync;
+
+Block.stopAll(1);
+
+Block.clear;
+
+a = [\rate, 2, \mul, 0.8]
+a.rank
+
+a = [ [\rate, 2, \mul, 0.8], [\rate, 0.5] ]
+
+
+Ndef('block2').set( 'freq', 200 );
+////////
+"coding ideas"
+
+"blk addrec 2" //hard coding
+"@ 2" //record buffer 2 seconds long
+
+"associations between dimentions"
+blk addrec # -&gt; @#
+blk addrec # -&gt; @ #
+
+blk ply # \ -&gt; pl # \
+
+"for deepter dimentions"
+1 pl # adam -&gt; adam //first state original dimention, then association
+
+
+
+pn
+sn
+pl
+lp
+
+sn 1 sine /290
+pn 2</pre>
+
+<p><div class='doclink'>helpfile source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/Block.schelp'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/Block.schelp</a><br>link::Classes/Block::<br>sc version: 3.8.0</div></div></body></html>

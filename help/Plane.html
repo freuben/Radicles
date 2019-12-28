@@ -1,0 +1,84 @@
+<html><head><title>Plane</title>
+<link rel='stylesheet' href='./../scdoc.css' type='text/css' />
+<link rel='stylesheet' href='./../frontend.css' type='text/css' />
+<link rel='stylesheet' href='./../custom.css' type='text/css' />
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<script src='./../scdoc.js' type='text/javascript'></script>
+<script src='./../docmap.js' type='text/javascript'></script>
+<script src='./../prettify.js' type='text/javascript'></script>
+<script src='./../lang-sc.js' type='text/javascript'></script>
+<script type='text/javascript'>var helpRoot='./..';</script>
+</head>
+<ul id='menubar'></ul>
+<body onload='fixTOC();prettyPrint()'>
+<div class='contents'>
+<div class='header'>
+<div id='label'>SuperCollider CLASSES (extension)</div>
+<div id='categories'><a href='./../Browse.html#Libraries>Radicles'>Libraries>Radicles</a></div>
+<h1>Plane</h1>
+<div id='summary'>Keeps track of Planes</div>
+</div>
+<div class='subheader'>
+<div id='filename'>Source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/Plane.sc'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/Plane.sc</a></div><div id='superclasses'>Inherits from: <a href="../Classes/Radicles.html">Radicles</a> : <a href="../Classes/Object.html">Object</a></div>
+<div id='subclasses'>Subclasses: <a href="../Classes/APlane.html">APlane</a>, <a href="../Classes/DPlane.html">DPlane</a>, <a href="../Classes/GPlane.html">GPlane</a></div>
+<div id='related'>See also: <a href="./../Classes/Ndef.html">Ndef</a></div>
+</div>
+<div id='toc'>
+<ul class='toc'><li class='toc1'><a href='#description'>Description</a></li>
+<ul class='toc'></ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*removeAt'>removeAt</a> </li>
+</ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*info'>info</a> </li>
+<li class='toc2'><a href='#Inherited%20class%20methods'>Inherited class methods</a></li>
+<li class='toc2'><a href='#Undocumented%20class%20methods'>Undocumented class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*getAPlanes'>getAPlanes</a> </li>
+<li class='toc3'><a href='#*getDPlanes'>getDPlanes</a> </li>
+<li class='toc3'><a href='#*getGPlanes'>getGPlanes</a> </li>
+<li class='toc3'><a href='#*getPlanes'>getPlanes</a> </li>
+<li class='toc3'><a href='#*indexArr'>indexArr</a> </li>
+<li class='toc3'><a href='#*new'>new</a> </li>
+<li class='toc3'><a href='#*planeIDs'>planeIDs</a> </li>
+<li class='toc3'><a href='#*planes'>planes</a> </li>
+</ul></ul><li class='toc1'><a href='#instancemethods'>Instance methods</a></li>
+<ul class='toc'><li class='toc2'><a href='#Inherited%20instance%20methods'>Inherited instance methods</a></li>
+<li class='toc2'><a href='#Undocumented%20instance%20methods'>Undocumented instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-initNewPlane'>initNewPlane</a> </li>
+</ul></ul><li class='toc1'><a href='#examples'>Examples</a></li>
+<ul class='toc'></ul></ul></div><h2><a class='anchor' name='description'>Description</a></h2>
+
+<p>Main Plane class. Keeps track of Planes<h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*removeAt' href='./../Overviews/Methods.html#removeAt'>removeAt</a> (<span class='argstr'>index</span>)</h3>
+<div class='method'>
+<p>Removes Plane at specified index.</div><h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*info' href='./../Overviews/Methods.html#info'>info</a> </h3>
+<div class='method'>
+<p>List all Planes with index number.</div><h3><a class='anchor' name='Inherited%20class%20methods'>Inherited class methods</a></h3>
+<div id='inheritedclassmets'></div><h3><a class='anchor' name='Undocumented%20class%20methods'>Undocumented class methods</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getAPlanes' href='./../Overviews/Methods.html#getAPlanes'>getAPlanes</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getDPlanes' href='./../Overviews/Methods.html#getDPlanes'>getDPlanes</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getGPlanes' href='./../Overviews/Methods.html#getGPlanes'>getGPlanes</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getPlanes' href='./../Overviews/Methods.html#getPlanes'>getPlanes</a> (<span class='argstr'>type: 'aplane'</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*indexArr' href='./../Overviews/Methods.html#indexArr'>indexArr</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*new' href='./../Overviews/Methods.html#new'>new</a> (<span class='argstr'>type</span>, <span class='argstr'>subtype</span>, <span class='argstr'>voice</span>, <span class='argstr'>settings</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*planeIDs' href='./../Overviews/Methods.html#planeIDs'>planeIDs</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*planes' href='./../Overviews/Methods.html#planes'>planes</a> </h3>
+<h2><a class='anchor' name='instancemethods'>Instance Methods</a></h2>
+<h3><a class='anchor' name='Inherited%20instance%20methods'>Inherited instance methods</a></h3>
+<div id='inheritedinstmets'></div><h3><a class='anchor' name='Undocumented%20instance%20methods'>Undocumented instance methods</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-initNewPlane' href='./../Overviews/Methods.html#initNewPlane'>initNewPlane</a> (<span class='argstr'>type</span>, <span class='argstr'>subtype</span>, <span class='argstr'>voice</span>, <span class='argstr'>settings</span>)</h3>
+<h2><a class='anchor' name='examples'>Examples</a></h2>
+<pre class='code prettyprint lang-sc'>APlane.add(\fft, \poly);
+
+GPlane.add(\chain, \mono);
+
+APlane.add(\fft, \mono);
+
+DPlane.add(\midiFile, \poly);
+
+Plane.info;
+
+a = Plane.planes; //returns array of plane classes
+
+a[0];
+a[3];</pre>
+<div class='doclink'>helpfile source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/Plane.schelp'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/Plane.schelp</a><br>link::Classes/Plane::<br>sc version: 3.8.0</div></div></body></html>

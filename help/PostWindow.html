@@ -1,0 +1,179 @@
+<html><head><title>PostWindow</title>
+<link rel='stylesheet' href='./../scdoc.css' type='text/css' />
+<link rel='stylesheet' href='./../frontend.css' type='text/css' />
+<link rel='stylesheet' href='./../custom.css' type='text/css' />
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<script src='./../scdoc.js' type='text/javascript'></script>
+<script src='./../docmap.js' type='text/javascript'></script>
+<script src='./../prettify.js' type='text/javascript'></script>
+<script src='./../lang-sc.js' type='text/javascript'></script>
+<script type='text/javascript'>var helpRoot='./..';</script>
+</head>
+<ul id='menubar'></ul>
+<body onload='fixTOC();prettyPrint()'>
+<div class='contents'>
+<div class='header'>
+<div id='label'>SuperCollider CLASSES (extension)</div>
+<div id='categories'><a href='./../Browse.html#Libraries>Radicles'>Libraries>Radicles</a></div>
+<h1>PostWindow</h1>
+<div id='summary'>A call window</div>
+</div>
+<div class='subheader'>
+<div id='filename'>Source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/PostWindow.sc'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/PostWindow.sc</a></div><div id='superclasses'>Inherits from: <a href="../Classes/Radicles.html">Radicles</a> : <a href="../Classes/Object.html">Object</a></div>
+<div id='related'>See also: <a href="./../Classes/CallWindow.html">CallWindow</a>, <a href="./../Classes/Window.html">Window</a></div>
+</div>
+<div id='toc'>
+<ul class='toc'><li class='toc1'><a href='#description'>Description</a></li>
+<ul class='toc'></ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*new'>new</a> </li>
+<li class='toc3'><a href='#*window'>window</a> </li>
+<li class='toc2'><a href='#Inherited%20class%20methods'>Inherited class methods</a></li>
+</ul><li class='toc1'><a href='#instancemethods'>Instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-addToFork'>addToFork</a> </li>
+<li class='toc2'><a href='#Inherited%20instance%20methods'>Inherited instance methods</a></li>
+<li class='toc2'><a href='#Undocumented%20instance%20methods'>Undocumented instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-addLine'>addLine</a> </li>
+<li class='toc3'><a href='#-addLineToFork'>addLineToFork</a> </li>
+<li class='toc3'><a href='#-addPost'>addPost</a> </li>
+<li class='toc3'><a href='#-clear'>clear</a> </li>
+<li class='toc3'><a href='#-clearFrom'>clearFrom</a> </li>
+<li class='toc3'><a href='#-deviation'>deviation</a> </li>
+<li class='toc3'><a href='#-doAddLine'>doAddLine</a> </li>
+<li class='toc3'><a href='#-doAddPost'>doAddPost</a> </li>
+<li class='toc3'><a href='#-fork'>fork</a> </li>
+<li class='toc3'><a href='#-initBasicClass'>initBasicClass</a> </li>
+<li class='toc3'><a href='#-megaString'>megaString</a> </li>
+<li class='toc3'><a href='#-time'>time</a> </li>
+</ul></ul><li class='toc1'><a href='#examples'>Examples</a></li>
+<ul class='toc'></ul></ul></div><h2><a class='anchor' name='description'>Description</a></h2>
+
+<p>An additional window that can be used as a post window in other environments.<h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*new' href='./../Overviews/Methods.html#new'>new</a> (<span class='argstr'>window</span>, <span class='argstr'>bounds</span>, <span class='argstr'>font</span>, <span class='argstr'>qpalette</span>)</h3>
+<div class='method'>
+<p>Create a new TextView for a post window.<h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>window<td class='argumentdesc'>
+<p>A Window in which to place the TextView.<tr><td class='argumentname'>bounds<td class='argumentdesc'>
+<p>A Rect for the TextView<tr><td class='argumentname'>font<td class='argumentdesc'>
+<p>A Font.<tr><td class='argumentname'>qpalette<td class='argumentdesc'>
+<p>A QPalette.</table></div><h3 class='cmethodname'><span class='methprefix'>*</span><a name='*window' href='./../Overviews/Methods.html#window'>window</a> (<span class='argstr'>name: "Window into your code"</span>, <span class='argstr'>bounds</span>, <span class='argstr'>font</span>, <span class='argstr'>qpalette</span>)</h3>
+<div class='method'>
+<p>Create a new Window with the TextView.<h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>name<td class='argumentdesc'>
+<p>A String for the name of the Window.<tr><td class='argumentname'>bounds<td class='argumentdesc'>
+<p>A Rect for the Window<tr><td class='argumentname'>font<td class='argumentdesc'>
+<p>A Font.<tr><td class='argumentname'>qpalette<td class='argumentdesc'>
+<p>A QPalette.</table></div><h3><a class='anchor' name='Inherited%20class%20methods'>Inherited class methods</a></h3>
+<div id='inheritedclassmets'></div><h2><a class='anchor' name='instancemethods'>Instance Methods</a></h2>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addToFork' href='./../Overviews/Methods.html#addToFork'>addToFork</a> (<span class='argstr'>thisObject</span>, <span class='argstr'>changeTime</span>, <span class='argstr'>changeDev</span>)</h3>
+<div class='method'>
+<p><h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>thisObject<td class='argumentdesc'>
+<p>Object to be posted in window.<tr><td class='argumentname'>changeTime<td class='argumentdesc'>
+<p>Change time of routine that writes string into post window.<tr><td class='argumentname'>changeDev<td class='argumentdesc'>
+<p>Change time deviation of routine that writes string into post window.</table></div><h3><a class='anchor' name='Inherited%20instance%20methods'>Inherited instance methods</a></h3>
+<div id='inheritedinstmets'></div><h3><a class='anchor' name='Undocumented%20instance%20methods'>Undocumented instance methods</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addLine' href='./../Overviews/Methods.html#addLine'>addLine</a> (<span class='argstr'>thisObject</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addLineToFork' href='./../Overviews/Methods.html#addLineToFork'>addLineToFork</a> (<span class='argstr'>thisObject</span>, <span class='argstr'>changeTime</span>, <span class='argstr'>changeDev</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addPost' href='./../Overviews/Methods.html#addPost'>addPost</a> (<span class='argstr'>thisObject</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-clear' href='./../Overviews/Methods.html#clear'>clear</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-clearFrom' href='./../Overviews/Methods.html#clearFrom'>clearFrom</a> (<span class='argstr'>max: 10000</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-deviation' href='./../Overviews/Methods.html#deviation'>deviation</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-deviation' href='./../Overviews/Methods.html#deviation'>deviation</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-doAddLine' href='./../Overviews/Methods.html#doAddLine'>doAddLine</a> (<span class='argstr'>array</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-doAddPost' href='./../Overviews/Methods.html#doAddPost'>doAddPost</a> (<span class='argstr'>array</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fork' href='./../Overviews/Methods.html#fork'>fork</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-initBasicClass' href='./../Overviews/Methods.html#initBasicClass'>initBasicClass</a> (<span class='argstr'>window</span>, <span class='argstr'>bounds</span>, <span class='argstr'>font</span>, <span class='argstr'>qpalette</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-megaString' href='./../Overviews/Methods.html#megaString'>megaString</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-megaString' href='./../Overviews/Methods.html#megaString'>megaString</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-time' href='./../Overviews/Methods.html#time'>time</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-time' href='./../Overviews/Methods.html#time'>time</a> = value</h3>
+<h2><a class='anchor' name='examples'>Examples</a></h2>
+<pre class='code prettyprint lang-sc'>p = PostWindow.window("My Post Window");
+
+p.addLineToFork("hello");
+10.do{p.addLine(Array.rand(10,0.1,2.0));};
+
+(
+["hello", "how", "are", "you", "isn't", "this", "a", "lot", "of", "nonsense" ].scramble.do{|item|
+p.addToFork(item);
+};
+)
+
+p.clear; //clear window
+p.addPost(Array.series(10,0,10))
+p.addLine("boom");
+
+Window.closeAll;
+
+//using extra displays
+
+Window.extraScreenBounds; //if you have another display, this posts screehBounds for other display(s) arg: offset in pixels, otherwise native screenBound width
+
+p = PostWindow.window("hello", Window.win4TopLeft(Rect(1440, -180, 1920, 1080)) );
+
+10.do{p.addLine(["la", "le", "li", "lo", "lu"].choose);};
+
+Window.closeAll;
+
+
+//using one window with serveral TextViews
+
+(
+w = Window("Window into my code", Window.screenBounds).front;
+b = Window.screenBounds;
+b.height = b.height - 40 - 10;
+~p1 = PostWindow(w, Window.win4BottomLeft(b, menuSpacer:0,winBorder:0));
+~p2 = PostWindow(w, Window.win4TopLeft(b, menuSpacer:0,winBorder:0));
+~p3 = PostWindow(w, Window.win4BottomRight(b, menuSpacer:0,winBorder:0));
+~p4 = PostWindow(w, Window.win4TopRight(b, menuSpacer:0,winBorder:0));
+)
+
+~maxChar = 2700;
+(
+~r1 = {
+    inf.do{
+        Array.rand(10,0,10).postin(\gui, \post, ~p1);
+        ~p1.clearFrom(~maxChar);
+        rrand(0.2,0.1).yield;
+    };
+}.fork(AppClock);
+~r2 = {
+    inf.do{
+        ["la", "le", "li", "lo", "lu"].choose.postin(\gui, \post, ~p2);
+        ~p2.clearFrom(~maxChar);
+        rrand(0.5,0.1).yield;
+    };
+}.fork(AppClock);
+~r3 = {
+    inf.do{
+        ["hello", "how", "are", "you", "isn't", "this", "a", "lot", "of", "nonsense" ].choose.postin(\gui, \ln, ~p3);
+        ~p3.clearFrom(~maxChar);
+        rrand(1.1,1.5).yield;
+    };
+}.fork(AppClock);
+~r4 = {
+    inf.do{
+        "boom".postin(\gui, \post, ~p4);
+        ~p4.clearFrom(~maxChar);
+        rrand(0.2,0.05).yield;
+    };
+}.fork(AppClock);
+w.front;
+);
+
+~r1.stop;
+~r2.stop;
+~r3.stop;
+~r4.stop;
+
+~p1.clear;
+~p2.clear;
+~p3.clear;
+~p4.clear;
+
+Window.closeAll;</pre>
+
+<p><div class='doclink'>helpfile source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/PostWindow.schelp'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/PostWindow.schelp</a><br>link::Classes/PostWindow::<br>sc version: 3.8.0</div></div></body></html>

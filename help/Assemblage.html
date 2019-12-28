@@ -1,0 +1,1313 @@
+<html><head><title>Assemblage</title>
+<link rel='stylesheet' href='./../scdoc.css' type='text/css' />
+<link rel='stylesheet' href='./../frontend.css' type='text/css' />
+<link rel='stylesheet' href='./../custom.css' type='text/css' />
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<script src='./../scdoc.js' type='text/javascript'></script>
+<script src='./../docmap.js' type='text/javascript'></script>
+<script src='./../prettify.js' type='text/javascript'></script>
+<script src='./../lang-sc.js' type='text/javascript'></script>
+<script type='text/javascript'>var helpRoot='./..';</script>
+</head>
+<ul id='menubar'></ul>
+<body onload='fixTOC();prettyPrint()'>
+<div class='contents'>
+<div class='header'>
+<div id='label'>SuperCollider CLASSES (extension)</div>
+<div id='categories'><a href='./../Browse.html#Libraries>Radicles'>Libraries>Radicles</a></div>
+<h1>Assemblage</h1>
+<div id='summary'>An Assembladge or Ndef based Mixer</div>
+</div>
+<div class='subheader'>
+<div id='filename'>Source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/Assemblage.sc'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/Assemblage.sc</a></div><div id='superclasses'>Inherits from: <a href="../Classes/Radicles.html">Radicles</a> : <a href="../Classes/Object.html">Object</a></div>
+<div id='related'>See also: <a href="./../Classes/Ndef.html">Ndef</a>, <a href="./../Classes/BufferSystem.html">BufferSystem</a></div>
+</div>
+<div id='toc'>
+<ul class='toc'><li class='toc1'><a href='#description'>Description</a></li>
+<ul class='toc'></ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*new'>new</a> </li>
+<li class='toc2'><a href='#Inherited%20class%20methods'>Inherited class methods</a></li>
+</ul><li class='toc1'><a href='#instancemethods'>Instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-filter'>filter</a> </li>
+<li class='toc2'><a href='#Inherited%20instance%20methods'>Inherited instance methods</a></li>
+<li class='toc2'><a href='#Undocumented%20instance%20methods'>Undocumented instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-addAlltracks'>addAlltracks</a> </li>
+<li class='toc3'><a href='#-addTrack'>addTrack</a> </li>
+<li class='toc3'><a href='#-addTracks'>addTracks</a> </li>
+<li class='toc3'><a href='#-argToFilterTag'>argToFilterTag</a> </li>
+<li class='toc3'><a href='#-autoAddTrack'>autoAddTrack</a> </li>
+<li class='toc3'><a href='#-autoRoute'>autoRoute</a> </li>
+<li class='toc3'><a href='#-basicFont'>basicFont</a> </li>
+<li class='toc3'><a href='#-bus'>bus</a> </li>
+<li class='toc3'><a href='#-busArr'>busArr</a> </li>
+<li class='toc3'><a href='#-busCount'>busCount</a> </li>
+<li class='toc3'><a href='#-busMix'>busMix</a> </li>
+<li class='toc3'><a href='#-clearModTrackNdefs'>clearModTrackNdefs</a> </li>
+<li class='toc3'><a href='#-clearNdefs'>clearNdefs</a> </li>
+<li class='toc3'><a href='#-collectSpecArr'>collectSpecArr</a> </li>
+<li class='toc3'><a href='#-collectTrackArr'>collectTrackArr</a> </li>
+<li class='toc3'><a href='#-convFilterTag'>convFilterTag</a> </li>
+<li class='toc3'><a href='#-convRevBuf'>convRevBuf</a> </li>
+<li class='toc3'><a href='#-dirInRec'>dirInRec</a> </li>
+<li class='toc3'><a href='#-fadeTime'>fadeTime</a> </li>
+<li class='toc3'><a href='#-filterBuff'>filterBuff</a> </li>
+<li class='toc3'><a href='#-filterGUI'>filterGUI</a> </li>
+<li class='toc3'><a href='#-filterGUIIndex'>filterGUIIndex</a> </li>
+<li class='toc3'><a href='#-filterInfoToTag'>filterInfoToTag</a> </li>
+<li class='toc3'><a href='#-filterLags'>filterLags</a> </li>
+<li class='toc3'><a href='#-filterWinGUI'>filterWinGUI</a> </li>
+<li class='toc3'><a href='#-filters'>filters</a> </li>
+<li class='toc3'><a href='#-filtersWindow'>filtersWindow</a> </li>
+<li class='toc3'><a href='#-findFilterTag'>findFilterTag</a> </li>
+<li class='toc3'><a href='#-findSpaceType'>findSpaceType</a> </li>
+<li class='toc3'><a href='#-findTrackArr'>findTrackArr</a> </li>
+<li class='toc3'><a href='#-fxLags'>fxLags</a> </li>
+<li class='toc3'><a href='#-fxTrackLags'>fxTrackLags</a> </li>
+<li class='toc3'><a href='#-fxTrackWarn'>fxTrackWarn</a> </li>
+<li class='toc3'><a href='#-fxTracksLags'>fxTracksLags</a> </li>
+<li class='toc3'><a href='#-fxWarn'>fxWarn</a> </li>
+<li class='toc3'><a href='#-fxsLags'>fxsLags</a> </li>
+<li class='toc3'><a href='#-fxsNum'>fxsNum</a> </li>
+<li class='toc3'><a href='#-fxsTrackLags'>fxsTrackLags</a> </li>
+<li class='toc3'><a href='#-garbage'>garbage</a> </li>
+<li class='toc3'><a href='#-get'>get</a> </li>
+<li class='toc3'><a href='#-getAllInputs'>getAllInputs</a> </li>
+<li class='toc3'><a href='#-getBusInLabels'>getBusInLabels</a> </li>
+<li class='toc3'><a href='#-getBuses'>getBuses</a> </li>
+<li class='toc3'><a href='#-getFilterArgs'>getFilterArgs</a> </li>
+<li class='toc3'><a href='#-getFilterKeys'>getFilterKeys</a> </li>
+<li class='toc3'><a href='#-getFilterPairs'>getFilterPairs</a> </li>
+<li class='toc3'><a href='#-getFilterTag'>getFilterTag</a> </li>
+<li class='toc3'><a href='#-getFilterVals'>getFilterVals</a> </li>
+<li class='toc3'><a href='#-getInputs'>getInputs</a> </li>
+<li class='toc3'><a href='#-getMaster'>getMaster</a> </li>
+<li class='toc3'><a href='#-getMixTrackIndex'>getMixTrackIndex</a> </li>
+<li class='toc3'><a href='#-getSpec'>getSpec</a> </li>
+<li class='toc3'><a href='#-getThisTrack'>getThisTrack</a> </li>
+<li class='toc3'><a href='#-getTrackDestination'>getTrackDestination</a> </li>
+<li class='toc3'><a href='#-getTrackInIndex'>getTrackInIndex</a> </li>
+<li class='toc3'><a href='#-getTrackInItem'>getTrackInItem</a> </li>
+<li class='toc3'><a href='#-getTrackInMenu'>getTrackInMenu</a> </li>
+<li class='toc3'><a href='#-getTrackInput'>getTrackInput</a> </li>
+<li class='toc3'><a href='#-getTrackOutIndex'>getTrackOutIndex</a> </li>
+<li class='toc3'><a href='#-getTrackOutItem'>getTrackOutItem</a> </li>
+<li class='toc3'><a href='#-getTrackOutput'>getTrackOutput</a> </li>
+<li class='toc3'><a href='#-getTracks'>getTracks</a> </li>
+<li class='toc3'><a href='#-globFadeTime'>globFadeTime</a> </li>
+<li class='toc3'><a href='#-initAssemblage'>initAssemblage</a> </li>
+<li class='toc3'><a href='#-input'>input</a> </li>
+<li class='toc3'><a href='#-inputLablesFunc'>inputLablesFunc</a> </li>
+<li class='toc3'><a href='#-inputMaster'>inputMaster</a> </li>
+<li class='toc3'><a href='#-inputs'>inputs</a> </li>
+<li class='toc3'><a href='#-labelsToInFunc'>labelsToInFunc</a> </li>
+<li class='toc3'><a href='#-lagFxArg'>lagFxArg</a> </li>
+<li class='toc3'><a href='#-lagFxArgTrack'>lagFxArgTrack</a> </li>
+<li class='toc3'><a href='#-lagFxArgTracks'>lagFxArgTracks</a> </li>
+<li class='toc3'><a href='#-lagFxArgs'>lagFxArgs</a> </li>
+<li class='toc3'><a href='#-listFx'>listFx</a> </li>
+<li class='toc3'><a href='#-listFxPresets'>listFxPresets</a> </li>
+<li class='toc3'><a href='#-listTrackPresets'>listTrackPresets</a> </li>
+<li class='toc3'><a href='#-loadFxPreset'>loadFxPreset</a> </li>
+<li class='toc3'><a href='#-loadFxPresets'>loadFxPresets</a> </li>
+<li class='toc3'><a href='#-loadFxTrackPreset'>loadFxTrackPreset</a> </li>
+<li class='toc3'><a href='#-loadFxTrackPresets'>loadFxTrackPresets</a> </li>
+<li class='toc3'><a href='#-loadRawFilterPreset'>loadRawFilterPreset</a> </li>
+<li class='toc3'><a href='#-loadRawFxPreset'>loadRawFxPreset</a> </li>
+<li class='toc3'><a href='#-loadTrackPreset'>loadTrackPreset</a> </li>
+<li class='toc3'><a href='#-loadTracksPreset'>loadTracksPreset</a> </li>
+<li class='toc3'><a href='#-mapOutFunc'>mapOutFunc</a> </li>
+<li class='toc3'><a href='#-mapOuts'>mapOuts</a> </li>
+<li class='toc3'><a href='#-mastOutArr'>mastOutArr</a> </li>
+<li class='toc3'><a href='#-mastOutGUI'>mastOutGUI</a> </li>
+<li class='toc3'><a href='#-mastOutSynth'>mastOutSynth</a> </li>
+<li class='toc3'><a href='#-mastOutWin'>mastOutWin</a> </li>
+<li class='toc3'><a href='#-masterInput'>masterInput</a> </li>
+<li class='toc3'><a href='#-masterNdefs'>masterNdefs</a> </li>
+<li class='toc3'><a href='#-masterSoloFunc'>masterSoloFunc</a> </li>
+<li class='toc3'><a href='#-masterSoloFunc2'>masterSoloFunc2</a> </li>
+<li class='toc3'><a href='#-masterSynth'>masterSynth</a> </li>
+<li class='toc3'><a href='#-mixControlKeyValues'>mixControlKeyValues</a> </li>
+<li class='toc3'><a href='#-mixGUI'>mixGUI</a> </li>
+<li class='toc3'><a href='#-mixTrackNames'>mixTrackNames</a> </li>
+<li class='toc3'><a href='#-mixTrackNdefs'>mixTrackNdefs</a> </li>
+<li class='toc3'><a href='#-mixer'>mixer</a> </li>
+<li class='toc3'><a href='#-mixerWin'>mixerWin</a> </li>
+<li class='toc3'><a href='#-modFilter'>modFilter</a> </li>
+<li class='toc3'><a href='#-modFilterCode'>modFilterCode</a> </li>
+<li class='toc3'><a href='#-modFilterIndex'>modFilterIndex</a> </li>
+<li class='toc3'><a href='#-modFilterIndexCode'>modFilterIndexCode</a> </li>
+<li class='toc3'><a href='#-modFilterTag'>modFilterTag</a> </li>
+<li class='toc3'><a href='#-modFunc'>modFunc</a> </li>
+<li class='toc3'><a href='#-modFx'>modFx</a> </li>
+<li class='toc3'><a href='#-modFxTrack'>modFxTrack</a> </li>
+<li class='toc3'><a href='#-modMix'>modMix</a> </li>
+<li class='toc3'><a href='#-modRawPreset'>modRawPreset</a> </li>
+<li class='toc3'><a href='#-modSend'>modSend</a> </li>
+<li class='toc3'><a href='#-modSendArr'>modSendArr</a> </li>
+<li class='toc3'><a href='#-muteButArr'>muteButArr</a> </li>
+<li class='toc3'><a href='#-muteStates'>muteStates</a> </li>
+<li class='toc3'><a href='#-ndefModClear'>ndefModClear</a> </li>
+<li class='toc3'><a href='#-ndefPrepare'>ndefPrepare</a> </li>
+<li class='toc3'><a href='#-nomixer'>nomixer</a> </li>
+<li class='toc3'><a href='#-oiIns'>oiIns</a> </li>
+<li class='toc3'><a href='#-oiOuts'>oiOuts</a> </li>
+<li class='toc3'><a href='#-outputMasterFunc'>outputMasterFunc</a> </li>
+<li class='toc3'><a href='#-outputSettings'>outputSettings</a> </li>
+<li class='toc3'><a href='#-play'>play</a> </li>
+<li class='toc3'><a href='#-prepArrArg'>prepArrArg</a> </li>
+<li class='toc3'><a href='#-prepLoadTrackPreset'>prepLoadTrackPreset</a> </li>
+<li class='toc3'><a href='#-prepMixSettings'>prepMixSettings</a> </li>
+<li class='toc3'><a href='#-prepModSendNdefs'>prepModSendNdefs</a> </li>
+<li class='toc3'><a href='#-prepModTrackNdefs'>prepModTrackNdefs</a> </li>
+<li class='toc3'><a href='#-prepWriteFxPreset'>prepWriteFxPreset</a> </li>
+<li class='toc3'><a href='#-prepareModSend'>prepareModSend</a> </li>
+<li class='toc3'><a href='#-prepareRecording'>prepareRecording</a> </li>
+<li class='toc3'><a href='#-prepareWriteFxPreset'>prepareWriteFxPreset</a> </li>
+<li class='toc3'><a href='#-rawFxPreset'>rawFxPreset</a> </li>
+<li class='toc3'><a href='#-recButArr'>recButArr</a> </li>
+<li class='toc3'><a href='#-recInputArr'>recInputArr</a> </li>
+<li class='toc3'><a href='#-recStates'>recStates</a> </li>
+<li class='toc3'><a href='#-recordingButton'>recordingButton</a> </li>
+<li class='toc3'><a href='#-recordingValBut'>recordingValBut</a> </li>
+<li class='toc3'><a href='#-refreshFunc'>refreshFunc</a> </li>
+<li class='toc3'><a href='#-refreshMixGUI'>refreshMixGUI</a> </li>
+<li class='toc3'><a href='#-removeAllFilters'>removeAllFilters</a> </li>
+<li class='toc3'><a href='#-removeBufFromFilter'>removeBufFromFilter</a> </li>
+<li class='toc3'><a href='#-removeBus'>removeBus</a> </li>
+<li class='toc3'><a href='#-removeFilter'>removeFilter</a> </li>
+<li class='toc3'><a href='#-removeTrack'>removeTrack</a> </li>
+<li class='toc3'><a href='#-removeTrackFilters'>removeTrackFilters</a> </li>
+<li class='toc3'><a href='#-replaceFunc'>replaceFunc</a> </li>
+<li class='toc3'><a href='#-resetVars'>resetVars</a> </li>
+<li class='toc3'><a href='#-respace'>respace</a> </li>
+<li class='toc3'><a href='#-routePairs'>routePairs</a> </li>
+<li class='toc3'><a href='#-routePairsSort'>routePairsSort</a> </li>
+<li class='toc3'><a href='#-routingMap'>routingMap</a> </li>
+<li class='toc3'><a href='#-routingSelMap'>routingSelMap</a> </li>
+<li class='toc3'><a href='#-screenBounds'>screenBounds</a> </li>
+<li class='toc3'><a href='#-scrollPoint'>scrollPoint</a> </li>
+<li class='toc3'><a href='#-sendsFunc'>sendsFunc</a> </li>
+<li class='toc3'><a href='#-setBusIns'>setBusIns</a> </li>
+<li class='toc3'><a href='#-setDirInRec'>setDirInRec</a> </li>
+<li class='toc3'><a href='#-setFilter'>setFilter</a> </li>
+<li class='toc3'><a href='#-setFilterSpec'>setFilterSpec</a> </li>
+<li class='toc3'><a href='#-setFilterTag'>setFilterTag</a> </li>
+<li class='toc3'><a href='#-setFx'>setFx</a> </li>
+<li class='toc3'><a href='#-setFxArg'>setFxArg</a> </li>
+<li class='toc3'><a href='#-setFxArgTrack'>setFxArgTrack</a> </li>
+<li class='toc3'><a href='#-setFxArgTracks'>setFxArgTracks</a> </li>
+<li class='toc3'><a href='#-setFxArgs'>setFxArgs</a> </li>
+<li class='toc3'><a href='#-setFxs'>setFxs</a> </li>
+<li class='toc3'><a href='#-setInputMenu'>setInputMenu</a> </li>
+<li class='toc3'><a href='#-setInputs'>setInputs</a> </li>
+<li class='toc3'><a href='#-setKnobIns'>setKnobIns</a> </li>
+<li class='toc3'><a href='#-setMute'>setMute</a> </li>
+<li class='toc3'><a href='#-setOutputMenu'>setOutputMenu</a> </li>
+<li class='toc3'><a href='#-setPan'>setPan</a> </li>
+<li class='toc3'><a href='#-setPanKnob'>setPanKnob</a> </li>
+<li class='toc3'><a href='#-setPanLag'>setPanLag</a> </li>
+<li class='toc3'><a href='#-setRec'>setRec</a> </li>
+<li class='toc3'><a href='#-setRecording'>setRecording</a> </li>
+<li class='toc3'><a href='#-setSend'>setSend</a> </li>
+<li class='toc3'><a href='#-setSendKnob'>setSendKnob</a> </li>
+<li class='toc3'><a href='#-setSendVolLag'>setSendVolLag</a> </li>
+<li class='toc3'><a href='#-setSolo'>setSolo</a> </li>
+<li class='toc3'><a href='#-setSpace'>setSpace</a> </li>
+<li class='toc3'><a href='#-setTrackIn'>setTrackIn</a> </li>
+<li class='toc3'><a href='#-setTrackOut'>setTrackOut</a> </li>
+<li class='toc3'><a href='#-setVolSlider'>setVolSlider</a> </li>
+<li class='toc3'><a href='#-setVolume'>setVolume</a> </li>
+<li class='toc3'><a href='#-setVolumeLag'>setVolumeLag</a> </li>
+<li class='toc3'><a href='#-soloButArr'>soloButArr</a> </li>
+<li class='toc3'><a href='#-soloStates'>soloStates</a> </li>
+<li class='toc3'><a href='#-sortTrackNames'>sortTrackNames</a> </li>
+<li class='toc3'><a href='#-space'>space</a> </li>
+<li class='toc3'><a href='#-spaceButArr'>spaceButArr</a> </li>
+<li class='toc3'><a href='#-spaceTypeToChanOut'>spaceTypeToChanOut</a> </li>
+<li class='toc3'><a href='#-specs'>specs</a> </li>
+<li class='toc3'><a href='#-startRecording'>startRecording</a> </li>
+<li class='toc3'><a href='#-stopRecording'>stopRecording</a> </li>
+<li class='toc3'><a href='#-sysChans'>sysChans</a> </li>
+<li class='toc3'><a href='#-sysPan'>sysPan</a> </li>
+<li class='toc3'><a href='#-systemChanNum'>systemChanNum</a> </li>
+<li class='toc3'><a href='#-trackBufferArr'>trackBufferArr</a> </li>
+<li class='toc3'><a href='#-trackCount'>trackCount</a> </li>
+<li class='toc3'><a href='#-trackDataArr'>trackDataArr</a> </li>
+<li class='toc3'><a href='#-trackNames'>trackNames</a> </li>
+<li class='toc3'><a href='#-tracks'>tracks</a> </li>
+<li class='toc3'><a href='#-unmapFx'>unmapFx</a> </li>
+<li class='toc3'><a href='#-unmapFxTrack'>unmapFxTrack</a> </li>
+<li class='toc3'><a href='#-unmapMix'>unmapMix</a> </li>
+<li class='toc3'><a href='#-unmapSend'>unmapSend</a> </li>
+<li class='toc3'><a href='#-updateFxWin'>updateFxWin</a> </li>
+<li class='toc3'><a href='#-updateMixInfo'>updateMixInfo</a> </li>
+<li class='toc3'><a href='#-updateTrackCount'>updateTrackCount</a> </li>
+<li class='toc3'><a href='#-winDirRec'>winDirRec</a> </li>
+<li class='toc3'><a href='#-winRefresh'>winRefresh</a> </li>
+<li class='toc3'><a href='#-writeFxPreset'>writeFxPreset</a> </li>
+<li class='toc3'><a href='#-writeFxTrackPreset'>writeFxTrackPreset</a> </li>
+<li class='toc3'><a href='#-writeTrackPreset'>writeTrackPreset</a> </li>
+<li class='toc3'><a href='#-writeTracksPreset'>writeTracksPreset</a> </li>
+</ul></ul><li class='toc1'><a href='#examples'>Examples</a></li>
+<ul class='toc'></ul></ul></div><h2><a class='anchor' name='description'>Description</a></h2>
+
+<p>A class that for mixing differnet Ndefs and adding effects.<h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*new' href='./../Overviews/Methods.html#new'>new</a> (<span class='argstr'>trackNum: 1</span>, <span class='argstr'>busNum: 0</span>, <span class='argstr'>chanNum: 2</span>, <span class='argstr'>spaceType</span>)</h3>
+<div class='method'>
+<p>Create new Assemblage.<h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>trackNum<td class='argumentdesc'>
+<p>Number of tracks<tr><td class='argumentname'>busNum<td class='argumentdesc'>
+<p>Number of buses<tr><td class='argumentname'>chanNum<td class='argumentdesc'>
+<p>Number of audio channels<tr><td class='argumentname'>spaceType<td class='argumentdesc'>
+<p>Space type</table></div><h3><a class='anchor' name='Inherited%20class%20methods'>Inherited class methods</a></h3>
+<div id='inheritedclassmets'></div><h2><a class='anchor' name='instancemethods'>Instance Methods</a></h2>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filter' href='./../Overviews/Methods.html#filter'>filter</a> (<span class='argstr'>type: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>slot: 1</span>, <span class='argstr'>filter: 'pch'</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>buffer</span>, <span class='argstr'>data</span>, <span class='argstr'>action</span>, <span class='argstr'>insert: false</span>)</h3>
+<div class='method'>
+<p><h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>type<td class='argumentdesc'>
+<p>Type of assembladge element (master, bus or track)<tr><td class='argumentname'>num<td class='argumentdesc'>
+<p>Assemblage element number<tr><td class='argumentname'>slot<td class='argumentdesc'>
+<p>Filter slot number<tr><td class='argumentname'>filter<td class='argumentdesc'>
+<p>Filter type<tr><td class='argumentname'>extraArgs<td class='argumentdesc'>
+<p>Extra arguments for filter synth<tr><td class='argumentname'>buffer<td class='argumentdesc'>
+<p>Buffer for filter (if required)<tr><td class='argumentname'>data<td class='argumentdesc'>
+<p>Data for filter (if required)</table></div><h3><a class='anchor' name='Inherited%20instance%20methods'>Inherited instance methods</a></h3>
+<div id='inheritedinstmets'></div><h3><a class='anchor' name='Undocumented%20instance%20methods'>Undocumented instance methods</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addAlltracks' href='./../Overviews/Methods.html#addAlltracks'>addAlltracks</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addTrack' href='./../Overviews/Methods.html#addTrack'>addTrack</a> (<span class='argstr'>type: 'track'</span>, <span class='argstr'>chanNum: 1</span>, <span class='argstr'>spaceType</span>, <span class='argstr'>trackSynth</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addTracks' href='./../Overviews/Methods.html#addTracks'>addTracks</a> (<span class='argstr'>number</span>, <span class='argstr'>type: 'track'</span>, <span class='argstr'>chanNum</span>, <span class='argstr'>spaceType</span>, <span class='argstr'>trackSynth</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-argToFilterTag' href='./../Overviews/Methods.html#argToFilterTag'>argToFilterTag</a> (<span class='argstr'>type</span>, <span class='argstr'>arg1</span>, <span class='argstr'>arg2</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-autoAddTrack' href='./../Overviews/Methods.html#autoAddTrack'>autoAddTrack</a> (<span class='argstr'>type: 'track'</span>, <span class='argstr'>chanNum</span>, <span class='argstr'>spaceType</span>, <span class='argstr'>trackSynth</span>, <span class='argstr'>trackSpecs</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-autoRoute' href='./../Overviews/Methods.html#autoRoute'>autoRoute</a> (<span class='argstr'>trackInfo</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-basicFont' href='./../Overviews/Methods.html#basicFont'>basicFont</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-bus' href='./../Overviews/Methods.html#bus'>bus</a> (<span class='argstr'>trackNum: 1</span>, <span class='argstr'>busNum: 1</span>, <span class='argstr'>mix: 1</span>, <span class='argstr'>trackType: 'track'</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-busArr' href='./../Overviews/Methods.html#busArr'>busArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-busCount' href='./../Overviews/Methods.html#busCount'>busCount</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-busMix' href='./../Overviews/Methods.html#busMix'>busMix</a> (<span class='argstr'>bus: 1</span>, <span class='argstr'>slot: 1</span>, <span class='argstr'>mix: 0</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-clearModTrackNdefs' href='./../Overviews/Methods.html#clearModTrackNdefs'>clearModTrackNdefs</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-clearNdefs' href='./../Overviews/Methods.html#clearNdefs'>clearNdefs</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-collectSpecArr' href='./../Overviews/Methods.html#collectSpecArr'>collectSpecArr</a> (<span class='argstr'>find: 'track'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-collectTrackArr' href='./../Overviews/Methods.html#collectTrackArr'>collectTrackArr</a> (<span class='argstr'>find: 'track'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-convFilterTag' href='./../Overviews/Methods.html#convFilterTag'>convFilterTag</a> (<span class='argstr'>filterTag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-convRevBuf' href='./../Overviews/Methods.html#convRevBuf'>convRevBuf</a> (<span class='argstr'>filterTag</span>, <span class='argstr'>impulse: 'ortf_s1r1'</span>, <span class='argstr'>fftsize: 2048</span>, <span class='argstr'>inVar</span>, <span class='argstr'>action</span>, <span class='argstr'>chanIn</span>, <span class='argstr'>globBuf</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-dirInRec' href='./../Overviews/Methods.html#dirInRec'>dirInRec</a> (<span class='argstr'>boundArr</span>, <span class='argstr'>scrollOrg</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fadeTime' href='./../Overviews/Methods.html#fadeTime'>fadeTime</a> (<span class='argstr'>secs</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filterBuff' href='./../Overviews/Methods.html#filterBuff'>filterBuff</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filterGUI' href='./../Overviews/Methods.html#filterGUI'>filterGUI</a> (<span class='argstr'>type: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>slot: 1</span>, <span class='argstr'>topLeftArr</span>, <span class='argstr'>mixButton</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filterGUIIndex' href='./../Overviews/Methods.html#filterGUIIndex'>filterGUIIndex</a> (<span class='argstr'>index: 0</span>, <span class='argstr'>topLeftArr</span>, <span class='argstr'>mixButton</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filterInfoToTag' href='./../Overviews/Methods.html#filterInfoToTag'>filterInfoToTag</a> (<span class='argstr'>filterInfo</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filterLags' href='./../Overviews/Methods.html#filterLags'>filterLags</a> (<span class='argstr'>filterNdefKey</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filterWinGUI' href='./../Overviews/Methods.html#filterWinGUI'>filterWinGUI</a> (<span class='argstr'>filterTag: 'filterTrack_1_1'</span>, <span class='argstr'>filterKey: 'pch'</span>, <span class='argstr'>filterPairs</span>, <span class='argstr'>fltWinLeft: 0</span>, <span class='argstr'>fltWinDown: 0</span>, <span class='argstr'>mixButton</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filters' href='./../Overviews/Methods.html#filters'>filters</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-filtersWindow' href='./../Overviews/Methods.html#filtersWindow'>filtersWindow</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-findFilterTag' href='./../Overviews/Methods.html#findFilterTag'>findFilterTag</a> (<span class='argstr'>type</span>, <span class='argstr'>arg1</span>, <span class='argstr'>arg2</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-findSpaceType' href='./../Overviews/Methods.html#findSpaceType'>findSpaceType</a> (<span class='argstr'>chanNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-findTrackArr' href='./../Overviews/Methods.html#findTrackArr'>findTrackArr</a> (<span class='argstr'>key: 'master'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fxLags' href='./../Overviews/Methods.html#fxLags'>fxLags</a> (<span class='argstr'>filterNum</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fxTrackLags' href='./../Overviews/Methods.html#fxTrackLags'>fxTrackLags</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>trackSlot</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fxTrackWarn' href='./../Overviews/Methods.html#fxTrackWarn'>fxTrackWarn</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>trackSlot</span>, <span class='argstr'>action</span>, <span class='argstr'>post: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fxTracksLags' href='./../Overviews/Methods.html#fxTracksLags'>fxTracksLags</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fxWarn' href='./../Overviews/Methods.html#fxWarn'>fxWarn</a> (<span class='argstr'>filterNum</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fxsLags' href='./../Overviews/Methods.html#fxsLags'>fxsLags</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fxsNum' href='./../Overviews/Methods.html#fxsNum'>fxsNum</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-fxsTrackLags' href='./../Overviews/Methods.html#fxsTrackLags'>fxsTrackLags</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-garbage' href='./../Overviews/Methods.html#garbage'>garbage</a> (<span class='argstr'>wait</span>, <span class='argstr'>extraArr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-get' href='./../Overviews/Methods.html#get'>get</a> (<span class='argstr'>trackType: 'track'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getAllInputs' href='./../Overviews/Methods.html#getAllInputs'>getAllInputs</a> (<span class='argstr'>master: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getBusInLabels' href='./../Overviews/Methods.html#getBusInLabels'>getBusInLabels</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getBuses' href='./../Overviews/Methods.html#getBuses'>getBuses</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getFilterArgs' href='./../Overviews/Methods.html#getFilterArgs'>getFilterArgs</a> (<span class='argstr'>type</span>, <span class='argstr'>num</span>, <span class='argstr'>slot</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getFilterKeys' href='./../Overviews/Methods.html#getFilterKeys'>getFilterKeys</a> (<span class='argstr'>filterTag</span>, <span class='argstr'>type: 'args'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getFilterPairs' href='./../Overviews/Methods.html#getFilterPairs'>getFilterPairs</a> (<span class='argstr'>type</span>, <span class='argstr'>num</span>, <span class='argstr'>slot</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getFilterTag' href='./../Overviews/Methods.html#getFilterTag'>getFilterTag</a> (<span class='argstr'>filterIndex: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getFilterVals' href='./../Overviews/Methods.html#getFilterVals'>getFilterVals</a> (<span class='argstr'>type</span>, <span class='argstr'>num</span>, <span class='argstr'>slot</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getInputs' href='./../Overviews/Methods.html#getInputs'>getInputs</a> (<span class='argstr'>type: 'master'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getMaster' href='./../Overviews/Methods.html#getMaster'>getMaster</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getMixTrackIndex' href='./../Overviews/Methods.html#getMixTrackIndex'>getMixTrackIndex</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>num: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getSpec' href='./../Overviews/Methods.html#getSpec'>getSpec</a> (<span class='argstr'>trackName: 'master'</span>, <span class='argstr'>argument: 'volume'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getThisTrack' href='./../Overviews/Methods.html#getThisTrack'>getThisTrack</a> (<span class='argstr'>type</span>, <span class='argstr'>num</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTrackDestination' href='./../Overviews/Methods.html#getTrackDestination'>getTrackDestination</a> (<span class='argstr'>type: 'master'</span>, <span class='argstr'>num: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTrackInIndex' href='./../Overviews/Methods.html#getTrackInIndex'>getTrackInIndex</a> (<span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTrackInItem' href='./../Overviews/Methods.html#getTrackInItem'>getTrackInItem</a> (<span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTrackInMenu' href='./../Overviews/Methods.html#getTrackInMenu'>getTrackInMenu</a> (<span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTrackInput' href='./../Overviews/Methods.html#getTrackInput'>getTrackInput</a> (<span class='argstr'>type: 'master'</span>, <span class='argstr'>num: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTrackOutIndex' href='./../Overviews/Methods.html#getTrackOutIndex'>getTrackOutIndex</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTrackOutItem' href='./../Overviews/Methods.html#getTrackOutItem'>getTrackOutItem</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTrackOutput' href='./../Overviews/Methods.html#getTrackOutput'>getTrackOutput</a> (<span class='argstr'>type: 'master'</span>, <span class='argstr'>num: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-getTracks' href='./../Overviews/Methods.html#getTracks'>getTracks</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-globFadeTime' href='./../Overviews/Methods.html#globFadeTime'>globFadeTime</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-initAssemblage' href='./../Overviews/Methods.html#initAssemblage'>initAssemblage</a> (<span class='argstr'>trackNum: 1</span>, <span class='argstr'>busNum: 0</span>, <span class='argstr'>chanNum: 2</span>, <span class='argstr'>spaceType</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-input' href='./../Overviews/Methods.html#input'>input</a> (<span class='argstr'>ndefsIn</span>, <span class='argstr'>type: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>respace: true</span>, <span class='argstr'>spaceType</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-inputLablesFunc' href='./../Overviews/Methods.html#inputLablesFunc'>inputLablesFunc</a> (<span class='argstr'>ind</span>, <span class='argstr'>thisTrackNames</span>, <span class='argstr'>thisInputMenu</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-inputMaster' href='./../Overviews/Methods.html#inputMaster'>inputMaster</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-inputs' href='./../Overviews/Methods.html#inputs'>inputs</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-labelsToInFunc' href='./../Overviews/Methods.html#labelsToInFunc'>labelsToInFunc</a> (<span class='argstr'>trackInInf</span>, <span class='argstr'>menuItem</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-lagFxArg' href='./../Overviews/Methods.html#lagFxArg'>lagFxArg</a> (<span class='argstr'>filterNum</span>, <span class='argstr'>fxArg</span>, <span class='argstr'>value</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-lagFxArgTrack' href='./../Overviews/Methods.html#lagFxArgTrack'>lagFxArgTrack</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>trackSlot</span>, <span class='argstr'>fxArg</span>, <span class='argstr'>value</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-lagFxArgTracks' href='./../Overviews/Methods.html#lagFxArgTracks'>lagFxArgTracks</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-lagFxArgs' href='./../Overviews/Methods.html#lagFxArgs'>lagFxArgs</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-listFx' href='./../Overviews/Methods.html#listFx'>listFx</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-listFxPresets' href='./../Overviews/Methods.html#listFxPresets'>listFxPresets</a> (<span class='argstr'>filterType: 'pch'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-listTrackPresets' href='./../Overviews/Methods.html#listTrackPresets'>listTrackPresets</a> (<span class='argstr'>trackType: 'track'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadFxPreset' href='./../Overviews/Methods.html#loadFxPreset'>loadFxPreset</a> (<span class='argstr'>filterNum</span>, <span class='argstr'>presetName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadFxPresets' href='./../Overviews/Methods.html#loadFxPresets'>loadFxPresets</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadFxTrackPreset' href='./../Overviews/Methods.html#loadFxTrackPreset'>loadFxTrackPreset</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>trackSlot</span>, <span class='argstr'>presetName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadFxTrackPresets' href='./../Overviews/Methods.html#loadFxTrackPresets'>loadFxTrackPresets</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadRawFilterPreset' href='./../Overviews/Methods.html#loadRawFilterPreset'>loadRawFilterPreset</a> (<span class='argstr'>newFilterNdef</span>, <span class='argstr'>dataArr</span>, <span class='argstr'>filterType</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadRawFxPreset' href='./../Overviews/Methods.html#loadRawFxPreset'>loadRawFxPreset</a> (<span class='argstr'>newFilterNdef</span>, <span class='argstr'>presetName</span>, <span class='argstr'>filterType: 'pch'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadTrackPreset' href='./../Overviews/Methods.html#loadTrackPreset'>loadTrackPreset</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>presetName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadTracksPreset' href='./../Overviews/Methods.html#loadTracksPreset'>loadTracksPreset</a> (<span class='argstr'>presetName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mapOutFunc' href='./../Overviews/Methods.html#mapOutFunc'>mapOutFunc</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mapOuts' href='./../Overviews/Methods.html#mapOuts'>mapOuts</a> (<span class='argstr'>outArr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mastOutArr' href='./../Overviews/Methods.html#mastOutArr'>mastOutArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mastOutGUI' href='./../Overviews/Methods.html#mastOutGUI'>mastOutGUI</a> (<span class='argstr'>boundArr</span>, <span class='argstr'>scrollOrg</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mastOutSynth' href='./../Overviews/Methods.html#mastOutSynth'>mastOutSynth</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mastOutWin' href='./../Overviews/Methods.html#mastOutWin'>mastOutWin</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-masterInput' href='./../Overviews/Methods.html#masterInput'>masterInput</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-masterInput' href='./../Overviews/Methods.html#masterInput'>masterInput</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-masterNdefs' href='./../Overviews/Methods.html#masterNdefs'>masterNdefs</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-masterSoloFunc' href='./../Overviews/Methods.html#masterSoloFunc'>masterSoloFunc</a> (<span class='argstr'>buttstates</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-masterSoloFunc2' href='./../Overviews/Methods.html#masterSoloFunc2'>masterSoloFunc2</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-masterSynth' href='./../Overviews/Methods.html#masterSynth'>masterSynth</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-masterSynth' href='./../Overviews/Methods.html#masterSynth'>masterSynth</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mixControlKeyValues' href='./../Overviews/Methods.html#mixControlKeyValues'>mixControlKeyValues</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mixGUI' href='./../Overviews/Methods.html#mixGUI'>mixGUI</a> (<span class='argstr'>updateFreq: 10</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mixTrackNames' href='./../Overviews/Methods.html#mixTrackNames'>mixTrackNames</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mixTrackNdefs' href='./../Overviews/Methods.html#mixTrackNdefs'>mixTrackNdefs</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mixer' href='./../Overviews/Methods.html#mixer'>mixer</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mixerWin' href='./../Overviews/Methods.html#mixerWin'>mixerWin</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-mixerWin' href='./../Overviews/Methods.html#mixerWin'>mixerWin</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modFilter' href='./../Overviews/Methods.html#modFilter'>modFilter</a> (<span class='argstr'>filterInfo</span>, <span class='argstr'>argument</span>, <span class='argstr'>modType: 'sin'</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modFilterCode' href='./../Overviews/Methods.html#modFilterCode'>modFilterCode</a> (<span class='argstr'>type</span>, <span class='argstr'>num</span>, <span class='argstr'>slot</span>, <span class='argstr'>argument</span>, <span class='argstr'>modType: 'sin'</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modFilterIndex' href='./../Overviews/Methods.html#modFilterIndex'>modFilterIndex</a> (<span class='argstr'>filterIndex</span>, <span class='argstr'>argument</span>, <span class='argstr'>modType: 'sin'</span>, <span class='argstr'>spec</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modFilterIndexCode' href='./../Overviews/Methods.html#modFilterIndexCode'>modFilterIndexCode</a> (<span class='argstr'>type</span>, <span class='argstr'>num</span>, <span class='argstr'>slot</span>, <span class='argstr'>argument</span>, <span class='argstr'>modType: 'sin'</span>, <span class='argstr'>spec</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modFilterTag' href='./../Overviews/Methods.html#modFilterTag'>modFilterTag</a> (<span class='argstr'>filterTag</span>, <span class='argstr'>argument</span>, <span class='argstr'>modType: 'sin'</span>, <span class='argstr'>spec</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modFunc' href='./../Overviews/Methods.html#modFunc'>modFunc</a> (<span class='argstr'>ndefKey</span>, <span class='argstr'>argIn</span>, <span class='argstr'>type</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>, <span class='argstr'>thisSpec</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modFx' href='./../Overviews/Methods.html#modFx'>modFx</a> (<span class='argstr'>filterNum</span>, <span class='argstr'>modArg</span>, <span class='argstr'>modType</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>, <span class='argstr'>thisSpec</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modFxTrack' href='./../Overviews/Methods.html#modFxTrack'>modFxTrack</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>trackSlot</span>, <span class='argstr'>modArg</span>, <span class='argstr'>modType</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>, <span class='argstr'>thisSpec</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modMix' href='./../Overviews/Methods.html#modMix'>modMix</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>modArg</span>, <span class='argstr'>modType</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>, <span class='argstr'>thisSpec</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modRawPreset' href='./../Overviews/Methods.html#modRawPreset'>modRawPreset</a> (<span class='argstr'>newNdef</span>, <span class='argstr'>hasMod</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modSend' href='./../Overviews/Methods.html#modSend'>modSend</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>sendSlot</span>, <span class='argstr'>modType</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>func</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>lag</span>, <span class='argstr'>thisSpec</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-modSendArr' href='./../Overviews/Methods.html#modSendArr'>modSendArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-muteButArr' href='./../Overviews/Methods.html#muteButArr'>muteButArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-muteStates' href='./../Overviews/Methods.html#muteStates'>muteStates</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-ndefModClear' href='./../Overviews/Methods.html#ndefModClear'>ndefModClear</a> (<span class='argstr'>ndefKey</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-ndefPrepare' href='./../Overviews/Methods.html#ndefPrepare'>ndefPrepare</a> (<span class='argstr'>ndef</span>, <span class='argstr'>func</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-nomixer' href='./../Overviews/Methods.html#nomixer'>nomixer</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-oiIns' href='./../Overviews/Methods.html#oiIns'>oiIns</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-oiOuts' href='./../Overviews/Methods.html#oiOuts'>oiOuts</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-outputMasterFunc' href='./../Overviews/Methods.html#outputMasterFunc'>outputMasterFunc</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-outputSettings' href='./../Overviews/Methods.html#outputSettings'>outputSettings</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-play' href='./../Overviews/Methods.html#play'>play</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepArrArg' href='./../Overviews/Methods.html#prepArrArg'>prepArrArg</a> (<span class='argstr'>fxArg</span>, <span class='argstr'>ndefKey</span>, <span class='argstr'>type: 'set'</span>, <span class='argstr'>value</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepLoadTrackPreset' href='./../Overviews/Methods.html#prepLoadTrackPreset'>prepLoadTrackPreset</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>dataArr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepMixSettings' href='./../Overviews/Methods.html#prepMixSettings'>prepMixSettings</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepModSendNdefs' href='./../Overviews/Methods.html#prepModSendNdefs'>prepModSendNdefs</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepModTrackNdefs' href='./../Overviews/Methods.html#prepModTrackNdefs'>prepModTrackNdefs</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepWriteFxPreset' href='./../Overviews/Methods.html#prepWriteFxPreset'>prepWriteFxPreset</a> (<span class='argstr'>filterKey</span>, <span class='argstr'>presetName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepareModSend' href='./../Overviews/Methods.html#prepareModSend'>prepareModSend</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>sendSlot</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepareRecording' href='./../Overviews/Methods.html#prepareRecording'>prepareRecording</a> (<span class='argstr'>headerFormat: "wav"</span>, <span class='argstr'>sampleFormat: "int16"</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-prepareWriteFxPreset' href='./../Overviews/Methods.html#prepareWriteFxPreset'>prepareWriteFxPreset</a> (<span class='argstr'>filterKey</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-rawFxPreset' href='./../Overviews/Methods.html#rawFxPreset'>rawFxPreset</a> (<span class='argstr'>ndefKey</span>, <span class='argstr'>filter: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-recButArr' href='./../Overviews/Methods.html#recButArr'>recButArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-recInputArr' href='./../Overviews/Methods.html#recInputArr'>recInputArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-recStates' href='./../Overviews/Methods.html#recStates'>recStates</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-recordingButton' href='./../Overviews/Methods.html#recordingButton'>recordingButton</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-recordingValBut' href='./../Overviews/Methods.html#recordingValBut'>recordingValBut</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-refreshFunc' href='./../Overviews/Methods.html#refreshFunc'>refreshFunc</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-refreshMixGUI' href='./../Overviews/Methods.html#refreshMixGUI'>refreshMixGUI</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-removeAllFilters' href='./../Overviews/Methods.html#removeAllFilters'>removeAllFilters</a> (<span class='argstr'>action</span>, <span class='argstr'>refresh: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-removeBufFromFilter' href='./../Overviews/Methods.html#removeBufFromFilter'>removeBufFromFilter</a> (<span class='argstr'>thisSlot</span>, <span class='argstr'>actionBuf</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-removeBus' href='./../Overviews/Methods.html#removeBus'>removeBus</a> (<span class='argstr'>trackNum: 1</span>, <span class='argstr'>busNum: 1</span>, <span class='argstr'>trackType: 'track'</span>, <span class='argstr'>clearTrack: false</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-removeFilter' href='./../Overviews/Methods.html#removeFilter'>removeFilter</a> (<span class='argstr'>type: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>slot: 1</span>, <span class='argstr'>action</span>, <span class='argstr'>actionBuf</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-removeTrack' href='./../Overviews/Methods.html#removeTrack'>removeTrack</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-removeTrackFilters' href='./../Overviews/Methods.html#removeTrackFilters'>removeTrackFilters</a> (<span class='argstr'>type: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>post: true</span>, <span class='argstr'>clear: false</span>, <span class='argstr'>action</span>, <span class='argstr'>refresh: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-replaceFunc' href='./../Overviews/Methods.html#replaceFunc'>replaceFunc</a> (<span class='argstr'>name</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-resetVars' href='./../Overviews/Methods.html#resetVars'>resetVars</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-respace' href='./../Overviews/Methods.html#respace'>respace</a> (<span class='argstr'>trackName: 'spaceMaster'</span>, <span class='argstr'>trackInput</span>, <span class='argstr'>spaceType</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-routePairs' href='./../Overviews/Methods.html#routePairs'>routePairs</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-routePairsSort' href='./../Overviews/Methods.html#routePairsSort'>routePairsSort</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-routingMap' href='./../Overviews/Methods.html#routingMap'>routingMap</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-routingSelMap' href='./../Overviews/Methods.html#routingSelMap'>routingSelMap</a> (<span class='argstr'>filter1: ""</span>, <span class='argstr'>filter2: ""</span>, <span class='argstr'>filter3: ""</span>, <span class='argstr'>filter4: ""</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-screenBounds' href='./../Overviews/Methods.html#screenBounds'>screenBounds</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-scrollPoint' href='./../Overviews/Methods.html#scrollPoint'>scrollPoint</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-sendsFunc' href='./../Overviews/Methods.html#sendsFunc'>sendsFunc</a> (<span class='argstr'>trackLb</span>, <span class='argstr'>thisKey</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setBusIns' href='./../Overviews/Methods.html#setBusIns'>setBusIns</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setDirInRec' href='./../Overviews/Methods.html#setDirInRec'>setDirInRec</a> (<span class='argstr'>stereoInIndices</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFilter' href='./../Overviews/Methods.html#setFilter'>setFilter</a> (<span class='argstr'>filterInfo</span>, <span class='argstr'>arg1</span>, <span class='argstr'>arg2</span>, <span class='argstr'>post: 'code'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFilterSpec' href='./../Overviews/Methods.html#setFilterSpec'>setFilterSpec</a> (<span class='argstr'>filterInfo</span>, <span class='argstr'>arg1</span>, <span class='argstr'>arg2</span>, <span class='argstr'>mul: 1</span>, <span class='argstr'>add: 0</span>, <span class='argstr'>min</span>, <span class='argstr'>val</span>, <span class='argstr'>warp</span>, <span class='argstr'>post: 'code'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFilterTag' href='./../Overviews/Methods.html#setFilterTag'>setFilterTag</a> (<span class='argstr'>filterTag</span>, <span class='argstr'>arg1</span>, <span class='argstr'>arg2</span>, <span class='argstr'>post: 'code'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFx' href='./../Overviews/Methods.html#setFx'>setFx</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>slot: 1</span>, <span class='argstr'>filter: 'pch'</span>, <span class='argstr'>extraArgs</span>, <span class='argstr'>buffer</span>, <span class='argstr'>data</span>, <span class='argstr'>remove: false</span>, <span class='argstr'>action</span>, <span class='argstr'>actionBuf</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFxArg' href='./../Overviews/Methods.html#setFxArg'>setFxArg</a> (<span class='argstr'>filterNum</span>, <span class='argstr'>fxArg</span>, <span class='argstr'>value</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFxArgTrack' href='./../Overviews/Methods.html#setFxArgTrack'>setFxArgTrack</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>trackSlot</span>, <span class='argstr'>fxArg</span>, <span class='argstr'>value</span>, <span class='argstr'>update: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFxArgTracks' href='./../Overviews/Methods.html#setFxArgTracks'>setFxArgTracks</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFxArgs' href='./../Overviews/Methods.html#setFxArgs'>setFxArgs</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setFxs' href='./../Overviews/Methods.html#setFxs'>setFxs</a> (<span class='argstr'>settingsArr</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setInputMenu' href='./../Overviews/Methods.html#setInputMenu'>setInputMenu</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setInputs' href='./../Overviews/Methods.html#setInputs'>setInputs</a> (<span class='argstr'>ndefIns</span>, <span class='argstr'>type</span>, <span class='argstr'>num</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setKnobIns' href='./../Overviews/Methods.html#setKnobIns'>setKnobIns</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setMute' href='./../Overviews/Methods.html#setMute'>setMute</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>value: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setOutputMenu' href='./../Overviews/Methods.html#setOutputMenu'>setOutputMenu</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setPan' href='./../Overviews/Methods.html#setPan'>setPan</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>, <span class='argstr'>val: 0</span>, <span class='argstr'>panTag: 'pan'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setPanKnob' href='./../Overviews/Methods.html#setPanKnob'>setPanKnob</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setPanLag' href='./../Overviews/Methods.html#setPanLag'>setPanLag</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>, <span class='argstr'>lag: 0</span>, <span class='argstr'>panTag: 'pan'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setRec' href='./../Overviews/Methods.html#setRec'>setRec</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>value: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setRecording' href='./../Overviews/Methods.html#setRecording'>setRecording</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setSend' href='./../Overviews/Methods.html#setSend'>setSend</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>, <span class='argstr'>slotNum: 1</span>, <span class='argstr'>busNum: 1</span>, <span class='argstr'>val: -inf</span>, <span class='argstr'>dirMaster: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setSendKnob' href='./../Overviews/Methods.html#setSendKnob'>setSendKnob</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>, <span class='argstr'>slotNum: 1</span>, <span class='argstr'>val: 0</span>, <span class='argstr'>lagTime: 0</span>, <span class='argstr'>db: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setSendVolLag' href='./../Overviews/Methods.html#setSendVolLag'>setSendVolLag</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>, <span class='argstr'>busNum: 1</span>, <span class='argstr'>lag: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setSolo' href='./../Overviews/Methods.html#setSolo'>setSolo</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>value: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setSpace' href='./../Overviews/Methods.html#setSpace'>setSpace</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>num: 1</span>, <span class='argstr'>value: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setTrackIn' href='./../Overviews/Methods.html#setTrackIn'>setTrackIn</a> (<span class='argstr'>trackNum: 1</span>, <span class='argstr'>inIndex: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setTrackOut' href='./../Overviews/Methods.html#setTrackOut'>setTrackOut</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>, <span class='argstr'>inIndex: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setVolSlider' href='./../Overviews/Methods.html#setVolSlider'>setVolSlider</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setVolume' href='./../Overviews/Methods.html#setVolume'>setVolume</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>val</span>, <span class='argstr'>lag</span>, <span class='argstr'>db: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-setVolumeLag' href='./../Overviews/Methods.html#setVolumeLag'>setVolumeLag</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>, <span class='argstr'>lag: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-soloButArr' href='./../Overviews/Methods.html#soloButArr'>soloButArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-soloStates' href='./../Overviews/Methods.html#soloStates'>soloStates</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-sortTrackNames' href='./../Overviews/Methods.html#sortTrackNames'>sortTrackNames</a> (<span class='argstr'>trackNameArr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-space' href='./../Overviews/Methods.html#space'>space</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-spaceButArr' href='./../Overviews/Methods.html#spaceButArr'>spaceButArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-spaceTypeToChanOut' href='./../Overviews/Methods.html#spaceTypeToChanOut'>spaceTypeToChanOut</a> (<span class='argstr'>spaceType: 1</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-specs' href='./../Overviews/Methods.html#specs'>specs</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-startRecording' href='./../Overviews/Methods.html#startRecording'>startRecording</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-stopRecording' href='./../Overviews/Methods.html#stopRecording'>stopRecording</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-sysChans' href='./../Overviews/Methods.html#sysChans'>sysChans</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-sysPan' href='./../Overviews/Methods.html#sysPan'>sysPan</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-systemChanNum' href='./../Overviews/Methods.html#systemChanNum'>systemChanNum</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-systemChanNum' href='./../Overviews/Methods.html#systemChanNum'>systemChanNum</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-trackBufferArr' href='./../Overviews/Methods.html#trackBufferArr'>trackBufferArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-trackCount' href='./../Overviews/Methods.html#trackCount'>trackCount</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-trackDataArr' href='./../Overviews/Methods.html#trackDataArr'>trackDataArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-trackNames' href='./../Overviews/Methods.html#trackNames'>trackNames</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-tracks' href='./../Overviews/Methods.html#tracks'>tracks</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-unmapFx' href='./../Overviews/Methods.html#unmapFx'>unmapFx</a> (<span class='argstr'>filterNum</span>, <span class='argstr'>modArg</span>, <span class='argstr'>value: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-unmapFxTrack' href='./../Overviews/Methods.html#unmapFxTrack'>unmapFxTrack</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>trackSlot</span>, <span class='argstr'>modArg</span>, <span class='argstr'>value: 0</span>, <span class='argstr'>post: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-unmapMix' href='./../Overviews/Methods.html#unmapMix'>unmapMix</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>modArg</span>, <span class='argstr'>value: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-unmapSend' href='./../Overviews/Methods.html#unmapSend'>unmapSend</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>sendSlot</span>, <span class='argstr'>value: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-updateFxWin' href='./../Overviews/Methods.html#updateFxWin'>updateFxWin</a> (<span class='argstr'>ndefKey</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-updateMixInfo' href='./../Overviews/Methods.html#updateMixInfo'>updateMixInfo</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-updateTrackCount' href='./../Overviews/Methods.html#updateTrackCount'>updateTrackCount</a> (<span class='argstr'>trackType: 'track'</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-winDirRec' href='./../Overviews/Methods.html#winDirRec'>winDirRec</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-winRefresh' href='./../Overviews/Methods.html#winRefresh'>winRefresh</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-writeFxPreset' href='./../Overviews/Methods.html#writeFxPreset'>writeFxPreset</a> (<span class='argstr'>filterNum</span>, <span class='argstr'>presetName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-writeFxTrackPreset' href='./../Overviews/Methods.html#writeFxTrackPreset'>writeFxTrackPreset</a> (<span class='argstr'>trackType</span>, <span class='argstr'>trackNum</span>, <span class='argstr'>trackSlot</span>, <span class='argstr'>presetName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-writeTrackPreset' href='./../Overviews/Methods.html#writeTrackPreset'>writeTrackPreset</a> (<span class='argstr'>trackType: 'track'</span>, <span class='argstr'>trackNum: 1</span>, <span class='argstr'>presetName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-writeTracksPreset' href='./../Overviews/Methods.html#writeTracksPreset'>writeTracksPreset</a> (<span class='argstr'>presetName</span>)</h3>
+<h2><a class='anchor' name='examples'>Examples</a></h2>
+<pre class='code prettyprint lang-sc'>/*
+Work on remove Tracks and GUI update
+
+Modulation!!
+//modulation set and xset within Assembladge for simplicity
+//removing filters and tracks should also remove modulation ndefs
+
+Set FX arguments with code (and auto UI update)
+
+Make sure there are no errors when mixer window is closed
+Presets
+
+Make sure it's possible to change all GUI through code, including everything (e.g. sub-windows)
+
+Work on multichannel stuff
+interface space buttons (mono to multichan toggle)
+*/
+
+a = Assemblage(6, 2);
+
+Block.addNum(6, 2);
+
+(
+Block.play(1, \pattern, \nobuf, \test1, data: [\pan, 0]); //be aware that default synth is stereo, therfore pan -1 to avoid issues of doubling blocks - although this is something maybe that should be looked into in the block class...
+Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \default, \pan, 0]);
+Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \default, \pan, 0]);
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05, \pan, 0]);
+Block.play(5, \loop, \marilyn1);
+)
+
+/*(
+Block.play(1, \pattern, \nobuf, \test1, data: [\pan, -1]); //be aware that default synth is stereo, therfore pan -1 to avoid issues of doubling blocks - although this is something maybe that should be looked into in the block class...
+Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \default, \pan, -1]);
+Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \default, \pan, -1]);
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05, \pan, -1]);
+Block.play(5, \loop, \marilyn1);
+)*/
+Block.play(6, \looppv, \parsifal, [\rate, 0.1, \mul, 4]);
+
+a.input(Block.ndefs[0], \track, 1);
+a.input(Block.ndefs[1], \track, 2);
+a.input(Block.ndefs[2], \track, 3);
+a.input(Block.ndefs[3], \track, 4);
+a.input(Block.ndefs[4], \track, 5);
+a.input(Block.ndefs[5], \track, 6);
+
+
+
+// a.mixer;
+a.inputs.dopostln
+a.mixTrackNames;
+a.mixerWin.bounds;
+
+a.mixer;
+a.mixerWin.close;
+a.play;
+//to stop posting
+Radicles.ignorePost = true;
+Radicles.ignorePostcont = true;
+
+Radicles.ignorePost = false;
+Radicles.ignorePostcont = false;
+
+//fadeTime
+a.fadeTime(5);
+Radicles.fadeTime; //changes global fadeTime
+
+a.fadeTime(0.5);
+
+//recording
+
+a.prepareRecording;
+a.startRecording;
+
+a.stopRecording;
+
+Block.stopAll(5);
+
+//to add tracks use auto add track
+a.autoAddTrack(\track);
+a.input(Block.ndefs[3], \track, 7);
+
+
+//Change interface with code!!
+a.setVolume(\track, 1, 0, 0);
+a.setVolume(\bus, 2, -10);
+a.setVolume(\track, 2, -5);
+a.setVolume(\bus, 4, -5);
+
+a.setVolumeLag(\track, 1, 10);
+a.setVolume(\track, 1, -inf);
+
+a.setVolumeLag(\track, 1, nil);
+a.setVolume(\track, 1, 0);
+
+a.setPan(\track, 1, 1);
+a.setPan(\track, 1, -1);
+
+a.setPanLag(\track, 1, 10);
+a.setPan(\track, 1, 1);
+a.setPanLag(\track, 1, nil);
+a.setPan(\track, 1, 0);
+
+//set buses
+a.setSend(\track, 1, 1, 1); //trackType, trackNum, busNum
+a.setSend(\track, 1, 1, 0); //remove
+
+a.setSend(\track, 1, 2, 2);
+a.setSend(\track, 1, 3, 3);
+
+a.setSend(\track, 1, 1, 1, 0); //trackType, trackNum, busNum, val
+a.setSend(\track, 1, 1, 0); //remove
+
+//send bus only without track
+a.setSend(\track, 1, 1, 1, 0, false); //trackType, trackNum, busNum, val, dirMaster (bool)
+
+//set knobs in buses only
+a.setSendKnob(\track, 1, 1, 0, 10); //trackType, trackNum, val, lag
+a.setSendKnob(\track, 1, 2, -10, 1); //trackType, trackNum, val, lag
+a.setSendKnob(\track, 1, 3, -20, 1); //trackType, trackNum, val, lag
+
+a.setSendKnob(\track, 2, 2, 0, 10); //trackType, trackNum, busNum, val, lag
+a.setSendKnob(\track, 1, 2, 0, 1); //trackType, trackNum, val, lag
+a.setSendKnob(\track, 1, 3, 0, 1); //trackType, trackNum, val, lag
+
+//filters
+a.setFx(\track, 1, 1, \pch);
+
+a.setFxArg(1, \pitchRatio, rrand(0.5,1.5)) //fltNum, fxArg, value
+a.setFxArg(1); //args
+a.setFxArg(1, 2, 2.0) //fltNum, fxArg, value
+
+a.lagFxArg(1, 2, 5); //filter set lags too!
+a.setFxArg(1, 2, 0)
+
+a.lagFxArg(1, 2, nil); //get rid of lag
+a.setFxArgTrack(\track, 1, 1, 2, 1.5); //trackType, trackNum, trackSlot, fxArg, value
+a.setFxArgTrack(\track, 1, 1, 2, 0);
+a.setFxArgTrack(\track, 1, 1, 1, 1);
+
+//remove filter
+a.setFx(\track, 1, 1, remove: true);
+
+a.setFx(\track, 2, 3, \pch); //should expand;
+a.setFx(\track, 2, 3, remove: true);
+
+//remove tracks
+a.removeTrack(\track, 1);
+a.removeTrack(\track, 3);
+
+//set inputs
+a.getTrackInMenu(1); //trackNum
+a.getTrackInItem(1);
+a.getTrackInIndex(1);
+
+a.setTrackIn(1, 2); //trackNum, input menu index
+
+a.getTrackInMenu(2);
+a.getTrackInItem(2);
+
+a.setTrackIn(2, 0);
+
+a.getTrackInItem(2);
+
+//set outputs
+a.getTrackOutItem(\track, 1);
+a.getTrackOutIndex(\track, 1);
+
+//doesn't route track to mixer with 0
+a.setTrackOut(\track, 1, 0);  //trackType, trackNum, val
+a.setTrackOut(\track, 2, 0);
+a.setTrackOut(\track, 3, 0);
+a.setTrackOut(\track, 4, 0);
+a.setTrackOut(\track, 5, 0);
+a.setTrackOut(\bus, 1, 0);
+
+//routes track to mixer with 1
+a.setTrackOut(\track, 1, 1); //trackType, trackNum, val
+a.setTrackOut(\track, 2, 1);
+a.setTrackOut(\track, 3, 1);
+a.setTrackOut(\track, 4, 1);
+a.setTrackOut(\track, 5, 1);
+a.setTrackOut(\bus, 1, 1);
+
+
+//set buttons (works both then GUI is on or not)
+//mute
+a.setMute(\track, 1, 1);
+a.setMute(\track, 1, 0);
+//rec
+a.setRec(\track, 1, 1);
+a.setRec(\track, 1, 0);
+//rec
+a.setSolo(\track, 1, 1);
+a.setSolo(\track, 1, 0);
+
+a.setSolo(\bus, 1, 1);
+a.setSolo(\bus, 1, 0);
+
+a.setSolo(\master, 1, 1);
+//space
+a.setSpace(\track, 1, 1);
+
+//recording button (evaluate several times)
+a.setRecording;
+//dir in rec
+a.setDirInRec([0,1]);
+
+//set outputs
+//map software outs to interface outs
+a.mapOuts([1,2]); //stero output into out 1 and 2 in interface
+a.mapOuts([[1,3],4]); //stero output, chan 1 into out 1 and 3  in interface, chan 2 into out 4 in interface
+
+//////
+
+//Modulation!
+a.modMix(\track, 1, \vol, \sin, [\freq, 3]);
+a.modMix(\track, 1, \pan, \sin, [\freq, 3]);
+
+a.unmapMix(\track, 1, \vol, 0);
+a.unmapMix(\track, 1, \pan, 0);
+
+
+a.setSend(\track, 1, 1, 1); //trackType, trackNum, busNum
+a.setSend(\track, 1, 2, 2); //trackType, trackNum, busNum
+
+a.modSend(\track, 1, 1, \sin, [\freq, 1]);
+a.modSend(\track, 1, 2, \sin, [\freq, 2]);
+
+a.setSend(\track, 2, 1, 1); //trackType, trackNum, busNum
+
+a.setSend(\track, 1, 1, 0); //remove
+a.setSend(\track, 1, 1, 0); //remove
+
+
+a.mixer;
+
+a.listFx; //list effects
+a.setFx(\track, 1, 1, \pch); //add fx
+
+ModMap.list; //modulation list
+a.modFx(1, 1, \sin, [\freq, 1]); //with default spec
+a.setFx(\track, 1, 1, remove: true); //remove fx
+
+a.setFx(\track, 1, 1, \pch); //add fx again
+a.modFx(1, 1, \sin, [\freq, 1], thisSpec: [0.25,4]); //specify spec
+
+ModMap.xset(1, \freq, 10);
+ModMap.xset(1, \mul, 0.5);
+ModMap.xset(1, \add, -0.5);
+ModMap.xset(1, \freq, 3);
+
+ModMap.xset(1, \add, 0.5);
+
+a.setFx(\track, 1, 2, \harm);
+a.modFx(2, 1, \sin, [\freq, 10], thisSpec: [0.2,5]);
+
+a.unmapFx(1, 1, 1);
+a.unmapFx(2, 1, 1);
+
+a.modFxTrack(\track, 1, 1); //lists fx arguments
+a.modFxTrack(\track, 1, 1, 2, \sin, [\freq, 3]);
+a.modFxTrack(\track, 1, 2);
+a.modFx(1, 1, \sin, [\freq, 1]);
+
+a.setFx(\track, 1, 1, remove: true); //remove fx will also remove mod ndefs
+
+ModMap.modNodes; //clear
+
+a.modFxTrack(\track, 1, 2, \pitchRatio1, \sin, [\freq, 1], thisSpec: [0.25,6]);
+a.unmapFxTrack(\track, 1, 2, \pitchRatio1, 1.0);
+
+
+
+/////////
+a.mixTrackNames;
+
+a.mixer;
+
+a.recordingButton.value = [1,2,3][a.recordingIndexBut]
+
+
+a.autoAddTrack(\bus);
+
+a.removeBus(1, 1, \track);
+a.removeBus(2, 1, \track);
+a.removeBus(1, 2, \bus);
+a.removeBus(1, 2, \bus);
+
+
+
+
+a.mixTrackNdefs[0].source.cs
+
+a.mixTrackNames;
+a.mixTrackNdefs;
+a.sysChans;
+a.sysPan;
+
+a.getBusInLabels
+
+Ndef(\busIn1).getKeysValues;
+Ndef(\busIn1).source.cs
+
+a.specs.dopostln
+a.getSpec(\bus1, \volume).cs
+
+Ndef(\busIn2).source.cs
+
+a.specs.dopostln;
+
+a.collectSpecArr(\spaceMaster);
+
+
+a.getSpec(\master, \volume);
+
+a.outputSettings.includes("".asSymbol);
+
+a.bus(1, 1, 0.4);
+// a.bus(1, 1, dirIn: false);
+a.routingMap.dopostln
+
+~in = \bus3;
+~arr = [];
+a.outputSettings.do{|item, index| if(item == ~in, {~arr = ~arr.add(mixTrackNdefs[index]) }); };
+
+~arr.postln;
+
+mixTrackNdefs
+
+Ndef(\spaceBus1).source.cs
+Ndef(\busIn1).source.cs
+Ndef(\busIn2).source.cs
+
+Ndef(\spaceMaster).source.cs;
+
+a.inputs.dopostln;
+
+Ndef(\track1).source.cs
+
+
+Ndef(\track1).set(\volume, 0.ampdb);
+Ndef(\track2).set(\volume, 0.ampdb);
+Ndef(\track3).set(\volume, 0.ampdb);
+Ndef(\track4).set(\volume, 0.ampdb);
+Ndef(\track5).set(\volume, 0.ampdb);
+
+Ndef(\track1);
+
+a.filter(extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+////////
+//work in progress
+
+a = Assemblage(6, 2, 4);
+
+Block.addNum(6, 2);
+
+(
+Block.play(1, \pattern, \nobuf, \test1); //be aware that default synth is stereo, therfore pan -1 to avoid issues of doubling blocks - although this is something maybe that should be looked into in the block class...
+Block.play(2, \pattern, \nobuf, [[\note, \seq, [7,7,7,7]], [\dur, 0.5] ], [\instrument, \default]);
+Block.play(3, \pattern, \nobuf, [[\note, \seq, [20,20,20,20]], [\dur, 0.25] ], [\instrument, \default]);
+Block.play(4, \pattern, \nobuf, [[\note, \seq, [(1..12),\rest,(1..12),\rest]], [\dur, 0.5] ], [\instrument, \default, \amp, 0.05]);
+Block.play(5, \loop, \marilyn1);
+)
+
+a.input(Block.ndefs[0], \track, 1);
+a.input(Block.ndefs[1], \track, 2);
+a.input(Block.ndefs[2], \track, 3);
+a.input(Block.ndefs[3], \track, 4);
+a.input(Block.ndefs[4], \track, 5);
+
+a.mixer
+
+
+View
+
+.enabled
+
+.acceptsMouse
+
+(
+w = Window.new.front;
+c = NumberBox(w, Rect(20, 20, 150, 20));
+a = Slider(w, Rect(20, 60, 150, 20))
+    .action_({
+        c.value_(a.value)
+        });
+a.action.value;
+)
+
+a.enabled = false;
+a.enabled = true;
+
+a.background_(Color.red)
+a.background_(Color.grey)
+
+/////
+
+//////////////////////////
+//HELP DOCUMENTATION
+//////////////////////////
+
+//////
+Ndef(\output).play;
+
+Ndef(\output).fadeTime = 0.5;
+
+Blocks //work a nit more on blocks, check the buffers in patterns and alloc
+
+Radicles.lineSize;
+Radicles.document;
+
+/*a = Assemblage(6, 2, [2, 1, 2]);*/
+
+
+a = Assemblage(6, 2);
+
+a.inputs.dopostln;
+
+Block.addNum(3, 2);
+
+a.input(Block.ndefs[0], \track, 1);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata);
+
+SynthFile.read(\block, \sine).cs.includesString(10.asAscii)
+
+ModMap.map(Block.ndefs[0], \freq, \sin, \freq1, [\freq, 1], lag: [\freq, 1]);
+
+a.getTrackInput(\master);
+
+a.getTrackInput(\track, 2);
+
+a.trackNames;
+a.getTrackInput(\bus, 2);
+a.getTrackInput(\bus, 4);
+
+a.getBuses.dopostln;
+
+a.getTracks.dopostln;
+
+a.getMaster.postln;
+
+////
+a = Assemblage(1,0,2);
+
+Block.addNum(3, 2);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata);
+
+a.input(Block.ndefs[0], \track, 1);
+
+//add more tracks after initiating
+a.autoAddTrack(\track, 2); //type, chanNum
+
+Block.play(2, \sine, \nobuf, [320,0,0.4], \nodata);
+
+a.input(Block.ndefs[1], \track, 2);
+
+//add more tracks after initiating
+a.autoAddTrack(\track, 2); //type, chanNum
+
+Block.play(3, \sine, \nobuf, [420,0,0.4], \nodata);
+
+a.input(Block.ndefs[2], \track, 3);
+
+a.ndefs.dopostln;
+a.ndefs.flat.do{|item| item.controlKeysValues.postln };
+
+//if you stop with cmd .  you can restart with:
+a.play;
+
+////
+
+a = Assemblage(6, 2);
+
+a.busArr
+
+Block.addNum(3, 1);
+
+a.setInputs(Block.ndefs, \track, 1);
+
+Block.play(1, \sine, \nobuf, [220,0,0.4], \nodata);
+
+ModMap.map(Block.ndefs[0], \freq, \sin, \freq1, [\freq, 1], lag: [\freq, 1]);
+
+a.input(Block.ndefs[0], \bus, 1);
+
+a.getInputs(\track1);
+a.ndefs;
+
+a.getAllInputs(true).dopostln;
+a.getAllInputs(false).dopostln;
+
+a.tracks[0][0]
+
+a.respace(\spaceMaster);
+a.findTrackArr(\spaceMaster);
+
+a.tracks[0][0][1].cs;
+
+"Asdf".find("a");
+
+a.space
+
+Ndef.ar(\input1, 1);
+Ndef(\input1).mold(1);
+Ndef.ar(\input2, 2);
+Ndef(\input2).mold(1);
+
+a.input(Ndef(\input1), \track, 1);
+
+a.input(Ndef(\input2), \track, 1);
+
+a.input([Ndef(\input1), Ndef(\input2)], \track, 1)
+
+// Ndef(\spaceTrack1).getKeysValues;
+
+//start work with buses
+(
+a.masterInput = a.masterInput.copyRange(1, a.masterInput.size-1); //get rid of track1 to master
+
+a.input(a.masterInput, \master);
+)
+
+a = Assemblage(6, 2);
+
+a.bus(1, 1, 1);
+a.bus(2, 1, 1);
+
+a.busArr;
+
+a.bus(2, 2, 1);
+a.bus(3, 2, 0.5);
+
+a.busMix(1, 1, 0);
+a.busLag(1, 1, 1);
+a.busMix(1, 1, 1);
+a.busMix(2, 1, 0.5);
+
+Ndef(\bus1In).set(\vol1, 0.5, \vol2, 1);
+
+
+Ndef(\bus1In).numChannels
+Ndef(\bus1In).getKeysValues
+
+
+a.input(Ndef(\busIt), \bus, 1);
+
+a.getTrackInput(\bus, 1);
+
+Ndef(\busIt).source.cs;
+
+Ndef('track1').source.cs;
+
+Ndef(\busIt).set(\vol1, 0.5);
+
+Ndef(\busIt).getKeysValues;
+
+Ndef(\busIt).set(\vol1, 0);
+
+///
+
+//filters
+
+
+
+Radicles.new;
+Radicles.fadeTime = 2;
+
+a = Assemblage(6, 2);
+
+Block.addNum(3, 1);
+
+a.setInputs(Block.ndefs, \track, 1);
+
+Block.play(1, \sine, \nobuf, [220,0,1], \nodata);
+
+a.filter(extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+Ndef('track1').set(\volume, -50); //change track vol
+
+a.filters;
+
+a.getTracks[0];
+
+a.filter(\track, 1, 2, extraArgs: [\pitchRatio, 0.5, \pitchDispertion, 0.1]);
+
+a.filters;
+
+a.specs[1]
+a.removeFilter(\track, 1, 1);
+
+a.findTrackArr(\track1)
+
+a.ndefs[0]
+a.specs[1].flop[0]
+
+a.removeTrackFilters(\track, 1);
+
+a.removeTrackFilters(\master, 1);
+
+a.filter(\master, 1, 2, extraArgs: [\pitchRatio, 0.5, \pitchDispertion, 0.1]);
+
+a.filters;
+
+a.removeAllFilters;
+
+a.removeAllFilters(\track);
+
+a.removeAllFilters(\master);
+
+a.tracks[1][1][1]
+a.specs[1][1][1]
+
+a.specs[1].flop
+
+
+
+a.filter(\bus, 2, 2, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+a.filter(\master, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+a.filter(\master, 1, 2, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0.1]);
+
+a.collectTrackArr(\filterTrack);
+a.collectTrackArr(\filterTrack1);
+a.collectTrackArr(\filterTrack2);
+a.getTracks[0].dopostln;
+
+SynthFile.read(\filter, \lpf).cs;
+
+a.filter(filter: \lpf);
+a.filters;
+
+a.filter(\track, 1, 3, extraArgs: [\pitchRatio, 3.5, \pitchDispertion, 0.5]);
+a.filters;
+
+Ndef(\filterTrack1).set(\pitchRatio, 2);
+
+Ndef(\filterTrack1).getKeysValues
+
+a.tracks
+
+a.ndefs;
+
+Ndef(\track1).source.cs
+
+Ndef(\track1).set(\volume, 0.ampdb);
+
+Ndef(\track1).getKeysValues
+
+////
+//convolution reverb
+
+a = Assemblage(6, 2);
+
+Block.addNum(3, 1);
+
+a.setInputs(Block.ndefs, \track, 1);
+
+Block.play(1, \loop, \marilyn1);
+
+// Ndef('spaceTrack1').set(\pan, 1);
+
+
+a.filter(\track, 1, 1, \convrev1, data: [\convrev, \ortf_s1r1, 2048]);
+
+a.filterBuff[0];
+
+a.filter(\master, 1, 1, \convrev1, data: [\convrev, \ortf_s1r1, 2048]);
+
+Ndef('track1').set(\volume, -30);
+
+BStore.stores;
+
+SynthFile.read(\block)
+
+// BStore.removeID([\cue, \cue2, \marilyn1]);
+
+////
+a.ndefs.flop[1];
+
+
+a.bus(1, 1, 0.5, false); //track number, bus number, mix, dirIn
+
+
+block1 -&gt; track1 -&gt; master
+block2 -&gt; track2 -&gt; master
+block3 -&gt; track3 -&gt; master
+block4 -&gt; track4 -&gt; master
+input -&gt; track5 -&gt; master
+
+
+//
+
+//////
+a = Assemblage(6, 2);
+
+Block.addNum(3, 1);
+
+a.setInputs(Block.ndefs, \track, 1);
+
+Block.play(1, \sine, \nobuf, [440,0,1], \nodata);
+
+Block.play(1, \loop, \marilyn1);
+
+a.filter(\track, 1, 1, \pch, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+///////
+//set filter arguments
+(
+{10.do{
+a.setFilterTag(a.filters[0][0], \pitchDispertion, rrand(0.1,10), \spec);
+    1.yield;
+}}.fork
+)
+
+//set through code
+a.setFilter(0,0,3); //straight values (filterIndex, keyIndex, value)
+a.setFilter(0,\pitchDispertion,0.1); //also use key as symbol
+a.setFilter(\filterTrack_1_1,1,1); //also use filterTag
+a.setFilter([\track, 1, 1], \pitchDispertion, 0.3); //or array to determing which track
+
+
+//set with spec
+a.setFilterSpec(0,0,1,1,0); //with spec
+a.setFilterSpec([\track, 1, 1], \pitchDispertion, 100.linlin(0,127,0,1)); //also work with array and filterTag
+
+//get infomation about filter settings and spec
+a.collectSpecArr(a.findFilterTag(\track, 1, 1))[0][1]; //get specs for filter
+a.getFilterVals(\track, 1, 1);
+a.findFilterTag(\track, 1, 1)
+a.getFilterArgs(\track, 1, 1);
+a.convFilterTag(a.findFilterTag(\track, 1, 1));
+a.getFilterKeys(\filterTrack_1_1);
+
+///////
+//modulate filter
+
+a.modFilterTag(\filterTrack_1_1, 0, \sin, [0.25, 2], [\freq, 0.3], {|val| val*0.5});
+
+a.getFilterTag(0);
+a.modFilterIndex(0, 0, \sin, [0.25, 2], [\freq, 0.3], {|val| val*0.5}, 1.15);
+
+ControlFile.post(\map);
+
+a.filterInfoToTag(0);
+a.filterInfoToTag(\filterTrack_1_1);
+a.filterInfoToTag([\track, 1, 1]);
+
+a.modFilter(0, 0, \lfn2, [\freq, 2]);
+a.getFilterKeys(\filterTrack_1_1);
+
+a.modFilterCode(\track, 1, 1, \pitchRatio, \lfn2, [\freq, 2]);
+
+a.modFilterCode(\track, 1, 1, \pitchDispertion, \lfn1, [\freq, 1]);
+
+/////
+
+//routing
+
+a = Assemblage(6, 2);
+
+a.inputs.dopostln;
+a.routePairs.dopostln;
+
+Block.addNum(3, 2);
+(
+~ndefs = [];
+Block.ndefs.do{|item| ~ndefs = ~ndefs.add(item); };
+)
+
+a.input(~ndefs, \track, 1);
+
+a.inputs.dopostln;
+
+a.getTrackInput(\track, 1);
+a.getTrackOutput(\track, 1);
+a.getTrackDestination(\track, 1);
+
+a.bus(1, 1, 1);
+a.bus(2, 1, 1);
+a.bus(1, 2, 1);
+
+a.filter(\track, 1, 1, \pch, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+a.filter(\bus, 1, 1, \pch, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+a.filter(\master, 1, 1, \pch, extraArgs: [\pitchRatio, 2, \pitchDispertion, 0]);
+
+a.routePairs.dopostln;
+a.routePairsSort.dopostln;
+
+a.routingMap.dopostln;
+
+a.routingSelMap("space", "In").dopostln;
+a.routingSelMap("space", "filter", "ln").dopostln;
+
+Block.addNum(3, 2);
+
+a.inputs.dopostln;
+
+Block.ndefs;
+(
+~ndefs = [];
+Block.ndefs.do{|item| ~ndefs = ~ndefs.add(item); };
+~ndefs = ~ndefs.copyRange(3,5);
+)
+a.input(~ndefs, \track, 4);
+a.inputs.dopostln;
+
+a.routingMap.dopostln;</pre>
+
+<p><div class='doclink'>helpfile source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/Assemblage.schelp'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/Assemblage.schelp</a><br>link::Classes/Assemblage::<br>sc version: 3.8.0</div></div></body></html>

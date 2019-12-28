@@ -1,0 +1,326 @@
+<html><head><title>BufferSystem</title>
+<link rel='stylesheet' href='./../scdoc.css' type='text/css' />
+<link rel='stylesheet' href='./../frontend.css' type='text/css' />
+<link rel='stylesheet' href='./../custom.css' type='text/css' />
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<script src='./../scdoc.js' type='text/javascript'></script>
+<script src='./../docmap.js' type='text/javascript'></script>
+<script src='./../prettify.js' type='text/javascript'></script>
+<script src='./../lang-sc.js' type='text/javascript'></script>
+<script type='text/javascript'>var helpRoot='./..';</script>
+</head>
+<ul id='menubar'></ul>
+<body onload='fixTOC();prettyPrint()'>
+<div class='contents'>
+<div class='header'>
+<div id='label'>SuperCollider CLASSES (extension)</div>
+<div id='categories'><a href='./../Browse.html#Libraries>Radicles'>Libraries>Radicles</a></div>
+<h1>BufferSystem</h1>
+<div id='summary'>A System for Buffer Allocation</div>
+</div>
+<div class='subheader'>
+<div id='filename'>Source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/BufferSystem.sc'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/BufferSystem.sc</a></div><div id='superclasses'>Inherits from: <a href="../Classes/Radicles.html">Radicles</a> : <a href="../Classes/Object.html">Object</a></div>
+<div id='related'>See also: <a href="./../Classes/Buffer.html">Buffer</a></div>
+</div>
+<div id='toc'>
+<ul class='toc'><li class='toc1'><a href='#description'>Description</a></li>
+<ul class='toc'></ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc2'><a href='#Inherited%20class%20methods'>Inherited class methods</a></li>
+<li class='toc2'><a href='#Undocumented%20class%20methods'>Undocumented class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*add'>add</a> </li>
+<li class='toc3'><a href='#*addAll'>addAll</a> </li>
+<li class='toc3'><a href='#*addAllPaths'>addAllPaths</a> </li>
+<li class='toc3'><a href='#*addDir'>addDir</a> </li>
+<li class='toc3'><a href='#*addPairs'>addPairs</a> </li>
+<li class='toc3'><a href='#*addSubDirs'>addSubDirs</a> </li>
+<li class='toc3'><a href='#*alloc'>alloc</a> </li>
+<li class='toc3'><a href='#*allocAll'>allocAll</a> </li>
+<li class='toc3'><a href='#*arrDir'>arrDir</a> </li>
+<li class='toc3'><a href='#*bufAlloc'>bufAlloc</a> </li>
+<li class='toc3'><a href='#*bufferArray'>bufferArray</a> </li>
+<li class='toc3'><a href='#*bufferByDir'>bufferByDir</a> </li>
+<li class='toc3'><a href='#*bufferCount'>bufferCount</a> </li>
+<li class='toc3'><a href='#*bufferInfo'>bufferInfo</a> </li>
+<li class='toc3'><a href='#*bufferPaths'>bufferPaths</a> </li>
+<li class='toc3'><a href='#*cue'>cue</a> </li>
+<li class='toc3'><a href='#*cueAll'>cueAll</a> </li>
+<li class='toc3'><a href='#*cueDir'>cueDir</a> </li>
+<li class='toc3'><a href='#*defaultPath'>defaultPath</a> </li>
+<li class='toc3'><a href='#*dirDialog'>dirDialog</a> </li>
+<li class='toc3'><a href='#*dirTags'>dirTags</a> </li>
+<li class='toc3'><a href='#*fileNames'>fileNames</a> </li>
+<li class='toc3'><a href='#*fileNumChannels'>fileNumChannels</a> </li>
+<li class='toc3'><a href='#*free'>free</a> </li>
+<li class='toc3'><a href='#*freeAll'>freeAll</a> </li>
+<li class='toc3'><a href='#*freeAt'>freeAt</a> </li>
+<li class='toc3'><a href='#*freeAtAll'>freeAtAll</a> </li>
+<li class='toc3'><a href='#*get'>get</a> </li>
+<li class='toc3'><a href='#*getFile'>getFile</a> </li>
+<li class='toc3'><a href='#*getFromPath'>getFromPath</a> </li>
+<li class='toc3'><a href='#*getGlobVar'>getGlobVar</a> </li>
+<li class='toc3'><a href='#*getGlobVarArr'>getGlobVarArr</a> </li>
+<li class='toc3'><a href='#*getPath'>getPath</a> </li>
+<li class='toc3'><a href='#*globVarArray'>globVarArray</a> </li>
+<li class='toc3'><a href='#*pathToTag'>pathToTag</a> </li>
+<li class='toc3'><a href='#*postWin'>postWin</a> </li>
+<li class='toc3'><a href='#*read'>read</a> </li>
+<li class='toc3'><a href='#*readAll'>readAll</a> </li>
+<li class='toc3'><a href='#*readDir'>readDir</a> </li>
+<li class='toc3'><a href='#*readSubDirs'>readSubDirs</a> </li>
+<li class='toc3'><a href='#*setDefaultPath'>setDefaultPath</a> </li>
+<li class='toc3'><a href='#*tags'>tags</a> </li>
+</ul></ul><li class='toc1'><a href='#instancemethods'>Instance methods</a></li>
+<ul class='toc'><li class='toc2'><a href='#Inherited%20instance%20methods'>Inherited instance methods</a></li>
+</ul><li class='toc1'><a href='#examples'>Examples</a></li>
+<ul class='toc'></ul></ul></div><h2><a class='anchor' name='description'>Description</a></h2>
+
+<p>A System for Buffer allocation and bookkeeping.<h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3><a class='anchor' name='Inherited%20class%20methods'>Inherited class methods</a></h3>
+<div id='inheritedclassmets'></div><h3><a class='anchor' name='Undocumented%20class%20methods'>Undocumented class methods</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*add' href='./../Overviews/Methods.html#add'>add</a> (<span class='argstr'>arg1</span>, <span class='argstr'>arg2</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addAll' href='./../Overviews/Methods.html#addAll'>addAll</a> (<span class='argstr'>arr</span>, <span class='argstr'>path</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addAllPaths' href='./../Overviews/Methods.html#addAllPaths'>addAllPaths</a> (<span class='argstr'>arr</span>, <span class='argstr'>path</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addDir' href='./../Overviews/Methods.html#addDir'>addDir</a> (<span class='argstr'>path</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addPairs' href='./../Overviews/Methods.html#addPairs'>addPairs</a> (<span class='argstr'>arr</span>, <span class='argstr'>function</span>, <span class='argstr'>readChansArr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*addSubDirs' href='./../Overviews/Methods.html#addSubDirs'>addSubDirs</a> (<span class='argstr'>path</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*alloc' href='./../Overviews/Methods.html#alloc'>alloc</a> (<span class='argstr'>numFrames</span>, <span class='argstr'>numChannels</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*allocAll' href='./../Overviews/Methods.html#allocAll'>allocAll</a> (<span class='argstr'>argArr</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*arrDir' href='./../Overviews/Methods.html#arrDir'>arrDir</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*bufAlloc' href='./../Overviews/Methods.html#bufAlloc'>bufAlloc</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*bufferArray' href='./../Overviews/Methods.html#bufferArray'>bufferArray</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*bufferByDir' href='./../Overviews/Methods.html#bufferByDir'>bufferByDir</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*bufferCount' href='./../Overviews/Methods.html#bufferCount'>bufferCount</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*bufferInfo' href='./../Overviews/Methods.html#bufferInfo'>bufferInfo</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*bufferPaths' href='./../Overviews/Methods.html#bufferPaths'>bufferPaths</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*cue' href='./../Overviews/Methods.html#cue'>cue</a> (<span class='argstr'>pathName</span>, <span class='argstr'>startFrame: 0</span>, <span class='argstr'>bufSize: 1</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*cueAll' href='./../Overviews/Methods.html#cueAll'>cueAll</a> (<span class='argstr'>arr</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*cueDir' href='./../Overviews/Methods.html#cueDir'>cueDir</a> (<span class='argstr'>path</span>, <span class='argstr'>startFrame: 0</span>, <span class='argstr'>bufSize: 1</span>, <span class='argstr'>function</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*defaultPath' href='./../Overviews/Methods.html#defaultPath'>defaultPath</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*defaultPath' href='./../Overviews/Methods.html#defaultPath'>defaultPath</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*dirDialog' href='./../Overviews/Methods.html#dirDialog'>dirDialog</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*dirTags' href='./../Overviews/Methods.html#dirTags'>dirTags</a> (<span class='argstr'>path</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*fileNames' href='./../Overviews/Methods.html#fileNames'>fileNames</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*fileNumChannels' href='./../Overviews/Methods.html#fileNumChannels'>fileNumChannels</a> (<span class='argstr'>path</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*free' href='./../Overviews/Methods.html#free'>free</a> (<span class='argstr'>tag</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*freeAll' href='./../Overviews/Methods.html#freeAll'>freeAll</a> (<span class='argstr'>tagArr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*freeAt' href='./../Overviews/Methods.html#freeAt'>freeAt</a> (<span class='argstr'>index</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*freeAtAll' href='./../Overviews/Methods.html#freeAtAll'>freeAtAll</a> (<span class='argstr'>indexArr</span>, <span class='argstr'>action</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*get' href='./../Overviews/Methods.html#get'>get</a> (<span class='argstr'>tag</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getFile' href='./../Overviews/Methods.html#getFile'>getFile</a> (<span class='argstr'>string</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getFromPath' href='./../Overviews/Methods.html#getFromPath'>getFromPath</a> (<span class='argstr'>string</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getGlobVar' href='./../Overviews/Methods.html#getGlobVar'>getGlobVar</a> (<span class='argstr'>buf</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getGlobVarArr' href='./../Overviews/Methods.html#getGlobVarArr'>getGlobVarArr</a> (<span class='argstr'>bufArr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*getPath' href='./../Overviews/Methods.html#getPath'>getPath</a> (<span class='argstr'>fileName: 'test'</span>, <span class='argstr'>pathDir</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*globVarArray' href='./../Overviews/Methods.html#globVarArray'>globVarArray</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*pathToTag' href='./../Overviews/Methods.html#pathToTag'>pathToTag</a> (<span class='argstr'>path</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*postWin' href='./../Overviews/Methods.html#postWin'>postWin</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*postWin' href='./../Overviews/Methods.html#postWin'>postWin</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*read' href='./../Overviews/Methods.html#read'>read</a> (<span class='argstr'>pathName</span>, <span class='argstr'>function</span>, <span class='argstr'>channels</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*readAll' href='./../Overviews/Methods.html#readAll'>readAll</a> (<span class='argstr'>pathArr</span>, <span class='argstr'>function</span>, <span class='argstr'>channelsArr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*readDir' href='./../Overviews/Methods.html#readDir'>readDir</a> (<span class='argstr'>path</span>, <span class='argstr'>function</span>, <span class='argstr'>channelsArr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*readSubDirs' href='./../Overviews/Methods.html#readSubDirs'>readSubDirs</a> (<span class='argstr'>path</span>, <span class='argstr'>function</span>, <span class='argstr'>readChansArr</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*setDefaultPath' href='./../Overviews/Methods.html#setDefaultPath'>setDefaultPath</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*tags' href='./../Overviews/Methods.html#tags'>tags</a> </h3>
+<h2><a class='anchor' name='instancemethods'>Instance Methods</a></h2>
+<h3><a class='anchor' name='Inherited%20instance%20methods'>Inherited instance methods</a></h3>
+<div id='inheritedinstmets'></div><h2><a class='anchor' name='examples'>Examples</a></h2>
+<pre class='code prettyprint lang-sc'>s.boot;
+//buffer alloc
+//args: numFrames, numChannels, function
+BufferSystem.add(44100*3, 2, {|item| item.numFrames.postln});
+
+BufferSystem.add(44100*3, 2, {|item| item.numChannels.postln});
+
+BufferSystem.tags.dopostln;
+
+~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/SoundFiles/Play/0/";
+
+BufferSystem.dirTags(~path).dopostln; //find tags for files in this directory
+
+//buffer read
+//args: tag, path, function
+BufferSystem.add('marilyn1', ~path, {|item| item.play});
+BufferSystem.add('SinedPink', ~path, {|item| item.play});
+
+BufferSystem.defaultPath;
+BufferSystem.defaultPath = ~path; //assign this path to defaultPath
+
+//no need to define path
+BufferSystem.add('marilyn1', function: {|item| item.play});
+
+//alloc all
+BufferSystem.addAll([[1234,2], [2342, 1], [35424,1]], function: {|item| item.do{|buf| buf.numFrames.postln } });
+//read all
+BufferSystem.addAll(['marilyn1', 'SinedPink'], ~path, {|item| item.do{|buf| buf.play } });
+
+//add in "pairs"
+BufferSystem.addPairs(['marilyn1',~path, 'SinedPink',~path], {|item| item.do{|buf| buf.play } });
+BufferSystem.addPairs([1234,2, 2342, 1, 35424,1], {|item| item.do{|buf| buf.numFrames.postln } });
+
+//add any type
+BufferSystem.addAll(['marilyn1', [1234,2], 'SinedPink'], ~path, function: {|item| a = item; });
+a.postin(\ide, \doln);
+
+(
+BufferSystem.addAll([[35424,1], 'marilyn1', [1234,2], 'SinedPink',  [2342, 1]],
+    ~path, {|item| a = item.postln});
+)
+a.postin(\ide, \doln);
+
+//Info about buffers: [tag, numChannels, bufnum,    numFrames, sampleRate, path]
+BufferSystem.bufferInfo.postin(\ide, \doln);
+
+BufferSystem.tags;
+BufferSystem.globVarArray;
+BufferSystem.fileNames;
+
+//get buffer with tag
+BufferSystem.get(\marilyn1);
+BufferSystem.get(\alloc0);
+BufferSystem.get(\alloc3);
+BufferSystem.get(\marilyn1).play;
+
+//get getGlobVar with tag
+BufferSystem.getGlobVar(BufferSystem.get(\marilyn1););
+BufferSystem.getGlobVar(BufferSystem.get(\alloc0);).postln.interpret;
+
+BufferSystem.getGlobVarArr(BufferSystem.bufferArray.copyRange(0,1));
+
+//get buffer with fileName
+BufferSystem.getFile("marilyn1.wav");
+
+//array of buffers
+BufferSystem.bufferArray.postin(\ide, \doln);
+BufferSystem.tags
+//free buffer by index
+BufferSystem.freeAt(0);
+BufferSystem.tags
+
+//free buffer by tag
+BufferSystem.free(\marilyn1);
+BufferSystem.tags
+
+//free tag arr
+BufferSystem.freeAll([\alloc2, \SinedPink]);
+BufferSystem.tags;
+
+//free index arr
+BufferSystem.freeAtAll([0,3]);
+BufferSystem.tags;
+
+BufferSystem.bufferArray.postin(\ide, \doln);
+
+//free all buffers in system
+BufferSystem.freeAll;
+BufferSystem.tags;
+
+//load whole directory
+BufferSystem.readDir(~path, {|bufArr| bufArr.do{|buf| buf.play} });
+
+//post tags and path for a Directory
+BufferSystem.dirDialog;
+
+
+//set default path from Dialog
+BufferSystem.setDefaultPath;
+BufferSystem.dirTags.dopostln;
+
+
+BufferSystem.bufferArray;
+BufferSystem.bufferArray.dopostln;
+BufferSystem.bufferInfo.dopostln;
+
+//add full directory into system
+~dirPath = "/Users/federicoreuben/Music/Sounds/radiohead_tracks/";
+BufferSystem.addDir(~dirPath, {|item| item.postln });
+BufferSystem.freeAll;
+
+//add subDirectories in multidimentional array
+~path = "/Users/federicoreuben/Music/Sketches/ImprovMaterial/"
+BufferSystem.addSubDirs(~path, {|item| a =item});
+
+a[0].postin(\ide, \doln);
+a[1].postin(\ide, \doln);
+
+BufferSystem.freeAll;
+
+//cueSoundFile buffers for DiskIn
+~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/SoundFiles/Play/0/";
+
+//args: [file,[start,bufSize]], path, function
+BufferSystem.add(['marilyn1','cue',[0,2]], ~path, {|item| item.numFrames.postln });
+BufferSystem.tags;
+
+BufferSystem.get(\disk0_marilyn1);
+BufferSystem.free(\disk0_marilyn1);
+
+//readChannels
+BufferSystem.add(['marilyn1',[0]], ~path, {|item| item.play });
+
+BufferSystem.add('marilyn1', ~path, {|item| item.play});
+
+BufferSystem.addAll([['marilyn1','cue',[0,1]], ['SinedPink','cue',[0,1]]], ~path, {|item| item.postln });
+
+~arr = [['marilyn1',[0]], 'marilyn1', [1234,2], [2342, 1], [35424,1], ['marilyn1','cue',[0,1]]]
+
+~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/SoundFiles/Play/0/";
+
+BufferSystem.addAll(~arr, ~path, {|item| item.postln });
+
+
+BufferSystem.addAll([[1234*2,4], 'marilyn1', [1234,2], [1234,1], ['SinedPink', 'cue', [0,1]] ], ~path, function: {|item| a = item; });
+
+BufferSystem.tags
+
+
+BufferSystem.tags;
+
+
+BufferSystem.freeAll;
+
+//mix of alloc, read and cue
+BufferSystem.addAll([[1234*2,4], 'marilyn1', [1234,2], [1234,1], ['SinedPink', [0,1]] ], ~path, function: {|item| a = item; });
+a.postin(\ide, \doln);
+
+BufferSystem.freeAll;
+
+//cue full directory
+~dirPath = "/Users/federicoreuben/Music/Sounds/radiohead_tracks/";
+
+BufferSystem.cueDir(~dirPath, 0, 1, {|item| item.postln });
+BufferSystem.freeAll;
+
+//access to more basic funtionality (not recommended in practice)
+
+~path = "/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/SoundFiles/Play/0/marilyn1.wav";
+
+BufferSystem.read(~path, {|item| item.play});
+
+BufferSystem.tags;
+
+BufferSystem.alloc(function: {|item| item.numChannels.postln});
+
+BufferSystem.bufferArray;
+
+BufferSystem.bufferInfo.postin(\ide, \doln);
+
+BufferSystem.alloc(44100*8, 2, {|item| item.numChannels.postln});
+
+BufferSystem.allocAll([[1234,2], [2342, 1], [35424,1]], {|item| item.do{|buf| buf.numFrames.postln } });
+
+BufferSystem.bufferInfo.dopostln;
+
+BufferSystem.bufferInfo.flop[0].dopostln;
+
+~path = [
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_bass.aif",
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_drums.aif",
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_FX.aif",
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_guitar.aif",
+"/Users/federicoreuben/Music/Sounds/radiohead_tracks/radiohead_voice.aif"
+];
+
+BufferSystem.readAll(~path, {|item| item.do{|buf| buf.play} });
+
+BufferSystem.freeAll;</pre>
+<div class='doclink'>helpfile source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/BufferSystem.schelp'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/BufferSystem.schelp</a><br>link::Classes/BufferSystem::<br>sc version: 3.8.0</div></div></body></html>

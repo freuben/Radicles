@@ -1,0 +1,14 @@
+(
+	\name: 		"Radicles",
+	\path: 		"Radicles",
+	\summary:		"A command-line style, highly-automised, multi-layered live coding environment for SuperCollider",
+	\author: 		"Federico Reuben",
+	\version:		0.0.1,
+	\organization: 	"Radicles",
+	\country: 		"uk",
+	\since: 		"2019",
+	\ext_dependency: "see helpfile",
+	\helpdoc:		"ixi help/help.html",
+	\url:           "https://www.federicoreuben.com/",
+	\dependencies: ["RadiclesLibs", "wslib"]
+)

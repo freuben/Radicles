@@ -1350,7 +1350,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{
 			wcond = Condition.new(false);
 			inVar ?? {inVar = "input"};
-			path = soundFilePath ++ "IR/" ++ impulse ++ ".wav";
+			path = soundFilePath ++ "/IR/" ++ impulse ++ ".wav";
 			file = SoundFile.new;
 			file.openRead(path);
 			numChan = file.numChannels;
@@ -2288,7 +2288,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				};
 				fltWinFunc2 = {arg menu, thisListView, irItems, labelKey;
 					menu.string = labelKey;
-					irItems = PathName(soundFilePath ++ "IR/").entries
+					irItems = PathName(soundFilePath ++ "/IR/").entries
 					.collect({|item| item.fileNameWithoutExtension });
 					thisListView.items = [""] ++ irItems;
 					thisListView.action = {|sbs|
@@ -3329,7 +3329,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	prepareRecording {arg headerFormat = "wav", sampleFormat = "int16";
 		var recPath, timestamp, recTracks;
-		recPath = Radicles.soundFilePath ++ "Record/";
+		recPath = Radicles.soundFilePath ++ "/Record/";
 		timestamp = Date.localtime;
 		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
 		recStates.do({|item, index|

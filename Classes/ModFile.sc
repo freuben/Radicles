@@ -19,14 +19,14 @@ ModFile : Radicles {var <filePath, <libArr;
 		var dir, existFiles, fileName, classString, modPath;
 
 		case
-		{file == \synth} { modPath = "Files/SynthFiles/"}
-		{file == \synth} { modPath = "Files/SynthFiles/"}
-		{file == \spec} { modPath = "Files/SpecFiles/"}
-		{file == \control} { modPath = "Files/ControlFiles/"}
-		{file == \data} { modPath = "Files/DataFiles/"}
-		{file == \description} { modPath = "Files/DescriptionFiles/"}
-		{file == \synthdef} { modPath = "Files/SynthDefFiles/"}
-		{file == \preset} { modPath = "Settings/Presets/"}
+		{file == \synth} { modPath = "/Files/SynthFiles/"}
+		{file == \synth} { modPath = "/Files/SynthFiles/"}
+		{file == \spec} { modPath = "/Files/SpecFiles/"}
+		{file == \control} { modPath = "/Files/ControlFiles/"}
+		{file == \data} { modPath = "/Files/DataFiles/"}
+		{file == \description} { modPath = "/Files/DescriptionFiles/"}
+		{file == \synthdef} { modPath = "/Files/SynthDefFiles/"}
+		{file == \preset} { modPath = "/Settings/Presets/"}
 		;
 		thisPath ?? {thisPath = mainPath};
 		dir = (thisPath ++ modPath);

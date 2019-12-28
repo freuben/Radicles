@@ -1,0 +1,242 @@
+<html><head><title>CallWindow</title>
+<link rel='stylesheet' href='./../scdoc.css' type='text/css' />
+<link rel='stylesheet' href='./../frontend.css' type='text/css' />
+<link rel='stylesheet' href='./../custom.css' type='text/css' />
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<script src='./../scdoc.js' type='text/javascript'></script>
+<script src='./../docmap.js' type='text/javascript'></script>
+<script src='./../prettify.js' type='text/javascript'></script>
+<script src='./../lang-sc.js' type='text/javascript'></script>
+<script type='text/javascript'>var helpRoot='./..';</script>
+</head>
+<ul id='menubar'></ul>
+<body onload='fixTOC();prettyPrint()'>
+<div class='contents'>
+<div class='header'>
+<div id='label'>SuperCollider CLASSES (extension)</div>
+<div id='categories'><a href='./../Browse.html#Libraries>Radicles'>Libraries>Radicles</a></div>
+<h1>CallWindow</h1>
+<div id='summary'>A call window</div>
+</div>
+<div class='subheader'>
+<div id='filename'>Source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/CallWindow.sc'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/CallWindow.sc</a></div><div id='superclasses'>Inherits from: <a href="../Classes/Radicles.html">Radicles</a> : <a href="../Classes/Object.html">Object</a></div>
+<div id='related'>See also: <a href="./../Classes/PostWindow.html">PostWindow</a>, <a href="./../Classes/Window.html">Window</a></div>
+</div>
+<div id='toc'>
+<ul class='toc'><li class='toc1'><a href='#description'>Description</a></li>
+<ul class='toc'></ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*new'>new</a> </li>
+<li class='toc2'><a href='#Inherited%20class%20methods'>Inherited class methods</a></li>
+<li class='toc2'><a href='#Undocumented%20class%20methods'>Undocumented class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*window'>window</a> </li>
+</ul></ul><li class='toc1'><a href='#instancemethods'>Instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-callFunc'>callFunc</a> </li>
+<li class='toc2'><a href='#Inherited%20instance%20methods'>Inherited instance methods</a></li>
+<li class='toc2'><a href='#Undocumented%20instance%20methods'>Undocumented instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-add'>add</a> </li>
+<li class='toc3'><a href='#-addAll'>addAll</a> </li>
+<li class='toc3'><a href='#-addArr'>addArr</a> </li>
+<li class='toc3'><a href='#-addFromFile'>addFromFile</a> </li>
+<li class='toc3'><a href='#-addSettings'>addSettings</a> </li>
+<li class='toc3'><a href='#-arrHistoryFiles'>arrHistoryFiles</a> </li>
+<li class='toc3'><a href='#-association'>association</a> </li>
+<li class='toc3'><a href='#-associationFunc'>associationFunc</a> </li>
+<li class='toc3'><a href='#-backgroundColor'>backgroundColor</a> </li>
+<li class='toc3'><a href='#-callwin'>callwin</a> </li>
+<li class='toc3'><a href='#-clearWindow'>clearWindow</a> </li>
+<li class='toc3'><a href='#-cmd'>cmd</a> </li>
+<li class='toc3'><a href='#-initCallWindow'>initCallWindow</a> </li>
+<li class='toc3'><a href='#-keyFunc'>keyFunc</a> </li>
+<li class='toc3'><a href='#-lang'>lang</a> </li>
+<li class='toc3'><a href='#-listHistoryFiles'>listHistoryFiles</a> </li>
+<li class='toc3'><a href='#-listSettings'>listSettings</a> </li>
+<li class='toc3'><a href='#-loadStartUp'>loadStartUp</a> </li>
+<li class='toc3'><a href='#-playHistory'>playHistory</a> </li>
+<li class='toc3'><a href='#-post'>post</a> </li>
+<li class='toc3'><a href='#-readHistory'>readHistory</a> </li>
+<li class='toc3'><a href='#-recordHistory'>recordHistory</a> </li>
+<li class='toc3'><a href='#-removeAt'>removeAt</a> </li>
+<li class='toc3'><a href='#-replace'>replace</a> </li>
+<li class='toc3'><a href='#-rootDir'>rootDir</a> </li>
+<li class='toc3'><a href='#-startHistory'>startHistory</a> </li>
+<li class='toc3'><a href='#-stopHistory'>stopHistory</a> </li>
+<li class='toc3'><a href='#-storeArr'>storeArr</a> </li>
+<li class='toc3'><a href='#-storeIndex'>storeIndex</a> </li>
+<li class='toc3'><a href='#-stringArr'>stringArr</a> </li>
+<li class='toc3'><a href='#-text'>text</a> </li>
+<li class='toc3'><a href='#-varString'>varString</a> </li>
+<li class='toc3'><a href='#-viewHistory'>viewHistory</a> </li>
+<li class='toc3'><a href='#-writeHistory'>writeHistory</a> </li>
+<li class='toc3'><a href='#-writeSettings'>writeSettings</a> </li>
+</ul></ul><li class='toc1'><a href='#examples'>Examples</a></li>
+<ul class='toc'></ul></ul></div><h2><a class='anchor' name='description'>Description</a></h2>
+
+<p>A call window<h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*new' href='./../Overviews/Methods.html#new'>new</a> (<span class='argstr'>window</span>, <span class='argstr'>bounds</span>, <span class='argstr'>font</span>, <span class='argstr'>qpalette</span>, <span class='argstr'>settings</span>, <span class='argstr'>postWhere</span>, <span class='argstr'>postType</span>, <span class='argstr'>postWin</span>, <span class='argstr'>postBool</span>, <span class='argstr'>storeSize</span>)</h3>
+<div class='method'>
+<p>Create a new CallWindow</div><h3><a class='anchor' name='Inherited%20class%20methods'>Inherited class methods</a></h3>
+<div id='inheritedclassmets'></div><h3><a class='anchor' name='Undocumented%20class%20methods'>Undocumented class methods</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*window' href='./../Overviews/Methods.html#window'>window</a> (<span class='argstr'>name: "Call Window"</span>, <span class='argstr'>bounds</span>, <span class='argstr'>font</span>, <span class='argstr'>qpalette</span>, <span class='argstr'>settings</span>, <span class='argstr'>postWhere</span>, <span class='argstr'>postType</span>, <span class='argstr'>postWin</span>, <span class='argstr'>postBool: true</span>, <span class='argstr'>storeSize: 10</span>)</h3>
+<h2><a class='anchor' name='instancemethods'>Instance Methods</a></h2>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-callFunc' href='./../Overviews/Methods.html#callFunc'>callFunc</a> (<span class='argstr'>string</span>, <span class='argstr'>postWin</span>, <span class='argstr'>postWhere: 'both'</span>, <span class='argstr'>postType: 'ln'</span>, <span class='argstr'>postBool: true</span>, <span class='argstr'>callIndex</span>)</h3>
+<div class='method'>
+<p><h4>Arguments:</h4>
+<table class='arguments'>
+<tr><td class='argumentname'>string<td class='argumentdesc'>
+<p>String associated with a function to evaluate.<tr><td class='argumentname'>post<td class='argumentdesc'>
+<p>Boolean to determine if function gets posted in post window.</table></div><h3><a class='anchor' name='Inherited%20instance%20methods'>Inherited instance methods</a></h3>
+<div id='inheritedinstmets'></div><h3><a class='anchor' name='Undocumented%20instance%20methods'>Undocumented instance methods</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-add' href='./../Overviews/Methods.html#add'>add</a> (<span class='argstr'>cmdID: 'test'</span>, <span class='argstr'>cmdTypes</span>, <span class='argstr'>function</span>, <span class='argstr'>description: "test command"</span>, <span class='argstr'>replace: false</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addAll' href='./../Overviews/Methods.html#addAll'>addAll</a> (<span class='argstr'>arr</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addArr' href='./../Overviews/Methods.html#addArr'>addArr</a> (<span class='argstr'>idArr</span>, <span class='argstr'>cmdTypes</span>, <span class='argstr'>function</span>, <span class='argstr'>description: "test command"</span>, <span class='argstr'>replace: false</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addFromFile' href='./../Overviews/Methods.html#addFromFile'>addFromFile</a> (<span class='argstr'>filePath</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-addSettings' href='./../Overviews/Methods.html#addSettings'>addSettings</a> (<span class='argstr'>file</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-arrHistoryFiles' href='./../Overviews/Methods.html#arrHistoryFiles'>arrHistoryFiles</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-association' href='./../Overviews/Methods.html#association'>association</a> (<span class='argstr'>cmd</span>, <span class='argstr'>callIndex</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-associationFunc' href='./../Overviews/Methods.html#associationFunc'>associationFunc</a> (<span class='argstr'>cmdString</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-backgroundColor' href='./../Overviews/Methods.html#backgroundColor'>backgroundColor</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-callwin' href='./../Overviews/Methods.html#callwin'>callwin</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-clearWindow' href='./../Overviews/Methods.html#clearWindow'>clearWindow</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-cmd' href='./../Overviews/Methods.html#cmd'>cmd</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-initCallWindow' href='./../Overviews/Methods.html#initCallWindow'>initCallWindow</a> (<span class='argstr'>window</span>, <span class='argstr'>bounds</span>, <span class='argstr'>font</span>, <span class='argstr'>qpalette</span>, <span class='argstr'>settings</span>, <span class='argstr'>postWhere: 'ide'</span>, <span class='argstr'>postType: 'ln'</span>, <span class='argstr'>postWin</span>, <span class='argstr'>postBool</span>, <span class='argstr'>storeSize: 10</span>, <span class='argstr'>startup: true</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-keyFunc' href='./../Overviews/Methods.html#keyFunc'>keyFunc</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-lang' href='./../Overviews/Methods.html#lang'>lang</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-lang' href='./../Overviews/Methods.html#lang'>lang</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-listHistoryFiles' href='./../Overviews/Methods.html#listHistoryFiles'>listHistoryFiles</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-listSettings' href='./../Overviews/Methods.html#listSettings'>listSettings</a> (<span class='argstr'>postWhere: 'ide'</span>, <span class='argstr'>postType: 'doln'</span>, <span class='argstr'>extraPost</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-loadStartUp' href='./../Overviews/Methods.html#loadStartUp'>loadStartUp</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-playHistory' href='./../Overviews/Methods.html#playHistory'>playHistory</a> (<span class='argstr'>fileName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-post' href='./../Overviews/Methods.html#post'>post</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-post' href='./../Overviews/Methods.html#post'>post</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-readHistory' href='./../Overviews/Methods.html#readHistory'>readHistory</a> (<span class='argstr'>fileName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-recordHistory' href='./../Overviews/Methods.html#recordHistory'>recordHistory</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-recordHistory' href='./../Overviews/Methods.html#recordHistory'>recordHistory</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-removeAt' href='./../Overviews/Methods.html#removeAt'>removeAt</a> (<span class='argstr'>index: 0</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-replace' href='./../Overviews/Methods.html#replace'>replace</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-replace' href='./../Overviews/Methods.html#replace'>replace</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-rootDir' href='./../Overviews/Methods.html#rootDir'>rootDir</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-rootDir' href='./../Overviews/Methods.html#rootDir'>rootDir</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-startHistory' href='./../Overviews/Methods.html#startHistory'>startHistory</a> (<span class='argstr'>fileName</span>, <span class='argstr'>replace: false</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-stopHistory' href='./../Overviews/Methods.html#stopHistory'>stopHistory</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-storeArr' href='./../Overviews/Methods.html#storeArr'>storeArr</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-storeArr' href='./../Overviews/Methods.html#storeArr'>storeArr</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-storeIndex' href='./../Overviews/Methods.html#storeIndex'>storeIndex</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-storeIndex' href='./../Overviews/Methods.html#storeIndex'>storeIndex</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-stringArr' href='./../Overviews/Methods.html#stringArr'>stringArr</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-text' href='./../Overviews/Methods.html#text'>text</a> </h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-varString' href='./../Overviews/Methods.html#varString'>varString</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-varString' href='./../Overviews/Methods.html#varString'>varString</a> = value</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-viewHistory' href='./../Overviews/Methods.html#viewHistory'>viewHistory</a> (<span class='argstr'>fileName</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-writeHistory' href='./../Overviews/Methods.html#writeHistory'>writeHistory</a> (<span class='argstr'>id</span>, <span class='argstr'>time</span>, <span class='argstr'>key</span>, <span class='argstr'>keycode</span>)</h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-writeSettings' href='./../Overviews/Methods.html#writeSettings'>writeSettings</a> (<span class='argstr'>fileName</span>, <span class='argstr'>replace: false</span>)</h3>
+<h2><a class='anchor' name='examples'>Examples</a></h2>
+<pre class='code prettyprint lang-sc'>c = CallWindow.window;
+
+c.add(\add, [\str, \num, \num], {|str, num1, num2| (num1 + num2).postln;}, "adds two numbers");
+
+c.callFunc("add 1 2");
+
+c.listSettings;
+
+c.add(\addTask, [\str], {a = {inf.do{c.callFunc("add " ++ rrand(0,100).asString ++ " " ++ rrand(0,100).asString); 0.1.yield}}.fork}, "routine of random adding");
+
+c.add(\stopTask, [\str], {a.stop}, "stop add routine");
+
+c.add(\add, [\str, \num, \arr], {|str, num, arr| (num + arr).postln;}, "adds one number with an array");
+
+c.add(\boot, [\str], { s.boot }, "boot server");
+
+c.add(\sine, [\str, \num, \num], {|str, num1, num2| {SinOsc.ar(num1, 0, num2)}.play }, "play sine wave");
+
+c.add(\sineArr, [\str, \arr, \arr, \num], {|str,arr1,arr2,num| {SinOsc.ar(arr1, num, arr2)}.play }, "play sine wave");
+
+c.addAll([[\ls, [\str], {c.listSettings;}, "prints one item commnads"], [\mul, [\str, \num, \num], {|str, num1, num2| (num1 * num2).postln;}, "multiply two numbers"]]);
+
+//array of ids
+c.addArr([\la, \le, \li, \lo, \lu], [\str, \num], {|a,b| (a ++ " is this shit and " ++ b.asString ++ " is the shat").postln; }, "array of cmds");
+
+//numbers and arrays as ID
+c.add(\number, [\num], {|str,a| if(a &gt; 6, {"number greater than 6".postln}, {"number smaller than 6".postln}) }, "number greater or smaller than 6");
+
+c.add(\array, [\arr, \arr], {|str,a,b| (a + b).postln;}, "adds two arrays");
+
+c.add(\array, [\dash], {|str,a| a.postln;}, "use dash as array");
+
+//replace the new command with the old one
+c.add(\array, [\arr, \arr], {|str,a,b| (a * b).postln;}, "multipy two arrays", replace: true);
+
+c.add(\free, [\str], { s.freeAll; }, "free all synths");
+
+c.add(\sc, [\str], {|str| c.lang = \sc;}, "supercollider environment"); //switch to sc environment
+c.add(\cmd, [\str], {|str| c.lang = \cmd;}, "call window environment"); //switch to call window
+
+c.listSettings;
+
+c.writeSettings("helpSettings"); //writeSettings to file (beware that if you use variables, they will be stored as such)
+
+c.storeArr = []; //clear memory
+
+c.addSettings("helpSettings"); //add the settings from file
+
+c.listSettings;
+
+//////
+
+c = CallWindow.window("Other call window", Window.win2Left, Font("Helvetica", 18), QPalette.light, "callwindow1");
+
+c.listSettings;
+
+c.add(\ls, [\str], {"this is the new list";}, "replace list function", replace: true); //replace listSettings command with string
+
+c.listSettings;
+
+c.removeAt(0); //remove first function
+
+c.listSettings;
+
+//////////
+
+c.lang = \sc;
+
+c.lang = \cmd;
+
+
+//////////
+
+(
+w = Window("Window into my code", Window.screenBounds).front;
+b = Window.screenBounds;
+b.height = b.height - 40 - 10;
+p = PostWindow(w, Window.win2Right(b, menuSpacer:0));
+c = CallWindow(w, Window.win2Left(b, menuSpacer:0), qpalette: QPalette.light, postWhere: \both, postType: \ln, postWin: p);
+)
+
+c.add(\add, [\str, \num, \num], {|str, num1, num2| (num1 + num2).postin(\both, \ln, p);}, "adds two numbers");
+
+c.addAll([[\ls, [\str], {c.listSettings(\both, \doln, p);}, "prints one item commnads"], [\mul, [\str, \num, \num], {|str, num1, num2| (num1 * num2).postin(\both, \ln, p);}, "multiply two numbers"]]);
+
+c.add(\array, [\dash], {|str,a| a.postin(\both, \ln, p);}, "use dash as array");
+
+c.removeAt(2);
+
+c.add(\clear, [\str], {p.clear;}, "clear post");
+
+//////////
+
+c = CallWindow.window;
+
+c.add(\add, [\str, \num, \num], {|str, num1, num2| (num1 + num2).postln;}, "adds two numbers");
+c.addAll([[\ls, [\str], {c.listSettings;}, "prints one item commnads"], [\mul, [\str, \num, \num], {|str, num1, num2| (num1 * num2).postln;}, "multiply two numbers"]]);
+
+c.startHistory("thisSession");
+c.recordHistory = false;
+
+a = c.arrHistoryFiles;
+
+c.readHistory(a.last);
+
+c.viewHistory(a.last);
+
+c.playHistory(a.last);</pre>
+
+<p><div class='doclink'>helpfile source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/CallWindow.schelp'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/CallWindow.schelp</a><br>link::Classes/CallWindow::<br>sc version: 3.8.0</div></div></body></html>

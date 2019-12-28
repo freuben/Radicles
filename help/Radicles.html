@@ -1,0 +1,473 @@
+<html><head><title>Radicles</title>
+<link rel='stylesheet' href='./../scdoc.css' type='text/css' />
+<link rel='stylesheet' href='./../frontend.css' type='text/css' />
+<link rel='stylesheet' href='./../custom.css' type='text/css' />
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+<script src='./../scdoc.js' type='text/javascript'></script>
+<script src='./../docmap.js' type='text/javascript'></script>
+<script src='./../prettify.js' type='text/javascript'></script>
+<script src='./../lang-sc.js' type='text/javascript'></script>
+<script type='text/javascript'>var helpRoot='./..';</script>
+</head>
+<ul id='menubar'></ul>
+<body onload='fixTOC();prettyPrint()'>
+<div class='contents'>
+<div class='header'>
+<div id='label'>SuperCollider CLASSES (extension)</div>
+<div id='categories'><a href='./../Browse.html#Libraries>Radicles'>Libraries>Radicles</a></div>
+<h1>Radicles</h1>
+<div id='summary'>Main Radicles Class</div>
+</div>
+<div class='subheader'>
+<div id='filename'>Source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/Radicles.sc'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/Classes/Radicles.sc</a></div><div id='superclasses'>Inherits from: <a href="../Classes/Object.html">Object</a></div>
+<div id='subclasses'>Subclasses: <a href="../Classes/Assemblage.html">Assemblage</a>, <a href="../Classes/Block.html">Block</a>, <a href="../Classes/BufferSystem.html">BufferSystem</a>, <a href="../Classes/CallWindow.html">CallWindow</a>, <a href="../Classes/GlobalHistory.html">GlobalHistory</a>, <a href="../Classes/ModFile.html">ModFile</a>, <a href="../Classes/ModMap.html">ModMap</a>, <a href="../Classes/Plane.html">Plane</a>, <a href="../Classes/PostWindow.html">PostWindow</a>, <a href="../Classes/Space.html">Space</a>, <a href="../Classes/Store.html">Store</a></div>
+<div id='related'>See also: <a href="./../Classes/PostWindow.html">PostWindow</a>, <a href="./../Classes/Window.html">Window</a></div>
+</div>
+<div id='toc'>
+<ul class='toc'><li class='toc1'><a href='#description'>Description</a></li>
+<ul class='toc'></ul><li class='toc1'><a href='#classmethods'>Class methods</a></li>
+<ul class='toc'><li class='toc2'><a href='#Inherited%20class%20methods'>Inherited class methods</a></li>
+<li class='toc2'><a href='#Undocumented%20class%20methods'>Undocumented class methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#*aZ'>aZ</a> </li>
+<li class='toc3'><a href='#*bpm'>bpm</a> </li>
+<li class='toc3'><a href='#*cW'>cW</a> </li>
+<li class='toc3'><a href='#*callWindow'>callWindow</a> </li>
+<li class='toc3'><a href='#*clock'>clock</a> </li>
+<li class='toc3'><a href='#*colorBus'>colorBus</a> </li>
+<li class='toc3'><a href='#*colorCritical'>colorCritical</a> </li>
+<li class='toc3'><a href='#*colorMaster'>colorMaster</a> </li>
+<li class='toc3'><a href='#*colorMeter'>colorMeter</a> </li>
+<li class='toc3'><a href='#*colorTextField'>colorTextField</a> </li>
+<li class='toc3'><a href='#*colorTrack'>colorTrack</a> </li>
+<li class='toc3'><a href='#*colorWarning'>colorWarning</a> </li>
+<li class='toc3'><a href='#*document'>document</a> </li>
+<li class='toc3'><a href='#*fadeTime'>fadeTime</a> </li>
+<li class='toc3'><a href='#*ignorePost'>ignorePost</a> </li>
+<li class='toc3'><a href='#*ignorePostcont'>ignorePostcont</a> </li>
+<li class='toc3'><a href='#*libPath'>libPath</a> </li>
+<li class='toc3'><a href='#*lineSize'>lineSize</a> </li>
+<li class='toc3'><a href='#*logCodeTime'>logCodeTime</a> </li>
+<li class='toc3'><a href='#*mainPath'>mainPath</a> </li>
+<li class='toc3'><a href='#*new'>new</a> </li>
+<li class='toc3'><a href='#*nodeTime'>nodeTime</a> </li>
+<li class='toc3'><a href='#*plugs'>plugs</a> </li>
+<li class='toc3'><a href='#*postDoc'>postDoc</a> </li>
+<li class='toc3'><a href='#*postWhere'>postWhere</a> </li>
+<li class='toc3'><a href='#*postWin'>postWin</a> </li>
+<li class='toc3'><a href='#*reducePostControl'>reducePostControl</a> </li>
+<li class='toc3'><a href='#*schedAction'>schedAction</a> </li>
+<li class='toc3'><a href='#*schedCount'>schedCount</a> </li>
+<li class='toc3'><a href='#*schedDiv'>schedDiv</a> </li>
+<li class='toc3'><a href='#*schedFunc'>schedFunc</a> </li>
+<li class='toc3'><a href='#*server'>server</a> </li>
+<li class='toc3'><a href='#*specUnmap'>specUnmap</a> </li>
+<li class='toc3'><a href='#*tempo'>tempo</a> </li>
+</ul></ul><li class='toc1'><a href='#instancemethods'>Instance methods</a></li>
+<ul class='toc'><li class='toc2'><a href='#Inherited%20instance%20methods'>Inherited instance methods</a></li>
+<li class='toc2'><a href='#Undocumented%20instance%20methods'>Undocumented instance methods</a></li>
+<ul class='toc'><li class='toc3'><a href='#-initRadicles'>initRadicles</a> </li>
+</ul></ul><li class='toc1'><a href='#examples'>Examples</a></li>
+<ul class='toc'></ul></ul></div><h2><a class='anchor' name='description'>Description</a></h2>
+
+<p>Main Radicles class<h2><a class='anchor' name='classmethods'>Class Methods</a></h2>
+<h3><a class='anchor' name='Inherited%20class%20methods'>Inherited class methods</a></h3>
+<div id='inheritedclassmets'></div><h3><a class='anchor' name='Undocumented%20class%20methods'>Undocumented class methods</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*aZ' href='./../Overviews/Methods.html#aZ'>aZ</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*bpm' href='./../Overviews/Methods.html#bpm'>bpm</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*cW' href='./../Overviews/Methods.html#cW'>cW</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*cW' href='./../Overviews/Methods.html#cW'>cW</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*callWindow' href='./../Overviews/Methods.html#callWindow'>callWindow</a> (<span class='argstr'>name</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*clock' href='./../Overviews/Methods.html#clock'>clock</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*clock' href='./../Overviews/Methods.html#clock'>clock</a> = </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorBus' href='./../Overviews/Methods.html#colorBus'>colorBus</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorBus' href='./../Overviews/Methods.html#colorBus'>colorBus</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorCritical' href='./../Overviews/Methods.html#colorCritical'>colorCritical</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorCritical' href='./../Overviews/Methods.html#colorCritical'>colorCritical</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorMaster' href='./../Overviews/Methods.html#colorMaster'>colorMaster</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorMaster' href='./../Overviews/Methods.html#colorMaster'>colorMaster</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorMeter' href='./../Overviews/Methods.html#colorMeter'>colorMeter</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorMeter' href='./../Overviews/Methods.html#colorMeter'>colorMeter</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorTextField' href='./../Overviews/Methods.html#colorTextField'>colorTextField</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorTextField' href='./../Overviews/Methods.html#colorTextField'>colorTextField</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorTrack' href='./../Overviews/Methods.html#colorTrack'>colorTrack</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorTrack' href='./../Overviews/Methods.html#colorTrack'>colorTrack</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorWarning' href='./../Overviews/Methods.html#colorWarning'>colorWarning</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*colorWarning' href='./../Overviews/Methods.html#colorWarning'>colorWarning</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*document' href='./../Overviews/Methods.html#document'>document</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*fadeTime' href='./../Overviews/Methods.html#fadeTime'>fadeTime</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*fadeTime' href='./../Overviews/Methods.html#fadeTime'>fadeTime</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*ignorePost' href='./../Overviews/Methods.html#ignorePost'>ignorePost</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*ignorePost' href='./../Overviews/Methods.html#ignorePost'>ignorePost</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*ignorePostcont' href='./../Overviews/Methods.html#ignorePostcont'>ignorePostcont</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*ignorePostcont' href='./../Overviews/Methods.html#ignorePostcont'>ignorePostcont</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*libPath' href='./../Overviews/Methods.html#libPath'>libPath</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*libPath' href='./../Overviews/Methods.html#libPath'>libPath</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*lineSize' href='./../Overviews/Methods.html#lineSize'>lineSize</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*lineSize' href='./../Overviews/Methods.html#lineSize'>lineSize</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*logCodeTime' href='./../Overviews/Methods.html#logCodeTime'>logCodeTime</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*logCodeTime' href='./../Overviews/Methods.html#logCodeTime'>logCodeTime</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*mainPath' href='./../Overviews/Methods.html#mainPath'>mainPath</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*mainPath' href='./../Overviews/Methods.html#mainPath'>mainPath</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*new' href='./../Overviews/Methods.html#new'>new</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*nodeTime' href='./../Overviews/Methods.html#nodeTime'>nodeTime</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*nodeTime' href='./../Overviews/Methods.html#nodeTime'>nodeTime</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*plugs' href='./../Overviews/Methods.html#plugs'>plugs</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*postDoc' href='./../Overviews/Methods.html#postDoc'>postDoc</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*postWhere' href='./../Overviews/Methods.html#postWhere'>postWhere</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*postWhere' href='./../Overviews/Methods.html#postWhere'>postWhere</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*postWin' href='./../Overviews/Methods.html#postWin'>postWin</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*postWin' href='./../Overviews/Methods.html#postWin'>postWin</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*reducePostControl' href='./../Overviews/Methods.html#reducePostControl'>reducePostControl</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*reducePostControl' href='./../Overviews/Methods.html#reducePostControl'>reducePostControl</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*schedAction' href='./../Overviews/Methods.html#schedAction'>schedAction</a> (<span class='argstr'>func</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*schedCount' href='./../Overviews/Methods.html#schedCount'>schedCount</a> (<span class='argstr'>func</span>, <span class='argstr'>min: 1</span>, <span class='argstr'>max: 100</span>, <span class='argstr'>loop: false</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*schedDiv' href='./../Overviews/Methods.html#schedDiv'>schedDiv</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*schedDiv' href='./../Overviews/Methods.html#schedDiv'>schedDiv</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*schedFunc' href='./../Overviews/Methods.html#schedFunc'>schedFunc</a></h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*schedFunc' href='./../Overviews/Methods.html#schedFunc'>schedFunc</a> = value</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*server' href='./../Overviews/Methods.html#server'>server</a> </h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*specUnmap' href='./../Overviews/Methods.html#specUnmap'>specUnmap</a> (<span class='argstr'>unmapVal</span>, <span class='argstr'>thisSpec</span>, <span class='argstr'>thisFunc</span>)</h3>
+<h3 class='cmethodname'><span class='methprefix'>*</span><a name='*tempo' href='./../Overviews/Methods.html#tempo'>tempo</a> (<span class='argstr'>newBPM</span>)</h3>
+<h2><a class='anchor' name='instancemethods'>Instance Methods</a></h2>
+<h3><a class='anchor' name='Inherited%20instance%20methods'>Inherited instance methods</a></h3>
+<div id='inheritedinstmets'></div><h3><a class='anchor' name='Undocumented%20instance%20methods'>Undocumented instance methods</a></h3>
+<h3 class='imethodname'><span class='methprefix'>-</span><a name='-initRadicles' href='./../Overviews/Methods.html#initRadicles'>initRadicles</a> (<span class='argstr'>doc: false</span>)</h3>
+<h2><a class='anchor' name='examples'>Examples</a></h2>
+<pre class='code prettyprint lang-sc'>//server
+boot //boot server
+
+//ASSEMBLAGE
+//assemblage start
+asm 1 //trackNum (mixer doesn't work)
+asm 2 1 // trackNum, busNum
+asm 2 1 1 //trackNum, busNum, chanNum
+asm 2 1 [[1,2],2,2] //trackNum, busNum, chanNumArr
+asm 2 1 1 pan2 //trackNum, busNum, chanNum, spaceType
+asm 2 1 [1,2,2] bal2 //trackNum, busNum, chanNumArr
+//asm UI
+asm mix
+asm nomix
+//shortcuts:
+mix
+nomix
+
+asm names //returns track names
+asm preprec
+asm startrec
+asm stoprec
+asm add track //auto adds track or bus
+asm add bus 2 //adds stereo bus
+asm addn 2 track //adds 2 tracks
+asm addn 3 bus 2 //adds 3 stereo buses
+asm remove track //removes last track
+asm remove bus //removes last bus
+asm remove track 2 //removes track number 2
+asm removen 2 track //removes 2 last tracks
+asm removen [3,5] track //removes track numbers in array
+//shortcuts
+t names
+prec
+rec
+srec
+t add //add track
+b add //add bus
+t add 2 ///adds stereo track
+b add 1 ///adds mono bus
+t addn 2 //adds 2 tracks
+b addn 2 2 //adds two stereo buses
+t rmv //remove track
+b rmv //remove bus
+t rmvn 2 //remove 2 tracks
+b rmvn [2,4] //remove tracks 2 and 4
+
+asm vol track 1 -90
+asm vollag bus 1 0.1
+asm pan bus 1 -0.5
+asm panlag bus 1 1
+asm trim bus 1 -0.5
+asm panlag bus 1 1
+//same in shortcuts:
+vol t 1 -20
+vollag t 1 0.1
+pan b 1 -0.5
+panlag b 1 1
+trim t 2 -10
+trimlag 2 1
+//and
+vol 1 -10
+vollag 1 -10
+pan 7 -0.5
+panlag 7 1
+trim 1 -10
+trimlag 1 1
+//with dashes for more tracks
+vol t 1-6 -20
+vollag t 1-3 0.1
+pan b 1-3 -0.5
+panlag b 1-3 1 1
+trim t 1-3 -10
+trimlag t 1-3 1
+vol 1-6 -10
+vollag 1-6 -10
+pan 1-6 -1
+panlag 1-6 1
+trim 1-6 -10
+trimlag 1-6 2
+//with arrays for specific tracks
+vol t [1,3,5] -20
+vollag t [1,3,5] 0.1
+pan b [1,3] -0.5
+panlag b [1,3] 1
+trim t [1,3] -10
+trimlag t [1,3] 1
+vol [1,2,4,6] -10
+vollag [1,2,4,6] -10
+pan [1,2,4,6] -0.5
+panlag [1,2,4,6] 1
+//bulks
+vol t 0 //all tracks to 0
+vol b 0 //all buses to 0
+vol m 0 //master to 0
+vol 0 //all tracks to 0
+pan t 0.5 //all tracks to 0
+pan 0
+trim t -10
+trim 0
+
+asm snd track 1 2 //send in track 1, slot 1, to bus 2
+asm snd track 1 2 2 //send in track 1, slot 2, to bus 2
+asm snd track 1 2 2 -10 //send in track 1, slot 2, to bus 2, vol -10
+asm sndry track 1 2 //send (no master) in track 1, slot 1, to bus 2
+asm sndry track 1 2 2 //send (no master) in track 1, slot 2, to bus 2
+asm sndry track 1 2 2 //send (no master) in track 1, slot 2, to bus 2, vol -10
+asm setsnd track 1 0 //set send in track 1 to 0
+asm setsnd track 1 1 0 //set send in track 1, slot 1 to 0
+asm setsnd track 1 1 0 1 //set send in track 1, slot 1 to 0 with lag of 1
+
+/* CHECK REMOVING BUSES - BUG?*/
+asm rmvsnd track 1 2
+asm snd track 1 0 //remove track 1, bus 1
+asm snd track 1 1 0 //remove track 1, bus 1
+asm snd track 1 2 0 //remove track 1, bus 2
+
+//shortcuts:
+snd t 1 1 //send in track 1, slot 1, bus 1
+snd t 1 2 2 //send in track 1, slot 2, bus 2
+snd t 1 2 2 -10 //send in track 1, slot 2, bus 2, vol -10
+snd 2 1
+snd 2 2 2
+snd 2 2 2 -10
+sndry t 2 2 2 //send (no master) in track 2, slot 2, bus 2
+sndry 2 2 2
+sndry 2 2 2 -10
+setsnd t 1 0 //set track 1, val 0
+setsnd t 1 1 0 //set track 1, slot 1, val 0
+setsnd t 1 1 0 1 //set track 1, slot 1, val 0, lag 1
+setsnd 2 2 -10 //set mixtrack 2, slot 2, val
+setsnd 2 2 -10 1 //set mixtrack 2, slot 2, val, lag
+
+asm fx track 1 pch //set fx called pch in track 1, slot 1
+asm fx track 1 2 pch //set fx called pch in track 1, slot 2
+asm fx track 1 2 pch [pitchRatio, 0.5, pitchDispertion, 0.1] //same with extraArgs
+asm fx track 1 2 pch [1, 0.5, 2, 0.1] //same with indexed extraArgs
+
+asm fxset track 1 1 //gets args of fxs at track 1 slot 1
+asm fxset track 1 1 1 //gets arg value of arg 1 in fxs at track 1 slot 1
+asm fxset track 1 1 1 0.5 //sets fx arg for arg 1 in fxs at track 1 slot 1
+asm fxset track 1 1 pitchRatio 0.5 //sets fx arg for arg pitchRatio in fxs at track 1 slot 1
+asm fxset track 1 [1, 0.8, 2, 1.2]
+asm fxset track 1 2 [1, 0.8, 2, 1.2]
+asm fxs //posts active effects
+asm setfx 1 //gets args from first fx
+asm setfx 1 1 //gets arg value of arg 1 from first fx
+asm setfx 1 1 0.5 //sets fx arg for arg 1 from first fx
+asm setfx 1 pitchRatio 0.5 //sets fx arg for arg pitchRatio from first fx
+asm setfx 1 [1, 0.8, 2, 1.2]
+
+//lagging fxs
+asm fxlag track 1 1 //gets args of fxs at track 1 slot 1
+asm fxlag track 1 1 1 //gets arg value of arg 1 in fxs at track 1 slot 1
+asm fxlag track 1 1 1 0.5 //sets fx arg for arg 1 in fxs at track 1 slot 1
+asm fxlag track 1 1 pitchRatio 0.5 //sets fx arg for arg pitchRatio in fxs at track 1 slot 1
+asm fxlag track 1 [1, 0.8, 2, 1.2]
+asm fxlag track 1 2 [1, 0.8, 2, 1.2]
+asm lagfx 1 //gets args from first fx
+asm lagfx 1 1 //gets arg value of arg 1 from first fx
+asm lagfx 1 1 0.5 //sets fx arg for arg 1 from first fx
+asm lagfx 1 pitchRatio 0.5 //sets fx arg for arg pitchRatio from first fx
+asm lagfx 1 [1, 0.8, 2, 1.2]
+asm fxremove track 1
+asm fxremove track 1 2
+asm fxsetn //array of tracks to set
+asm fxlagn //array of tracks to lag
+asm fxlagn track 1 2 10 //lag all parameters in filter
+
+//shortcuts
+fx t 1 pch
+fx t 1 2 harm
+fx b 1 pch [0, 0.5, 1, 0.1]
+fx b 1 2 harm [pitchRatio1, 0.5, pitchRatio2, 1.5]
+fx 1 pch
+fx 1 2 pch
+fx m pch //set fx pch to master slot 1
+fx m 2 harm //set fx harm to master slot 2
+fxset t 1 1
+fxset t 1 1 1
+fxset t 1 1 1 0.5
+fxset t 1 1 pitchRatio 0.5
+fxset m 1
+fxset m 1 1 //try this
+fxset m 1 1 0.5
+fxset m 1 pitchRatio 0.5
+fxset m 1 [1,1.8,2,0.8]
+fxset m 1 2 [1,1.8,2,0.8]
+fxset t 1 1 [1,1.8,2,0.8]
+
+fxset 1 1 //with mixtrack num
+fxset 1 1 1
+fxset 1 1 1 0.5
+fxset 1 1 pitchRatio 0.5
+fxset 1 1 [1,0.8,2,1.0]
+fxs //posts available effects
+setfx //posts active effects
+setfx 1
+setfx 1 1
+setfx 1 1 0.5
+setfx 1 pitchRatio 0.5
+
+//lags
+fxlag t 1 1
+fxlag t 1 1 1
+fxlag t 1 1 1 0.5
+fxlag t 1 1 pitchRatio 0.5
+fxlag m 1
+fxlag m 1 1 //try this
+fxlag m 1 1 0.5
+fxlag m 1 pitchRatio 0.5
+fxlag m 1 [1,1.8,2,0.8]
+fxlag m 1 2 [1,1.8,2,0.8]
+fxlag t 1 1 [1,1.8,2,0.8]
+fxlag 1 1 //with mixtrack num
+fxlag 1 1 1
+fxlag 1 1 1 0.5
+fxlag 1 1 pitchRatio 0.5
+fxlag 1 1 [1,0.8,2,1.0]
+lagfx 1
+lagfx 1 1
+lagfx 1 1 0.5
+lagfx 1 pitchRatio 0.5
+fxlagn t 1 2 10 //lag all parameters in filter
+fxlagn [[track,1,1,[1,2,2,1.1]], [track,1,2,[1,0.8,2,1.1]]]//array of tracks to lag
+//remove filters
+fxclear t 1
+fxclear t 1 2
+fxclear 1 1 //multitrack
+clearfx 1
+
+//get filter information
+fxget m 1
+fxget t 1
+fxget t 1 1
+fxgetlag m 1
+fxgetlag t 1 1
+fxget 1 //multitrack num
+fxget 1 1
+fxgetlag 1
+fxgetlag 1 1
+getfx 1
+getlagfx 1
+
+asm mute track 1
+asm mute track 1 1
+asm rec track 1 0
+asm solo track 1 1
+//shortcuts
+mute t 1
+unmute t 1
+recen t 1
+recdis t 1
+solo t 1
+unsolo 1
+
+
+asm in block1 //ndef (input ndef block1 to default input arguments track 1)
+asm in block1 1 //ndef, trackNum (input ndef to track 1)
+asm in block2 2 //ndef block2 into track 2
+
+asm inmenu 1 //set in menut to slot 1
+asm getinmenu 1
+asm getoutmenu track 1
+asm getoutmenu 1
+asm outmenu track 1
+asm getoutmenu track 1
+//shortcut
+inmenu 1 2
+getinmenu 1
+outmenu t 1 0 //0 = not master, 1 = master
+getoutmenu 1
+
+//radicles
+rad doc //created new code document
+
+//blocks
+blk add
+blk clock
+blk ply
+blk bpm
+blk sstart
+blk ndef
+blk blocks
+blk clear
+
+blk add 2 //channels (adds one block with specified channels)
+blk addn 4 //number (adds the given number of blocks)
+blk remove 1 //block (removes block 1)
+blk stop 1 //block (stops block 1)
+blk bpm 1 //sets bpm to 1
+blk tempo 1 //sets bpm to 1
+blk sdiv 2 //divitions by 2
+
+blk addn 2 2 //number, channels (adds 2 blocks of 2 channels)
+blk stop 1 0.5 //block, fadeOut (stops block 1 with 0.5 fade)
+
+blk play 1 sine //block, blockName (play block 1 with sine synthdef)
+blk ply 1 sine //block, blockName (play block 1 with sine synthdef)
+blk ply 1 sine [freq 400] //block, blockName (play block 1 with sine synthdef) with extraArgs
+blk ply 1 pattern nobuf test1
+blk ply 1 pattern nobuf [[note, seq, [10, 6, 2, 2]], [dur, 0.5], [instrument, perkysine]]
+blk ply 1 play marilyn1 [rate, 1.2, amp, 0.8]
+blk ply 1 loop marilyn1 [rate, 0.8, amp, 0.8]
+
+//shortcuts
+pl 1 marilyn1 //play
+lp 1 marilyn1 //loop
+pl 1 marilyn1 [1, 0.9] //play w/ extraArgs
+lp 1 marilyn1 [1, 1.1] //loop w/ extraArgs
+
+//before pattern
+blk clock
+blk tempo 80
+blk pn 1 test1
+blk pn 1 [[note, seq, [10, 6, 2, 2]], [dur, 0.5], [instrument, perkysine]]
+
+//routing
+blk 1 &lt;&gt; 1 //rounting? block 1 into track 1 str str num str num
+blk 2-4 &lt;&gt; 2 //blocks 2,3,4 into track 2
+blk 1-4 &lt;&gt; 2-5 //blocks 1,2,3,4 insto tracks 2,3,4,5
+
+//implement features
+//queries
+getvol
+getpan
+gettrim
+
+//ideas for Tdef implementation as loop?
+l{rrand(0.1,2).postln}{0.1} //loop
+l{[rrand(0.1,2), 0.2]}{[0.1,2]} //loop
+t{rrand(0.1,2).postln}{0.1} //do once
+t{[rrand(0.1,2), 0.2]}{[0.1,2]} //do once
+//ideas of variable associations
+(a = {rrand(0.1,4.0)});
+vol 1 a</pre>
+
+<p><div class='doclink'>helpfile source: <a href='file:///Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/Radicles.schelp'>/Users/federicoreuben/Library/Application Support/SuperCollider/Extensions/Radicles/HelpSource/Classes/Radicles.schelp</a><br>link::Classes/Radicles::<br>sc version: 3.8.0</div></div></body></html>
