@@ -10,5 +10,5 @@
 	\ext_dependency: "see helpfile",
 	\helpdoc:		"Radicles help/Radicles.html",
 	\url:           "https://www.federicoreuben.com/",
-	\dependencies: ["RadiclesLibs", "wslib"]
+	\dependencies: ["wslib"]
 )
