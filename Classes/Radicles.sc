@@ -5,13 +5,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	<>soundFilePath;
 
 	*new {
-		colorCritical = Color.new255(211, 14, 14);
-		colorMeter = Color.new255(78, 109, 38);
-		colorWarning = Color.new255(232, 90, 13);
-		colorTrack = Color.new255(58, 162, 175);
-		colorBus = Color.new255(132, 124, 10);
-		colorMaster = Color.new255(102, 57, 130);
-		colorTextField = Color.new255(246, 246, 246);
+		this.setColors;
 		^super.new.initRadicles;
 	}
 
@@ -100,6 +94,16 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, {
 			"Libary not found".warn;
 		});
+	}
+
+	*setColors {
+		colorCritical = Color.new255(211, 14, 14);
+		colorMeter = Color.new255(78, 109, 38);
+		colorWarning = Color.new255(232, 90, 13);
+		colorTrack = Color.new255(58, 162, 175);
+		colorBus = Color.new255(132, 124, 10);
+		colorMaster = Color.new255(102, 57, 130);
+		colorTextField = Color.new255(246, 246, 246);
 	}
 
 	*callWindow {arg name;

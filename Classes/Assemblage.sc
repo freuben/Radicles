@@ -2902,38 +2902,38 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		data, remove=false, action, actionBuf;
 		var insert, newFilterNdef, extraArgsBool;
 		if(SynthDefFile.read(\filter, exclude: excludeLibs).includes(filter), {
-		if(remove, {
-			this.removeFilter(trackType, num, slot, {this.refreshFunc; action.();}, {actionBuf.()} );
-		}, {
-			if(this.findFilterTag(trackType, num, slot).isNil, {
-				insert = false;
+			if(remove, {
+				this.removeFilter(trackType, num, slot, {this.refreshFunc; action.();}, {actionBuf.()} );
 			}, {
-				insert = true;
-			});
-			if(extraArgs.notNil, {
-				extraArgsBool = extraArgs.select({|item, index| index.even.and(item == 0) }).isEmpty;
-				if(extraArgsBool, {
-					if(extraArgs.select{|item| item.isSymbol}.isEmpty, {
-						extraArgs = extraArgs.collect({|item, index| if(index.even, {
-							item = SynthFile.read('filter', filter, exclude: excludeLibs).argNames[item-1];
-						}, {
-							item = item;
+				if(this.findFilterTag(trackType, num, slot).isNil, {
+					insert = false;
+				}, {
+					insert = true;
+				});
+				if(extraArgs.notNil, {
+					extraArgsBool = extraArgs.select({|item, index| index.even.and(item == 0) }).isEmpty;
+					if(extraArgsBool, {
+						if(extraArgs.select{|item| item.isSymbol}.isEmpty, {
+							extraArgs = extraArgs.collect({|item, index| if(index.even, {
+								item = SynthFile.read('filter', filter, exclude: excludeLibs).argNames[item-1];
+							}, {
+								item = item;
+							});
+							});
 						});
-						});
+					}, {
+						"wrong arg number, should be numbers starting with 1".warn;
 					});
 				}, {
-					"wrong arg number, should be numbers starting with 1".warn;
+					extraArgsBool = true;
 				});
-			}, {
-				extraArgsBool = true;
+				if(extraArgsBool, {
+					this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
+						{this.refreshFunc}.defer;
+						action.();
+					}, insert);
+				});
 			});
-			if(extraArgsBool, {
-				this.filter(trackType, num, slot, filter, extraArgs, buffer, data, {
-					{this.refreshFunc}.defer;
-					action.();
-				}, insert);
-			});
-		});
 		}, {
 			"filter doesn't exist or is not loaded".warn;
 		});
@@ -4019,7 +4019,34 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		var ndefString;
 		ndefString = this.findFxModNdef(trackType, trackNum, trackSlot, trackArg);
 		if(ndefString.notNil, {
-			ndefString.controlKeysValues.radpost;
+			^ndefString.controlKeysValues;
+		});
+	}
+
+	findSndModNdef {arg trackType, trackNum, trackSlot;
+		var arr, arr1, arr2, result;
+		arr = modSendArr;
+		arr1 = arr.collect({|item| (item[0] ++ "_" ++ item[1] ++ "_" ++ item[2]).asSymbol });
+		arr2 = arr.flop[3];
+		result = arr2[arr1.indexOfEqual((trackType ++ "_" ++ trackNum ++ "_"
+			++ trackSlot).asSymbol)];
+		^result;
+	}
+
+		setSndMod {arg trackType, trackNum, trackSlot, extraArgs;
+		var ndefString;
+		ndefString = this.findSndModNdef(trackType, trackNum, trackSlot);
+		if(ndefString.notNil, {
+			(ndefString.cs ++ ".setn" ++ extraArgs.cs.replaceAt("(",0)
+				.replaceAt(")", extraArgs.cs.size-1)).radpost.interpret;
+		});
+	}
+
+	getSndMod {arg trackType, trackNum, trackSlot;
+		var ndefString;
+		ndefString = this.findSndModNdef(trackType, trackNum, trackSlot);
+		if(ndefString.notNil, {
+			^ndefString.controlKeysValues;
 		});
 	}
 
