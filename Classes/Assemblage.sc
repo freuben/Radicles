@@ -1981,7 +1981,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			panKeyValues = Ndef(panKey).controlKeysValues;
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
+				if(hidNodes.notEmpty, {
 				hidPan = hidNodes.flop[1].includes(Ndef(panKey));
+				}, {hidPan = false});
 			}, {hidPan = false});
 			case
 			{panKeyValues.size == 0} {panValues = 0}
@@ -2032,7 +2034,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			})[0];
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
+				if(hidNodes.notEmpty, {
 				hidVol = hidNodes.flop[1].includes(volNdef);
+				}, {hidVol = false});
 			}, {hidVol = false});
 			if((volValue.cs.find("mod").notNil).or(hidVol), {
 				item.background = colorCritical;
@@ -2132,7 +2136,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				selValue = thisNdefVal.flop[1][thisNdefVal.flop[0].indexOf(selArg)];
 				hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
+					if(hidNodes.notEmpty, {
 				hidKnob = hidNodes.flop[1].includes(Ndef(thisKey));
+					}, { hidKnob = false });
 			}, {hidKnob = false});
 				if((selValue.cs.find("mod").notNil).or(hidKnob), {
 					it.background = colorCritical;
@@ -2167,13 +2173,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			};
 		});
 
-		inKnobArr.do{|item, index| var thisKey, trimKeys, thisSpec, thisTrimKey;
+		inKnobArr.do{|item, index|
+			var thisKey, trimKeys, thisSpec, thisTrimKey, hidNodes, hidTrim;
 			thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			trimKeys = Ndef(thisKey).controlKeysValues;
 			thisSpec = this.getSpec(thisKey, \trim).asSpec;
-			if(trimKeys.notEmpty, {
+
+			hidNodes = HIDMap.hidNodes;
+			if(hidNodes.notNil, {
+			if(hidNodes.notEmpty, {
+				hidTrim = hidNodes.flop[1].includes(Ndef(thisKey));
+				}, {hidTrim = false});
+			}, {hidTrim = false});
+
+			if((trimKeys.notEmpty).or(hidTrim), {
 				thisTrimKey = trimKeys[trimKeys.indexOf(\trim)+1];
-				if(thisTrimKey.cs.find("mod").notNil, {
+				if((thisTrimKey.cs.find("mod").notNil).or(hidTrim), {
 					item.background = colorCritical;
 					item.enabled = false;
 					thisTrimKey = 0;
@@ -3137,9 +3152,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
 				hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
+						if(hidNodes.notEmpty, {
 						hidIndex = hidNodes.flop[2].indexOfEqual(argArr[index]);
 						hidFx = (hidNodes.flop[1].includes(Ndef(filterTag)))
 						.and(hidIndex.notNil);
+					}, {hidFx = false});
 			}, {hidFx = false});
 				if(specBool, {
 					thisSpec = specArr[index][1].asSpec;

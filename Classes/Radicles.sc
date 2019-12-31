@@ -10,10 +10,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	}
 
 	initRadicles {arg doc=false;
-		mainPath = Quark("Radicles").localPath;
-		libPath = Quark("RadiclesLibs").localPath;
-		/*mainPath = (Platform.userExtensionDir ++ "/Radicles");
-		libPath = (Platform.userExtensionDir ++ "/RadiclesLibs");*/
+		/*mainPath = Quark("Radicles").localPath;
+		libPath = Quark("RadiclesLibs").localPath;*/
+		mainPath = (Platform.userExtensionDir ++ "/Radicles");
+		libPath = (Platform.userExtensionDir ++ "/RadiclesLibs");
 		soundFilePath = (Platform.userExtensionDir ++ "/RadiclesSFs");
 		server = Server.default;
 	}
