@@ -1976,9 +1976,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		panKnobTextArr.flat.do{|item| item.font = basicFont;};
 		panSpec = \pan.asSpec;
 		panKnobArr.do{|item, index|
-			var panKey, panKeyValues, panValues;
+			var panKey, panKeyValues, panValues, hidNodes, hidPan;
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			panKeyValues = Ndef(panKey).controlKeysValues;
+			hidNodes = HIDMap.hidNodes;
+			if(hidNodes.notNil, {
+				hidPan = hidNodes.flop[1].includes(Ndef(panKey));
+			}, {hidPan = false});
 			case
 			{panKeyValues.size == 0} {panValues = 0}
 			{panKeyValues.includes(\pan)} {
@@ -1988,7 +1992,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					panKeyValues[panKeyValues.indexOf(\pany)+1]
 			]};
 			if(sysPan[index] == 0, {
-				if(panValues.cs.find("mod").notNil, {
+				if((panValues.cs.find("mod").notNil).or(hidPan), {
 					item.background = colorCritical;
 					item.enabled = false;
 					panValues = 0;
@@ -2020,12 +2024,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		};
 
 		sliderArr.do{|item, index|
-			var volSpec, volValue;
+			var volSpec, volValue, volNdef, hidVol, hidNodes;
 			volSpec = this.getSpec(mixTrackNames[index], \volume).asSpec;
-			volValue = mixTrackNdefs[index].getKeysValues.collect({|item|
+			volNdef = mixTrackNdefs[index];
+			volValue = volNdef.getKeysValues.collect({|item|
 				if(item[0] == \volume, {item[1]});
 			})[0];
-			if(volValue.cs.find("mod").notNil, {
+			hidNodes = HIDMap.hidNodes;
+			if(hidNodes.notNil, {
+				hidVol = hidNodes.flop[1].includes(volNdef);
+			}, {hidVol = false});
+			if((volValue.cs.find("mod").notNil).or(hidVol), {
 				item.background = colorCritical;
 				item.enabled = false;
 				volValue = 0;
@@ -2114,14 +2123,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 
 		knobFunc = {|it, trackLb, thisKey|
-			var thisNdefVal, selArg, thisSpec, selValue;
+			var thisNdefVal, selArg, thisSpec, selValue, hidKnob, hidNodes;
 			if(thisKey.notNil, {
 				thisNdefVal = Ndef(thisKey).getKeysValues;
 				selArg = ("vol" ++ (busArr.flop[1][busArr.flop[0].indexOf(thisKey)].collect{|keyVal|
 					keyVal.key}.indexOf(trackLb) + 1)).asSymbol;
 				thisSpec = this.getSpec(thisKey.asString.replace("In", "").asSymbol, \volume).asSpec;
 				selValue = thisNdefVal.flop[1][thisNdefVal.flop[0].indexOf(selArg)];
-				if(selValue.cs.find("mod").notNil, {
+				hidNodes = HIDMap.hidNodes;
+			if(hidNodes.notNil, {
+				hidKnob = hidNodes.flop[1].includes(Ndef(thisKey));
+			}, {hidKnob = false});
+				if((selValue.cs.find("mod").notNil).or(hidKnob), {
 					it.background = colorCritical;
 					it.enabled = false;
 					selValue = -inf;
@@ -3078,16 +3091,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	filterWinGUI {arg filterTag=\filterTrack_1_1, filterKey=\pch, filterPairs,
 		fltWinLeft=0, fltWinDown=0, mixButton;
-		var winName, filtersWin, fltCanvas, panKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
+		var winName, filtersWin, fltCanvas, fxKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
 		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop, winBool;
-
 		winName = filterTag.asString;
-		/*		winName = filterTag.asString.split($_);
-		winName[0] = winName[0].asString.replace("filter", "Filter ");
-		if(winName.size == 3, {
-		winName = [winName[0] ++ winName[1], winName[2]]
-		});
-		winName = (winName[0] ++ ": " ++ winName[1]) ++ " | " ++ filterKey.asString;*/
 		winName = winName ++ " | " ++ filterKey.asString;
 		winBool = true;
 		if(filtersWindow.notNil, {
@@ -3116,65 +3122,80 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			fltCanvas = View();
 			fltCanvas.background_(Color.black);
 			argArr.do{|item, index|
-				var finalLayout, panKnob, panKnobText, spaceTextLay, specOptions,
-				panKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc,
-				thisResult, labelTextArr;
+				var finalLayout, fxKnob, fxKnobText, specOptions,
+				fxKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc,
+				thisResult, labelTextArr, hidFx, hidNodes, hidIndex;
 				if(specArr.notNil, {
 					specBool = specArr[index].notNil;
 				}, {
 					specBool = false;
 				});
-				panKnobText = StaticText(fltCanvas).align_(\center)
+				fxKnobText = StaticText(fltCanvas).align_(\center)
 				.background_(Color.black)
 				.stringColor_(Color.white)
 				.font_(basicFont)
 				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
+				hidNodes = HIDMap.hidNodes;
+			if(hidNodes.notNil, {
+						hidIndex = hidNodes.flop[2].indexOfEqual(argArr[index]);
+						hidFx = (hidNodes.flop[1].includes(Ndef(filterTag)))
+						.and(hidIndex.notNil);
+			}, {hidFx = false});
 				if(specBool, {
 					thisSpec = specArr[index][1].asSpec;
 					thisFunc = specArr[index][2];
-					panKnob = Slider().minWidth_(180).maxWidth_(180)
+					fxKnob = Slider().minWidth_(180).maxWidth_(180)
 					.maxHeight_(15).minHeight_(15);
-					panKnob.orientation = \horizontal;
-					if(defaultArgArr[index].isNumber, {
-						panKnob.action = {
+					fxKnob.orientation = \horizontal;
+
+					if((defaultArgArr[index].isNumber).and(hidFx.not), {
+						fxKnob.action = {
 							if(thisFunc.notNil, {
-								thisResult = thisFunc.(thisSpec.map(panKnob.value));
+								thisResult = thisFunc.(thisSpec.map(fxKnob.value));
 							}, {
-								thisResult = thisSpec.map(panKnob.value);
+								thisResult = thisSpec.map(fxKnob.value);
 							});
-							panKnobText.string = thisResult.asString.copyRange(0, 7);
+							fxKnobText.string = thisResult.asString.copyRange(0, 7);
 							("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
 								++ thisResult ++ ");").radpostcont.interpret;
 						};
 						thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
-						panKnob.value = thisResult;
-						panKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+						fxKnob.value = thisResult;
+						fxKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
 					}, {
-						panKnob.value = 0.5;
-						panKnob.background = colorCritical; //mod color
-						panKnob.enabled = false;
-						panKnobText.string = defaultArgArr[index].key.asString.copyRange(0, 7);
+						fxKnob.value = 0.5;
+						fxKnob.background = colorCritical; //mod color
+						fxKnob.enabled = false;
+						if(hidFx, {
+							fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
+						}, {
+							fxKnobText.string = defaultArgArr[index].key.asString.copyRange(0, 7);
+						});
 					});
 				}, {
-					panKnob = TextField().minWidth_(180).maxWidth_(180)
+					fxKnob = TextField().minWidth_(180).maxWidth_(180)
 					.font_(basicFont)
 					.background_(colorTextField)
 					.maxHeight_(15).minHeight_(15);
 					defaultVal = defaultArgArr[index];
 					if(defaultVal.notNil, {
-						if(defaultVal.cs.find("Ndef").isNil, {
-							panKnob.string = defaultVal.cs;
-							panKnobText.string = defaultVal.cs.copyRange(0, 7);
-							panKnob.action = {arg field;
-								panKnobText.string = field.value;
+						if((defaultVal.cs.find("Ndef").isNil).and(hidFx.not), {
+							fxKnob.string = defaultVal.cs;
+							fxKnobText.string = defaultVal.cs.copyRange(0, 7);
+							fxKnob.action = {arg field;
+								fxKnobText.string = field.value;
 								("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
 									++ field.value ++ ");").radpostcont.interpret;
 							};
 						}, {
-							panKnob.background = colorCritical; //mod color
-							panKnob.enabled = false;
-							panKnob.string = defaultVal.cs;
-							panKnobText.string = defaultVal.key.asString.copyRange(0, 7);
+							fxKnob.background = colorCritical; //mod color
+							fxKnob.enabled = false;
+							fxKnob.string = defaultVal.cs;
+							if(hidFx, {
+							fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
+						}, {
+							fxKnobText.string = defaultVal.key.asString.copyRange(0, 7);
+						});
 						});
 					});
 
@@ -3188,11 +3209,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				.maxWidth_(stringLengh)
 				.minWidth_(stringLengh)
 				.minHeight_(10);
-				panKnobTextArr = panKnobTextArr.add(panKnobText);
+				fxKnobTextArr = fxKnobTextArr.add(fxKnobText);
 				labelTextArr = labelTextArr.add(labelText);
-				panKnobArr = panKnobArr.add(panKnob);
-				[[labelText, align: \center], [panKnob, align: \center],
-					[panKnobText, align: \center]].do{|lay|
+				fxKnobArr = fxKnobArr.add(fxKnob);
+				[[labelText, align: \center], [fxKnob, align: \center],
+					[fxKnobText, align: \center]].do{|lay|
 					finalLayout = finalLayout.add(lay);
 				};
 				fltVlay = fltVlay.add(HLayout(*finalLayout) );
@@ -3222,7 +3243,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					});
 				});
 			};
-
 			removeButton.canFocus = false;
 			fltVlay = [removeButton] ++ fltVlay;
 			fltCanvas.layout = VLayout(*fltVlay);
@@ -3591,8 +3611,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modFunc {arg ndefKey, argIn, type, extraArgs, func,
-		mul=1, add=0, min, val, warp, lag, thisSpec;
-		var filterType, index, keyValues, spec, newArr, specInd;
+		mul=1, add=0, min, val, warp, lag, thisSpec, modifier=\mod;
+		var index, keyValues, spec, newArr, specInd;
 		if(argIn.isNumber, {
 			index = argIn-1;
 		}, {
@@ -3624,15 +3644,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			});
 			if(thisSpec.notNil, {spec = thisSpec});
 			if(spec.isNil, {spec = [-1,1] });
+			if(modifier == \mod, {
 			^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
 				func, mul, add, min, val, warp, lag);
+			}, {
+			^HIDMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
+				func, mul, add, min, val, warp, lag);
+			});
 		}, {
 			"Argument doesn't match synth".warn;
 		});
 	}
 
 	modMix {arg trackType, trackNum, modArg, modType, extraArgs,
-		mul=1, add=0, min, val, warp, lag, thisSpec, func;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier=\mod;
 		var typeKey, ndefKey;
 		typeKey = trackType.asString;
 		case
@@ -3643,7 +3668,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		ndefKey = ndefKey.asSymbol;
 		{
 			this.modFunc(ndefKey, modArg, modType, extraArgs, func,
-				mul, add, min, val, warp, lag, thisSpec);
+				mul, add, min, val, warp, lag, thisSpec, modifier);
 			server.sync;
 			this.refreshFunc;
 		}.fork(AppClock);

@@ -4474,7 +4474,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	*loadBaseCmds {
 
 		cW.add(\modspec, [\str], {|str1, str2, str3, str4|
-			SpecFile.read('modulation').postln;
+			SpecFile.read('common').postln;
 		}, "modspec: posts modulation specfile");
 
 		cW.add(\mods, [\str], {|str1, str2, str3, str4|

@@ -19,7 +19,6 @@ ModFile : Radicles {var <filePath, <libArr;
 		var dir, existFiles, fileName, classString, modPath;
 		case
 		{file == \synth} { modPath = "/Files/SynthFiles/"}
-		{file == \synth} { modPath = "/Files/SynthFiles/"}
 		{file == \spec} { modPath = "/Files/SpecFiles/"}
 		{file == \control} { modPath = "/Files/ControlFiles/"}
 		{file == \data} { modPath = "/Files/DataFiles/"}
@@ -111,7 +110,7 @@ ModFile : Radicles {var <filePath, <libArr;
 		arrayFromFile = this.writeArray(path);
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
-			if(this.array.flop[0].includes(key).notNil, {
+			if(this.array.flop[0].postln.includes(key), {
 				if(window, {
 					Window.warnQuestion(("This key already exists: " ++
 						"Are you sure you want to replace it?"), {

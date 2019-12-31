@@ -3,7 +3,7 @@ ModMap : Radicles {
 
 	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag;
 		var modMap, keyVals, defaultVal;
-		if(spec.isSymbol, {spec = SpecFile.read(\modulation, spec); });
+		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
 		if(modNodes.isNil, {
 			modIndex=0;

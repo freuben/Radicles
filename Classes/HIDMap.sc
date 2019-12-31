@@ -2,8 +2,8 @@ HIDMap : Radicles {
 	classvar <hidNodes, <hidInfoArr, hidIndex=0, <lagArr;
 
 	*map {arg ndef, key=\freq, type=\midicc, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag;
-		var hidMap, keyVals, defaultVal;
-		/*if(spec.isSymbol, {spec = SpecFile.read(\modulation, spec); });*/
+		var hidMap, keyVals, defaultVal, inFunc;
+		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
 		if(hidNodes.isNil, {
 			hidIndex=0;
@@ -15,17 +15,18 @@ HIDMap : Radicles {
 		keyVals = ndef.getKeysValues;
 		defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];
 		spec = spec.specFactor(mul, add, min, val, warp);
-		hidMap = this.getFunc(type, spec, extraArgs, func);
-		(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ hidMap.cs ++ ");").radpost.interpret;
-		hidNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
+		inFunc = ("{|val| (\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
+			", \" ++ val ++ \")\").radpostcont.interpret; }").interpret;
+		hidMap = this.getFunc(inFunc, type, spec, extraArgs, func);
+		/*hidNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
 			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
 			hidNodes.remove(item);
 			hidInfoArr.removeAt(index);
-		}); };
-		hidNodes = hidNodes.add([hidMap, ndef, key, defaultVal]);
-		hidInfoArr = hidInfoArr.add([hidMap.key, type, spec, extraArgs, func, mul, add, min, val, warp, lag]);
+		}); };*/
+		hidNodes = hidNodes.add([hidMap[0], ndef, key, defaultVal]);
+		hidInfoArr = hidInfoArr.add([hidMap[1], type, spec, extraArgs, func, mul, add, min, val, warp, lag]);
 		if(lag.notNil, {
-			this.lag(ndef.key.asString.divNumStr[1], key, lag);
+			this.lag(ndef, key, lag);
 		});
 		^hidMap;
 	}
@@ -40,7 +41,8 @@ HIDMap : Radicles {
 			{
 				value ?? {value = hidNodes[index][3]};
 				(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;
-				(hidNodes[index][0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
+				(this.getHIDType(hidInfoArr[index][1]).split($.)[0] ++ "(" ++ hidNodes[index][0] ++
+				").free;").radpost.interpret;
 				hidNodes.removeAt(index);
 				hidInfoArr.removeAt(index);
 		});
@@ -55,8 +57,8 @@ HIDMap : Radicles {
 		});
 	}
 
-	*getFunc {arg inFunc={}, type=\midicc, spec=[-1,1], extraArgs, func, inMin, inMax, replaceIndex;
-		var hidFuncString, compile, hidString, funcData;
+	*getHIDType {arg type;
+		var funcData;
 		case
 		{type == \midicc} {funcData = "MIDIdef.cc"}
 		{type == \midion} {funcData = "MIDIdef.noteOn"}
@@ -70,6 +72,13 @@ HIDMap : Radicles {
 		{type == \hidusageID} {funcData = "HIDdef.usageID"}
 		{type == \hiddevice} {funcData = "HIDdef.device"}
 		{type == \hidelement} {funcData = "HIDdef.element"};
+		^funcData;
+	}
+
+	*getFunc {arg inFunc={}, type=\midicc, spec=[-1,1], extraArgs, func, inMin, inMax, replaceIndex;
+		var hidFuncString, compile, hidString, funcData;
+		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
+		funcData = this.getHIDType(type);
 		if([\midicc, \midion, \midioff, \midiptouch, \miditouch, \midibend, \midiprogram].includes(type), {
 			inMin ?? {inMin=0};
 			inMax ?? {inMax=127};
@@ -98,15 +107,14 @@ HIDMap : Radicles {
 				extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
 			});
 			compile.radpost.interpret;
+			^[(hidString ++ "'").replace("(", ""), compile];
 		}, {
 			"HID type not Found".warn;
 		});
 	}
 
-	*lag {arg hidNum=1, key, value;
-		var hidNumIndex, string, ndef;
-		hidNumIndex = hidNum-1;
-		ndef = hidNodes[hidNumIndex][0];
+	*lag {arg ndef, key, value;
+		var string;
 		string = ndef.cs ++ ".lag(" ++ key.cs
 		++ ", " ++ value.cs ++ ");";
 		string.radpost.interpret;
@@ -116,35 +124,11 @@ HIDMap : Radicles {
 		lagArr = lagArr.add([ndef, key, value]);
 	}
 
-	*set {arg hidNum=1, key, value;
-		var hidNumIndex, string;
-		hidNumIndex = hidNum-1;
-		string = hidNodes[hidNumIndex][0].cs ++ ".set(" ++ key.cs
-		++ ", " ++ value.cs ++ ");";
-		string.radpost.interpret;
-	}
-
-	*xset {arg hidNum=1, key, value;
-		var hidNumIndex, string;
-		hidNumIndex = hidNum-1;
-		string = hidNodes[hidNumIndex][0].cs ++ ".xset(" ++ key.cs
-		++ ", " ++ value.cs ++ ");";
-		string.radpost.interpret;
-	}
-
 	*ndefs {
 		^hidNodes.flop[0];
 	}
 
-	*list {
-		ControlFile.read(\modulation).postln;
-	}
-
-	*read {arg type;
-		ControlFile.read(\modulation, type).cs.postln;
-	}
-
-	*getPresets {var result;
+/*	*getPresets {var result;
 		if(HIDMap.lagArr.notNil, {
 			result = hidNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
 				item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs]
@@ -167,6 +151,6 @@ HIDMap : Radicles {
 			}),
 			(newNdef ++ ".set(" ++ arr[4] ++ ", " ++ "Ndef(" ++ arr[0] ++ "));";)
 		]
-	}
+	}*/
 
 }
