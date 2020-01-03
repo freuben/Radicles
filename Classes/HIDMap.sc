@@ -1,7 +1,8 @@
 HIDMap : Radicles {
 	classvar <hidNodes, <hidInfoArr, hidIndex=0, <lagArr;
 
-	*map {arg ndef, key=\freq, type=\midicc, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag, action;
+	*map {arg ndef, key=\freq, type=\midicc, spec=[-1,1], extraArgs, func, mul=1, add=0,
+		min, val, warp, lag, action;
 		var hidMap, keyVals, defaultVal, inFunc;
 		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });

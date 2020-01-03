@@ -10,7 +10,6 @@ Main Radicles class
 Examples::
 
 code::
-
 //RADICLES MAIN
 doc //created new code document
 fade //post radicles fadeTime
@@ -23,6 +22,7 @@ imp All //loads all libraries
 
 //server
 boot //boot server
+
 
 //ASSEMBLAGE
 //assemblage start
@@ -418,6 +418,9 @@ unmodsnd 1 //unmod send at mixtrack 1 slot 1
 unmodsnd t 1 2 //unmod track 1 slot 2
 unmodsnd 1 2 //unmod mixtrack 1 slot 2
 
+//hid as mods
+vol t 1 midicc_(1) //map midi cc num 1 to volume track 1
+vol 2 midicc_(2) //map midi cc num 1 to vol 2 mixtrack
 
 //NDEF DIRECT
 ndefset track1 [freq, 1]
@@ -431,15 +434,19 @@ ndefset lag 1 pitchRatio //lag all values of ndef
 //$n1, $s1, $a1 and $f1 are variables specifying if its a number, string, array, function
 (fx $n1 pch -> pch $n1) //therefore here "pch 1", will be the same as and evaluate "fx 1 pch"
 (fede = fxset 1 1 0.5) //assign the cmd fxset 1 1 0.5 to the abstration "fede"
+
 //hid connect
 (midion 1 <> fx 1 pch) //midi noteOn num 1 will triger cmd "fx 1 pch"
 (midicc 6 <> fxset 1 1 1 $) //midicc num 6 will change $ val within cmd "fxset 1 1 1 val"
 (midicc 6 [0.5,2] <> fxset 1 1 1 $) //same but specified as array is the spec
 //some work to do on osc and hid with this
-(osc chat 127.0.0.1 57120) <> fxset 1 1 1 $)
+net 1 127.0.0.1 57120 //creates a network address called net1
+(osc chat net1 <> fxset 1 1 1 $) //route osc chat messages from net1 to fxset
 //make sure that worked:
-m = NetAddr("127.0.0.1", 57120);
-m.sendMsg("/chat", 0.1);
+~net1.sendMsg("/chat", 0.5);
+
+//check unmaping
+//some work to do hid with this
 
 //NEW FEATURES
 //implement features
@@ -465,5 +472,4 @@ modfxset t 1 pitchRatio [freq, 10]
 modfxset 1 2 [freq, 10]
 modfxset 1 pitchRatio [freq, 10]
 modsetfx 1 1 [freq, 1]
-
 ::

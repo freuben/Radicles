@@ -3915,13 +3915,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modFx {arg filterNum, modArg, modType, extraArgs,
-		mul=1, add=0, min, val, warp, lag, thisSpec, func;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier;
 		var typeKey, ndefKey;
 		this.fxWarn(filterNum, {|ndefKey|
 			if(modArg.notNil, {
 				{
 					this.modFunc(ndefKey, modArg, modType, extraArgs, func,
-						mul, add, min, val, warp, lag, thisSpec);
+						mul, add, min, val, warp, lag, thisSpec, modifier);
 					server.sync;
 					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
@@ -3932,12 +3932,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modFxTrack {arg trackType, trackNum, trackSlot, modArg, modType, extraArgs,
-		mul=1, add=0, min, val, warp, lag, thisSpec, func;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			if(modArg.notNil, {
 				{
 					this.modFunc(ndefKey, modArg, modType, extraArgs, func,
-						mul, add, min, val, warp, lag, thisSpec);
+						mul, add, min, val, warp, lag, thisSpec, modifier);
 					server.sync;
 					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
@@ -3969,7 +3969,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
-		mul=1, add=0, min, val, warp, lag, thisSpec, func;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn, modNdef;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
@@ -3977,7 +3977,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				thisBusIn = busInArr[0];
 				volArg = busInArr[1];
 				modNdef = this.modFunc(thisBusIn, volArg, modType, extraArgs, func,
-					mul, add, min, val, warp, lag, thisSpec);
+					mul, add, min, val, warp, lag, thisSpec, modifier);
 				modSendArr = modSendArr.add([trackType, trackNum, sendSlot, modNdef]);
 				server.sync;
 				this.refreshFunc;
