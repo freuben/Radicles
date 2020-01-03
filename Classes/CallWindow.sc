@@ -99,7 +99,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	callFunc {arg string, postWin, postWhere=\both, postType=\ln, postBool=true, callIndex;
 		var inputArr, typeArr, index, selectArr, selectItem, funcArr;
 		var arrString, arrInterpret, finalArr, callInd, thisStringArr, thisReplaceString;
-		var arr1, arr2, arr3, arr4, arr5, arrArr, arrArr2;
+		var arr1, arr2, arr3, arr4, arr5, arrArr, arrArr2, thisInd;
 		if(lang != \sc, {
 
 			if(string.contains("{").and(string.contains("}")), {
@@ -116,9 +116,9 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 					case
 					{string.contains("(").and(string.contains(")"))} {
 						if(string.contains("_"), {
-						inputArr = string.split2($ , ", ");
+							inputArr = string.split2($ , ", ");
 						}, {
-						inputArr = string;
+							inputArr = string;
 						});
 					}
 					{string.contains("[").and(string.contains("]"))} {
@@ -212,11 +212,22 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 						/*inputArr = inputArr.split2($ , ", ");*/
 						/*inputArr.cs.postln;*/
 					}, {
-					if(inputArr.contains("->"), {
-						this.association(inputArr, callInd);
-					}, {
-						("~callWindowGlobVar.add" ++ inputArr).radpost.interpret;
-					});
+						if(inputArr.contains("->"), {
+							this.association(inputArr, callInd);
+						}, {
+							case
+							{inputArr.contains("=")} {
+								arr1 = inputArr.copyRange(1, inputArr.size-2);
+								thisInd = arr1.find(" = ");
+								arr2 = arr1.copyFromStart(thisInd-1);
+								arr3 = arr1.copyRange(thisInd+3, arr1.size);
+								("~callWindowGlobVar.add(" ++ arr2.asSymbol.cs ++
+									", ['str'], {~callWindowGlobVar.callFunc(" ++ arr3.cs ++ ") });").radpost.interpret;
+							}
+							{inputArr.contains("<>")} {
+								this.hidconnect(inputArr);
+							};
+						});
 					});
 				}
 				/*{string.contains("[").and(string.contains("]"))} {
@@ -434,25 +445,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		cmd3A = cmd3A.reject({|item| item == "" });
 		cmd3B = cmd3B.reject({|item| item == "" });
 		"cmd3A".post; cmd3A.postln;
-		/*varArr = 	cmd3A.collect({|item|
-		if(item.find("$").notNil, {
-		case
-		{item.find("$n").notNil} {[\num, ("num" ++ item.replace("$n", ""))]}
-		{item.find("$s").notNil} {[\str, ("str" ++ item.replace("$s", ""))]}
-		{item.find("$a").notNil} {[\arr, ("arr" ++ item.replace("$a", ""))]}
-		{item.find("$f").notNil} {[\func, ("func" ++ item.replace("$f", ""))]};
-		}, {
-		case
-		{item.isNumber} {[\num, "num"]}
-		{item.isSymbol} {[\str, "str"]}
-		{item.isString} {[\str, "str"]}
-		{item.isArray} {[\arr, "arr"]}
-		{item.isFunction} {[\func, "func"]};
-		});
-		});*/
-
 		cmd3A.do({|item|
-
 			case
 			{(item.find("$n").notNil).or(item.isNumber)}
 			{varArr = 	varArr.add([\num, "num" ++ ncount]);
@@ -467,8 +460,8 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			{varArr = 	varArr.add([\func, "func" ++ fcount]);
 				fcount = fcount + 1};
 		});
-		"varArr".postln;
-		varArr.flop[1].postln;
+		/*		"varArr".postln;
+		varArr.flop[1].postln;*/
 		secondInd = [];
 		cmd3B.do{|item|
 			if(item.asString.find("$").notNil, {
@@ -510,6 +503,29 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			++ ", callIndex: " ++ callIndex ++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : "
 		++ assoArr[1].flop[0] ++ "\", replace: " ++ replace.cs ++ ");";
 		firstFunc.radpost.interpret;
+	}
+
+	hidconnect {arg string;
+		var str, str2, arr, ind, arr1, arr2, arr3, spec;
+		str = string.copyRange(1, string.size-2);
+		arr = str.split($ );
+		ind = arr.indexOfEqual("<>");
+		arr1 = arr.copyFromStart(ind-1);
+		arr2 = arr.copyToEnd(ind+1);
+		arr2 = arr2.collect({|item, index| if((item == "$").and(index == (arr2.size-1)), {"#"}, {item});});
+		str = arr2.asString;
+		str = str.copyRange(2, str.size-3).replace(",");
+		str = str.cs;
+		str = str.replace("$", "\" ++ val ++ \"");
+		str = str.replace("#\"", "\" ++ val");
+		arr3 = arr1.copyToEnd(1);
+		arr3 = arr3.collect({|item| if(item.isStringNumber, {item.interpret}, {item}); });
+		str2 = [];
+		arr3 = arr3.collect{|item| if(item.isString, {item.asSymbol }, {item }); };
+		arr3.do{|item| item.isArray; if(item.isArray, {spec = item }, {str2 = (str2 ++ item)}); };
+		if(spec.isNil, {spec = [0,1]});
+		("HIDMap.getFunc({|val| ~callWindowGlobVar.callFunc(" ++ str ++ ") }, " ++
+			arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 	}
 
 	loadStartUp {

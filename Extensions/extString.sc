@@ -60,8 +60,10 @@
 	isStringNumber {
 		var bol, item;
 		item = this;
+		if(item.findAll(".").size > 1, {bol = false}, {
 		if(item.contains("."), {item = item.replace(".")});
 		bol = "1234567890".ascii.includesAll(item.ascii);
+		});
 		^bol;
 	}
 

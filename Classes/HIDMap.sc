@@ -1,7 +1,7 @@
 HIDMap : Radicles {
 	classvar <hidNodes, <hidInfoArr, hidIndex=0, <lagArr;
 
-	*map {arg ndef, key=\freq, type=\midicc, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag;
+	*map {arg ndef, key=\freq, type=\midicc, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag, action;
 		var hidMap, keyVals, defaultVal, inFunc;
 		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
@@ -15,8 +15,12 @@ HIDMap : Radicles {
 		keyVals = ndef.getKeysValues;
 		defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];
 		spec = spec.specFactor(mul, add, min, val, warp);
+		if(action.isNil, {
 		inFunc = ("{|val| (\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
 			", \" ++ val ++ \")\").radpostcont.interpret; }").interpret;
+		}, {
+		inFunc = action;
+		});
 		hidMap = this.getFunc(inFunc, type, spec, extraArgs, func);
 		/*hidNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
 			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
@@ -94,17 +98,36 @@ HIDMap : Radicles {
 				hidString = "('hid" ++ replaceIndex;
 			});
 			if(func.notNil, {
+				if(type == \osc, {
+				hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ func.cs ++ ".(" ++ spec.cs
+					++ ".asSpec.map(args[0][1].postln.linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0))) )}";
+				}, {
 				hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ func.cs ++ ".(" ++ spec.cs
 				++ ".asSpec.map(args[0].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0))) )}";
+				});
 			}, {
+					if(type == \osc, {
+				hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ spec.cs ++
+					".asSpec.map(args[0][1].postln.linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0)) )}";
+				}, {
 				hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ spec.cs ++
 				".asSpec.map(args[0].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0)) )}";
+				});
 			});
 			if(extraArgs.isNil, {
 				compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ ");";
 			}, {
+				if(type == \osc, {
+					if(extraArgs.size > 1, {
+						extraArgs[1] = ("~" ++ extraArgs[1]);
+						extraArgs = extraArgs.collect({|item, index| if(index == 1, {item}, {item.cs}); });
+					});
+				compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ "," ++
+				extraArgs.asString.replace("[", "").replace("]", "") ++ ");";
+				}, {
 				compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ "," ++
 				extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
+				});
 			});
 			compile.radpost.interpret;
 			^[(hidString ++ "'").replace("(", ""), compile];

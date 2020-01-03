@@ -11,6 +11,16 @@ Examples::
 
 code::
 
+//RADICLES MAIN
+doc //created new code document
+fade //post radicles fadeTime
+fade 1 //set fadeTime to 1
+
+//libraries
+imp Main //loads library
+imp [Main, FedPlugs] //loads an array of libraries
+imp All //loads all libraries
+
 //server
 boot //boot server
 
@@ -22,31 +32,15 @@ asm 2 1 1 //trackNum, busNum, chanNum
 asm 2 1 [[1,2],2,2] //trackNum, busNum, chanNumArr
 asm 2 1 1 pan2 //trackNum, busNum, chanNum, spaceType
 asm 2 1 [1,2,2] bal2 //trackNum, busNum, chanNumArr
-//asm UI
-asm mix
-asm nomix
-//shortcuts:
+//mix UI
 mix
 nomix
 
-asm names //returns track names
-asm preprec
-asm startrec
-asm stoprec
-asm add track //auto adds track or bus
-asm add bus 2 //adds stereo bus
-asm addn 2 track //adds 2 tracks
-asm addn 3 bus 2 //adds 3 stereo buses
-asm remove track //removes last track
-asm remove bus //removes last bus
-asm remove track 2 //removes track number 2
-asm removen 2 track //removes 2 last tracks
-asm removen [3,5] track //removes track numbers in array
-//shortcuts
-t names
-prec
-rec
-srec
+//mixer
+mixnames
+prec //prepare recording
+rec //record
+srec //start recording
 t add //add track
 b add //add bus
 t add 2 ///adds stereo track
@@ -58,13 +52,7 @@ b rmv //remove bus
 t rmvn 2 //remove 2 tracks
 b rmvn [2,4] //remove tracks 2 and 4
 
-asm vol track 1 -90
-asm vollag bus 1 0.1
-asm pan bus 1 -0.5
-asm panlag bus 1 1
-asm trim bus 1 -0.5
-asm panlag bus 1 1
-//same in shortcuts:
+//mix control:
 vol t 1 -20
 vollag t 1 0.1
 pan b 1 -0.5
@@ -108,19 +96,9 @@ vol b 0 //all buses to 0
 vol m 0 //master to 0
 vol 0 //all tracks to 0
 pan t 0.5 //all tracks to 0
-pan 0
+panlag 1 //lag all pans to 1
 trim t -10
-trim 0
-
-asm snd track 1 2 //send in track 1, slot 1, to bus 2
-asm snd track 1 2 2 //send in track 1, slot 2, to bus 2
-asm snd track 1 2 2 -10 //send in track 1, slot 2, to bus 2, vol -10
-asm sndry track 1 2 //send (no master) in track 1, slot 1, to bus 2
-asm sndry track 1 2 2 //send (no master) in track 1, slot 2, to bus 2
-asm sndry track 1 2 2 //send (no master) in track 1, slot 2, to bus 2, vol -10
-asm setsnd track 1 0 //set send in track 1 to 0
-asm setsnd track 1 1 0 //set send in track 1, slot 1 to 0
-asm setsnd track 1 1 0 1 //set send in track 1, slot 1 to 0 with lag of 1
+trimlag 1 //lag all trims to 1
 
 /* CHECK REMOVING BUSES - BUG?*/
 asm rmvsnd track 1 2
@@ -128,7 +106,7 @@ asm snd track 1 0 //remove track 1, bus 1
 asm snd track 1 1 0 //remove track 1, bus 1
 asm snd track 1 2 0 //remove track 1, bus 2
 
-//shortcuts:
+//sends:
 snd t 1 1 //send in track 1, slot 1, bus 1
 snd t 1 2 2 //send in track 1, slot 2, bus 2
 snd t 1 2 2 -10 //send in track 1, slot 2, bus 2, vol -10
@@ -144,43 +122,7 @@ setsnd t 1 1 0 1 //set track 1, slot 1, val 0, lag 1
 setsnd 2 2 -10 //set mixtrack 2, slot 2, val
 setsnd 2 2 -10 1 //set mixtrack 2, slot 2, val, lag
 
-asm fx track 1 pch //set fx called pch in track 1, slot 1
-asm fx track 1 2 pch //set fx called pch in track 1, slot 2
-asm fx track 1 2 pch [pitchRatio, 0.5, pitchDispertion, 0.1] //same with extraArgs
-asm fx track 1 2 pch [1, 0.5, 2, 0.1] //same with indexed extraArgs
-
-asm fxset track 1 1 //gets args of fxs at track 1 slot 1
-asm fxset track 1 1 1 //gets arg value of arg 1 in fxs at track 1 slot 1
-asm fxset track 1 1 1 0.5 //sets fx arg for arg 1 in fxs at track 1 slot 1
-asm fxset track 1 1 pitchRatio 0.5 //sets fx arg for arg pitchRatio in fxs at track 1 slot 1
-asm fxset track 1 [1, 0.8, 2, 1.2]
-asm fxset track 1 2 [1, 0.8, 2, 1.2]
-asm fxs //posts active effects
-asm setfx 1 //gets args from first fx
-asm setfx 1 1 //gets arg value of arg 1 from first fx
-asm setfx 1 1 0.5 //sets fx arg for arg 1 from first fx
-asm setfx 1 pitchRatio 0.5 //sets fx arg for arg pitchRatio from first fx
-asm setfx 1 [1, 0.8, 2, 1.2]
-
-//lagging fxs
-asm fxlag track 1 1 //gets args of fxs at track 1 slot 1
-asm fxlag track 1 1 1 //gets arg value of arg 1 in fxs at track 1 slot 1
-asm fxlag track 1 1 1 0.5 //sets fx arg for arg 1 in fxs at track 1 slot 1
-asm fxlag track 1 1 pitchRatio 0.5 //sets fx arg for arg pitchRatio in fxs at track 1 slot 1
-asm fxlag track 1 [1, 0.8, 2, 1.2]
-asm fxlag track 1 2 [1, 0.8, 2, 1.2]
-asm lagfx 1 //gets args from first fx
-asm lagfx 1 1 //gets arg value of arg 1 from first fx
-asm lagfx 1 1 0.5 //sets fx arg for arg 1 from first fx
-asm lagfx 1 pitchRatio 0.5 //sets fx arg for arg pitchRatio from first fx
-asm lagfx 1 [1, 0.8, 2, 1.2]
-asm fxremove track 1
-asm fxremove track 1 2
-asm fxsetn //array of tracks to set
-asm fxlagn //array of tracks to lag
-asm fxlagn track 1 2 10 //lag all parameters in filter
-
-//shortcuts
+//fxs
 fx t 1 pch
 fx t 1 2 harm
 fx b 1 pch [0, 0.5, 1, 0.1]
@@ -241,25 +183,38 @@ fxclear t 1
 fxclear t 1 2
 fxclear 1 1 //multitrack
 clearfx 1
+//getspec
+fxgetspec t 1 1 1
+fxgetspec t 1 1 pitchRatio
+fxgetspec m 1 1
+fxgetspec m 1 pitchRatio
+fxgetspec 1 1
+fxgetspec 1 pitchRatio
+getfxspec 1 1
+getfxspec 1 pitchRatio
 
-//get filter information
+//get fx information
 fxget m 1
 fxget t 1
 fxget t 1 1
+fxget m 1 1
+fxget m 1 pitchRatio
+fxget t 1 1 1
+fxget t 1 1 pitchRatio
 fxgetlag m 1
 fxgetlag t 1 1
 fxget 1 //multitrack num
 fxget 1 1
+fxget 1 1 1
+fxget 1 1 pitchRatio
 fxgetlag 1
 fxgetlag 1 1
 getfx 1
+getfx 1 1
+getfx 1 pitchRatio
 getlagfx 1
 
-asm mute track 1
-asm mute track 1 1
-asm rec track 1 0
-asm solo track 1 1
-//shortcuts
+//mixer buttons
 mute t 1
 unmute t 1
 recen t 1
@@ -267,27 +222,20 @@ recdis t 1
 solo t 1
 unsolo 1
 
-
-asm in block1 //ndef (input ndef block1 to default input arguments track 1)
-asm in block1 1 //ndef, trackNum (input ndef to track 1)
-asm in block2 2 //ndef block2 into track 2
-
-asm inmenu 1 //set in menut to slot 1
-asm getinmenu 1
-asm getoutmenu track 1
-asm getoutmenu 1
-asm outmenu track 1
-asm getoutmenu track 1
-//shortcut
+//mixer I/Os
 inmenu 1 2
 getinmenu 1
+getinmenu t 1
+outmenu 1 1 //mixTrack, master as out
 outmenu t 1 0 //0 = not master, 1 = master
 getoutmenu 1
+getoutmenu t 1
 
-//radicles
-rad doc //created new code document
+dirinrec [0,1]
+mapouts [1,2]
 
-//blocks
+
+//BLOCKS
 blk add
 blk clock
 blk ply
@@ -321,18 +269,179 @@ pl 1 marilyn1 //play
 lp 1 marilyn1 //loop
 pl 1 marilyn1 [1, 0.9] //play w/ extraArgs
 lp 1 marilyn1 [1, 1.1] //loop w/ extraArgs
+in 2 <> blk 1 //audio input 2 to block 1
+in 2 1 //same as above: audio input 2 to block 1
+st 1 //stop block 1
+st 1 2 //stop block 1 with fade of 2 secs
+st 1-4 //stop blocks 1 to 4
+st 1-4 2 //stop blocks 1 to 4 with fade of 2 secs
+st [2,4] //stop blocks 2 and 4
+st [2,4] 2 //stop blocks 2 and 4 with fade of 2 secs
+
+blkn 4 //add 4 blocks
+blkn 4 2 //add 4 blocks of 2 channels
 
 //before pattern
 blk clock
 blk tempo 80
-blk pn 1 test1
-blk pn 1 [[note, seq, [10, 6, 2, 2]], [dur, 0.5], [instrument, perkysine]]
+
+pn 1 test1
+pn 2 [[note, seq, [10, 6, 2, 2]], [dur, 0.5], [instrument, perkysine]]
+
+//setting blocks
+blksetn 1 [freq, 10]
+blklagn 1 [freq, 1]
+blkxsetn 1 [freq, 10]
 
 //routing
 blk 1 <> 1 //rounting? block 1 into track 1 str str num str num
 blk 2-4 <> 2 //blocks 2,3,4 into track 2
 blk 1-4 <> 2-5 //blocks 1,2,3,4 insto tracks 2,3,4,5
 
+ndef perkySine <> 2 //ndef called perkySine goes into track 2
+
+
+//MODULATION
+mods //list of mod types
+modspec //list of mod spec types
+
+//base mods
+mod play1 freq sin [200,400]
+mod play1 freq sin freq1
+mod play1 freq sin freq1 [freq, 1]
+
+//check upmap -> currently not working with default value. fix modmap so that
+unmod play1 freq
+unmod play1 freq 1000
+
+getmods
+
+unmod 1
+unmod 1 100
+
+//fx mods
+fxset t 1 2 1 sin //mod
+fxset t 1 2 pitchRatio sin_(freq, 1, mul: 0.5) //mod with extraArgs
+fxset m 2 1 sin //mod
+fxset m 2 pitchRatio sin //mod
+fxset 1 1 1 sin //mod
+fxset 1 1 pitchRatio sin_(freq, 10) //mod
+setfx 1 1 sin
+setfx 1 pitchRatio sin_(freq, 2)
+
+//change mod values
+modfxget t 1 2 pitchRatio
+modfxget t 1 2 1
+modfxget m 2 pitchRatio
+modfxget m 2 1
+modfxget 1 1
+modfxget 1 pitchRatio
+modgetfx 1 1
+modgetfx 1 pitchRatio
+modfxset t 1 2 pitchRatio [freq, 1, mul, 0.1]
+modfxset t 1 2 1 [freq, 1]
+modfxset m 2 pitchRatio [freq, 1]
+modfxset m 2 1 [freq, 1]
+modfxset 1 1 [freq, 1]
+modfxset 1 pitchRatio [freq, 1]
+modsetfx 1 1 [freq, 1]
+modsetfx 1 pitchRatio [freq, 1]
+//unmodfxs:
+unmodfx t 1 2 pitchRatio
+unmodfx t 1 2 1
+unmodfx m 2 pitchRatio
+unmodfx m 2 1
+unmodfx 1 1
+unmodfx 1 pitchRatio
+fxunmod 1 1
+fxunmod 1 pitchRatio
+
+//continue here
+blkset 1 1 lfn1_(freq, 10) //mod
+blkset 1 rate sin //mod
+blkgetspec 1 1 //posts spec
+blkgetspec rate 1 //posts spec
+
+modblkget 1 rate
+modblkset 1 rate [freq, 1]
+unmodblk 1 1
+unmodblk 1 rate
+
+//mixer mods
+vol t 1 sin_(freq, 10)
+pan b 1 sin
+trim t 2 sin
+vol 1 sin_(freq, 10)
+pan 7 sin
+trim 1 sin
+//with dashes for more tracks
+vol t 1-6 sin_(freq, 3)
+pan b 1-3 sin
+trim t 1-3 sin
+vol 1-6 sin_(freq, 3)
+pan 1-6 sin
+trim 1-6 sin
+//with arrays for specific tracks
+vol t [1,3,5] sin_(freq, 3)
+pan b [1,3] sin
+trim t [1,3] sin
+vol [1,2,4,6] sin_(freq, 3)
+pan [1,2,4,6] sin
+//bulks
+vol t sin_(freq, 3) //all tracks to sin
+vol b sin //all buses to sin
+vol m sin //master to sin
+pan t sin //all tracks to sin
+trim t sin
+//not implemented yet:
+modvolget
+modvolset
+//etc
+
+//send mods
+setsnd t 1 sin_(freq, 1)
+setsnd t 1 1 sin //set track 1, slot 1, mod
+setsnd 2 sin_(freq, 1) //set mixtrack 2, slot 1, mod
+setsnd 2 2 sin_(freq, 1) //set mixtrack 2, slot 2, mod
+//get and set send mods
+modsndget t 1
+modsndget t 1 1
+modsndget 1
+modsndget 1 2
+modsndset t 1 [freq, 1]
+modsndset t 1 1 [freq, 1]
+modsndset 1 [freq, 1]
+modsndset 1 2 [freq, 1]
+//unmods
+unmodsnd t 1 //unmod send at track 1 slot 1
+unmodsnd 1 //unmod send at mixtrack 1 slot 1
+unmodsnd t 1 2 //unmod track 1 slot 2
+unmodsnd 1 2 //unmod mixtrack 1 slot 2
+
+
+//NDEF DIRECT
+ndefset track1 [freq, 1]
+ndefset lag 1 //lag all values of ndef
+ndefset lag 1 1 //lag all values of ndef
+ndefset lag 1 pitchRatio //lag all values of ndef
+
+//associations
+//this are expressed between round brackets "()"
+//when there is an arrow "->", then first statment is abstracted into second statment
+//$n1, $s1, $a1 and $f1 are variables specifying if its a number, string, array, function
+(fx $n1 pch -> pch $n1) //therefore here "pch 1", will be the same as and evaluate "fx 1 pch"
+(fede = fxset 1 1 0.5) //assign the cmd fxset 1 1 0.5 to the abstration "fede"
+//hid connect
+(midion 1 <> fx 1 pch) //midi noteOn num 1 will triger cmd "fx 1 pch"
+(midicc 6 <> fxset 1 1 1 $) //midicc num 6 will change $ val within cmd "fxset 1 1 1 val"
+(midicc 6 [0.5,2] <> fxset 1 1 1 $) //same but specified as array is the spec
+//some work to do on osc and hid with this
+(osc chat 127.0.0.1 57120) <> fxset 1 1 1 $)
+//make sure that worked:
+m = NetAddr("127.0.0.1", 57120);
+m.sendMsg("/chat", 0.1);
+
+//NEW FEATURES
 //implement features
 //queries
 getvol
@@ -345,8 +454,16 @@ l{[rrand(0.1,2), 0.2]}{[0.1,2]} //loop
 t{rrand(0.1,2).postln}{0.1} //do once
 t{[rrand(0.1,2), 0.2]}{[0.1,2]} //do once
 //ideas of variable associations
-(a = {rrand(0.1,4.0)});
-vol 1 a
+(~a1 = {rrand(0.1,4.0)});
+vol 1 ~a1
 
+//revise buffer freeing when same buffer...
+
+//don't implement yet:
+modfxset t 1 2 [freq, 10]
+modfxset t 1 pitchRatio [freq, 10]
+modfxset 1 2 [freq, 10]
+modfxset 1 pitchRatio [freq, 10]
+modsetfx 1 1 [freq, 1]
 
 ::

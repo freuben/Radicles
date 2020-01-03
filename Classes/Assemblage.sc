@@ -1982,7 +1982,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
 				if(hidNodes.notEmpty, {
-				hidPan = hidNodes.flop[1].includes(Ndef(panKey));
+					hidPan = hidNodes.flop[1].includes(Ndef(panKey));
 				}, {hidPan = false});
 			}, {hidPan = false});
 			case
@@ -2035,7 +2035,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
 				if(hidNodes.notEmpty, {
-				hidVol = hidNodes.flop[1].includes(volNdef);
+					hidVol = hidNodes.flop[1].includes(volNdef);
 				}, {hidVol = false});
 			}, {hidVol = false});
 			if((volValue.cs.find("mod").notNil).or(hidVol), {
@@ -2135,11 +2135,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				thisSpec = this.getSpec(thisKey.asString.replace("In", "").asSymbol, \volume).asSpec;
 				selValue = thisNdefVal.flop[1][thisNdefVal.flop[0].indexOf(selArg)];
 				hidNodes = HIDMap.hidNodes;
-			if(hidNodes.notNil, {
+				if(hidNodes.notNil, {
 					if(hidNodes.notEmpty, {
-				hidKnob = hidNodes.flop[1].includes(Ndef(thisKey));
+						hidKnob = hidNodes.flop[1].includes(Ndef(thisKey));
 					}, { hidKnob = false });
-			}, {hidKnob = false});
+				}, {hidKnob = false});
 				if((selValue.cs.find("mod").notNil).or(hidKnob), {
 					it.background = colorCritical;
 					it.enabled = false;
@@ -2181,8 +2181,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
-			if(hidNodes.notEmpty, {
-				hidTrim = hidNodes.flop[1].includes(Ndef(thisKey));
+				if(hidNodes.notEmpty, {
+					hidTrim = hidNodes.flop[1].includes(Ndef(thisKey));
 				}, {hidTrim = false});
 			}, {hidTrim = false});
 
@@ -3151,13 +3151,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				.font_(basicFont)
 				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
 				hidNodes = HIDMap.hidNodes;
-			if(hidNodes.notNil, {
-						if(hidNodes.notEmpty, {
+				if(hidNodes.notNil, {
+					if(hidNodes.notEmpty, {
 						hidIndex = hidNodes.flop[2].indexOfEqual(argArr[index]);
 						hidFx = (hidNodes.flop[1].includes(Ndef(filterTag)))
 						.and(hidIndex.notNil);
 					}, {hidFx = false});
-			}, {hidFx = false});
+				}, {hidFx = false});
 				if(specBool, {
 					thisSpec = specArr[index][1].asSpec;
 					thisFunc = specArr[index][2];
@@ -3209,10 +3209,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							fxKnob.enabled = false;
 							fxKnob.string = defaultVal.cs;
 							if(hidFx, {
-							fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
-						}, {
-							fxKnobText.string = defaultVal.key.asString.copyRange(0, 7);
-						});
+								fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
+							}, {
+								fxKnobText.string = defaultVal.key.asString.copyRange(0, 7);
+							});
 						});
 					});
 
@@ -3648,25 +3648,32 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						spec =specInd.detect({|item| item[0] == keyValues[0] });
 						func ?? {if(spec[2].notNil, {func = spec[2] }) };
 						spec = spec[1];
+						spec.postln;
 						if(spec.includes(\db), {
 							spec = spec.copyFromStart(1);
 							spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
+							if(modifier == \hid, {
+								spec = spec ++ [\db];
+							});
 						});
 					}, {
 						spec = [-1,1];
 					});
 				});
 			}, {
-				spec = [-90, 6];
+				spec = [-90,6];
+				if(modifier == \hid, {
+					spec = spec ++ [\db];
+				});
 			});
 			if(thisSpec.notNil, {spec = thisSpec});
 			if(spec.isNil, {spec = [-1,1] });
 			if(modifier == \mod, {
-			^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
-				func, mul, add, min, val, warp, lag);
+				^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
+					func, mul, add, min, val, warp, lag);
 			}, {
-			^HIDMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
-				func, mul, add, min, val, warp, lag);
+				^HIDMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
+					func, mul, add, min, val, warp, lag);
 			});
 		}, {
 			"Argument doesn't match synth".warn;
@@ -3679,7 +3686,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		typeKey = trackType.asString;
 		case
 		{(modArg == \vol).or(modArg == \volume)} {
-			ndefKey = (typeKey ++ trackNum); modArg = \volume }
+			ndefKey = (typeKey ++ trackNum); modArg = \volume;
+			if(modifier == \hid, {
+				func = {|val| val.round(0.1)}; lag = 0.01;
+			});
+		}
 		{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
 		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
 		ndefKey = ndefKey.asSymbol;
@@ -4075,7 +4086,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		^result;
 	}
 
-		setSndMod {arg trackType, trackNum, trackSlot, extraArgs;
+	setSndMod {arg trackType, trackNum, trackSlot, extraArgs;
 		var ndefString;
 		ndefString = this.findSndModNdef(trackType, trackNum, trackSlot);
 		if(ndefString.notNil, {
