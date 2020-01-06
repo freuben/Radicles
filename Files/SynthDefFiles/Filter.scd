@@ -61,8 +61,8 @@
 	signal = pitch1 + pitch2 + pitch3 + pitch4;
 	signal = signal/4;
 	signal;
-} ], [ 'ctp', {arg rate=1, pitchDispersion=0.0, timeDispersion=0.0001, lag=0.01,
- windowSize=0.02;
+} ], [ 'ctp', {arg rate=1 -> [(1/12),10], pitchDispersion=0.0 -> [0.01,2.01, \exp, {|val| (val-0.01)}], timeDispersion=0.0001 -> [0.01,2.01, \exp, {|val| (val-0.01)}], lag=0.01 -> [0.01,15],
+	windowSize=0.02 -> [0.01,3];
 	var freq, hasFreq, latch1, latch2, latch3, input, maxDelay=12;
 	input = \in;
 	#freq, hasFreq = Pitch.kr(input);
@@ -71,8 +71,8 @@
 	latch3 = (latch1.cpsmidi - (latch1.cpsmidi - latch2.cpsmidi)).midicps.min(20000).max(20);
 	PitchShift.ar(input, windowSize, (latch1/latch3)[0].lag(lag), pitchDispersion,
  timeDispersion);
-} ], [ 'cbg', {arg decayTime=0.5, freq=10, lag=5.0;
-	CombL.ar(\in * (LFNoise0.ar(freq.lag(lag)) > 0), 0.2, 0.2, decayTime);} ], [ 'lpf', {arg freq=20000, lag=0.1; LPF.ar(\in, freq.lag(lag));} ], [ 'convrev1', {arg mix=1.0 -> [ 0, 1];
+} ], [ 'cbg', {arg decayTime=0.5 -> [0.0,10], freq=10 -> [1.0,1000, \exp], lag=5.0 -> [0.01,15];
+	CombL.ar(\in * (LFNoise0.ar(freq.lag(lag)) > 0), 0.2, 0.2, decayTime);} ], [ 'lpf', {arg freq=20000 -> [10,20000, \exp], lag=0.1 -> [0,30]; LPF.ar(\in, freq.lag(lag));} ], [ 'convrev1', {arg mix=1.0 -> [ 0, 1];
 	var input, output;
 	input = \in * Line.kr(0,1,0.1);
 	output = \convrev;
@@ -145,4 +145,15 @@ sig = sig * 3;
 	SinOsc.ar(modFreq),
 	Saw.ar(modFreq),
 		Pulse.ar(modFreq)]);
+} ], [ 'hpf', {arg freq=20000 -> [10,20000, \exp], lag=0.1 -> [0,30]; HPF.ar(\in, freq.lag(lag));} ], [ 'eq8', {arg freq1=30 -> [20,20000,\exp], freq2=80 -> [20,20000,\exp], freq3=200 -> [20,20000,\exp], freq4=500 -> [20,20000,\exp], freq5=1200 -> [20,20000,\exp], freq6=3500 -> [20,20000,\exp], freq7=10000 -> [20,20000,\exp], freq8=17000 -> [20,20000,\exp], gain1=0 -> [-24,24], gain2=0 -> [-24,24], gain3=0 -> [-24,24], gain4=0 -> [-24,24], gain5=0 -> [-24,24], gain6=0 -> [-24,24], gain7=0 -> [-24,24], gain8=0 -> [-24,24], q1=0.71 -> [0.1, 10, \exp], q2=1.10 -> [0.1, 2, \exp], q3=0.98 -> [0.1, 100, \exp], q4=0.71 -> [0.1, 100, \exp], q5=0.71 -> [0.1, 100, \exp], q6=0.71 -> [0.1, 100, \exp], q7=0.71 -> [0.1, 2, \exp], q8=0.71 -> [0.1, 10, \exp], on1=0 -> [0,1, \lin, 1, 0], on2=1 -> [0,1, \lin, 1, 0], on3=1 -> [0,1, \lin, 1, 0], on4=1 -> [0,1, \lin, 1, 0], on5=1 -> [0,1, \lin, 1, 0], on6=1 -> [0,1, \lin, 1, 0], on7=1 -> [0,1, \lin, 1, 0], on8=0 -> [0,1, \lin, 1, 0], lag=0.5-> [0,10], masterGain=0 -> [ -inf, 6, 'db', 0, -inf, " dB" ], lagOn=0.1 -> [0,10];
+	var signal;
+	signal = (on1.linlin(0,1,1,0).lag(lagOn)*\in) + (on1.lag(lagOn)*BHiPass.ar(\in,freq1.lag(lag),1/q1.lag(lag), gain1.dbamp.lag(lag);));
+	signal = (on2.linlin(0,1,1,0).lag(lagOn)*signal) + (on2.lag(lagOn)*BLowShelf.ar(signal,freq2.lag(lag),1/(q2).lag(lag),gain2.dbamp.lag(lag)));
+	signal = (on3.linlin(0,1,1,0).lag(lagOn)*signal) + (on3.lag(lagOn)*BPeakEQ.ar(signal,freq3.lag(lag),1/(q3).lag(lag),gain3.dbamp.lag(lag)));
+	signal = (on4.linlin(0,1,1,0).lag(lagOn)*signal) + (on4.lag(lagOn)*BPeakEQ.ar(signal,freq4.lag(lag),1/(q4).lag(lag),gain4.dbamp.lag(lag)));
+	signal = (on5.linlin(0,1,1,0).lag(lagOn)*signal) + (on5.lag(lagOn)*BPeakEQ.ar(signal,freq5.lag(lag),1/(q5).lag(lag),gain5.dbamp.lag(lag)));
+	signal = (on6.linlin(0,1,1,0).lag(lagOn)*signal) + (on6.lag(lagOn)*BPeakEQ.ar(signal,freq6.lag(lag),1/(q6).lag(lag),gain6.dbamp.lag(lag)));
+	signal = (on7.linlin(0,1,1,0).lag(lagOn)*signal) + (on7.lag(lagOn)*BHiShelf.ar(signal,freq7.lag(lag),1/(q7).lag(lag),gain7.dbamp.lag(lag)));
+	signal = (on8.linlin(0,1,1,0).lag(lagOn)*signal) + (on8.lag(lagOn)*BLowPass.ar(signal,freq8.lag(lag),1/q8.lag(lag), gain8.dbamp.lag(lag)));
+	signal * masterGain.dbamp;
 } ] ]

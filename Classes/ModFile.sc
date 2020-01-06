@@ -110,7 +110,8 @@ ModFile : Radicles {var <filePath, <libArr;
 		arrayFromFile = this.writeArray(path);
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
-			if(this.array.flop[0].postln.includes(key), {
+			if(this.array.flop[0].includes(key), {
+			/*if(this.array.flop[0].postln.includes(key), {*/
 				if(window, {
 					Window.warnQuestion(("This key already exists: " ++
 						"Are you sure you want to replace it?"), {
@@ -507,10 +508,11 @@ SynthDefFile : ModFile {
 	* write {arg class=\filter, key, dataArr, desc, path, post=true;
 		var synthFile;
 		synthFile = this.new(\synthdef, class);
+		dataArr.cs.postln;
 		if(dataArr.specArr.notNil, {
 			^synthFile.write(key, dataArr, true, {
 				SynthFile.write(class, key, dataArr.specFunc, false, path, false);
-				SpecFile.write(class, key, dataArr.specArr, false, path, false);
+				SpecFile.write(class, key, dataArr.specArr.postln, false, path, false);
 				if(desc.notNil, {
 					DescriptionFile.write(class, key, desc, false, path, false);
 				});

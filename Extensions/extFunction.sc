@@ -38,11 +38,12 @@
 		if(string.includesString("->"), {
 		stringFunc = string.replace("-> [", "->[");
 		indecesFind = stringFunc.findAll("->[");
-		indecesArgs = argNames.collect{|item| stringFunc.find(item.asString); };
-		indArgs = indecesFind.collect{|item|
+		/*indecesArgs = argNames.collect{|item| stringFunc.find(item.asString); };*/
+		/*indArgs = indecesFind.collect{|item|
 			indecesArgs.indexOf(indecesArgs.reject{|it| item < it}.last);
-		};
-		arrArgs = argNames.atAll(indArgs);
+		};*/
+		/*arrArgs = argNames.atAll(indArgs);*/
+			arrArgs = argNames;
 		if(indecesFind.notNil, {
 			indecesBrack = stringFunc.findAll("]");
 			indecesClose = indecesFind.collect{|it|

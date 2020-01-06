@@ -3793,9 +3793,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
+						if(fxArg.isSymbol, {
 						("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
 							value.cs ++ ");").radpostcont.interpret;
+						}, {
 						this.prepArrArg(fxArg, ndefKey, \set, value);
+						});
 					});
 					server.sync;
 					this.updateFxWin(ndefKey);
@@ -3821,10 +3824,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
+						if(fxArg.isSymbol, {
+							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
+							value.cs ++ ");").radpostcont.interpret;
+						}, {
 						if(fxArg.select({|item, index| index.even.and(item == 0) }).isEmpty, {
 							this.prepArrArg(fxArg, ndefKey, \set, value);
 						}, {
 							"wrong arg number, should be numbers starting with 1".warn;
+						});
 						});
 					});
 					server.sync;
