@@ -74,7 +74,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			});
 
 			//add from file
-			rootDir = (mainPath ++ "Settings/CallWindow/");
+			rootDir = (filesPath ++ "Settings/CallWindow/");
 
 			if(settings.notNil, {
 				this.addSettings(settings.asString);

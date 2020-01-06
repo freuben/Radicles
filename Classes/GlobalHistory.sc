@@ -10,7 +10,7 @@ GlobalHistory : Radicles {
 
 		fileName ?? {fileName = Date.getDate.asString};
 
-		path = (mainPath ++ "Settings/GlobalHistory/" ++ fileName ++ ".scd");
+		path = (filesPath ++ "Settings/GlobalHistory/" ++ fileName ++ ".scd");
 
 		writeHistoryFunc = {
 			file = File(path, "a+");

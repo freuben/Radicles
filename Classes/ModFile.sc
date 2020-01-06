@@ -26,7 +26,7 @@ ModFile : Radicles {var <filePath, <libArr;
 		{file == \synthdef} { modPath = "/Files/SynthDefFiles/"}
 		{file == \preset} { modPath = "/Settings/Presets/"}
 		;
-		thisPath ?? {thisPath = mainPath};
+		thisPath ?? {if(file == \preset, {thisPath = filesPath}, {thisPath = mainPath});};
 		dir = (thisPath ++ modPath);
 		PathName(dir).files.do{|item|
 			existFiles = existFiles.add(item.fileNameWithoutDoubleExtension.asSymbol);

@@ -957,7 +957,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 			};
 			if(insert, {
-				"insert is true".postln;
+				/*"insert is true".postln;*/
 				routInd = routArr1.flop[0].indexOf(filterTag);
 				("Ndef(" ++ routArr1[routInd][0].cs ++ ", " ++
 					routArr1[routInd][1].filterFunc(Ndef(routArr1[routInd-1][0])).cs
@@ -972,7 +972,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					};
 				});
 			}, {
-				"insert is false".postln;
+				/*"insert is false".postln;*/
 				if(extraArgs.notNil, {
 					extraArgs.pairsDo{|it1, it2|
 						Ndef(filterTag).set(it1, it2);

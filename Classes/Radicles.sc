@@ -2,7 +2,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>soundFilePath;
+	<>filesPath, <>soundFilePath;
 
 	*new {
 		this.setColors;
@@ -12,9 +12,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	initRadicles {arg doc=false;
 		mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
-		/*mainPath = (Platform.userExtensionDir ++ "/Radicles");
+/*		mainPath = (Platform.userExtensionDir ++ "/Radicles");
 		libPath = (Platform.userExtensionDir ++ "/RadiclesLibs");*/
-		soundFilePath = (Platform.userExtensionDir ++ "/RadiclesSFs");
+		filesPath = (Platform.userExtensionDir ++ "/RadiclesFiles");
+		soundFilePath = filesPath ++ "/SoundFiles";
 		server = Server.default;
 	}
 
