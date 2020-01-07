@@ -135,16 +135,22 @@ ModFile : Radicles {var <filePath, <libArr;
 		}, {^arrayFromFile});
 	}
 
-	remove {arg key, window=true, func;
+	remove {arg key, window=true, func, path;
 		var arrayFromFile, writeFunc, keyIndex, file;
-		arrayFromFile = this.array;
+		/*arrayFromFile = this.array;*/
+		path ?? {path = filePath};
+		if(path.isNumber, {
+			path = ([filePath] ++ libArr)[path];
+		});
+		arrayFromFile = this.writeArray(path);
+
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
 			if(keyIndex.notNil, {
 				if(window, {
 					Window.warnQuestion(("Are you sure you want to remove this key?"), {
 						arrayFromFile.removeAt(keyIndex);
-						this.writeFunc(arrayFromFile);
+						this.writeFunc(arrayFromFile, path);
 						func.();
 					});
 				}, {
@@ -219,10 +225,10 @@ SynthFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true, exclude;
+	* remove {arg class=\filter, key, win=true, exclude, path;
 		var synthFile;
 		synthFile = this.new(\synth, class, exclude);
-		^synthFile.remove(key, win);
+		^synthFile.remove(key, win, path: path);
 	}
 
 	* string {arg class=\filter, key, exclude;
@@ -264,10 +270,10 @@ SpecFile : ModFile {classvar specArr;
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true, exclude;
+	* remove {arg class=\filter, key, win=true, exclude, path;
 		var synthFile;
 		synthFile = this.new(\spec, class, exclude);
-		^synthFile.remove(key, win);
+		^synthFile.remove(key, win, path: path);
 	}
 
 	*specs {arg class=\filter, key, exclude;
@@ -318,10 +324,10 @@ ControlFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\map, key, win=true, exclude;
+	* remove {arg class=\map, key, win=true, exclude, path;
 		var synthFile;
 		synthFile = this.new(\control, class, exclude);
-		^synthFile.remove(key, win);
+		^synthFile.remove(key, win, path: path);
 	}
 
 	* string {arg class=\map, key, exclude;
@@ -363,10 +369,10 @@ DataFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\sampler, key, win=true, exclude;
+	* remove {arg class=\sampler, key, win=true, exclude, path;
 		var synthFile;
 		synthFile = this.new(\data, class, exclude);
-		^synthFile.remove(key, win);
+		^synthFile.remove(key, win, path: path);
 	}
 
 	* string {arg class=\filter, key, exclude;
@@ -408,10 +414,10 @@ DescriptionFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true, exclude;
+	* remove {arg class=\filter, key, win=true, exclude, path;
 		var synthFile;
 		synthFile = this.new(\description, class, exclude);
-		^synthFile.remove(key, win);
+		^synthFile.remove(key, win, path: path);
 	}
 
 	* string {arg class=\filter, key, exclude;
@@ -458,10 +464,10 @@ PresetFile : ModFile {
 		^presetFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\bstore, key, win=true, exclude;
+	* remove {arg class=\bstore, key, win=true, exclude, path;
 		var presetFile;
 		presetFile = this.new(\preset, class, exclude);
-		^presetFile.remove(key, win);
+		^presetFile.remove(key, win, path: path);
 	}
 
 	* string {arg class=\filter, key, exclude;
@@ -522,14 +528,18 @@ SynthDefFile : ModFile {
 		});
 	}
 
-	* remove {arg class=\filter, key, exclude;
+	* remove {arg class=\filter, key, exclude, path;
 		var synthFile;
 		synthFile = this.new(\synthdef, class, exclude);
-		^synthFile.remove(key, true, {
-			SynthFile.remove(class, key, false, exclude);
-			SpecFile.remove(class, key, false, exclude);
-			DescriptionFile.remove(class, key, false, exclude);
+		path ?? {path = synthFile.filePath};
+		if(path.isNumber, {
+			path = ([synthFile.filePath] ++ synthFile.libArr)[path];
 		});
+		^synthFile.remove(key, true, {
+			SynthFile.remove(class, key, false, exclude, path: path);
+			SpecFile.remove(class, key, false, exclude, path: path);
+			DescriptionFile.remove(class, key, false, exclude, path: path);
+		}, path);
 	}
 
 	* string {arg class=\filter, key, exclude;

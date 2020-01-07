@@ -15,7 +15,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 /*		mainPath = (Platform.userExtensionDir ++ "/Radicles");
 		libPath = (Platform.userExtensionDir ++ "/RadiclesLibs");*/
 		filesPath = (Platform.userExtensionDir ++ "/RadiclesFiles");
-		soundFilePath = filesPath ++ "/SoundFiles";
+		soundFilePath = (filesPath ++ "/SoundFiles");
 		server = Server.default;
 	}
 

@@ -77,16 +77,7 @@
 	input = \in * Line.kr(0,1,0.1);
 	output = \convrev;
 	(output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
-} ], [ 'pch_test', {arg pitchRatio=1.0 -> [ -12, 12, {|val| val.round(0.4).midiratio }], pitchDispertion=0.0 -> [ 0.01, 2.01, \exp, {|val| (val-0.01)} ], timeDispersion=0.0001
- -> [ 0.01, 2.01, \exp, {|val| (val-0.01)} ], winSize=0.02
- -> [ 0.01, 3 ];
-	PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion)*SinOsc.ar();
- } ], [ 'frz2', {arg thresh=0 -> [0,1], adjVol=1, lagTime=0.1,pan=0;
-var freeze, chain, frameSize=2048, sig;
-chain = FFT(LocalBuf(frameSize), Mix.new(\in));
-freeze = Onsets.kr(chain, thresh).lag(lagTime);
-chain = PV_MagFreeze(chain, freeze);
-	Pan2.ar(adjVol * IFFT(chain);, pan);} ], [ 'gdy1', {arg mix=0 -> [0,1], maxMul=1, ampdist=2, durDist=3, adParam=1, ddParam=1, ampScale=0.5, durScale=0.0, kNum=40, transp=1;
+} ], [ 'gdy1', {arg mix=0 -> [0,1], maxMul=1, ampdist=2, durDist=3, adParam=1, ddParam=1, ampScale=0.5, durScale=0.0, kNum=40, transp=1;
 	var freq, hasFreq, amp, minFreq, sig;
 #freq, hasFreq = Pitch.kr(\in, minFreq: 20, ampThreshold: 0.0, median: 7);
 amp = Amplitude.kr(\in, 0.05, 0.05).lag(0.1);
@@ -137,14 +128,6 @@ sig = sig * 3;
  -> [ 0.01, 1.01, \exp, {|val| (val-0.01)} ], winSize=0.02
  -> [ 0.01, 2 ];
 	PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion)*SinOsc.ar(440);
-} ], [ 'pchmod', {arg pitchRatio=1.0 -> [0.5, 1], pitchDispertion=0.0 -> [ 0.01, 2.01, \exp, {|val| (val-0.01)} ], timeDispersion=0.0001
- -> [ 0.01, 2.01, \exp, {|val| (val-0.01)} ], winSize=0.02
-	-> [ 0.01, 3 ], modFreq=100 -> [100, 4000], shape=0 -> [0,2,\lin, {|val| val.round}];
-	PitchShift.ar(\in, winSize, pitchRatio, pitchDispertion, timeDispersion)*
-	Select.ar(shape, [
-	SinOsc.ar(modFreq),
-	Saw.ar(modFreq),
-		Pulse.ar(modFreq)]);
 } ], [ 'hpf', {arg freq=20000 -> [10,20000, \exp], lag=0.1 -> [0,30]; HPF.ar(\in, freq.lag(lag));} ], [ 'eq8', {arg freq1=30 -> [20,20000,\exp], freq2=80 -> [20,20000,\exp], freq3=200 -> [20,20000,\exp], freq4=500 -> [20,20000,\exp], freq5=1200 -> [20,20000,\exp], freq6=3500 -> [20,20000,\exp], freq7=10000 -> [20,20000,\exp], freq8=17000 -> [20,20000,\exp], gain1=0 -> [-24,24], gain2=0 -> [-24,24], gain3=0 -> [-24,24], gain4=0 -> [-24,24], gain5=0 -> [-24,24], gain6=0 -> [-24,24], gain7=0 -> [-24,24], gain8=0 -> [-24,24], q1=0.71 -> [0.1, 10, \exp], q2=1.10 -> [0.1, 2, \exp], q3=0.98 -> [0.1, 100, \exp], q4=0.71 -> [0.1, 100, \exp], q5=0.71 -> [0.1, 100, \exp], q6=0.71 -> [0.1, 100, \exp], q7=0.71 -> [0.1, 2, \exp], q8=0.71 -> [0.1, 10, \exp], on1=0 -> [0,1, \lin, 1, 0], on2=1 -> [0,1, \lin, 1, 0], on3=1 -> [0,1, \lin, 1, 0], on4=1 -> [0,1, \lin, 1, 0], on5=1 -> [0,1, \lin, 1, 0], on6=1 -> [0,1, \lin, 1, 0], on7=1 -> [0,1, \lin, 1, 0], on8=0 -> [0,1, \lin, 1, 0], lag=0.5-> [0,10], masterGain=0 -> [ -inf, 6, 'db', 0, -inf, " dB" ], lagOn=0.1 -> [0,10];
 	var signal;
 	signal = (on1.linlin(0,1,1,0).lag(lagOn)*\in) + (on1.lag(lagOn)*BHiPass.ar(\in,freq1.lag(lag),1/q1.lag(lag), gain1.dbamp.lag(lag);));
@@ -156,4 +139,28 @@ sig = sig * 3;
 	signal = (on7.linlin(0,1,1,0).lag(lagOn)*signal) + (on7.lag(lagOn)*BHiShelf.ar(signal,freq7.lag(lag),1/(q7).lag(lag),gain7.dbamp.lag(lag)));
 	signal = (on8.linlin(0,1,1,0).lag(lagOn)*signal) + (on8.lag(lagOn)*BLowPass.ar(signal,freq8.lag(lag),1/q8.lag(lag), gain8.dbamp.lag(lag)));
 	signal * masterGain.dbamp;
-} ] ]
+} ], [ 'ds1', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).distort * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds2', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).softclip * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds3', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).clip2 * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds4', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).fold2(1) * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds5', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).wrap2(1) * (lagdr.sqrt/lagdr))*adjVol} ], [ 'fvrb', {arg mix=0->[0,1], room=0->[0,1], damp=0.0->[0,1], lag=0.0->[0,15], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	FreeVerb.ar(\in, mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol} ], [ 'fvrb2', {arg mix=0->[0,1], room=0->[0,1], damp=0.0->[0,1], lag=0.0->[0,15], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	var sig;
+	sig = \in;
+	FreeVerb2.ar(sig[0], sig[1], mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol} ], [ 'gvrb1', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	var drysig, wetsig;
+	drysig = \in;
+	wetsig= GVerb.ar(\in, 5, 0.6, 0.62, 0.48, 15, -6, -11, -13,300,-40.dbamp);
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb2', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	var drysig, wetsig;
+	drysig = \in;
+	wetsig= GVerb.ar(\in, 16, 1.24, 0.1, 0.95, 15, -3, -15, -17, 300,-40.dbamp);
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb3', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	var drysig, wetsig;
+	drysig = \in;
+	wetsig= GVerb.ar(\in, 80, 4.85, 0.41, 0.19, 15, -3, -9, -11, 300,-40.dbamp);
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb4', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	var drysig, wetsig;
+	drysig = \in;
+	wetsig= GVerb.ar(\in, 243, 1, 0.1, 0.19, 15, -3, -9, -11, 300,-40.dbamp);
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb5', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	var drysig, wetsig;
+	drysig = \in;
+	wetsig= GVerb.ar(\in, 300, 103, 0.43, 0.51, 15, -5, -26, -20, 300,-40.dbamp);
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ] ]
