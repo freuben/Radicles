@@ -13,11 +13,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
 	}
 
-	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType;
+	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType, memSize=50;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
 		server.options.numWireBufs = 128*4;
 		server.options.numAudioBusChannels = 128*8;
 		server.options.numControlBusChannels = 128*128;
+		server.options.memSize = memSize*8192;
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;

@@ -124,10 +124,7 @@ sig = DelayC.ar(input, 2.0, modulators);
 sig = sig.sum;
 sig = sig * 3;
 ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
-} ], [ 'dl2', {arg mix=0 , mul=1, freq=0.25, lag=0.1, decayTime=0, lag2=1; var sig;
-	sig = CombL.ar(\in,12,LFNoise1.kr(freq.lag(lag), 1*(mul.lag(lag2)/2), 0+(mul.lag(lag2)/2)).lag(lag),decayTime);
-((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
-} ], [ 'sclip', {arg vol=0 ;
+} ], [ 'dl2', {arg mul=1, freq=0.25, lag=0.1, decayTime=0, lag2=1; CombL.ar(\in,12,LFNoise1.kr(freq.lag(lag), 1*(mul.lag(lag2)/2), 0+(mul.lag(lag2)/2)).lag(lag),decayTime)} ], [ 'sclip', {arg vol=0 ;
 	(\in*vol.dbamp).softclip;
  } ], [ 'pch5', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
@@ -168,4 +165,5 @@ sig = sig * 3;
 	var drysig, wetsig;
 	drysig = \in;
 	wetsig= GVerb.ar(\in, 300, 103, 0.43, 0.51, 15, -5, -26, -20, 300,-40.dbamp);
-	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ] ]
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'amp', {arg bus=1, adjVol=1, lag=0.1; (\in*Amplitude.kr(SoundIn.ar((bus-1).round(1))).lag(lag))*adjVol
+} ], [ 'dl1', {arg delayTime=0, decayTime=1; CombL.ar(\in, 12, delayTime, decayTime)} ] ]
