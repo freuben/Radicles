@@ -3924,7 +3924,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modFx {arg filterNum, modArg, modType, extraArgs,
-		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier=\mod;
 		var typeKey, ndefKey;
 		this.fxWarn(filterNum, {|ndefKey|
 			if(modArg.notNil, {
@@ -3941,7 +3941,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modFxTrack {arg trackType, trackNum, trackSlot, modArg, modType, extraArgs,
-		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier=\mod;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			if(modArg.notNil, {
 				{
@@ -3978,7 +3978,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
-		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier;
+		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier=\mod;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn, modNdef;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
@@ -4343,6 +4343,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		firstNdef = Ndef(newNdef);
 		if(hasMod.notNil, {
 			hasMod.do{|item|
+				"ModMap args: ".post;
+				[firstNdef, item[1][0], item[1][1][1], item[1][1][2],
+					item[1][1][3], item[1][1][4], item[1][1][5], item[1][1][6], item[1][1][7],
+					item[1][1][8], item[1][1][9], item[1][1][10]].postln;
 				server.sync;
 				firstNdef = ModMap.map(firstNdef, item[1][0], item[1][1][1], item[1][1][2],
 					item[1][1][3], item[1][1][4], item[1][1][5], item[1][1][6], item[1][1][7],
@@ -4374,7 +4378,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					cond.wait;
 					server.sync;
 					cond.test = false;
-					[tagArr[0], tagArr[1], tagArr[2], filterType, filterArgs[1], filterArgs[3]].postln;
 					this.setFx(tagArr[0], tagArr[1], tagArr[2], filterType, filterArgs[1], filterArgs[2],
 						filterArgs[3], action: {
 							cond.test = true; cond.signal;
@@ -4475,6 +4478,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				cond.test = false;
 				modSettings.do{|item|
 					server.sync;
+					"item[0]: ".post; item[0].cs.postln;
+					"item[1]: ".post; item[1].cs.postln;
 					this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
 					cond.wait;
 				}
@@ -4491,6 +4496,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				cond.test = true; cond.signal;
 			}, refresh: false);
 			cond.wait;
+			"debug1".postln;
 			dataArr = PresetFile.read(\tracks, presetName);
 			mixSettings = dataArr[0];
 			prepSettings = dataArr[1];
@@ -4504,22 +4510,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					modSettings = modSettings ++ arrSettings[1];
 				});
 			};
+			"debug2".postln;
 			extraArgs = this.prepMixSettings(mixSettings);
 			extraArgs.do({|item| ("Ndef(" ++ item[0].cs ++ ").set" ++
 				item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
 			server.sync;
 			});
+			"debug3".postln;
 			mixSettings[1].flop[1].do{|item|
 				cond.test = false;
 				this.modRawPreset(item[0][0], item, {cond.test = true; cond.signal;});
 				cond.wait;
 			};
+			"debug4".postln;
 			this.setFxs(fxSettings, {
 				cond.test = false;
 				modSettings.do{|item|
 					server.sync;
+								"debug5".postln;
+					"item[0]: ".post; item[0].cs.postln;
+					"item[1]: ".post; item[1].cs.postln;
 					this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
 					cond.wait;
+					"debug6".postln;
 				}
 			});
 		}.fork;
@@ -4648,6 +4661,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		recButArr=nil; soloButArr=nil; spaceButArr=nil; recordingButton=nil; recordingValBut=nil;
 		setOutputMenu=nil; setInputMenu=nil; modSendArr=nil; trackDataArr=nil; trackBufferArr=nil;
 		trackCount=1; busCount=1; winRefresh=false;
+	}
+
+	mainVars {
+		^[tracks, specs, inputs, space, masterNdefs, masterSynth, trackNames, masterInput, busArr,
+		filters, filterBuff, mixerWin, setVolSlider, mixTrackNames, systemChanNum, mixTrackNdefs,
+		basicFont, sysChans, sysPan, setBusIns, setKnobIns, setPanKnob, 	outputSettings, filtersWindow,
+		scrollPoint, fxsNum, soloStates, muteStates, recStates, recBStoreArr, mastOutArr, screenBounds,
+		mastOutWin, oiIns, oiOuts, recInputArr, winDirRec, muteButArr, recButArr, soloButArr, spaceButArr,
+		recordingButton, recordingValBut, setOutputMenu, setInputMenu, modSendArr, trackDataArr,
+		trackBufferArr, trackCount, busCount, winRefresh];
 	}
 
 	clearNdefs {var modArr, keys, modNdefs, cond, busNdefs;

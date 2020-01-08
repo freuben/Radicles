@@ -2,9 +2,14 @@ ModMap : Radicles {
 	classvar <modNodes, <modInfoArr, modIndex=0, <lagArr;
 
 	*map {arg ndef, key=\freq, type=\sin, spec=[-1,1], extraArgs, func, mul=1, add=0, min, val, warp, lag;
-		var modMap, keyVals, defaultVal;
+		var modMap, keyVals, defaultVal, defIndex;
+
+/*		[key, type, spec, extraArgs, func, mul, add, min, val, warp, lag].postln;*/
+
 		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
+		/*"spec: ".post; spec.postln;*/
+
 		if(modNodes.isNil, {
 			modIndex=0;
 		}, {
@@ -12,8 +17,16 @@ ModMap : Radicles {
 				modIndex=0;
 			});
 		});
+		/*modIndex.postln;*/
 		keyVals = ndef.getKeysValues;
-		defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];
+		/*keyVals.postln;*/
+		defIndex = keyVals.flop[0].indexOf(key);
+		/*defIndex.postln;*/
+		if(defIndex.notNil, {
+		defaultVal = keyVals.flop[1][defIndex];
+		}, {
+			defaultVal = 1;
+		});
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
 		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost.interpret;
