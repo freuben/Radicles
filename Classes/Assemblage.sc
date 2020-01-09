@@ -4188,13 +4188,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			var modArr;
 			if(item[1].cs.find("Ndef").notNil, {
 				modArr = ModMap.modInfoArr.detect({|it| it[0] == item[1].key });
+				"ModMap.modNodes.detect ".post;
+
+				ModMap.modNodes.detect({|it| it[0] == item[1] })[2];
+				" item[1]: ".post; item[1].postln;
 				keyValues = keyValues.add(	[
-					ModMap.modNodes.detect({|it| it[0] == item[1] }).last,
+					ModMap.modNodes.detect({|it| it[0] == item[1] })[2],
 					modArr;
 				]);
 				mods = mods.add(modArr[0])
-			}, {keyValues = keyValues.add(item)});
-		};
+			}, {keyValues = keyValues.add(item)});};
 		if(mods.notNil, {
 			arr = ModMap.modNodes.flop[0].collect{|item|
 				[item.key,
@@ -4205,6 +4208,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						}, {it1});
 				}];
 			};
+			"arr: ".post; arr.postln;
 			mods.do{|item|
 				var thisArr;
 				thisArr = arr[arr.flop[0].indexOf(item)];
@@ -4217,6 +4221,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			};
 			arr3 = arr.atAll(arr2);
 		});
+		"keyValues: ".post; keyValues.postln;
 		keyValues = [ndefKey, keyValues];
 		rawWrite = ([keyValues] ++ arr3);
 		if(filter, {
@@ -4233,9 +4238,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	prepareWriteFxPreset {arg filterKey;
 		var presetArr, extraArgs, hasMod, newArr, dataArr, bufData, dataData, trackArrInd;
 		presetArr = this.rawFxPreset(filterKey);
+		/*presetArr.postln;*/
 		presetArr[1].do{|item, index|
+			"presetArr: ".post; item.postln;
 			item[1].do{|it|
 				if(it[1][0].cs.find("mod").notNil, {
+					"item[0]: ".post; item[0].postln;
 					hasMod = hasMod.add([item[0], it]);
 				}, {
 					extraArgs = extraArgs.add([item[0], it]); //extra args
@@ -4262,6 +4270,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				extraArgs.flop[0].indicesOfEqual(item)).flat, bufData, dataData] );
 		};
 		hasMod.do{|item|
+			item.postln;
 			item[1][1][3] = newArr.flop[1][newArr.flop[0].indexOf(item[1][1][0])];
 		};
 		dataArr = [presetArr[0], newArr, hasMod];
