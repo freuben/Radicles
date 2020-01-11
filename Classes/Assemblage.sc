@@ -794,7 +794,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}.fork;
 	}
 
-	removeBus {arg trackNum= 1, busNum=1, trackType=\track, clearTrack=false, action;
+	removeBus {arg trackNum= 1, busNum=1, trackType=\track, clearTrack=false;
 		var oldLabel, newBusInd, newLabelArr, spaceBusNum, spaceBusLabel,
 		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel, trackKey;
 		oldLabel = ("busIn" ++ busNum).asSymbol;
@@ -803,7 +803,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		trackKey = (trackType.asString ++ trackNum).asSymbol;
 
 		if(spaceInInd.notNil, {
-			{
 				newBusInd = busArr.flop[0].indexOf(oldLabel);
 				newLabelArr = busArr.flop[1][newBusInd];
 				newLabelArr = newLabelArr.select({|item|
@@ -814,10 +813,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				if(newLabelArr.isEmpty, {
 					if(clearTrack, {
 						("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
-						server.sync;
 					}, {
 						("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radpost.interpret;
-						server.sync;
 					});
 					busArr[newBusInd] = [nil,nil];
 					inputs.removeAt(thisBusIndLabel);
@@ -825,7 +822,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(inputs.flop[1][spaceInInd].isArray.not, {
 						if(clearTrack.not, {
 							("Ndef(" ++ spaceBusLabel.cs ++ ").source = nil;").radpost.interpret;
-							server.sync;
 							inputs.removeAt(spaceInInd);
 						});
 					});
@@ -836,7 +832,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						inputs[thisBusIndLabel][1] = newLabelArr;
 					});
 					("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radpost.interpret;
-					server.sync;
 				});
 				spaceInNdef = inputs.flop[1][spaceInInd];
 				if(spaceInNdef.isArray, {
@@ -846,10 +841,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					}, {
 						this.input(spaceInSel, \bus, busNum);
 					});
-					server.sync;
 				});
-				action.();
-			}.fork;
 		}, {
 			"Bus not found".warn;
 		});
@@ -2255,9 +2247,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					}, {
 						thisBusItem = busInSettings[index][ind];
 						thisTrackLabel = mixTrackNames[index].asString.divNumStr;
+						if(menu.item == "", {
+							busInSettings[index][ind] = nil;
+						}, {
 						busInSettings[index][ind] = menu.item;
+						});
+						/*busInSettings[index][ind] = menu.item;*/
 						busInBool1 = busInSettings[index].select({|item, index| index != ind})
 						.includesEqual(it.item);
+						busInSettings[index].collect({|item|
+							if(item.notNil, {item.asSymbol}, {item});
+						});
 						busInBool2 =  busInSettings[index].collect({|item|
 							if(item.notNil, {item.asSymbol}, {item});
 						}).includes(outputSettings[index]);
@@ -2740,10 +2740,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf,
-		dirMaster=true, presetMode=false, action;
-		var trackIndex, funcThis, modArr, cond, setThisVal;
-		cond = Condition.new(false);
-		{
+		dirMaster=true, presetMode=false;
+		var trackIndex, funcThis, modArr, setThisVal;
 			if(busNum == 0, {
 				modArr = ModMap.modNodes;
 				if(modArr.notNil, {
@@ -2756,9 +2754,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(trackIndex.notNil, {
 				funcThis = {arg setVal;
 					if(busNum == 0, {
-						this.removeBus(trackNum, busNum, trackType, action: {cond.test = true; cond.signal;});
+						this.removeBus(trackNum, busNum, trackType);
 					}, {
-						this.bus(trackNum, busNum, val, trackType, {cond.test = true; cond.signal; }, setVal);
+						this.bus(trackNum, busNum, val, trackType, setVal);
 					});
 				}; //track, bus, mix, type
 				if(presetMode.not, {setThisVal = true}, {setThisVal = false});
@@ -2781,7 +2779,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					funcThis.(setThisVal);
 				});
-				cond.wait;
 				if(presetMode.not, {
 					if(dirMaster, {
 						if(outputSettings[trackIndex] == '', {
@@ -2793,11 +2790,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						});
 					});
 				});
-				action.();
 			}, {
 				"Track not found".warn;
 			});
-		}.fork;
 	}
 
 	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, lagTime=0, db=true;
@@ -2996,7 +2991,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	setFxs {	arg settingsArr, action;
+	setFxs {	arg settingsArr, action, refresh=true;
 		var cond, refreshUI, insert, newFilterNdef, thisTracks, arr, thisInfo, dest;
 		cond = Condition.new;
 		{
@@ -3020,7 +3015,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					++ ");").radpost.interpret;
 				server.sync;
 			};
+			if(refresh, {
 			{this.refreshFunc;}.defer;
+			});
 			action.();
 		}.fork;
 	}
@@ -4516,16 +4513,22 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	loadTracksPreset {arg presetName;
 		var dataArr, cond, modSettings, mixSettings, fxSettings,
-		arrSettings, prepSettings, trackInfoArr, extraArgs, modMixSettings;
+		arrSettings, prepSettings, trackInfoArr, extraArgs, modMixSettings, busSettings, outSettings;
 		{
 			cond = Condition(false);
 			this.removeAllFilters(action: {
 				cond.test = true; cond.signal;
 			}, refresh: false);
 			cond.wait;
+			this.removeAllSends(action: {
+				cond.test = true; cond.signal;
+			}, refresh: false);
+			cond.wait;
 			dataArr = PresetFile.read(\tracks, presetName);
 			mixSettings = dataArr[0];
 			prepSettings = dataArr[1];
+			busSettings = dataArr[2];
+			outSettings = dataArr[3];
 			prepSettings.do{|item|
 				var infoArr;
 				infoArr = item.flop[0][0].asString.divNumStr;
@@ -4549,19 +4552,30 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					cond.wait;
 				};
 			});
+			if(outSettings.notNil, {
+				this.setOutputSettings(outSettings);
+				nodeTime.yield;
+			});
+			if(busSettings.notNil, {
+				this.setBusForPreset(busSettings, false, {cond.test = true; cond.signal;});
+				/*nodeTime.yield;*/
+			});
 			if(fxSettings.notNil, {
+				cond.test = false;
 				this.setFxs(fxSettings, {
 					cond.test = false;
 					modSettings.do{|item|
 						server.sync;
 						this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
 						cond.wait;
-					}
-				});
-			}, {
-				{this.refreshMixGUI}.defer;
+					};
+					cond.test = true; cond.signal;
+				}, false);
 			});
-		}.fork;
+			cond.wait;
+			nodeTime.yield;
+				this.refreshMixGUI;
+		}.fork(AppClock);
 	}
 
 	fxLags {arg filterNum, lag=nil;
@@ -4690,48 +4704,43 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	removeAllSends {arg refresh=false, action;
 		{
-			if(this.getBusInArr.notNil, {
+			if(this.getBusInLabels.notNil, {
 			busArr.flop[0].do{|item, index|
 				if(item.notNil, {
 					Ndef(item).clear;
 					Ndef(item).source = nil;
-					server.sync;
 				});
 				busArr[index] = [nil!2];
+					server.sync;
 			};
 			if(refresh, { {this.refreshMixGUI}.defer });
 			});
-			action.();
-		}.fork;
+		action.();
+		}.fork
 	}
 
-	setBusForPreset {arg arr, removeSends=true, refresh=false;
-		var busSettings, thisBusArr, cond;
+	setBusForPreset {arg arr, refresh=false, action;
+		var busSettings, thisBusArr;
 		{
-			cond = Condition.new(false);
-			if(removeSends, {
-			this.removeAllSends(action: {cond.test = true; cond.signal;});
-			cond.wait;
-			});
 			thisBusArr = arr[0];
-			busSettings = Radicles.aZ.getBusInArr(thisBusArr);
+			busSettings = this.getBusInArr(thisBusArr);
 			busSettings.do{|item|
 				var trackSetting;
 				trackSetting = item[0].asString.divNumStr;
 				item[1].do{|it, ind|
 					var busNum;
 					busNum = it.asString.divNumStr[1];
-					this.setSend(trackSetting[0].asSymbol, trackSetting[1], ind+1, busNum, presetMode: true,
-						action: {cond.test = true; cond.signal;});
+					this.setSend(trackSetting[0].asSymbol, trackSetting[1], ind+1, busNum, presetMode: true);
 				};
-				cond.wait;
 			};
+			nodeTime.yield;
 			thisBusArr.flop[0].do{|item, index| ("Ndef(" ++ item.cs ++ ").set" ++
 				arr[1][index].cs.replace("[", "(").replace("]", ")") ++ ";" ).radpost.interpret;
-			server.sync;
 			};
+			server.sync;
 			if(refresh, { {this.refreshMixGUI}.defer });
-		}.fork;
+			action.();
+		}.fork
 	}
 
 	saveVars {

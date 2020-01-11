@@ -514,11 +514,11 @@ SynthDefFile : ModFile {
 	* write {arg class=\filter, key, dataArr, desc, path, post=true;
 		var synthFile;
 		synthFile = this.new(\synthdef, class);
-		dataArr.cs.postln;
+		/*dataArr.cs.postln;*/
 		if(dataArr.specArr.notNil, {
 			^synthFile.write(key, dataArr, true, {
 				SynthFile.write(class, key, dataArr.specFunc, false, path, false);
-				SpecFile.write(class, key, dataArr.specArr.postln, false, path, false);
+				SpecFile.write(class, key, dataArr.specArr, false, path, false);
 				if(desc.notNil, {
 					DescriptionFile.write(class, key, desc, false, path, false);
 				});

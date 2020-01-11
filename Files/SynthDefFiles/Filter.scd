@@ -103,11 +103,12 @@ kernel = LPCError.ar(\in, \in.linlin(-1,1,num,1));
 signal = Convolution.ar(\in,kernel, 2048);
 signal2 = LPCError.ar(signal, \in.linlin(-1,1,1,num));
 signal3 = ((signal2+(\in.clip2(0.05)*0.05))).clip2(1.0);
-	adjVol * ((signal3*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'mga', {arg thresh=0 -> [0,40], adjVol=1, pan=0;
-var chain, frameSize=2048;
-chain = FFT(LocalBuf(frameSize), Mix.new(\in));
-chain = PV_MagAbove(chain, thresh);
-	Pan2.ar(adjVol * IFFT(chain), pan);} ], [ 'mrk1', {arg mix=0 -> [0,1], rec=1, table=2, time=2;
+	adjVol * ((signal3*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'mga', {arg thresh=0->[0.01,50.01,\exp, {|val| val-0.01}], adjVol=1->[0,4];
+var chain, frameSize=2048, input;
+	input = \in;
+chain = FFT(LocalBuf(frameSize, input.numChannels), input);
+chain = PV_MagAbove(chain, thresh); 
+(adjVol * IFFT(chain));} ], [ 'mrk1', {arg mix=0 -> [0,1], rec=1, table=2, time=2;
 	var sig;
 	sig = MarkovSynth.ar(\in, rec, time, table);
 	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))} ], [ 'chr1', {arg mix=0, depth=0.1, predelay=0.08, speed=0.05, ph_diff=0.5, lagTime=0.1;
@@ -161,4 +162,103 @@ sig = sig * 3;
 	drysig = \in;
 	wetsig= GVerb.ar(\in, 300, 103, 0.43, 0.51, 15, -5, -26, -20, 300,-40.dbamp);
 	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'amp', {arg bus=1->[1,8,{|val| val.round(1)}], adjVol=1->[1,30, {|val| val.round(0.01)-0.01}], lag=0.1->[0,10]; (\in*Amplitude.kr(SoundIn.ar((bus-1).round(1))).lag(lag))*adjVol
-} ], [ 'dl1', {arg delayTime=0->[0,12], decayTime=1->[0,24]; CombL.ar(\in, 12, delayTime, decayTime)} ] ]
+} ], [ 'dl1', {arg delayTime=0->[0,12], decayTime=1->[0,24]; CombL.ar(\in, 12, delayTime, decayTime)} ], [ 'cvt1', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}]; 
+	var signal, input;
+	signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+	input = \in;
+	(Convolution.ar(input,signal, frameSize,adjVol*0.15)*mix)
+		+(input*mix.linlin(0,1,1,0))} ], [ 'cvt2', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}]; 
+	var signal, input;
+	signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+	input = \in;
+	(Convolution.ar(signal,input, frameSize,adjVol*0.15)*mix)
+		+(input*mix.linlin(0,1,1,0))} ], [ 'cvi1', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}]; 
+	var signal, input;
+	signal = SoundIn.ar((soundin+1).round(1));
+	input = \in;
+	(Convolution.ar(input,signal,frameSize,adjVol*0.15)*mix)
+	+(input*mix.linlin(0,1,1,0))} ], [ 'cvi2', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}]; 
+	var signal, input;
+	signal = SoundIn.ar((soundin+1).round(1));
+	input = \in;
+	(Convolution.ar(signal, input, frameSize,adjVol*0.15)*mix)
+	+(input*mix.linlin(0,1,1,0))} ], [ 'mmi', {arg mix=0->[0,1], soundin=1->[1,8, {|val| val.round(1)}], adjVol=1->[1,4]; 
+var input, inA, chainA, chainB, chain, frameSize=2048;
+	input = \in;
+	inA = SoundIn.ar((soundin-1).round(1));
+chainA = FFT(LocalBuf(frameSize), input);
+chainB = FFT(LocalBuf(frameSize), inA);
+chain = PV_MagMul(chainA, chainB);
+Mix.new(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+} ], [ 'mmt', {arg mix=0->[0,1], track=1->[1,8, {|val| val.round(1)}], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}]; 
+var input, inA, chainA, chainB, chain, frameSize=2048;
+	input = \in;
+	inA = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+chainA = FFT(LocalBuf(frameSize, input.numChannels), input);
+chainB = FFT(LocalBuf(frameSize, inA.numChannels), inA);
+chain = PV_MagMul(chainA, chainB);
+(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+} ], [ 'frz1', {arg freeze=0->[0,1,{|val| val.round(1)}], adjVol=1->[1,4];
+var chain, input, frameSize=2048;
+	input = \in;
+chain = FFT(LocalBuf(frameSize, input.numChannels), input);
+chain = PV_MagFreeze(chain, freeze); 
+	(adjVol * IFFT(chain));} ], [ 'frz2', {arg thresh=1->[0,2], adjVol=1->[1,4], lagTime=0.1->[0,0.4];
+var freeze, chain, input, frameSize=2048;
+	input = \in;
+	chain = FFT(LocalBuf(frameSize, input.numChannels), input);
+	freeze = Onsets.kr(chain, thresh).lag(lagTime);
+	chain = PV_MagFreeze(chain, freeze); 
+	(adjVol * IFFT(chain));} ], [ 'srt', {arg mix=0->[0,1], adjVol=1->[0,4];
+	var chain, origmagsphases, magsphases, input;
+	input = \in;
+	chain = FFT(LocalBuf(1024, input.numChannels), input);
+	origmagsphases = UnpackFFT(chain, 1024, 0, 250).clump(2).flop;
+	magsphases = [origmagsphases[0][30..] ++ origmagsphases[0][..30], origmagsphases[1][30..] ++ origmagsphases[1][..30]];
+	magsphases = magsphases.size.switch(
+		1, {magsphases ++ origmagsphases[1]},
+		2, {magsphases},
+		{[magsphases, origmagsphases[1]]}
+	);
+	magsphases = magsphases.flop.flatten;
+	chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
+	(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+} ], [ 'sdf', {arg mix=0->[0,1], adjVol=1->[0,4];
+	var chain, origmagsphases, magsphases, input;
+	input = \in;
+	chain = FFT(LocalBuf(1024, input.numChannels), input);
+	origmagsphases = UnpackFFT(chain, 1024, 0, 250).clump(2).flop;
+	magsphases = [origmagsphases[0].differentiate, origmagsphases[1].differentiate];
+	magsphases = magsphases.size.switch(
+		1, {magsphases ++ origmagsphases[1]},
+		2, {magsphases},
+		{[magsphases, origmagsphases[1]]}
+	);
+	magsphases = magsphases.flop.flatten;
+	chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
+	(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+} ], [ 'srv', {arg mix=0->[0,1], adjVol=1->[0,4];
+	var chain, origmagsphases, magsphases, input;
+	input = \in;
+	chain = FFT(LocalBuf(1024, input.numChannels), input);
+	origmagsphases = UnpackFFT(chain, 1024, 0, 250).clump(2).flop;
+	magsphases = [origmagsphases[0].reverse, origmagsphases[1].reverse];
+	magsphases = magsphases.size.switch(
+		1, {magsphases ++ origmagsphases[1]},
+		2, {magsphases},
+		{[magsphases, origmagsphases[1]]}
+	);
+	magsphases = magsphases.flop.flatten;
+	chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
+	(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+} ], [ 'ssq', {arg mix=0->[0,1], adjVol=1->[0,4];
+	var chain, magsphases, input;
+	input = \in;
+	chain = FFT(LocalBuf(1024, input.numChannels), input);
+	magsphases = UnpackFFT(chain, 1024);
+	magsphases = magsphases.collect(_.sqrt);
+	chain = PackFFT(chain, 1024, magsphases);
+	(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+} ], [ 'gate', {arg gates=1->[0,1,{|val| val.round}], adjVol=1->[0,10]; 
+	Gate.ar(\in, gates.round(1))*adjVol} ], [ 'gain', {arg gain=0->[ -inf, 24, \db, 0, -inf,  "dB" ]; 
+	(\in*gain.dbamp)} ] ]
