@@ -748,8 +748,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		busAdd, argIndex, thisBusLabel;
 		{
 			thisBusLabel = ("inBus" ++ busNum).asSymbol;
+			"thisBusLabel ".post; thisBusLabel.postln;
 			numChan = Ndef(thisBusLabel).numChannels;
 			busTag = ("busIn" ++ busNum).asSymbol;
+			"busArr ".post; busArr.postln;
+			"busArr[busNum-1][0] ".post; busArr[busNum-1][0].postln;
 			if(busArr[busNum-1][0].isNil, {
 				busArr[busNum-1][0] = busTag;
 				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
@@ -785,6 +788,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			ndefCS2.radpost.interpret;
 			server.sync;
 			if(setVal, {
+				"setVal ".post; setVal.postln;
 				argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));
 				ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set('vol" ++ (argIndex+1)
 				++ "', " ++ mix ++ ");";
@@ -816,7 +820,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					}, {
 						("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radpost.interpret;
 					});
-					busArr[newBusInd] = [nil,nil];
+					busArr[newBusInd] = nil!2;
 					inputs.removeAt(thisBusIndLabel);
 					spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
 					if(inputs.flop[1][spaceInInd].isArray.not, {
@@ -2638,7 +2642,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	setTrackOut {arg trackType=\track, trackNum=1, inIndex=0;
+	setTrackOut {arg trackType=\track, trackNum=1, inIndex=0, bool=true;
 		var mixTrackIndex, label;
 		mixTrackIndex = mixTrackNames.indexOfEqual( (trackType ++ trackNum).asSymbol );
 		if(inIndex == 0, {
@@ -2649,7 +2653,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 		if(mixTrackIndex.notNil, {
 			outputSettings[mixTrackIndex] = label;
+			if(bool, {
 			this.outputMasterFunc;
+			});
 			this.mixWinBool({
 				setOutputMenu.(mixTrackIndex, inIndex);
 			});
@@ -2756,7 +2762,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(busNum == 0, {
 						this.removeBus(trackNum, busNum, trackType);
 					}, {
-						this.bus(trackNum, busNum, val, trackType, setVal);
+					"setVal ".post; setVal.postln;
+					"	this.bus ".post; [trackNum, busNum, val, trackType].postln;
+						this.bus(trackNum, busNum, val, trackType, setVal: setVal);
 					});
 				}; //track, bus, mix, type
 				if(presetMode.not, {setThisVal = true}, {setThisVal = false});
@@ -4326,7 +4334,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	writeTracksPreset {arg presetName;
-		var filterKeyArr, mixDataArr, dataArr2, busSettings;
+		var filterKeyArr, mixDataArr, dataArr2, busSettings, ioSettings;
 		mixDataArr = this.mixControlKeyValues;
 		if(filters.notNil, {
 			filterKeyArr = filters.flop[0];
@@ -4347,8 +4355,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(this.getBusInLabels.notNil, {
 			busSettings = [busArr, busArr.flop[0].collect({|item| Ndef(item).controlKeysValues});];
 		});
+		ioSettings = [recStates, recInputArr, mastOutArr];
 		if(presetName.notNil, {
-			PresetFile.write(\tracks, presetName, [mixDataArr, dataArr2, busSettings, outputSettings]);
+			PresetFile.write(\tracks, presetName, [mixDataArr, dataArr2, busSettings, outputSettings, ioSettings]);
 		});
 	}
 
@@ -4512,23 +4521,31 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	loadTracksPreset {arg presetName;
-		var dataArr, cond, modSettings, mixSettings, fxSettings,
-		arrSettings, prepSettings, trackInfoArr, extraArgs, modMixSettings, busSettings, outSettings;
+		var dataArr, cond, modSettings, mixSettings, fxSettings, arrSettings, prepSettings,
+		trackInfoArr, extraArgs, modMixSettings, busSettings, outSettings, ioSettings;
 		{
 			cond = Condition(false);
 			this.removeAllFilters(action: {
 				cond.test = true; cond.signal;
 			}, refresh: false);
 			cond.wait;
+			"filters removed".postln;
+			cond.test = false;
 			this.removeAllSends(action: {
 				cond.test = true; cond.signal;
 			}, refresh: false);
 			cond.wait;
+			"sends removed".postln;
+
 			dataArr = PresetFile.read(\tracks, presetName);
 			mixSettings = dataArr[0];
 			prepSettings = dataArr[1];
 			busSettings = dataArr[2];
 			outSettings = dataArr[3];
+			ioSettings = dataArr[4];
+
+			"data imported".postln;
+
 			prepSettings.do{|item|
 				var infoArr;
 				infoArr = item.flop[0][0].asString.divNumStr;
@@ -4539,11 +4556,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					modSettings = modSettings ++ arrSettings[1];
 				});
 			};
+
+			"prepSettings".postln;
+
 			extraArgs = this.prepMixSettings(mixSettings);
-			extraArgs.do({|item| ("Ndef(" ++ item[0].cs ++ ").set" ++
+			extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
 				item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
 			server.sync;
+			case
+			{item[1].includes(\mute)} {
+				muteStates[mixTrackNames.indexOf(item[0])] =
+				item[1][(item[1].indexOfEqual(\mute)+1)];
+			}
+			{item[1].includes(\solo)} {
+				soloStates[mixTrackNames.indexOf(item[0])] =
+				item[1][(item[1].indexOfEqual(\solo)+1)];
+			};
 			});
+
+			"mixSettings loaded".postln;
+
 			modMixSettings =mixSettings[1];
 			if(modMixSettings.notNil, {
 				modMixSettings.flop[1].do{|item|
@@ -4551,17 +4583,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					this.modRawPreset(item[0][0], item, {cond.test = true; cond.signal;});
 					cond.wait;
 				};
+					"modMixSettings loaded".postln;
 			});
+
 			if(outSettings.notNil, {
 				this.setOutputSettings(outSettings);
 				nodeTime.yield;
 			});
+			"outSettings loaded".postln;
 			if(busSettings.notNil, {
-				this.setBusForPreset(busSettings, false, {cond.test = true; cond.signal;});
-				/*nodeTime.yield;*/
-			});
-			if(fxSettings.notNil, {
 				cond.test = false;
+				this.setBusForPreset(busSettings, false, {cond.test = true; cond.signal;});
+				cond.wait;
+			});
+			"busSettings loaded".postln;
+			//still some work on this...
+			if(ioSettings.notNil, {
+				recStates = ioSettings[0];
+				recInputArr = ioSettings[1];
+				mastOutArr = ioSettings[2];
+			});
+			"ioSettings loaded".postln;
+
+			if(fxSettings.notNil, {
 				this.setFxs(fxSettings, {
 					cond.test = false;
 					modSettings.do{|item|
@@ -4569,12 +4613,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
 						cond.wait;
 					};
-					cond.test = true; cond.signal;
-				}, false);
-			});
-			cond.wait;
-			nodeTime.yield;
+					nodeTime.yield;
+					"fxSettings loaded".postln;
+				});
+			}, {
+				nodeTime.yield;
+				"refresh GUI".postln;
 				this.refreshMixGUI;
+			});
 		}.fork(AppClock);
 	}
 
@@ -4619,13 +4665,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	setOutputSettings {arg arr;
+		var refreshNdefs;
 		arr.do{|item, index|
 			var trackArr;
+			if(index == (arr.size-1), {refreshNdefs = true }, {refreshNdefs = false });
 			trackArr = mixTrackNames[index].asString.divNumStr;
 			if(item == 'master', {
-				this.setTrackOut(trackArr[0].asSymbol, trackArr[1], 1);
+				this.setTrackOut(trackArr[0].asSymbol, trackArr[1], 1, refreshNdefs);
 			}, {
-				this.setTrackOut(trackArr[0].asSymbol, trackArr[1], 0);
+				this.setTrackOut(trackArr[0].asSymbol, trackArr[1], 0, refreshNdefs);
 			});
 		};
 	}
@@ -4704,17 +4752,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	removeAllSends {arg refresh=false, action;
 		{
-			if(this.getBusInLabels.notNil, {
-			busArr.flop[0].do{|item, index|
-				if(item.notNil, {
-					Ndef(item).clear;
-					Ndef(item).source = nil;
-				});
-				busArr[index] = [nil!2];
+			this.getBusInLabels.postln;
+			this.getBusInLabels.do{|item|
+				var trackInform;
+				trackInform = item[0].asString.divNumStr;
+				item[1].do{|it|
+					var thisBusNum;
+					thisBusNum = it.asString.divNumStr[1];
+					"should post send remove".postln;
+					this.removeBus(trackInform[1], thisBusNum, trackInform[0]);
 					server.sync;
+				};
 			};
 			if(refresh, { {this.refreshMixGUI}.defer });
-			});
 		action.();
 		}.fork
 	}
@@ -4724,6 +4774,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{
 			thisBusArr = arr[0];
 			busSettings = this.getBusInArr(thisBusArr);
+			"busSettings ".post; busSettings.postln;
 			busSettings.do{|item|
 				var trackSetting;
 				trackSetting = item[0].asString.divNumStr;

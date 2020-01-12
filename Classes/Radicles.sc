@@ -4334,7 +4334,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "audioin: bus, block");
 		cW.add(\in, [\str, \num, \num], {|str1, num1, num2|
-			Block.play(num1, \audioin, [\bus, num1]);
+			Block.play(num2, \audioin, [\bus, num1]);
 		}, "audioin: bus, block");
 		cW.add(\blkn, [\str, \num], {|str1, num1|
 			Block.addNum(num1);
