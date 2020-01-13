@@ -3,7 +3,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 	<>varString, <>replace=false;
 
 	*new {arg window, bounds, font, qpalette, settings,
-		postWhere, postType, postWin, postBool, storeSize;
+		postWhere, postType, postWin, postBool, storeSize=10;
 		^super.new.initCallWindow(window, bounds, font, qpalette,
 			settings, postWhere, postType, postWin, postBool, storeSize);
 	}
@@ -94,6 +94,14 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		window = Window.new(name, bounds.asRect).front;
 		^this.new(window, Rect(0,0,bounds.width, bounds.height), font, qpalette,
 			settings, postWhere, postType, postWin, postBool, storeSize);
+	}
+
+	background {arg color;
+		text.background_(color);
+	}
+
+	fontColor {arg color;
+		text.stringColor_(color);
 	}
 
 	callFunc {arg string, postWin, postWhere=\both, postType=\ln, postBool=true, callIndex;
@@ -543,6 +551,20 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			};
 		};
 		storeIndex = 0;
+	}
+
+	colorArr {
+		^[ 'alice blue', 'AliceBlue', 'antique white', 'AntiqueWhite', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanched almond', 'BlanchedAlmond', 'blue', 'blue violet', 'BlueViolet', 'brown', 'burlywood', 'cadet blue', 'CadetBlue', 'chartreuse', 'chocolate', 'coral', 'cornflower blue', 'CornflowerBlue', 'cornsilk', 'cyan', 'dark goldenrod', 'dark green', 'dark khaki', 'dark olive green', 'dark orange', 'dark orchid', 'dark salmon', 'dark sea green', 'dark slate blue', 'dark slate gray', 'dark slate grey', 'dark turquoise', 'dark violet', 'DarkGoldenrod', 'DarkGreen', 'DarkKhaki', 'DarkOliveGreen', 'DarkOrange', 'DarkOrchid', 'DarkSalmon', 'DarkSeaGreen', 'DarkSlateBlue', 'DarkSlateGray', 'DarkSlateGrey', 'DarkTurquoise', 'DarkViolet', 'deep pink', 'deep sky blue', 'DeepPink', 'DeepSkyBlue', 'dim gray', 'dim grey', 'DimGray', 'DimGrey', 'dodger blue', 'DodgerBlue', 'firebrick', 'floral white', 'FloralWhite', 'forest green', 'ForestGreen', 'gainsboro', 'ghost white', 'GhostWhite', 'gold', 'goldenrod', 'gray' ];
+
+		// [ 'alice blue', 'AliceBlue', 'antique white', 'AntiqueWhite', 'AntiqueWhite1', 'AntiqueWhite2', 'AntiqueWhite3', 'AntiqueWhite4', 'aquamarine', 'aquamarine1', 'aquamarine2', 'aquamarine3', 'aquamarine4', 'azure', 'azure1', 'azure2', 'azure3', 'azure4', 'beige', 'bisque', 'bisque1', 'bisque2', 'bisque3', 'bisque4', 'black', 'blanched almond', 'BlanchedAlmond', 'blue', 'blue violet', 'blue1', 'blue2', 'blue3', 'blue4', 'BlueViolet', 'brown', 'brown1', 'brown2', 'brown3', 'brown4', 'burlywood', 'burlywood1', 'burlywood2', 'burlywood3', 'burlywood4', 'cadet blue', 'CadetBlue', 'CadetBlue1', 'CadetBlue2', 'CadetBlue3', 'CadetBlue4', 'chartreuse', 'chartreuse1', 'chartreuse2', 'chartreuse3', 'chartreuse4', 'chocolate', 'chocolate1', 'chocolate2', 'chocolate3', 'chocolate4', 'coral', 'coral1', 'coral2', 'coral3', 'coral4', 'cornflower blue', 'CornflowerBlue', 'cornsilk', 'cornsilk1', 'cornsilk2', 'cornsilk3', 'cornsilk4', 'cyan', 'cyan1', 'cyan2', 'cyan3', 'cyan4', 'dark goldenrod', 'dark green', 'dark khaki', 'dark olive green', 'dark orange', 'dark orchid', 'dark salmon', 'dark sea green', 'dark slate blue', 'dark slate gray', 'dark slate grey', 'dark turquoise', 'dark violet', 'DarkGoldenrod', 'DarkGoldenrod1', 'DarkGoldenrod2', 'DarkGoldenrod3', 'DarkGoldenrod4', 'DarkGreen', 'DarkKhaki', 'DarkOliveGreen', 'DarkOliveGreen1', 'DarkOliveGreen2', 'DarkOliveGreen3', 'DarkOliveGreen4', 'DarkOrange', 'DarkOrange1', 'DarkOrange2', 'DarkOrange3', 'DarkOrange4', 'DarkOrchid', 'DarkOrchid1', 'DarkOrchid2', 'DarkOrchid3', 'DarkOrchid4', 'DarkSalmon', 'DarkSeaGreen', 'DarkSeaGreen1', 'DarkSeaGreen2', 'DarkSeaGreen3', 'DarkSeaGreen4', 'DarkSlateBlue', 'DarkSlateGray', 'DarkSlateGray1', 'DarkSlateGray2', 'DarkSlateGray3', 'DarkSlateGray4', 'DarkSlateGrey', 'DarkTurquoise', 'DarkViolet', 'deep pink', 'deep sky blue', 'DeepPink', 'DeepPink1', 'DeepPink2', 'DeepPink3', 'DeepPink4', 'DeepSkyBlue', 'DeepSkyBlue1', 'DeepSkyBlue2', 'DeepSkyBlue3', 'DeepSkyBlue4', 'dim gray', 'dim grey', 'DimGray', 'DimGrey', 'dodger blue', 'DodgerBlue', 'DodgerBlue1', 'DodgerBlue2', 'DodgerBlue3', 'DodgerBlue4', 'firebrick', 'firebrick1', 'firebrick2', 'firebrick3', 'firebrick4', 'floral white', 'FloralWhite', 'forest green', 'ForestGreen', 'gainsboro', 'ghost white', 'GhostWhite', 'gold', 'gold1', 'gold2', 'gold3', 'gold4', 'goldenrod', 'goldenrod1', 'goldenrod2', 'goldenrod3', 'goldenrod4', 'gray', 'gray0', 'gray1', 'gray10', 'gray100', 'gray11', 'gray12', 'gray13', 'gray14', 'gray15', 'gray16', 'gray17', 'gray18', 'gray19', 'gray2', 'gray20', 'gray21', 'gray22', 'gray23' ];
+	}
+
+	colorList {
+		Post << this.colorArr;
+	}
+
+	randColorList {
+		^this.colorArr.choose.radpostwarn;
 	}
 
 }

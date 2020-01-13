@@ -3535,6 +3535,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		.states_([["S E L E C T", Color.white, Color.black]]);
 		selButt.action = {
 			mastOutArr = butt.collect({|item|  item.collect({|it| it.value }) });
+			mastOutArr.postln;
 			this.mapOutFunc;
 			mastOutWin.close;
 		};
@@ -4365,7 +4366,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(filterType.isNil, {
 			PresetFile.post(\filter);
 		}, {
-			PresetFile.readAll(\filter).select{|item| item[1][0] == filterType }.flop[0].cs.postln;
+			PresetFile.readAll(\filter).select{|item| item[1][0] == filterType }.flop[0].cs.radpostwarn;
 		});
 	}
 
@@ -4373,7 +4374,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(trackType.isNil, {
 			PresetFile.post(\track);
 		}, {
-			PresetFile.readAll(\track).select{|item| item[1][0] == trackType }.flop[0].cs.postln;
+			PresetFile.readAll(\track).select{|item| item[1][0] == trackType }.flop[0].cs.radpostwarn;
 		});
 	}
 
@@ -4529,6 +4530,91 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				cond.test = true; cond.signal;
 			}, refresh: false);
 			cond.wait;
+			cond.test = false;
+			this.removeAllSends(action: {
+				cond.test = true; cond.signal;
+			}, refresh: false);
+			cond.wait;
+			dataArr = PresetFile.read(\tracks, presetName);
+			mixSettings = dataArr[0];
+			prepSettings = dataArr[1];
+			busSettings = dataArr[2];
+			outSettings = dataArr[3];
+			ioSettings = dataArr[4];
+			prepSettings.do{|item|
+				var infoArr;
+				infoArr = item.flop[0][0].asString.divNumStr;
+				if(infoArr[1].isNil, {infoArr[1] = 1});
+				arrSettings = this.prepLoadTrackPreset(infoArr[0].asSymbol, infoArr[1], item.flop[1]);
+				fxSettings = fxSettings ++ arrSettings[0];
+				if(arrSettings[1].notNil, {
+					modSettings = modSettings ++ arrSettings[1];
+				});
+			};
+			extraArgs = this.prepMixSettings(mixSettings);
+			extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
+				item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
+			server.sync;
+			case
+			{item[1].includes(\mute)} {
+				muteStates[mixTrackNames.indexOf(item[0])] =
+				item[1][(item[1].indexOfEqual(\mute)+1)];
+			}
+			{item[1].includes(\solo)} {
+				soloStates[mixTrackNames.indexOf(item[0])] =
+				item[1][(item[1].indexOfEqual(\solo)+1)];
+			};
+			});
+			modMixSettings =mixSettings[1];
+			if(modMixSettings.notNil, {
+				modMixSettings.flop[1].do{|item|
+					cond.test = false;
+					this.modRawPreset(item[0][0], item, {cond.test = true; cond.signal;});
+					cond.wait;
+				};
+			});
+			if(outSettings.notNil, {
+				this.setOutputSettings(outSettings);
+				nodeTime.yield;
+			});
+			if(busSettings.notNil, {
+				cond.test = false;
+				this.setBusForPreset(busSettings, false, {cond.test = true; cond.signal;});
+				cond.wait;
+			});
+			if(ioSettings.notNil, {
+				recStates = ioSettings[0];
+				recInputArr = ioSettings[1];
+				mastOutArr = ioSettings[2];
+				this.mapOutFunc;
+				nodeTime.yield;
+			});
+			if(fxSettings.notNil, {
+				this.setFxs(fxSettings, {
+					cond.test = false;
+					modSettings.do{|item|
+						server.sync;
+						this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
+						cond.wait;
+					};
+					nodeTime.yield;
+				});
+			}, {
+				nodeTime.yield;
+				this.refreshMixGUI;
+			});
+		}.fork(AppClock);
+	}
+
+		loadPreset {arg presetName;
+		var dataArr, cond, modSettings, mixSettings, fxSettings, arrSettings, prepSettings,
+		trackInfoArr, extraArgs, modMixSettings, busSettings, outSettings, ioSettings;
+		{
+			cond = Condition(false);
+			this.removeAllFilters(action: {
+				cond.test = true; cond.signal;
+			}, refresh: false);
+			cond.wait;
 			"filters removed".postln;
 			cond.test = false;
 			this.removeAllSends(action: {
@@ -4602,6 +4688,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				recStates = ioSettings[0];
 				recInputArr = ioSettings[1];
 				mastOutArr = ioSettings[2];
+				this.mapOutFunc;
+				nodeTime.yield;
+				/*this.mapOuts(ioSettings[2]);*/
 			});
 			"ioSettings loaded".postln;
 

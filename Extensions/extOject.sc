@@ -132,10 +132,15 @@
 	}
 
 	radpost {arg type=\ln;
-		var string, doc;
+		var string, doc, postUI;
 		if(Radicles.ignorePost.not, {
-		string = this.asString.lineFormat(Radicles.lineSize);
 		doc = Radicles.postDoc;
+		postUI = Radicles.postWindow;
+			string = this;
+			if(postUI.notNil, {
+				string = string.replace(9.asAscii, " ");
+			});
+		string = string.asString.lineFormat(Radicles.lineSize);
 		if(string.includesString(10.asAscii), {
 			type = \br
 		});
@@ -147,6 +152,9 @@
 		}, {
 			string.postallin([\ide, \doc], type, doc);
 		});
+			if(postUI.notNil, {
+				string.postin(\gui, type, postUI);
+			});
 		});
 	}
 
@@ -176,9 +184,14 @@
 	}
 
 	radpostwarn {arg type=\ln;
-		var string;
+		var string, postUI;
+		postUI = Radicles.postWindow;
 		string = this.asString.lineFormat(Radicles.lineSize);
 		string.postin(\ide, type);
+		if(postUI.notNil, {
+				string.postin(\gui, type, postUI);
+			});
+
 	}
 
 }

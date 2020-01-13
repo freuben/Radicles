@@ -1,4 +1,4 @@
-PostWindow : Radicles {var text, <>megaString, <>time=0.1, <>deviation=0.01, win;
+PostWindow : Radicles {var text, <>megaString, <>time=0.1, <>deviation=0.01, win, <backgroundColor;
 
 	*new {arg window, bounds, font, qpalette;
 		^super.new.initBasicClass(window, bounds, font, qpalette);
@@ -8,13 +8,13 @@ PostWindow : Radicles {var text, <>megaString, <>time=0.1, <>deviation=0.01, win
 
 		bounds ?? {bounds = Window.win4TopLeft};
 		font ?? {font=Font("Monaco", 12)};
-		qpalette ?? {qpalette = QPalette.dark};
+		qpalette ?? {qpalette = QPalette.dark; backgroundColor = Color.black};
 
 		if(window.isNil, {
 			"You must provide a window as first argument, otherwise use the .window class method".warn;
 		}, {
 			text = TextView(window.asView, bounds).focus(true);
-			text.font_(font).palette_(qpalette);
+			text.font_(font).palette_(qpalette).background_(backgroundColor);
 			megaString = "";
 			this.fork;
 		});
