@@ -15,6 +15,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType, memSize, action;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
+		server.options.numOutputBusChannels = 8;
+		server.options.numInputBusChannels = 8;
 		server.options.numWireBufs = 128*4;
 		server.options.numAudioBusChannels = 128*8;
 		server.options.numControlBusChannels = 128*128;
