@@ -9,15 +9,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob;
 
-	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType;
-		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType);
+	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
+		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);
 	}
 
-	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType, memSize=50;
+	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType, memSize, action;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
 		server.options.numWireBufs = 128*4;
 		server.options.numAudioBusChannels = 128*8;
 		server.options.numControlBusChannels = 128*128;
+		memSize ?? {Radicles.new; memSize = memorySize};
 		server.options.memSize = memSize*8192;
 		server.waitForBoot{
 			{
@@ -68,6 +69,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				oiIns = Ndef(\spaceMaster).numChannels;
 				oiOuts = server.options.numOutputBusChannels;
 				basicFont = Font("Monaco", 8);
+				server.sync;
+				action.(trackNum, chanNum);
 			}.fork
 		};
 		screenBounds = Window.screenBounds.bounds;
@@ -268,7 +271,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			server.sync;
 			{this.refreshFunc}.defer;
 			server.sync;
-			action.();
+			action.(trackInfo);
 		}.fork;
 	}
 
@@ -4906,7 +4909,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		trackCount=1; busCount=1; winRefresh=false;
 	}
 
-	clearNdefs {var modArr, keys, modNdefs, cond, busNdefs;
+	clearNdefs {arg action;
+		var modArr, keys, modNdefs, cond, busNdefs;
 		{
 			if(mixerWin.notNil, {
 				{mixerWin.close}.defer;
@@ -4942,6 +4946,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			server.sync;
 			nodeTime.yield;
 			this.garbage(fadeTime, (modNdefs ++ busNdefs).postln);
+			action.();
 		}.fork;
 	}
 
@@ -4949,6 +4954,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(mixerWin.notNil, {
 			{mixerWin.close}.defer;
 		});
+	}
+
+	kill {arg action;
+		{
+			{this.nomixer}.defer;
+		nodeTime.yield;
+		this.clearNdefs({
+			this.resetVars;
+			nodeTime.yield;
+				action.();
+		});
+		}.fork;
 	}
 
 }

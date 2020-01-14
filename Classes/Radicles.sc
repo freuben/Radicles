@@ -2,14 +2,14 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>filesPath, <>soundFilePath, <>postWindow;
+	<>filesPath, <>soundFilePath, <>postWindow, <>memorySize=50;
 
 	*new {
 		this.setColors;
 		^super.new.initRadicles;
 	}
 
-	initRadicles {arg doc=false;
+	initRadicles {
 		mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
 /*		mainPath = (Platform.userExtensionDir ++ "/Radicles");
@@ -17,6 +17,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		filesPath = (Platform.userExtensionDir ++ "/RadiclesFiles");
 		soundFilePath = (filesPath ++ "/SoundFiles");
 		server = Server.default;
+	}
+
+	*start {
+		this.callWindow;
 	}
 
 	*document {
@@ -1910,6 +1914,296 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		});
 	}, "setfx: filterNum, fxArg");
 
+	//assemblage presets:
+	//fx presets
+	cW.add(\fxload, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.loadFxTrackPreset(\track, num1, 1, str3);}
+			{str2 == 'b'} {aZ.loadFxTrackPreset(\bus, num1, 1, str3);}
+			{str2 == 'm'} {aZ.loadFxTrackPreset(\master, 1, num1, str3);};
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxload: trackType, slot, preset");
+
+	cW.add(\fxload, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.loadFxTrackPreset(\track, num1, num2, str3);}
+			{str2 == 'b'} {aZ.loadFxTrackPreset(\bus, num1, num2, str3);}
+			{str2 == 'm'} {aZ.loadFxTrackPreset(\master, 1, num2, str3);};
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxload: trackType, trackNum, slot");
+
+	cW.add(\fxload, [\str, \num, \str], {|str1, num1, str2|
+		var trackArr, thisArr;
+		if(aZ.notNil, {
+			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+			if(num1 <= (trackArr.size), {
+				thisArr = trackArr[num1-1];
+				if(thisArr[1].isNil, {thisArr[1] = 1});
+				aZ.loadFxTrackPreset(thisArr[0].asSymbol, thisArr[1], 1, str2);
+			}, {
+				"track not found".warn;
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxload: mixTrackNum, slot1, preset");
+
+	cW.add(\fxload, [\str, \num, \num, \str], {|str1, num1, num2, str2|
+		var trackArr, thisArr;
+		if(aZ.notNil, {
+			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+			if(num1 <= (trackArr.size), {
+				thisArr = trackArr[num1-1];
+				if(thisArr[1].isNil, {thisArr[1] = 1});
+				aZ.loadFxTrackPreset(thisArr[0].asSymbol, thisArr[1], num2, str2);
+			}, {
+				"track not found".warn;
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxload: mixTrackNum, slot, preset");
+
+	cW.add(\loadfx, [\str, \num, \str], {|str1, num1, str2|
+		var filterTag, filterTagArr;
+		if(aZ.notNil, {
+			filterTag = aZ.filters[num1-1][0];
+			if(filterTag.notNil, {
+				filterTagArr = aZ.convFilterTag(filterTag).postln;
+				aZ.loadFxTrackPreset(filterTagArr[0].asSymbol, filterTagArr[1],
+					filterTagArr[2], str2);
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "load: filterNum, preset");
+
+	cW.add(\fxsave, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.writeFxTrackPreset(\track, num1, 1, str3);}
+			{str2 == 'b'} {aZ.writeFxTrackPreset(\bus, num1, 1, str3);}
+			{str2 == 'm'} {aZ.writeFxTrackPreset(\master, 1, num1, str3);};
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxsave: trackType, slot, preset");
+
+	cW.add(\fxsave, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.writeFxTrackPreset(\track, num1, num2, str3);}
+			{str2 == 'b'} {aZ.writeFxTrackPreset(\bus, num1, num2, str3);}
+			{str2 == 'm'} {aZ.writeFxTrackPreset(\master, 1, num2, str3);};
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxsave: trackType, trackNum, slot");
+
+	cW.add(\fxsave, [\str, \num, \str], {|str1, num1, str2|
+		var trackArr, thisArr;
+		if(aZ.notNil, {
+			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+			if(num1 <= (trackArr.size), {
+				thisArr = trackArr[num1-1];
+				if(thisArr[1].isNil, {thisArr[1] = 1});
+				aZ.writeFxTrackPreset(thisArr[0].asSymbol, thisArr[1], 1, str2);
+			}, {
+				"track not found".warn;
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxsave: mixTrackNum, slot1, preset");
+
+	cW.add(\fxsave, [\str, \num, \num, \str], {|str1, num1, num2, str2|
+		var trackArr, thisArr;
+		if(aZ.notNil, {
+			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+			if(num1 <= (trackArr.size), {
+				thisArr = trackArr[num1-1];
+				if(thisArr[1].isNil, {thisArr[1] = 1});
+				aZ.writeFxTrackPreset(thisArr[0].asSymbol, thisArr[1], num2, str2);
+			}, {
+				"track not found".warn;
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxsave: mixTrackNum, slot, preset");
+
+	cW.add(\savefx, [\str, \num, \str], {|str1, num1, str2|
+		var filterTag, filterTagArr;
+		if(aZ.notNil, {
+			filterTag = aZ.filters[num1-1][0];
+			if(filterTag.notNil, {
+				filterTagArr = aZ.convFilterTag(filterTag).postln;
+				aZ.writeFxTrackPreset(filterTagArr[0].asSymbol, filterTagArr[1],
+					filterTagArr[2], str2);
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "save: filterNum, preset");
+
+	//print fx presets
+	cW.add(\fxload, [\str], {|str1|
+		PresetFile.read(\filter).collect{|item|
+			[PresetFile.read(\filter, item)[0], item]; }
+		.sort({ arg a, b; a[0] <= b[0] }).dopostln;
+	}, "fxload: prints all fx presets that can be loaded");
+
+	cW.add(\fxload, [\str, \str], {|str1, str2|
+		var resultArr;
+		resultArr = PresetFile.read(\filter).collect{|item|
+			[PresetFile.read(\filter, item)[0], item]; }
+		.sort({ arg a, b; a[0] <= b[0] });
+		resultArr.select({|item| item[0] == str2 }).dopostln;
+	}, "fxload: fxType, fx presets with for this type");
+	//fxs lags
+	cW.add(\fxlags, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.fxTrackLags(\track, num1, 1, num2);}
+			{str2 == 'b'} {aZ.fxTrackLags(\bus, num1, 1, num2);}
+			{str2 == 'm'} {aZ.fxTrackLags(\master, 1, num1, num2);};
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxsave: trackType, slot, preset");
+
+	cW.add(\fxlags, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.fxTrackLags(\track, num1, num2, num3);}
+			{str2 == 'b'} {aZ.fxTrackLags(\bus, num1, num2, num3);}
+			{str2 == 'm'} {aZ.fxTrackLags(\master, 1, num2, num3);};
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxsave: trackType, trackNum, slot");
+
+	cW.add(\fxlags, [\str, \num, \num], {|str1, num1, num2|
+		var trackArr, thisArr;
+		if(aZ.notNil, {
+			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+			if(num1 <= (trackArr.size), {
+				thisArr = trackArr[num1-1];
+				if(thisArr[1].isNil, {thisArr[1] = 1});
+				aZ.fxTrackLags(thisArr[0].asSymbol, thisArr[1], 1, num2);
+			}, {
+				"track not found".warn;
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxsave: mixTrackNum, slot1, preset");
+
+	cW.add(\fxlags, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+		var trackArr, thisArr;
+		if(aZ.notNil, {
+			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+			if(num1 <= (trackArr.size), {
+				thisArr = trackArr[num1-1];
+				if(thisArr[1].isNil, {thisArr[1] = 1});
+				aZ.fxTrackLags(thisArr[0].asSymbol, thisArr[1], num2, num3);
+			}, {
+				"track not found".warn;
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "fxsave: mixTrackNum, slot, preset");
+
+	cW.add(\lagsfx, [\str, \num, \num], {|str1, num1, num2|
+		var filterTag, filterTagArr;
+		if(aZ.notNil, {
+			filterTag = aZ.filters[num1-1][0];
+			if(filterTag.notNil, {
+				filterTagArr = aZ.convFilterTag(filterTag);
+				aZ.fxTrackLags(filterTagArr[0].asSymbol, filterTagArr[1],
+					filterTagArr[2], num2);
+			});
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "save: filterNum, preset");
+
+	//assmeblage track presets
+	cW.add(\csload, [\str], {|str1|
+		if(aZ.notNil, {
+			aZ.listTrackPresets(nil);
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "csload: [trackType, presetName]");
+
+	cW.add(\csload, [\str, \str], {|str1, str2|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.listTrackPresets(\track);}
+			{str2 == 'b'} {aZ.listTrackPresets(\bus);}
+			{str2 == 'm'} {aZ.listTrackPresets(\master);}
+			;
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "csload: [trackType, presetName]");
+
+	cW.add(\csload, [\str, \str, \str], {|str1, str2, str3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.loadTrackPreset(\track, 1, str3);}
+			{str2 == 'b'} {aZ.loadTrackPreset(\bus, 1, str3);}
+			{str2 == 'm'} {aZ.loadTrackPreset(\master, 1, str3);}
+			;
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "csload: [trackType, presetName]");
+
+	cW.add(\csload, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.loadTrackPreset(\track, num1, str3);}
+			{str2 == 'b'} {aZ.loadTrackPreset(\bus, num1, str3);}
+			{str2 == 'm'} {aZ.loadTrackPreset(\master, num1, str3);}
+			;
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "csload: [trackType, trackNum, presetName]");
+
+	cW.add(\cssave, [\str, \str, \str], {|str1, str2, str3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.writeTrackPreset(\track, 1, str3);}
+			{str2 == 'b'} {aZ.writeTrackPreset(\bus, 1, str3);}
+			{str2 == 'm'} {aZ.writeTrackPreset(\master, 1, str3);}
+			;
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "cssave: [trackType, presetName]");
+
+	cW.add(\cssave, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.writeTrackPreset(\track, num1, str3);}
+			{str2 == 'b'} {aZ.writeTrackPreset(\bus, num1, str3);}
+			{str2 == 'm'} {aZ.writeTrackPreset(\master, num1, str3);}
+			;
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "cssave: [trackType, trackNum, presetName]");
+
 }
 
 	*loadMixCmds {
@@ -1927,7 +2221,13 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		if(aZ.notNil, {
 			case
 			{str2 == 'add'} {
-				aZ.autoAddTrack(\track);
+				aZ.autoAddTrack(\track, action: {|item|
+					var ndefKey;
+					ndefKey = item[0][0];
+					Block.add(Ndef(item[0][0]).numChannels, {|item|
+						aZ.input(item, \track, ndefKey.asString.divNumStr[1]);
+					});
+				});
 			}
 			{str2 == 'rmv'} {
 				getTrack = (aZ.mixTrackNames.select{|item|
@@ -1966,14 +2266,31 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		if(aZ.notNil, {
 			case
 			{str2 == 'add'} {
-				aZ.autoAddTrack(\track, num1);
+				aZ.autoAddTrack(\track, num1, action: {|item|
+					var ndefKey;
+					ndefKey = item[0][0];
+					Block.add(Ndef(item[0][0]).numChannels, {|item|
+						aZ.input(item, \track, ndefKey.asString.divNumStr[1]);
+					});
+				});
 			}
 			{str2 == 'addn'} {
 				{num1.do{
 					cond.test = false;
-					aZ.autoAddTrack(\track, action: {cond.test = true; cond.signal});
+					aZ.autoAddTrack(\track, action: {|item|
+						var ndefKey;
+						ndefKey = item[0][0];
+						Block.add(Ndef(item[0][0]).numChannels, {|it|
+							aZ.input(it, \track, ndefKey.asString.divNumStr[1]);
+							server.sync;
+							cond.test = true; cond.signal;
+						});
+						cond.wait;
+						cond.test = true; cond.signal});
 					cond.wait;
-				};}.fork;
+				};
+				{aZ.refreshMixGUI}.defer;
+				}.fork;
 			}
 			{str2 == 'rmvn'} {
 				{num1.do{
@@ -2070,9 +2387,20 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			{str2 == 'addn'} {
 				{num1.do{
 					cond.test = false;
-					aZ.autoAddTrack(\track, num2, action: {cond.test = true; cond.signal});
+					aZ.autoAddTrack(\track, num2, action: {|item|
+						var ndefKey;
+						ndefKey = item[0][0];
+						Block.add(Ndef(item[0][0]).numChannels, {|it|
+							aZ.input(it, \track, ndefKey.asString.divNumStr[1]);
+							server.sync;
+							cond.test = true; cond.signal;
+						});
+						cond.wait;
+						cond.test = true; cond.signal});
 					cond.wait;
-				};}.fork;
+				};
+				{aZ.refreshMixGUI}.defer;
+				}.fork;
 			};
 		}, {
 			"could not find assemblage".warn;
@@ -3185,6 +3513,30 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		});
 	}, "unmodsnd: mixTrackNum, slotNum");
 
+	cW.add(\mute, [\str, \str], {|str1, str2|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.setMute(\track, 1, 1);}
+			{str2 == 'b'} {aZ.setMute(\bus, 1, 1);}
+			{str2 == 'm'} {aZ.setMute(\master, 1, 1);}
+			;
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "mute: [trackType, trackNum]");
+
+	cW.add(\unmute, [\str, \str], {|str1, str2|
+		if(aZ.notNil, {
+			case
+			{str2 == 't'} {aZ.setMute(\track, 1, 0);}
+			{str2 == 'b'} {aZ.setMute(\bus, 1, 0);}
+			{str2 == 'm'} {aZ.setMute(\master, 1, 0);}
+			;
+		}, {
+			"could not find assemblage".warn;
+		});
+	}, "unmute: [trackType, trackNum]");
+
 	cW.add(\mute, [\str, \str, \num], {|str1, str2, num1|
 		if(aZ.notNil, {
 			case
@@ -4256,15 +4608,15 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Block.xset(num1, [str2, num3]);
 	}, "blocksetn: blk, arg");
 
-	cW.add(\blksetn, [\str, \num, \num, \arr], {|str1, num1, arr1|
+	cW.add(\blksetn, [\str, \num, \arr], {|str1, num1, arr1|
 		Block.set(num1, arr1);
 	}, "blocksetn: blk, arg");
 
-	cW.add(\blkxsetn, [\str, \num, \num, \arr], {|str1, num1, arr1|
+	cW.add(\blkxsetn, [\str, \num, \arr], {|str1, num1, arr1|
 		Block.xset(num1, arr1);
 	}, "blockxsetn: blk, arg");
 
-	cW.add(\blklagn, [\str, \num, \num, \arr], {|str1, num1, arr1|
+	cW.add(\blklagn, [\str, \num, \arr], {|str1, num1, arr1|
 		Block.lag(num1, arr1);
 	}, "blocksetn: blk, val");
 
@@ -4445,29 +4797,70 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		{str2 == 'fade'} {Radicles.fadeTime = num1};
 	}, "radicles: ['fade']");
 
+	cW.add(\start, [\str, \num], {|str, num|
+		if(aZ.isNil, {
+			aZ = Assemblage(num, 1, action: {|number, channels|
+				Block.addNum(number, channels, {|arr|
+					arr.do{|item, index|
+						aZ.input(item, \track, (index+1));
+					};
+				});
+			});
+		}, {
+			"assemblage is already running".warn;
+		});
+	}, "assemblage: trackNum");
+
+	cW.add(\start, [\str, \num, \num], {|str, num1, num2|
+		if(aZ.isNil, {
+			aZ = Assemblage(num1, num2, action: {|number, channels|
+				Block.addNum(number, channels, {|arr|
+					arr.do{|item, index|
+						aZ.input(item, \track, (index+1));
+					};
+				});
+			});
+		}, {
+			"assemblage is already running".warn;
+		});
+	}, "assemblage: trackNum, busNum");
+	cW.add(\start, [\str, \num, \num, \num], {|str, num1, num2, num3|
+		if(aZ.isNil, {
+			aZ = Assemblage(num1, num2, num3, action: {|number, channels|
+				Block.addNum(number, channels, {|arr|
+					arr.do{|item, index|
+						aZ.input(item, \track, (index+1));
+					};
+				});
+			});
+		}, {
+			"assemblage is already running".warn;
+		});
+	}, "assemblage: trackNum, busNum, chanNum");
+
 	cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 		("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
 			num2 ++ ");").radpost.interpret;
 	}, "netaddrs: id, ip, port");
 
 	cW.add(\color, [\str, \str], {|str1, str2|
-	cW.background(Color.newName(str2););
+		cW.background(Color.newName(str2););
 	});
 
 	cW.add(\colortext, [\str, \str], {|str1, str2|
-	cW.fontColor(Color.newName(str2););
+		cW.fontColor(Color.newName(str2););
 	});
 
 	cW.add(\colors, [\str], {|str1|
-	cW.colorList;
+		cW.colorList;
 	});
 
 	cW.add(\selcolor, [\str], {|str1|
-	cW.background(Color.newName(cW.randColorList););
+		cW.background(Color.newName(cW.randColorList););
 	});
 
 	cW.add(\selcolortext, [\str], {|str1|
-	cW.fontColor(Color.newName(cW.randColorList););
+		cW.fontColor(Color.newName(cW.randColorList););
 	});
 
 	cW.add(\update, [\str], {|str1|
@@ -4476,7 +4869,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	});
 
 	cW.add(\recompile, [\str], {|str1|
-	thisProcess.platform.recompile
+		thisProcess.platform.recompile;
+	});
+
+	cW.add(\kill, [\str], {|str1|
+		thisProcess.platform.recompile;
 	});
 
 	//base associations
@@ -4568,7 +4965,24 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			};
 			synthFile.radpostwarn;
 		}, "fxs: posts available filters");
-
+		cW.add(\pl, [\str], {|str1|
+			var path;
+			("Play Folder: " ++ BStore.playFolder).radpostwarn;
+			"SoundFiles: ".postln;
+			path = PathName(BStore.getPlayPath);
+			path.files.collect({|item| item.fileNameWithoutExtension }).dopostln;
+		}, "lists play soundfiles");
+		cW.add(\pl, [\str, \num], {|str1, num1|
+			var path;
+			BStore.playFolder = num1;
+			("Play Folder: " ++ BStore.playFolder).radpostwarn;
+		}, "change play folder");
+		cW.add(\memory, [\str], {|str1|
+			Radicles.memorySize.radpostwarn;
+		}, "posts memory size");
+		cW.add(\memory, [\str, \num], {|str1, num1|
+			Radicles.memorySize = num1;
+		}, "change memory size");
 	};
 	cW.storeIndex = 0;
 }

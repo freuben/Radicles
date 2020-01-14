@@ -2,27 +2,38 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
 	<pattCount=1, <timecond;
 
-	*add {arg channels=1;
+	*add {arg channels=1, action;
 		var ndefTag, ndefCS1, ndefCS2;
+		{
 		ndefTag = ("block" ++ blockCount).asSymbol;
 		blockCount = blockCount + 1;
 		ndefCS1 = "Ndef.ar(";
 		ndefCS1 = (ndefCS1 ++ ndefTag.cs ++ ", " ++ channels.cs ++ ");");
 		ndefCS1.radpost.interpret;
+		server.sync;
 		ndefCS2 = ("Ndef(" ++ ndefTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
 		ndefCS2.radpost.interpret;
+			server.sync;
 		ndefs = ndefs.add(Ndef(ndefTag));
 		blocks = blocks.add( [ndefTag, channels] );
 		liveBlocks = liveBlocks.add(nil);
 		timecond = timecond.add(Condition(false));
+			action.(Ndef(ndefTag));
+		}.fork;
 	}
 
-	*addNum {arg number, channels=1;
-		var thisChan;
+	*addNum {arg number, channels=1, action;
+		var thisChan, cond, arr;
+		{
+		cond = Condition(false);
 		number.do{|index|
+				cond.test = false;
 			if(channels.isArray, {thisChan = channels[index]}, {thisChan = channels});
-			this.add(thisChan);
+				this.add(thisChan, {|val| cond.test = true; cond.signal; arr = arr.add(val) });
+			cond.wait;
 		};
+			action.(arr);
+		}.fork;
 	}
 
 	*addAll {arg arr;
