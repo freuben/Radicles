@@ -238,9 +238,9 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	*getDirPath {arg format=\audio, directory, subDir;
 		var folderPath, fileIndex, selectedPath, dash;
 		dash = "/";
-		Platform.case(
+		/*Platform.case(
 			\windows,   {dash = "\\"; "Windows".postln }
-		);
+		);*/
 		this.new;
 		playPath = this.soundFilePath ++ dash ++ directory;
 
@@ -261,27 +261,27 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	*getPlayPath {arg format=\audio, fileName=\test;
 		var dash;
 		dash = "/";
-		Platform.case(
+		/*Platform.case(
 			\windows,   {dash = "\\"; "Windows".postln }
-		);
+		);*/
 		^this.getDirPath(format, ("Play" ++ dash), playFolder);
 	}
 
 	*getSamplerPath {arg format=\audio, samplerName=\str;
 		var dash;
 		dash = "/";
-		Platform.case(
+		/*Platform.case(
 			\windows,   {dash = "\\"; "Windows".postln }
-		);
+		);*/
 		^this.getDirPath(format, ("Sampler" ++ dash), "");
 	}
 
 		*getIRPath {arg format=\audio, samplerName=\str;
 		var dash, irpath;
 		dash = "/";
-		Platform.case(
+		/*Platform.case(
 			\windows,   {dash = "\\"; "Windows".postln }
-		);
+		);*/
 		this.new;
 		irpath = (this.soundFilePath ++ dash ++ "IR" ++ dash);
 		^irpath;

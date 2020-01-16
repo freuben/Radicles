@@ -18,9 +18,9 @@ ModFile : Radicles {var <filePath, <libArr;
 	whichFile {arg file, class, thisPath;
 		var dir, existFiles, fileName, classString, modPath, dash;
 		dash = "/";
-		Platform.case(
+		/*Platform.case(
 			\windows,   {dash = "\\"; "Windows".postln }
-		);
+		);*/
 		case
 		{file == \synth} { modPath = dash ++ "Files" ++ dash ++ "SynthFiles" ++ dash}
 		{file == \spec} { modPath = dash ++ "Files" ++ dash ++ "SpecFiles" ++ dash}
@@ -32,8 +32,9 @@ ModFile : Radicles {var <filePath, <libArr;
 		;
 		thisPath ?? {if(file == \preset, {thisPath = filesPath}, {thisPath = mainPath});};
 		dir = (thisPath ++ modPath);
-		PathName(dir).files.do{|item|
-			existFiles = existFiles.add(item.fileNameWithoutDoubleExtension.asSymbol);
+		"dir ".post; dir.postln;
+		PathName(dir).files.postln.do{|item|
+			existFiles = existFiles.add(item.fileNameWithoutDoubleExtension.asSymbol.postln);
 		};
 		classString = class.asString.firstToUpper;
 		if(existFiles.includes(classString.asSymbol), {
