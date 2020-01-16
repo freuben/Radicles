@@ -12,11 +12,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	initRadicles {var dash;
 		dash = "/";
 		Platform.case(
-			\windows,   {dash = "\\"; "Windows".postln }
+			\windows,   {dash = "\\"; }
 		);
 		mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
-		/*mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
 		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
@@ -31,9 +31,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		postDoc = Document.new("Radicles: " ++ Date.getDate.asString);
 	}
 
-	*libraries {
+	*libraries {var libsFolder;
 		this.new;
-		^(["Main"] ++ PathName(libPath).folders.collect({|item| item.folderName }));
+		libsFolder = PathName(libPath).folders;
+		libsFolder = libsFolder.reject({|item| item.folderName == ".git" });
+		^(["Main"] ++ libsFolder.collect({|item| item.folderName }));
 	}
 
 	*clock {var clock, tclock;
@@ -84,15 +86,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		^thisResult;
 	}
 
-	/**plugs {var result;
-	this.new;
-	result = PathName(libPath).folders.collect{|item| item.folderName };
-	^result;
-	}*/
-
-	*allLibs {
+	*allLibs {var libsFolder;
 		this.new;
-		^(PathName.new(libPath).folders.collect({|item| item.folderName }) ++ ["Main"]);
+		libsFolder = PathName(libPath).folders;
+		libsFolder = libsFolder.reject({|item| item.folderName == ".git" });
+		^(libsFolder.collect({|item| item.folderName }) ++ ["Main"]);
 	}
 
 	*selLibs {arg selLibs;

@@ -18,9 +18,7 @@ ModFile : Radicles {var <filePath, <libArr;
 	whichFile {arg file, class, thisPath;
 		var dir, existFiles, fileName, classString, modPath, dash;
 		dash = "/";
-		Platform.case(
-			\windows,   {dash = "\\"; "Windows".postln }
-		);
+		Platform.case(\windows,   {dash = "\\"; });
 		case
 		{file == \synth} { modPath = dash ++ "Files" ++ dash ++ "SynthFiles" ++ dash}
 		{file == \spec} { modPath = dash ++ "Files" ++ dash ++ "SpecFiles" ++ dash}
@@ -115,7 +113,6 @@ ModFile : Radicles {var <filePath, <libArr;
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
 			if(this.array.flop[0].includes(key), {
-			/*if(this.array.flop[0].postln.includes(key), {*/
 				if(window, {
 					Window.warnQuestion(("This key already exists: " ++
 						"Are you sure you want to replace it?"), {
@@ -177,6 +174,9 @@ ModFile : Radicles {var <filePath, <libArr;
 	loadLibs {arg file, class, exclude;
 		var libsFolder, libsFiles, libFolderPath;
 		libsFolder = PathName(libPath).folders;
+		/*libsFolder.postln;*/
+		libsFolder = libsFolder.reject({|item| item.folderName == ".git" });
+		/*libsFolder.postln;*/
 		if(libsFolder.notEmpty, {
 			if(exclude.isNil, {
 				libsFiles = libsFolder.collect{|item|
@@ -194,6 +194,8 @@ ModFile : Radicles {var <filePath, <libArr;
 				}
 			});
 			^libsFiles;
+		}, {
+			^libsFolder;
 		});
 	}
 

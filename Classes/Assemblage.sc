@@ -4274,10 +4274,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		presetArr = this.rawFxPreset(filterKey);
 		presetArr[1].do{|item, index|
 			item[1].do{|it|
+				if(it.rank != 1 , {
 				if(it[1][0].cs.find("mod").notNil, {
 					hasMod = hasMod.add([item[0], it]);
 				}, {
 					extraArgs = extraArgs.add([item[0], it]); //extra args
+				});
+				}, {
+					extraArgs = extraArgs.add([item[0], it]);
 				});
 		} };
 		if(trackBufferArr.notNil, {
