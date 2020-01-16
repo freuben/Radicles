@@ -14,10 +14,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		/*Platform.case(
 			\windows,   {dash = "\\"; "Windows".postln }
 		);*/
-		/*mainPath = Quark("Radicles").localPath;
-		libPath = Quark("RadiclesLibs").localPath;*/
-		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
-		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");
+		mainPath = Quark("Radicles").localPath;
+		libPath = Quark("RadiclesLibs").localPath;
+/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
 		server = Server.default;
