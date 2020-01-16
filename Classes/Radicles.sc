@@ -11,12 +11,12 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 	initRadicles {var dash;
 		dash = "/";
-		/*Platform.case(
+		Platform.case(
 			\windows,   {dash = "\\"; "Windows".postln }
-		);*/
+		);
 		mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
-/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+		/*mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
 		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
