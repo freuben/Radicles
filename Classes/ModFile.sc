@@ -174,9 +174,7 @@ ModFile : Radicles {var <filePath, <libArr;
 	loadLibs {arg file, class, exclude;
 		var libsFolder, libsFiles, libFolderPath;
 		libsFolder = PathName(libPath).folders;
-		/*libsFolder.postln;*/
 		libsFolder = libsFolder.reject({|item| item.folderName == ".git" });
-		/*libsFolder.postln;*/
 		if(libsFolder.notEmpty, {
 			if(exclude.isNil, {
 				libsFiles = libsFolder.collect{|item|
