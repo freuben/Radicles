@@ -16,15 +16,19 @@ ModFile : Radicles {var <filePath, <libArr;
 	}
 
 	whichFile {arg file, class, thisPath;
-		var dir, existFiles, fileName, classString, modPath;
+		var dir, existFiles, fileName, classString, modPath, dash;
+		dash = "/";
+		Platform.case(
+			\windows,   {dash = "\\"; "Windows".postln }
+		);
 		case
-		{file == \synth} { modPath = "/Files/SynthFiles/"}
-		{file == \spec} { modPath = "/Files/SpecFiles/"}
-		{file == \control} { modPath = "/Files/ControlFiles/"}
-		{file == \data} { modPath = "/Files/DataFiles/"}
-		{file == \description} { modPath = "/Files/DescriptionFiles/"}
-		{file == \synthdef} { modPath = "/Files/SynthDefFiles/"}
-		{file == \preset} { modPath = "/Settings/Presets/"}
+		{file == \synth} { modPath = dash ++ "Files" ++ dash ++ "SynthFiles" ++ dash}
+		{file == \spec} { modPath = dash ++ "Files" ++ dash ++ "SpecFiles" ++ dash}
+		{file == \control} { modPath = dash ++ "Files" ++ dash ++ "ControlFiles" ++ dash}
+		{file == \data} { modPath = dash ++ "Files" ++ dash ++ "DataFiles" ++ dash}
+		{file == \description} { modPath = dash ++ "Files" ++ dash ++ "DescriptionFiles" ++ dash}
+		{file == \synthdef} { modPath = dash ++ "Files" ++ dash ++ "SynthDefFiles" ++ dash}
+		{file == \preset} { modPath = dash ++ "Settings" ++ dash ++ "Presets" ++ dash}
 		;
 		thisPath ?? {if(file == \preset, {thisPath = filesPath}, {thisPath = mainPath});};
 		dir = (thisPath ++ modPath);

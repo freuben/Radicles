@@ -236,15 +236,19 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	}
 
 	*getDirPath {arg format=\audio, directory, subDir;
-		var folderPath, fileIndex, selectedPath;
+		var folderPath, fileIndex, selectedPath, dash;
+		dash = "/";
+		Platform.case(
+			\windows,   {dash = "\\"; "Windows".postln }
+		);
 		this.new;
-		playPath = this.soundFilePath ++ "/" ++ directory;
+		playPath = this.soundFilePath ++ dash ++ directory;
 
 		if([\audio, \scpv].includes(format), {
 			if(format == \audio, {
 				folderPath = (playPath ++ subDir.asString);
 			}, {
-				folderPath = (playPath ++ "scpv/" ++ subDir.asString);
+				folderPath = (playPath ++ "scpv" ++ dash ++ subDir.asString);
 			});
 
 		}, {
@@ -255,17 +259,31 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	}
 
 	*getPlayPath {arg format=\audio, fileName=\test;
-		^this.getDirPath(format, "Play/", playFolder);
+		var dash;
+		dash = "/";
+		Platform.case(
+			\windows,   {dash = "\\"; "Windows".postln }
+		);
+		^this.getDirPath(format, ("Play" ++ dash), playFolder);
 	}
 
 	*getSamplerPath {arg format=\audio, samplerName=\str;
-		^this.getDirPath(format, "Sampler/", "");
+		var dash;
+		dash = "/";
+		Platform.case(
+			\windows,   {dash = "\\"; "Windows".postln }
+		);
+		^this.getDirPath(format, ("Sampler" ++ dash), "");
 	}
 
 		*getIRPath {arg format=\audio, samplerName=\str;
-		var irpath;
+		var dash, irpath;
+		dash = "/";
+		Platform.case(
+			\windows,   {dash = "\\"; "Windows".postln }
+		);
 		this.new;
-		irpath = this.soundFilePath ++ "/IR/"
+		irpath = (this.soundFilePath ++ dash ++ "IR" ++ dash);
 		^irpath;
 	}
 
