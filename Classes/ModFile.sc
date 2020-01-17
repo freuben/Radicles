@@ -214,7 +214,8 @@ SynthFile : ModFile {
 	}
 
 	* postAll {arg class=\filter, exclude;
-		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post; this.post(class, item, exclude) }
+		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
+			this.post(class, item, exclude) }
 	}
 
 	* post {arg class=\filter, key, exclude;
@@ -518,7 +519,6 @@ SynthDefFile : ModFile {
 	* write {arg class=\filter, key, dataArr, desc, path, post=true;
 		var synthFile;
 		synthFile = this.new(\synthdef, class);
-		/*dataArr.cs.postln;*/
 		if(dataArr.specArr.notNil, {
 			^synthFile.write(key, dataArr, true, {
 				SynthFile.write(class, key, dataArr.specFunc, false, path, false);

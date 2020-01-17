@@ -4381,7 +4381,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	listTrackPresets {arg trackType=\track;
 		if(trackType.isNil, {
-			PresetFile.post(\track);
+			PresetFile.read(\track).dopostln;
 		}, {
 			PresetFile.readAll(\track).select{|item| item[1][0] == trackType }.flop[0].cs.radpostwarn;
 		});

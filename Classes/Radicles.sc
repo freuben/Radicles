@@ -2182,6 +2182,23 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "csload: [trackType, trackNum, presetName]");
 
+		cW.add(\csload, [\str, \num, \str], {|str1, num1, str2|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.loadTrackPreset(thisArr[0].asSymbol, thisArr[1], str2);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "csload: mixTrackNum, slot1, preset");
+
+
 		cW.add(\cssave, [\str, \str, \str], {|str1, str2, str3|
 			if(aZ.notNil, {
 				case
@@ -2205,6 +2222,22 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				"could not find assemblage".warn;
 			});
 		}, "cssave: [trackType, trackNum, presetName]");
+
+		cW.add(\cssave, [\str, \num, \str], {|str1, num1, str2|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.writeTrackPreset(thisArr[0].asSymbol, thisArr[1], str2);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "cssave: mixTrackNum, slot1, preset");
 
 	}
 
