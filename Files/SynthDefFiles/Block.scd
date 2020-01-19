@@ -44,4 +44,4 @@ SinOsc.ar(freq, 0, amp);
 		PlayBuf.ar(item.numChannels, item, rate, trigger, startPos.linlin(0,1,0, item.numFrames), 1)*mul;};
 	play.sum/play.size;
 } ], [ 'audioin', {arg bus=1 -> [1,8], mul= 1 -> [0,4];
-	SoundIn.ar((bus.round(1)-1).max(1), mul);} ] ]
+	SoundIn.ar((bus.round(1)-1).max(0), mul);} ] ]
