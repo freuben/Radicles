@@ -812,45 +812,45 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		trackKey = (trackType.asString ++ trackNum).asSymbol;
 
 		if(spaceInInd.notNil, {
-				newBusInd = busArr.flop[0].indexOf(oldLabel);
-				newLabelArr = busArr.flop[1][newBusInd];
-				newLabelArr = newLabelArr.select({|item|
-					item.key != trackKey;
-				});
-				busArr[newBusInd][1] = newLabelArr;
-				thisBusIndLabel = inputs.flop[0].indexOf(oldLabel);
-				if(newLabelArr.isEmpty, {
-					if(clearTrack, {
-						("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
-					}, {
-						("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radpost.interpret;
-					});
-					busArr[newBusInd] = nil!2;
-					inputs.removeAt(thisBusIndLabel);
-					spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
-					if(inputs.flop[1][spaceInInd].isArray.not, {
-						if(clearTrack.not, {
-							("Ndef(" ++ spaceBusLabel.cs ++ ").source = nil;").radpost.interpret;
-							inputs.removeAt(spaceInInd);
-						});
-					});
+			newBusInd = busArr.flop[0].indexOf(oldLabel);
+			newLabelArr = busArr.flop[1][newBusInd];
+			newLabelArr = newLabelArr.select({|item|
+				item.key != trackKey;
+			});
+			busArr[newBusInd][1] = newLabelArr;
+			thisBusIndLabel = inputs.flop[0].indexOf(oldLabel);
+			if(newLabelArr.isEmpty, {
+				if(clearTrack, {
+					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
 				}, {
-					if(newLabelArr.size == 1, {
-						inputs[thisBusIndLabel][1] = newLabelArr[0];
-					}, {
-						inputs[thisBusIndLabel][1] = newLabelArr;
-					});
-					("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radpost.interpret;
+					("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radpost.interpret;
 				});
-				spaceInNdef = inputs.flop[1][spaceInInd];
-				if(spaceInNdef.isArray, {
-					spaceInSel = spaceInNdef.select{|item| item.key !=  oldLabel};
-					if(spaceInSel.size == 1, {
-						this.input(spaceInSel[0], \bus, busNum);
-					}, {
-						this.input(spaceInSel, \bus, busNum);
+				busArr[newBusInd] = nil!2;
+				inputs.removeAt(thisBusIndLabel);
+				spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
+				if(inputs.flop[1][spaceInInd].isArray.not, {
+					if(clearTrack.not, {
+						("Ndef(" ++ spaceBusLabel.cs ++ ").source = nil;").radpost.interpret;
+						inputs.removeAt(spaceInInd);
 					});
 				});
+			}, {
+				if(newLabelArr.size == 1, {
+					inputs[thisBusIndLabel][1] = newLabelArr[0];
+				}, {
+					inputs[thisBusIndLabel][1] = newLabelArr;
+				});
+				("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radpost.interpret;
+			});
+			spaceInNdef = inputs.flop[1][spaceInInd];
+			if(spaceInNdef.isArray, {
+				spaceInSel = spaceInNdef.select{|item| item.key !=  oldLabel};
+				if(spaceInSel.size == 1, {
+					this.input(spaceInSel[0], \bus, busNum);
+				}, {
+					this.input(spaceInSel, \bus, busNum);
+				});
+			});
 		}, {
 			"Bus not found".warn;
 		});
@@ -1360,11 +1360,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
 		action={|val| val.radpost}, chanIn, globBuf;
 		var path, buffArr, file, numChan, irbuffer, irArr, bufsize, numtag,
-		string, filterBuffArr, wcond;
+		string, filterBuffArr, wcond, dash;
 		{
 			wcond = Condition.new(false);
 			inVar ?? {inVar = "input"};
-			path = soundFilePath ++ "/IR/" ++ impulse ++ ".wav";
+			dash = "/";
+			Platform.case(
+				\windows,   {dash = "\\"; }
+			);
+			path = soundFilePath ++ dash++ "IR" ++ dash ++ impulse ++ ".wav";
 			file = SoundFile.new;
 			file.openRead(path);
 			numChan = file.numChannels;
@@ -2259,7 +2263,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						if(menu.item == "", {
 							busInSettings[index][ind] = nil;
 						}, {
-						busInSettings[index][ind] = menu.item;
+							busInSettings[index][ind] = menu.item;
 						});
 						/*busInSettings[index][ind] = menu.item;*/
 						busInBool1 = busInSettings[index].select({|item, index| index != ind})
@@ -2342,8 +2346,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					}.fork(AppClock);
 				};
 				fltWinFunc2 = {arg menu, thisListView, irItems, labelKey;
+					var dash;
 					menu.string = labelKey;
-					irItems = PathName(soundFilePath ++ "/IR/").entries
+					dash = "/";
+					Platform.case(
+						\windows,   {dash = "\\"; }
+					);
+					irItems = PathName(soundFilePath ++ dash ++ "IR" ++ dash).entries
 					.collect({|item| item.fileNameWithoutExtension });
 					thisListView.items = [""] ++ irItems;
 					thisListView.action = {|sbs|
@@ -2659,7 +2668,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(mixTrackIndex.notNil, {
 			outputSettings[mixTrackIndex] = label;
 			if(bool, {
-			this.outputMasterFunc;
+				this.outputMasterFunc;
 			});
 			this.mixWinBool({
 				setOutputMenu.(mixTrackIndex, inIndex);
@@ -2753,59 +2762,59 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf,
 		dirMaster=true, presetMode=false;
 		var trackIndex, funcThis, modArr, setThisVal;
-			if(busNum == 0, {
-				modArr = ModMap.modNodes;
-				if(modArr.notNil, {
-					if(modArr.notEmpty, {
-						this.unmapSend(trackType, trackNum, slotNum, -inf);
-					});
+		if(busNum == 0, {
+			modArr = ModMap.modNodes;
+			if(modArr.notNil, {
+				if(modArr.notEmpty, {
+					this.unmapSend(trackType, trackNum, slotNum, -inf);
 				});
 			});
-			trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
-			if(trackIndex.notNil, {
-				funcThis = {arg setVal;
-					if(busNum == 0, {
-						this.removeBus(trackNum, busNum, trackType);
-					}, {
+		});
+		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
+		if(trackIndex.notNil, {
+			funcThis = {arg setVal;
+				if(busNum == 0, {
+					this.removeBus(trackNum, busNum, trackType);
+				}, {
 					"setVal ".post; setVal.postln;
 					"	this.bus ".post; [trackNum, busNum, val, trackType].postln;
-						this.bus(trackNum, busNum, val, trackType, setVal: setVal);
-					});
-				}; //track, bus, mix, type
-				if(presetMode.not, {setThisVal = true}, {setThisVal = false});
-				if(mixerWin.notNil, {
-					if(mixerWin.notClosed, {
-						if(presetMode.not, {
-							{
-								setBusIns.(trackIndex,(slotNum-1), busNum);
-								if(val != inf, {
-									if(busNum != 0, {
-										nodeTime.yield;
-										this.setSendKnob(trackType, trackNum, slotNum, val);
-									});
+					this.bus(trackNum, busNum, val, trackType, setVal: setVal);
+				});
+			}; //track, bus, mix, type
+			if(presetMode.not, {setThisVal = true}, {setThisVal = false});
+			if(mixerWin.notNil, {
+				if(mixerWin.notClosed, {
+					if(presetMode.not, {
+						{
+							setBusIns.(trackIndex,(slotNum-1), busNum);
+							if(val != inf, {
+								if(busNum != 0, {
+									nodeTime.yield;
+									this.setSendKnob(trackType, trackNum, slotNum, val);
 								});
-							}.fork(AppClock);
-						}, {funcThis.(setThisVal);});
-					}, {
-						funcThis.(setThisVal);
-					});
+							});
+						}.fork(AppClock);
+					}, {funcThis.(setThisVal);});
 				}, {
 					funcThis.(setThisVal);
 				});
-				if(presetMode.not, {
-					if(dirMaster, {
-						if(outputSettings[trackIndex] == '', {
-							this.setTrackOut(trackType, trackNum, 1);
-						});
-					}, {
-						if(outputSettings[trackIndex] == 'master', {
-							this.setTrackOut(trackType, trackNum, 0);
-						});
+			}, {
+				funcThis.(setThisVal);
+			});
+			if(presetMode.not, {
+				if(dirMaster, {
+					if(outputSettings[trackIndex] == '', {
+						this.setTrackOut(trackType, trackNum, 1);
+					});
+				}, {
+					if(outputSettings[trackIndex] == 'master', {
+						this.setTrackOut(trackType, trackNum, 0);
 					});
 				});
-			}, {
-				"Track not found".warn;
 			});
+		}, {
+			"Track not found".warn;
+		});
 	}
 
 	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, lagTime=0, db=true;
@@ -3029,7 +3038,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				server.sync;
 			};
 			if(refresh, {
-			{this.refreshFunc;}.defer;
+				{this.refreshFunc;}.defer;
 			});
 			action.();
 		}.fork;
@@ -3404,8 +3413,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	prepareRecording {arg headerFormat = "wav", sampleFormat = "int16";
-		var recPath, timestamp, recTracks;
-		recPath = Radicles.soundFilePath ++ "/Record/";
+		var recPath, timestamp, recTracks, dash;
+		dash = "/";
+		Platform.case(
+			\windows,   {dash = "\\"; }
+		);
+		recPath = Radicles.soundFilePath ++ dash ++  "Record" ++ dash;
 		timestamp = Date.localtime;
 		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
 		recStates.do({|item, index|
@@ -4275,11 +4288,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		presetArr[1].do{|item, index|
 			item[1].do{|it|
 				if(it.rank != 1 , {
-				if(it[1][0].cs.find("mod").notNil, {
-					hasMod = hasMod.add([item[0], it]);
-				}, {
-					extraArgs = extraArgs.add([item[0], it]); //extra args
-				});
+					if(it[1][0].cs.find("mod").notNil, {
+						hasMod = hasMod.add([item[0], it]);
+					}, {
+						extraArgs = extraArgs.add([item[0], it]); //extra args
+					});
 				}, {
 					extraArgs = extraArgs.add([item[0], it]);
 				});
@@ -4615,7 +4628,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}.fork(AppClock);
 	}
 
-		loadPreset {arg presetName;
+	loadPreset {arg presetName;
 		var dataArr, cond, modSettings, mixSettings, fxSettings, arrSettings, prepSettings,
 		trackInfoArr, extraArgs, modMixSettings, busSettings, outSettings, ioSettings;
 		{
@@ -4678,7 +4691,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					this.modRawPreset(item[0][0], item, {cond.test = true; cond.signal;});
 					cond.wait;
 				};
-					"modMixSettings loaded".postln;
+				"modMixSettings loaded".postln;
 			});
 
 			if(outSettings.notNil, {
@@ -4863,7 +4876,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				};
 			};
 			if(refresh, { {this.refreshMixGUI}.defer });
-		action.();
+			action.();
 		}.fork
 	}
 
@@ -4965,12 +4978,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	kill {arg action;
 		{
 			{this.nomixer}.defer;
-		nodeTime.yield;
-		this.clearNdefs({
-			this.resetVars;
 			nodeTime.yield;
+			this.clearNdefs({
+				this.resetVars;
+				nodeTime.yield;
 				action.();
-		});
+			});
 		}.fork;
 	}
 
