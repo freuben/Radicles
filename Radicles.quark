@@ -4,7 +4,6 @@
 	\summary:		"A command-line style, highly-automised, multi-layered live coding environment for SuperCollider",
 	\author: 		"Federico Reuben",
 	\version:		"0.0.2",
-\tag: "0.1",
 	\organization: 	"Radicles",
 	\country: 		"uk",
 	\since: 		"2019",
