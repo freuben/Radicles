@@ -3415,11 +3415,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	prepareRecording {arg headerFormat = "wav", sampleFormat = "int16";
 		var recPath, timestamp, recTracks, dash;
 		dash = "/";
+		timestamp = Date.localtime;
 		Platform.case(
-			\windows,   {dash = "\\"; }
+			\windows,   {dash = "\\";  timestamp.asString.replace(":", "_") }
 		);
 		recPath = Radicles.soundFilePath ++ dash ++  "Record" ++ dash;
-		timestamp = Date.localtime;
 		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
 		recStates.do({|item, index|
 			if(item == 1, {
