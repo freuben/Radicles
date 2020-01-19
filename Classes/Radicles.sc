@@ -14,10 +14,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-		mainPath = Quark("Radicles").localPath;
-		libPath = Quark("RadiclesLibs").localPath;
-/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
-		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
+/*		mainPath = Quark("Radicles").localPath;
+		libPath = Quark("RadiclesLibs").localPath;*/
+		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
 		server = Server.default;
@@ -4717,11 +4717,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, "lp: block, buffer, extraArgs]");
 		cW.add(\in, [\str, \num, \str, \str, \num], {|str1, num1, str2, str3, num2|
 			if((str2 == '<>').and(str3 == 'blk'), {
-				Block.play(num2, \audioin, [\bus, num1]);
+				Block.play(num2, \audioin, \nobuf, [\bus, num1]);
 			});
 		}, "audioin: bus, block");
 		cW.add(\in, [\str, \num, \num], {|str1, num1, num2|
-			Block.play(num2, \audioin, [\bus, num1]);
+			Block.play(num2, \audioin, \nobuf, [\bus, num1]);
 		}, "audioin: bus, block");
 		cW.add(\blkn, [\str, \num], {|str1, num1|
 			Block.addNum(num1);
