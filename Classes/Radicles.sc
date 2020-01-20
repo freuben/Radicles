@@ -28,6 +28,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		this.callWindow;
 	}
 
+	*version {
+		"Version 0.02".postln;
+	}
+
 	*document {
 		postDoc = Document.new("Radicles: " ++ Date.getDate.asString);
 	}
