@@ -1,3 +1,4 @@
+//version 0.02
 Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
@@ -14,10 +15,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-/*		mainPath = Quark("Radicles").localPath;
-		libPath = Quark("RadiclesLibs").localPath;*/
-		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
-		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");
+		mainPath = Quark("Radicles").localPath;
+		libPath = Quark("RadiclesLibs").localPath;
+/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
 		server = Server.default;
