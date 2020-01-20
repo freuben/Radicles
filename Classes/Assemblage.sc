@@ -3415,9 +3415,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	prepareRecording {arg headerFormat = "wav", sampleFormat = "int16";
 		var recPath, timestamp, recTracks, dash;
 		dash = "/";
-		timestamp = Date.localtime;
+		timestamp = Date.localtime.format("%d_%m_%Y_%H_%M_%S");
 		Platform.case(
-			\windows,   {dash = "\\";  timestamp.asString.replace(":", "_") }
+			\windows,   {dash = "\\"; }
 		);
 		recPath = Radicles.soundFilePath ++ dash ++  "Record" ++ dash;
 		if(recStates.isNil, { recStates = 0!(mixTrackNames.size-1) ++ [1] });
