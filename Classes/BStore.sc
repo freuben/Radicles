@@ -205,10 +205,13 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 
 	*removeIndices {arg indices;
 		var count=0;
+		{
 		indices.do{|item|
-				this.removeByIndex(item-count);
+			this.removeByIndex((item-count));
 				count = count+1;
+				server.sync;
 			}
+		}.fork;
 	}
 
 	*removeByArg {arg argument, index;

@@ -543,6 +543,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			recbuffers.do{|item|
 				bstoreIndeces = bstoreIndeces.add(BStore.bstoreIDs.indexOfEqual(item));
 			};
+			bstoreIndeces.postln;
 			BStore.removeIndices(bstoreIndeces);
 			recbuffers = [];
 			recBufInfo = [];

@@ -29,7 +29,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	}
 
 	*version {
-		"Version 0.02".postln;
+		"Version 0.0.3".postln;
 	}
 
 	*document {
