@@ -1,5 +1,5 @@
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
-	<recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
+	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
 	<pattCount=1, <timecond;
 
 	*add {arg channels=1, action;

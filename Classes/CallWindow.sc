@@ -234,7 +234,35 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 							}
 							{inputArr.contains("<>")} {
 								this.hidconnect(inputArr);
-							};
+							}
+							{inputArr.contains("&")} {
+								inputArr = inputArr.replace(" &", "&").replace("& ", "&");
+								arr1 = inputArr.copyRange(1, inputArr.size-2).split($&);
+								arr1.do{|item|
+									{this.callFunc(item);}.defer;
+								};
+							}
+							{inputArr.contains("^")} {
+								inputArr = inputArr.replace(" ^", "^").replace("^ ", "^");
+								arr1 = inputArr.copyRange(1, inputArr.size-2).split($^);
+								if((arr1[0] == ""), {
+									Radicles.schedAction({ this.callFunc(arr1[1]); });
+								}, {
+									arr2 = arr1[0].interpret;
+									if(arr2.isNumber, {
+										Radicles.beatsFunc = {|a| if(a == arr2, { this.callFunc(arr1[1]); Radicles.beatsFunc = nil }); };
+									}, {
+										arr2.cs.postln; "array".postln;
+									});
+							});
+								/*{
+								arr1.do{|item|
+									this.callFunc(item);
+										nodeTime.yield;
+								};
+								}.fork(AppClock);*/
+							}
+							;
 						});
 					});
 				}
