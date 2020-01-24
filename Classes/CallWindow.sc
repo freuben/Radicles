@@ -248,11 +248,21 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 								if((arr1[0] == ""), {
 									Radicles.schedAction({ this.callFunc(arr1[1]); });
 								}, {
-									arr2 = arr1[0].interpret;
-									if(arr2.isNumber, {
-										Radicles.beatsFunc = {|a| if(a == arr2, { this.callFunc(arr1[1]); Radicles.beatsFunc = nil }); };
+									arr2 = arr1[0].split($ );
+									if(arr2.size == 1, {
+										if(Radicles.beatsFuncArr.isNil, {arr3 = 0}, {
+										arr3 = Radicles.beatsFuncArr.size;
+										});
+										Radicles.beatsFuncArr = Radicles.beatsFuncArr.add(
+											{|a| if((a == arr2[0].interpret), {
+												this.callFunc(arr1[1]);
+												Radicles.beatsFuncArr[arr3] = nil; }); }; );
 									}, {
+										if(arr2[1] == "l", {
+											Radicles.beatsFuncArr = Radicles.beatsFuncArr.add( {|a|
+												if(a == arr2[0].interpret, { this.callFunc(arr1[1]); }); }; );
 										arr2.cs.postln; "array".postln;
+									});
 									});
 							});
 								/*{

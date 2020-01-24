@@ -2,7 +2,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>filesPath, <>soundFilePath, <>postWindow, <>memorySize=50, <>beatsFunc;
+	<>filesPath, <>soundFilePath, <>postWindow, <>memorySize=50, <>beatsFuncArr;
 
 	*new {
 		this.setColors;
@@ -4874,39 +4874,75 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	}, "print all recbufs");
 
 	cW.add('@', [\str, \num], {|str1, num1|
-		Block.addRec(num1);
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+		}, {bpm = 1});
+		Block.addRec(num1/bpm);
 	}, "record buffer: seconds");
 
 	cW.add('@', [\str, \num, \num], {|str1, num1, num2|
-		Block.addRec(num1, num2);
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+			}, {bpm = 1});
+		Block.addRec(num1/bpm, num2);
 	}, "record buffer: seconds, channels");
 
 	cW.add('@', [\str, \num, \num, \str2], {|str1, num1, num2, str2|
-		Block.addRec(num1, num2, str2);
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+			}, {bpm = 1});
+		Block.addRec(num1/bpm, num2, str2);
 	}, "record buffer: seconds, channels, format");
 
 	cW.add('@pv', [\str, \num], {|str1, num1|
-		Block.addRec(num1, format: 'pv');
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+			}, {bpm = 1});
+		Block.addRec(num1/bpm, format: 'pv');
 	}, "record buffer: seconds");
 
 	cW.add('@pv', [\str, \num, \num], {|str1, num1, num2|
-		Block.addRec(num1, num2, 'pv');
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+			}, {bpm = 1});
+		Block.addRec(num1/bpm, num2, 'pv');
 	}, "record buffer: seconds, channels");
 
 	cW.add('@n', [\str, \num, \num], {|str1, num1, num2|
-		Block.addRecNum(num1, num2);
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+			}, {bpm = 1});
+		Block.addRecNum(num1, num2/bpm);
 	}, "record buffers: number, seconds");
 
 	cW.add('@n', [\str, \num, \num, \num], {|str1, num1, num2, num3|
-		Block.addRecNum(num1, num2, num3);
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+			}, {bpm = 1});
+		Block.addRecNum(num1, num2/bpm, num3);
 	}, "record buffers: number, seconds");
 
 	cW.add('@npv', [\str, \num, \num], {|str1, num1, num2|
-		Block.addRecNum(num1, num2, format: 'pv');
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+			}, {bpm = 1});
+		Block.addRecNum(num1, num2/bpm, format: 'pv');
 	}, "record buffers: number, seconds");
 
 	cW.add('@npv', [\str, \num, \num, \num], {|str1, num1, num2, num3|
-		Block.addRecNum(num1, num2, num3, 'pv');
+			var bpm;
+			if(Ndef('metronome').clock.notNil, {
+				bpm = Ndef('metronome').clock.tempo;
+			}, {bpm = 1});
+		Block.addRecNum(num1, num2/bpm, num3, 'pv');
 	}, "record buffers: number, seconds");
 
 	cW.add('sr', [\str, \str], {|str1, str2|
@@ -5200,11 +5236,16 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	}, "set bpm");
 
 	cW.add('beats', [\str], {|str1|
-		Radicles.schedCount({|a| "stop".postln }, 1, 1, false);
+			Radicles.schedCount({|a| "stop".postln; Radicles.beatsFuncArr = [] }, 1, 1, false);
 	}, "set bpm");
 
 	cW.add('beats', [\str, \num], {|str1, num1|
-		Radicles.schedCount({|a| a.postln; Radicles.beatsFunc.(a) }, 1, num1, true);
+			Radicles.schedCount({|a|
+				a.postln;
+				if(Radicles.beatsFuncArr.notNil, {
+				Radicles.beatsFuncArr.do{|item| item.(a) };
+				});
+				}, 1, num1.postln, true);
 	}, "set bpm");
 
 }
