@@ -25,6 +25,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 	*start {
 		this.callWindow;
+		this.synthDefsPn;
 	}
 
 	*version {
@@ -135,6 +136,13 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		this.loadFxCmds;
 		this.loadBlkCmds;
 		this.loadBaseCmds;
+	}
+
+	*synthDefsPn {
+		SynthDef(\metro, 	{arg out=0, amp=0.2; var sig;
+		sig = WhiteNoise.ar(amp)*Env.perc(0.001,0.04).kr(doneAction: 2);
+		Out.ar(out, sig);
+	}).add;
 	}
 
 	*loadAssemblageCmds {
@@ -4871,6 +4879,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	cW.add(\pn, [\str, \num, \arr], {|str1, num, arr|
 		Block.play(num, \pattern, \nobuf, arr);
 	}, "pn: blockNum, patternArr");
+
+	cW.add(\metro, [\str, \num], {|str, num|
+			Block.play(num, \pattern, \nobuf, [[\instrument, \metro]]);
+	});
 
 	cW.add('@', [\str], {|str1|
 		Block.recbuffers.dopostln;
