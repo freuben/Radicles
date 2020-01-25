@@ -625,7 +625,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*recTimer {arg recblock=1, input=1, loop=0, recLevel, preLevel;
 		timeInfo = [recblock, Main.elapsedTime];
-		this.rec(recblock, input, loop, recLevel, preLevel);
+		this.rec(recblock, input, loop, recLevel, preLevel, xfade: true);
 	}
 
 	*loopTimer {arg block=1;

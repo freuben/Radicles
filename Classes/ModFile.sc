@@ -6,11 +6,11 @@ ModFile : Radicles {var <filePath, <libArr;
 
 	initFile {arg file, class, exclude;
 		if(exclude.isNil, {
-		filePath =  this.whichFile(file, class);
+			filePath =  this.whichFile(file, class);
 		}, {
-		if(exclude.indexOfEqual("Main").notNil.not, {
-		filePath =  this.whichFile(file, class);
-		});
+			if(exclude.indexOfEqual("Main").notNil.not, {
+				filePath =  this.whichFile(file, class);
+			});
 		});
 		libArr = this.loadLibs(file, class, exclude);
 	}
@@ -117,9 +117,9 @@ ModFile : Radicles {var <filePath, <libArr;
 					Window.warnQuestion(("This key already exists: " ++
 						"Are you sure you want to replace it?"), {
 						if(keyIndex.notNil, {
-						arrayFromFile[keyIndex] = [key, dataArr];
-						this.writeFunc(arrayFromFile, path, post);
-						func.();
+							arrayFromFile[keyIndex] = [key, dataArr];
+							this.writeFunc(arrayFromFile, path, post);
+							func.();
 						}, {
 							"This fx name already exists in another library".warn;
 						});
@@ -156,7 +156,8 @@ ModFile : Radicles {var <filePath, <libArr;
 					});
 				}, {
 					arrayFromFile.removeAt(keyIndex);
-					this.writeFunc(arrayFromFile);
+					this.writeFunc(arrayFromFile, path);
+					func.();
 				});
 			}, {
 				"Key not found".warn;
@@ -186,7 +187,7 @@ ModFile : Radicles {var <filePath, <libArr;
 				libsFolder.do{|item|
 					if(exclude.indexOfEqual(item.folderName).notNil.not, {
 						libFolderPath  = item.pathOnly;
-					libFolderPath = libFolderPath.copyFromStart(libFolderPath.size-2);
+						libFolderPath = libFolderPath.copyFromStart(libFolderPath.size-2);
 						libsFiles = libsFiles.add(this.whichFile(file, class, libFolderPath;););
 					});
 				}
@@ -483,34 +484,34 @@ PresetFile : ModFile {
 
 }
 
-SynthDefFile : ModFile {
+SynthDefFile {
 
 	*path {arg class=\filter, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class, exclude);
+		synthFile = ModFile.new(\synthdef, class, exclude);
 		^synthFile.filePath;
 	}
 
 	* read {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class, exclude);
+		synthFile = ModFile.new(\synthdef, class, exclude);
 		^synthFile.read(key);
 	}
 
 	* postAll {arg class=\filter, exclude;
-		this.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
-			this.post(class, item, exclude) }
+		ModFile.read(class, exclude: exclude).do{|item| (item.cs ++ " -> ").post;
+			ModFile.post(class, item, exclude) }
 	}
 
 	* post {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class, exclude);
+		synthFile = ModFile.new(\synthdef, class, exclude);
 		^synthFile.post(key);
 	}
 
 	* info {arg class=\filter, key, exclude;
 		var string;
-		string = [class, key, this.read(class, key, exclude),
+		string = [class, key, ModFile.read(class, key, exclude),
 			DescriptionFile.read(class, key, exclude: exclude)].cs;
 		string = string.replaceAt("(", 0).replaceAt(")", string.size-1);
 		^string;
@@ -518,7 +519,7 @@ SynthDefFile : ModFile {
 
 	* write {arg class=\filter, key, dataArr, desc, path, post=true;
 		var synthFile;
-		synthFile = this.new(\synthdef, class);
+		synthFile = ModFile.new(\synthdef, class);
 		if(dataArr.specArr.notNil, {
 			^synthFile.write(key, dataArr, true, {
 				SynthFile.write(class, key, dataArr.specFunc, false, path, false);
@@ -534,21 +535,22 @@ SynthDefFile : ModFile {
 
 	* remove {arg class=\filter, key, exclude, path;
 		var synthFile;
-		synthFile = this.new(\synthdef, class, exclude);
-		path ?? {path = synthFile.filePath};
-		if(path.isNumber, {
-			path = ([synthFile.filePath] ++ synthFile.libArr)[path];
+		Window.warnQuestion(("Are you sure you want to remove this key?"), {
+		SynthFile.remove(class, key, false, exclude, path);
+		SpecFile.remove(class, key, false, exclude, path);
+		DescriptionFile.remove(class, key, false, exclude, path);
+			synthFile = ModFile.new(\synthdef, class, exclude);
+		 path ?? {path = synthFile.filePath};
+		 if(path.isNumber, {
+		 	path = ([synthFile.filePath] ++ synthFile.libArr)[path];
+		 });
+			 synthFile.remove(key, false, exclude, path);
 		});
-		^synthFile.remove(key, true, {
-			SynthFile.remove(class, key, false, exclude, path: path);
-			SpecFile.remove(class, key, false, exclude, path: path);
-			DescriptionFile.remove(class, key, false, exclude, path: path);
-		}, path);
 	}
 
 	* string {arg class=\filter, key, exclude;
 		var synthFile;
-		synthFile = this.new(\synthdef, class, exclude);
+		synthFile = ModFile.new(\synthdef, class, exclude);
 		^synthFile.read(key).cs;
 	}
 

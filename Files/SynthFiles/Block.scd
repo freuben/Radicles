@@ -12,9 +12,10 @@
 		chain = PV_PlayBuf(localbuf, \buffer.bufnum, rate, offset.linlin(0,1,0, \buffer.numFrames),
  1);
 	IFFT(chain, winType)*mul} ], [ 'playbuf', {arg rate=1 , trigger=1 , startPos=0 , mul=1 , loop=1 ;
-	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), loop)*mul;} ], [ 'rec', {arg recLevel=1 , preLevel=0 ;
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), loop)*mul;} ], [ 'rec', {arg recLevel=1 , preLevel=0 , fade=0.001 ;
 	var sig;
 	sig = \in;
+		sig = sig * Env.linen(fade,  (\buffer.duration-(fade*2)), fade).kr;
 	RecordBuf.ar(sig, \buffer.bufnum, 0, recLevel, preLevel, loop: 0); } ], [ 'recpv', {arg numChannels=1 , numFrames=0.6 , hop=0.5 , winType=0 , offset=0 , run=1 , loop=0 , mul=1 ;
 	var sig, localbuf, chain;
 	sig = \in;

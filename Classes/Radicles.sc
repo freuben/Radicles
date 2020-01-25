@@ -1,5 +1,5 @@
 Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=nil,
-	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedDiv=1,
+	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedFuncAction, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
 	<>filesPath, <>soundFilePath, <>postWindow, <>memorySize=50, <>beatsFuncArr;
@@ -14,10 +14,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-		mainPath = Quark("Radicles").localPath;
-		libPath = Quark("RadiclesLibs").localPath;
-/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
-		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
+/*		mainPath = Quark("Radicles").localPath;
+		libPath = Quark("RadiclesLibs").localPath;*/
+		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
 		server = Server.default;
@@ -47,7 +47,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		clock.radpost;
 		clock.interpret;
 		tclock = Ndef('metronome').proxyspace.clock;
-		tclock.schedAbs(tclock.beats.ceil, { arg beat, sec; schedFunc.(beat, sec); schedDiv });
+		tclock.schedAbs(tclock.beats.ceil, { arg beat, sec;
+			schedFunc.(beat, sec);
+			schedFuncAction.(beat, sec);
+			schedDiv });
 	}
 
 	*tempo {arg newBPM;
@@ -63,7 +66,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	}
 
 	*schedAction {arg func;
-		schedFunc = { func.(); func=nil};
+		schedFuncAction = { func.(); func=nil};
 	}
 
 	*schedCount {arg func, min=1, max=100, loop=false;
@@ -5245,7 +5248,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(Radicles.beatsFuncArr.notNil, {
 				Radicles.beatsFuncArr.do{|item| item.(a) };
 				});
-				}, 1, num1.postln, true);
+				}, 1, num1, true);
 	}, "set bpm");
 
 }
