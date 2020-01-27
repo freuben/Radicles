@@ -5515,15 +5515,18 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			synthFile.radpostwarn;
 		}, "blks: posts available blk synths");
 		cW.add(\fxs, [\str], {|str1|
-			var synthFile;
+			var synthFile, arr;
 			synthFile = SynthDefFile.read(\filter, exclude: Radicles.excludeLibs);
-			synthFile.do{|item|
+			arr = synthFile.collect{|item|
 				var desc;
 				desc = DescriptionFile.read(\filter, item, false, Radicles.excludeLibs);
 				if(desc.isNil, {desc = "??"});
-				(item ++ " -> " ++ desc).radpostwarn;
+					[item, " -> ", desc];
+				/*(item ++ " -> " ++ desc).radpostwarn;*/
 			};
-			synthFile.radpostwarn;
+				arr = arr.sort({ arg a, b; a[0] <= b[0] });
+				arr.do{|item| (item[0] ++ item[1] ++ item[2]).radpostwarn};
+				arr.flop[0].radpostwarn;
 		}, "fxs: posts available filters");
 		cW.add(\pl, [\str], {|str1|
 			var path;
