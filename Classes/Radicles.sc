@@ -14,10 +14,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-		mainPath = Quark("Radicles").localPath;
-		libPath = Quark("RadiclesLibs").localPath;
-/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
-		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
+/*		mainPath = Quark("Radicles").localPath;
+		libPath = Quark("RadiclesLibs").localPath;*/
+		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
 		server = Server.default;
@@ -41,6 +41,12 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		libsFolder = PathName(libPath).folders;
 		libsFolder = libsFolder.reject({|item| item.folderName == ".git" });
 		^(["Main"] ++ libsFolder.collect({|item| item.folderName }));
+	}
+
+	*getLib {arg library;
+		var result;
+		result = this.libraries.indexOfEqual(library);
+		^result;
 	}
 
 	*clock {var clock, tclock;
@@ -4885,7 +4891,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	});
 
 	cW.add('@', [\str], {|str1|
-		Block.recbuffers.dopostln;
+		Block.recBufInfo.dopostln;
 	}, "print all recbufs");
 
 	cW.add('@', [\str, \num], {|str1, num1|
@@ -5236,10 +5242,16 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	}, "write rec buffer to file: rec buffer, input");
 
 		cW.add('fr', [\str, \str], {|str1, str2|
-		var num;
+		var num, recBuf;
 		num = str2.asString.divNumStr[1];
-		BStore.removeID(Block.recBuf(num));
-		Block.recbuffers.remove(Block.recBuf(num));
+		recBuf = Block.recBuf(num);
+		BStore.removeID(recBuf);
+		Block.recbuffers.remove(recBuf);
+			if(recBuf.notNil, {
+			Block.recBufInfo.removeAt((num-1));
+			}, {
+				"Buffer doesn\'t exist".warn;
+			});
 	}, "free rec buffer to file: rec buffer, input");
 
 	cW.add('clock', [\str], {|str1|
@@ -5252,7 +5264,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 	cW.add('beats', [\str], {|str1|
 			Radicles.schedCount({|a| "stop".postln; Radicles.beatsFuncArr = [] }, 1, 1, false);
-	}, "set bpm");
+	}, "stop counting beats");
 
 	cW.add('beats', [\str, \num], {|str1, num1|
 			Radicles.schedCount({|a|
@@ -5261,7 +5273,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				Radicles.beatsFuncArr.do{|item| item.(a) };
 				});
 				}, 1, num1, true);
-	}, "set bpm");
+	}, "start counding beats: count");
 
 }
 
@@ -5481,6 +5493,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\imp, [\str], {|str1|
 			Radicles.libraries.radpostwarn;
 		}, "imp: posts libraries");
+
+			cW.add(\libs, [\str], {|str1|
+			Radicles.libraries.radpostwarn;
+		}, "libs: posts libraries");
 
 		cW.add(\imp, [\str, \arr], {|str1, arr1|
 			var strArr;

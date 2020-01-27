@@ -584,12 +584,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					blockFunc = SynthFile.read(\block, recType);
 					blockFuncString = blockFunc.cs;
 					bufString = BStore.buffStrByID(recbuffers[blockIndex]);
-					/*bufIDs = BStore.buffByID(recbuffers[blockIndex]);
-					bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
-					bufString = BufferSystem.globVarArray[bufIndex];*/
 					blockFuncString = blockFuncString.replace("\\buffer",
 						bufString).replace("'buffer'", bufString);
 					blockFuncString = blockFuncString.replace("\\in", inString);
+					blockFuncString = blockFuncString.replace("\\duration", recBufInfo[blockIndex][0]);
 					blockFunc = blockFuncString.interpret;
 					(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++
 						blockFuncString ++ ");").radpost;

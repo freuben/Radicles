@@ -12,18 +12,20 @@
 		chain = PV_PlayBuf(localbuf, \buffer.bufnum, rate, offset.linlin(0,1,0, \buffer.numFrames),
  1);
 	IFFT(chain, winType)*mul} ], [ 'playbuf', {arg rate=1 , trigger=1 , startPos=0 , mul=1 , loop=1 ;
-	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), loop)*mul;} ], [ 'rec', {arg recLevel=1 , preLevel=0 , fade=0.001 ;
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), loop)*mul;} ], [ 'rec', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
 	var sig;
 	sig = \in;
-		sig = sig * Env.linen(fade,  (\buffer.duration-(fade*2)), fade).kr;
-	RecordBuf.ar(sig, \buffer.bufnum, 0, recLevel, preLevel, loop: 0); } ], [ 'recpv', {arg numChannels=1 , numFrames=0.6 , hop=0.5 , winType=0 , offset=0 , run=1 , loop=0 , mul=1 ;
+		sig = sig * Env.linen(fade,  (\duration-(fade*2)), fade, 1, 'sin').kr;
+	RecordBuf.ar(sig, \buffer.bufnum, 0, recLevel, preLevel, loop: 0); } ], [ 'recpv', {arg numChannels=1 , numFrames=0.6 , hop=0.5 , winType=0 , offset=0 , run=1 , loop=0 , mul=1 , fade=0.01 ;
 	var sig, localbuf, chain;
 	sig = \in;
+	sig = sig * Env.linen(fade,  (\duration-(fade*2)), fade, 1, 'sin').kr;
 	localbuf = LocalBuf(numFrames.linexp(0,1,32,32768), numChannels);
 	chain = FFT(localbuf, sig, hop/2, winType);
-	chain = PV_RecordBuf(chain, \buffer.bufnum, offset.linlin(0,1,0, \buffer.numFrames), run, loop, hop, winType)*mul} ], [ 'recloop', {arg recLevel=1 , preLevel=0 ;
+	chain = PV_RecordBuf(chain, \buffer.bufnum, offset.linlin(0,1,0, \buffer.numFrames), run, loop, hop, winType)*mul} ], [ 'recloop', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
 	var sig;
 	sig = \in;
+	sig = sig * Env.asr(fade, 1, fade, 'sin').kr;
 	RecordBuf.ar(sig, \buffer.bufnum, 0, recLevel, preLevel, loop: 1); } ], [ 'looptr', {arg rate=1 , triggerRate=1 , startPos=0 , mul=1 ;
 	PlayBuf.ar(\buffer.numChannels, \buffer, rate, Impulse.kr(triggerRate),
  startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;} ], [ 'osc1', {arg freq=400 , phase=0 , mul=0.5 ; Osc.ar(\buffer, freq, phase, mul)} ], [ 'shaperSine', {arg freq=440 , phase=0 , mul=0.5 ;

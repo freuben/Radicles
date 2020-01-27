@@ -105,10 +105,12 @@ ModFile : Radicles {var <filePath, <libArr;
 
 	write {arg key, dataArr, window=true, func, path, post=true;
 		var arrayFromFile, writeFunc, keyIndex;
-		path ?? {path = filePath};
+		/*path ?? {path = filePath};*/
+		path ?? {path = Radicles.getLib("UserLib")};
 		if(path.isNumber, {
 			path = ([filePath] ++ libArr)[path];
 		});
+		/*path.postln;*/
 		arrayFromFile = this.writeArray(path);
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
@@ -136,10 +138,11 @@ ModFile : Radicles {var <filePath, <libArr;
 		}, {^arrayFromFile});
 	}
 
-	remove {arg key, window=true, func, path;
+	remove {arg key, window=true, func, path, post=true;
 		var arrayFromFile, writeFunc, keyIndex, file;
 		/*arrayFromFile = this.array;*/
-		path ?? {path = filePath};
+		/*path ?? {path = filePath};*/
+		path ?? {path = Radicles.getLib("UserLib")};
 		if(path.isNumber, {
 			path = ([filePath] ++ libArr)[path];
 		});
@@ -151,12 +154,12 @@ ModFile : Radicles {var <filePath, <libArr;
 				if(window, {
 					Window.warnQuestion(("Are you sure you want to remove this key?"), {
 						arrayFromFile.removeAt(keyIndex);
-						this.writeFunc(arrayFromFile, path);
+						this.writeFunc(arrayFromFile, path, post);
 						func.();
 					});
 				}, {
 					arrayFromFile.removeAt(keyIndex);
-					this.writeFunc(arrayFromFile, path);
+					this.writeFunc(arrayFromFile, path, post);
 					func.();
 				});
 			}, {
@@ -231,10 +234,10 @@ SynthFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true, exclude, path;
+	* remove {arg class=\filter, key, win=true, exclude, path, post;
 		var synthFile;
 		synthFile = this.new(\synth, class, exclude);
-		^synthFile.remove(key, win, path: path);
+		^synthFile.remove(key, win, path: path, post: post);
 	}
 
 	* string {arg class=\filter, key, exclude;
@@ -276,10 +279,10 @@ SpecFile : ModFile {classvar specArr;
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true, exclude, path;
+	* remove {arg class=\filter, key, win=true, exclude, path, post;
 		var synthFile;
 		synthFile = this.new(\spec, class, exclude);
-		^synthFile.remove(key, win, path: path);
+		^synthFile.remove(key, win, path: path, post: post);
 	}
 
 	*specs {arg class=\filter, key, exclude;
@@ -330,10 +333,10 @@ ControlFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\map, key, win=true, exclude, path;
+	* remove {arg class=\map, key, win=true, exclude, path, post;
 		var synthFile;
 		synthFile = this.new(\control, class, exclude);
-		^synthFile.remove(key, win, path: path);
+		^synthFile.remove(key, win, path: path, post: post);
 	}
 
 	* string {arg class=\map, key, exclude;
@@ -375,10 +378,10 @@ DataFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\sampler, key, win=true, exclude, path;
+	* remove {arg class=\sampler, key, win=true, exclude, path, post;
 		var synthFile;
 		synthFile = this.new(\data, class, exclude);
-		^synthFile.remove(key, win, path: path);
+		^synthFile.remove(key, win, path: path, post: post);
 	}
 
 	* string {arg class=\filter, key, exclude;
@@ -420,10 +423,10 @@ DescriptionFile : ModFile {
 		^synthFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\filter, key, win=true, exclude, path;
+	* remove {arg class=\filter, key, win=true, exclude, path, post;
 		var synthFile;
 		synthFile = this.new(\description, class, exclude);
-		^synthFile.remove(key, win, path: path);
+		^synthFile.remove(key, win, path: path, post: post);
 	}
 
 	* string {arg class=\filter, key, exclude;
@@ -470,10 +473,10 @@ PresetFile : ModFile {
 		^presetFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\bstore, key, win=true, exclude, path;
+	* remove {arg class=\bstore, key, win=true, exclude, path, post;
 		var presetFile;
 		presetFile = this.new(\preset, class, exclude);
-		^presetFile.remove(key, win, path: path);
+		^presetFile.remove(key, win, path: path, post: post);
 	}
 
 	* string {arg class=\filter, key, exclude;
@@ -511,7 +514,7 @@ SynthDefFile {
 
 	* info {arg class=\filter, key, exclude;
 		var string;
-		string = [class, key, ModFile.read(class, key, exclude),
+		string = [class, key, this.read(class, key, exclude),
 			DescriptionFile.read(class, key, exclude: exclude)].cs;
 		string = string.replaceAt("(", 0).replaceAt(")", string.size-1);
 		^string;
@@ -536,11 +539,12 @@ SynthDefFile {
 	* remove {arg class=\filter, key, exclude, path;
 		var synthFile;
 		Window.warnQuestion(("Are you sure you want to remove this key?"), {
-		SynthFile.remove(class, key, false, exclude, path);
-		SpecFile.remove(class, key, false, exclude, path);
-		DescriptionFile.remove(class, key, false, exclude, path);
+		SynthFile.remove(class, key, false, exclude, path, false);
+		SpecFile.remove(class, key, false, exclude, path, false);
+		DescriptionFile.remove(class, key, false, exclude, path, false);
 			synthFile = ModFile.new(\synthdef, class, exclude);
-		 path ?? {path = synthFile.filePath};
+		 /*path ?? {path = synthFile.filePath};*/
+			path ?? {path = Radicles.getLib("UserLib")};
 		 if(path.isNumber, {
 		 	path = ([synthFile.filePath] ++ synthFile.libArr)[path];
 		 });

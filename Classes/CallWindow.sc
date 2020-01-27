@@ -251,7 +251,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 									arr2 = arr1[0].split($ );
 									if(arr2.size == 1, {
 										if(Radicles.beatsFuncArr.isNil, {arr3 = 0}, {
-										arr3 = Radicles.beatsFuncArr.size;
+											arr3 = Radicles.beatsFuncArr.size;
 										});
 										Radicles.beatsFuncArr = Radicles.beatsFuncArr.add(
 											{|a| if((a == arr2[0].interpret), {
@@ -261,14 +261,14 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 										if(arr2[1] == "l", {
 											Radicles.beatsFuncArr = Radicles.beatsFuncArr.add( {|a|
 												if(a == arr2[0].interpret, { this.callFunc(arr1[1]); }); }; );
-										arr2.cs.postln; "array".postln;
+											arr2.cs.postln; "array".postln;
+										});
 									});
-									});
-							});
+								});
 								/*{
 								arr1.do{|item|
-									this.callFunc(item);
-										nodeTime.yield;
+								this.callFunc(item);
+								nodeTime.yield;
 								};
 								}.fork(AppClock);*/
 							}
@@ -580,7 +580,12 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		(0..9).do{|dim|
 			storeIndex = dim;
 			this.add(\sc, [\str], {arg str; lang = \sc;}, "switch to sclang");
-			this.add(\ls, [\str], {arg str; this.listSettings.radpost}, "post list settings");
+			this.add(\list, [\str], {arg str; this.listSettings.radpost}, "post list settings");
+			this.add(\ls, [\str], {|str1|
+				var arr;
+				arr = 	cW.stringArr;
+				[arr.flop[0], arr.flop[1], arr.flop[3]].flop.sort({ arg a, b; a[0] <= b[0] };).dopostln;
+			}, "lists all commands without func");
 			this.add(\replace, [\str, \str], {arg str1, str2; replace = str2.asString.interpret}, "replace cmds");
 			(0..9).do{|index|
 				this.add(index.asSymbol, [\num], {|num|
