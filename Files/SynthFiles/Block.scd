@@ -44,4 +44,15 @@ SinOsc.ar(freq, 0, amp);
 		PlayBuf.ar(item.numChannels, item, rate, trigger, startPos.linlin(0,1,0, item.numFrames), 1)*mul;};
 	play.sum/play.size;
 } ], [ 'audioin', {arg bus=1 , mul= 1 ;
-	SoundIn.ar((bus.round(1)-1).max(0), mul);} ] ]
+	SoundIn.ar((bus.round(1)-1).max(0), mul);} ], [ 'grainbuf', {arg rate=1 , freq= 1 , dur = 0.1 , startPos=0 , interp=1 , pan= 0 ;
+	var buffer;
+	buffer = \buffer;
+	BufGrain.ar(Impulse.kr(freq), dur, \buffer, rate, startPos, interp); 	
+	/*GrainBuf.ar(buffer.numChannels, Impulse.kr(freq), dur, buffer[0], rate, startPos, interp, pan); 	*/
+} ], [ 'grainfm', {arg freq= 1 , dur = 0.1 , carfreq= 440 , modFreq=200 , index= 1 , pan = 0 ;
+	GrainFM.ar(1, Impulse.kr(freq), dur, carfreq, modFreq, index, pan); 	
+} ], [ 'formletfun', {arg my= 1000 ;
+	var amp;
+    amp = LFPulse.kr(0.5,0,0.5);
+        Formlet.ar(Dust.ar(12,[0.05,0.05]) * amp, my * exprand(0.5,2.0), 0.005, 0.1);
+} ] ]

@@ -143,6 +143,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											bufString = BufferSystem.getGlobVar(buf);
 											/*bufIndex = BufferSystem.bufferArray.indexOf(buf);
 											bufString = BufferSystem.globVarArray[bufIndex];*/
+											blockFunc.postln;
 											blockFunc = blockFuncString.replace("\\buffer",
 												bufString).replace("'buffer'", bufString).interpret;
 											if(data.notNil, {

@@ -106,11 +106,10 @@ ModFile : Radicles {var <filePath, <libArr;
 	write {arg key, dataArr, window=true, func, path, post=true;
 		var arrayFromFile, writeFunc, keyIndex;
 		/*path ?? {path = filePath};*/
-		path ?? {path = Radicles.getLib("UserLib")};
+		path ?? {path = Radicles.getLib("UserLib"); };
 		if(path.isNumber, {
 			path = ([filePath] ++ libArr)[path];
 		});
-		/*path.postln;*/
 		arrayFromFile = this.writeArray(path);
 		if(arrayFromFile.notNil, {
 			keyIndex = arrayFromFile.flop[0].indexOf(key);
@@ -469,6 +468,7 @@ PresetFile : ModFile {
 
 	* write {arg class=\bstore, key, dataArr, win=true, path, post=true;
 		var presetFile;
+		path ?? {path = 0};
 		presetFile = this.new(\preset, class);
 		^presetFile.write(key, dataArr, win, path: path, post: post);
 	}
@@ -556,6 +556,14 @@ SynthDefFile {
 		var synthFile;
 		synthFile = ModFile.new(\synthdef, class, exclude);
 		^synthFile.read(key).cs;
+	}
+
+	* list {arg class=\filter, key, exclude;
+		var synthFile, list;
+		synthFile = ModFile.new(\synthdef, class, exclude);
+		list = synthFile.read(key).sort;
+		list.dopostln;
+		^list;
 	}
 
 }

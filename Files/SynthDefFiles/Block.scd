@@ -47,4 +47,15 @@ SinOsc.ar(freq, 0, amp);
 		PlayBuf.ar(item.numChannels, item, rate, trigger, startPos.linlin(0,1,0, item.numFrames), 1)*mul;};
 	play.sum/play.size;
 } ], [ 'audioin', {arg bus=1 -> [1,8], mul= 1 -> [0,4];
-	SoundIn.ar((bus.round(1)-1).max(0), mul);} ] ]
+	SoundIn.ar((bus.round(1)-1).max(0), mul);} ], [ 'grainbuf', {arg rate=1 -> [0.1,10], freq= 1 -> [0.5,50], dur = 0.1 -> [0.0001, 0.1, {|val|val.round(0.0001)}], startPos=0 -> [0,1], interp=1 -> [0,4, {|val| val.round(1)}], pan= 0 -> [-1,1];
+	var buffer;
+	buffer = \buffer;
+	BufGrain.ar(Impulse.kr(freq), dur, \buffer, rate, startPos, interp); 	
+	/*GrainBuf.ar(buffer.numChannels, Impulse.kr(freq), dur, buffer[0], rate, startPos, interp, pan); 	*/
+} ], [ 'grainfm', {arg freq= 1 -> [0.5,50], dur = 0.1 -> [0.0001, 0.1, {|val| val.round(0.0001)}], carfreq= 440 -> [20,20000, \exp], modFreq=200 -> [1,1000, \exp], index= 1 -> [0.1,10], pan = 0 -> [-1,1];
+	GrainFM.ar(1, Impulse.kr(freq), dur, carfreq, modFreq, index, pan); 	
+} ], [ 'formletfun', {arg my= 1000 -> [400,3200];
+	var amp;
+    amp = LFPulse.kr(0.5,0,0.5);
+        Formlet.ar(Dust.ar(12,[0.05,0.05]) * amp, my * exprand(0.5,2.0), 0.005, 0.1);
+} ] ]

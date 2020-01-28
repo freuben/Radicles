@@ -4541,40 +4541,25 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		;
 	}, "block: ['addn', 'stop'], [numer, block], [channels, fadeOut]");
 
-	cW.add(\blk, [\str, \str, \num, \str], {|str1, str2, num, str3|
-		case
-		{str2 == 'play'} {Block.play(num, str3);}
-		{str2 == 'ply'} {Block.play(num, str3);}
-		;
-	}, "block: ['play', 'ply'], [block, block, block], [blockName, blockName]");
+	cW.add(\blk, [\str, \num, \str], {|str1, num, str2|
+			Block.play(num, str2);
+	}, "block: blockNum, blockName");
 
-	cW.add(\blk, [\str, \str, \num, \str, \str], {|str1, str2, num, str3, str4|
-		case
-		{str2 == 'play'} {Block.play(num, str3, str4);}
-		{str2 == 'ply'} {Block.play(num, str3, str4);}
-		;
-	}, "block: ['play', 'ply'], [block, block], [blockName, blockName], [buffer, buffer]");
+	cW.add(\blk, [\str, \num, \str, \str], {|str1, num, str2, str3|
+			Block.play(num, str2, str3);
+	}, "block: blockNum, blockName, buffer");
 
-	cW.add(\blk, [\str, \str, \num, \str, \arr], {|str1, str2, num, str3, arr|
-		case
-		{str2 == 'play'} {Block.play(num, str3, extraArgs: arr);}
-		{str2 == 'ply'} {Block.play(num, str3, extraArgs: arr);}
-		;
-	}, "block: ['play', 'ply'], [block, block], [blockName, blockName], [extraArgs, extraArgs]");
+	cW.add(\blk, [\str, \num, \str, \arr], {|str1, num, str2, arr|
+			Block.play(num, str2, extraArgs: arr);
+	}, "block: blockNum, blockName, extraArgs");
 
-	cW.add(\blk, [\str, \str, \num, \str, \str, \arr], {|str1, str2, num, str3, str4, arr|
-		case
-		{str2 == 'play'} {Block.play(num, str3, str4, arr);}
-		{str2 == 'ply'} {Block.play(num, str3, str4, arr);}
-		;
-	}, "block: ['play', 'ply'], [block, block], [blockName, blockName], [buffer, buffer], [extraArgs, extraArgs]");
+	cW.add(\blk, [\str, \num, \str, \str, \arr], {|str1, num, str2, str3, arr|
+		Block.play(num, str2, str3, arr);
+	}, "block: blockNum, blockName, buffer, extraArgs");
 
-	cW.add(\blk, [\str, \str, \num, \str, \str, \str], {|str1, str2, num, str3, str4, str5|
-		case
-		{str2 == 'play'} {Block.play(num, str3, str4, str4);}
-		{str2 == 'ply'} {Block.play(num, str3, str4, str5);}
-		;
-	}, "block: ['play', 'ply'], [block, block], [blockName, blockName], [extraArgs, extraArgs]");
+	cW.add(\blk, [\str, \num, \str, \str, \str], {|str1, num, str2, str3, str4|
+			Block.play(num, str2, str3, str4);
+	}, "block: blockNum, blockName, extraArgs");
 	//blk ply 1 pattern nobuf [ [\note, \seq, [10,6,2,2]], [\dur, 0.5], [\instrument, \perkysine] ]
 	//rounting blocks to assemblage
 	cW.add(\blk, [\str, \num, \str, \num], {|str1, num1, str2, num2|
@@ -4649,6 +4634,17 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		modArgs = str3.asString.radStringMod;
 		Block.modBlk(num1, str2, modArgs[0], modArgs[1]);
 	}, "blocksetn: blk, arg");
+
+	cW.add(\blklag, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+		var thisIndex, thisKey;
+		thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+		thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
+		Block.lag(num1, [thisKey, num3]);
+	}, "blocksetn: blk, arg");
+
+	cW.add(\blklag, [\str, \num, \str, \num], {|str1, num1, str2, num3|
+		Block.lag(num1, [str2, num3]);
+	}, "blocklag: blk, arg");
 
 	cW.add(\blkxset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 		var thisIndex, thisKey;
@@ -5503,6 +5499,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			strArr = arr1.collect({|item| item.asString });
 			Radicles.selLibs(strArr);
 		}, "imp: arr");
+
 		cW.add(\blks, [\str], {|str1|
 			var synthFile;
 			synthFile = SynthDefFile.read(\block, exclude: Radicles.excludeLibs);
@@ -5540,6 +5537,26 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			BStore.playFolder = num1;
 			("Play Folder: " ++ BStore.playFolder).radpostwarn;
 		}, "change play folder");
+			cW.add(\ssave, [\str, \str], {|str1, str2|
+			PresetFile.write(\session, str2, Radicles.cW.text.string);
+		}, "save string in call window");
+			cW.add(\sload, [\str], {|str|
+			PresetFile.read(\session).sort.dopostln;
+		}, "posts saved strings for call window");
+			cW.add(\sload, [\str, \str], {|str1, str2|
+				var string;
+				string = PresetFile.read(\session, str2);
+				Radicles.cW.text.string = "";
+				Radicles.cW.text.string = string;
+				Radicles.cW.text.select(string.size,string.size);
+		}, "load string in call window");
+			cW.add(\sconcat, [\str, \str], {|str1, str2|
+				var string;
+				string =  PresetFile.read(\session, str2);
+				string = Radicles.cW.text.string ++ 10.asAscii ++ string;
+				Radicles.cW.text.string = string;
+				Radicles.cW.text.select(string.size,string.size);
+		}, "concatenate string in call window");
 		cW.add(\memory, [\str], {|str1|
 			Radicles.memorySize.radpostwarn;
 		}, "posts memory size");
