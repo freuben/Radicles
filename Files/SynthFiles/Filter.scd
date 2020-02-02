@@ -121,7 +121,8 @@ chain = PV_MagAbove(chain, thresh);
 	table=2;
 	sig = MarkovSynth.ar(\in, rec, time, table);
 	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))} ], [ 'chr1', {arg mix=0 , depth=0.1 , predelay=0.08 , speed=0.05 , ph_diff=0.5 , lagTime=0.1 ;
-var input, sig, modulators, numDelays = 12;
+var input, sig, modulators, numDelays;
+numDelays = 12;
 input = \in * numDelays.reciprocal;
 modulators = Array.fill(numDelays, {arg i;
 LFPar.kr(speed * rrand(0.94, 1.06), ph_diff * i, depth.lag(lagTime), predelay.lag(lagTime));}); 
@@ -291,7 +292,8 @@ adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ '
 var signal; 
 signal = BPF.ar(\in, freq, q.lag(lagTime))*q.lag(lagTime).linlin(0.01,30,10,1);
 vol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'chr2', {arg mix=0 , depth=0.1 , predelay=0.08 , speed=0.05 , ph_diff=0.5 , lagTime=0.1 ;
-var input, sig, modulators, numDelays = 24;
+var input, sig, modulators, numDelays;
+numDelays = 24;
 input = \in * numDelays.reciprocal;
 modulators = Array.fill(numDelays, {arg i;
 LFPar.kr(speed * rrand(0.94, 1.06), ph_diff * i, depth.lag(lagTime), predelay.lag(lagTime));}); 
@@ -310,7 +312,8 @@ sig = sig * 3;
 	var trig;
 	trig = Decay.kr(Impulse.kr(LFNoise1.kr(freq).linlin(-1,1,minFreq,maxFreq)), decayTime);
 	Gate.ar(\in, trig)} ], [ 'gdy2', {arg mix=0 , maxMul=1 , ampdist=2 , durDist=3 , adParam=1 , ddParam=1 , ampScale=0.5 , durScale=0.0 , kNum=40 , transp=1 , rate=1 ; 
-	var freq, hasFreq, amp, minFreq, sig, latch1, latch2, latch3, maxDelay=12, in;
+	var freq, hasFreq, amp, minFreq, sig, latch1, latch2, latch3, maxDelay, in;
+	maxDelay=12;
 	in = \in;
 #freq, hasFreq = Pitch.kr(in, minFreq: 20, ampThreshold: 0.0, median: 7);
 latch1 = Latch.ar(freq, Impulse.kr(rate));
@@ -338,4 +341,16 @@ concat;
 	var sig, table;
 	table=3;
 	sig = MarkovSynth.ar(\in, rec, time, table);
-	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))} ] ]
+	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))} ], [ 'gdy3', {arg mix=0 , maxMul=1 , ampdist=2 , durDist=3 , adParam=1 , ddParam=1 , ampScale=0.5 , durScale=0.0 , kNum=40 , transp=1 , rate=1 ; 
+var freq, hasFreq, amp, minFreq, sig, latch1, latch2, latch3, maxDelay, in;
+in = \in;
+maxDelay=12;
+#freq, hasFreq = Pitch.kr(in, minFreq: 20, ampThreshold: 0.0, median: 7);
+latch1 = Latch.ar(freq, Impulse.kr(rate));
+latch2 = DelayL.kr(Latch.ar(freq, Impulse.kr(rate)), maxDelay, 1/rate);
+latch3 = (latch1.cpsmidi - (latch1.cpsmidi - latch2.cpsmidi)).midicps.min(20000).max(20);
+amp = Amplitude.kr(in, 0.05, 0.05).lag(0.1);
+minFreq = ((latch3 * transp).fold2(1000)).abs.max(20);
+sig = Gendy1.ar(ampdist.max(0).min(6), durDist, adParam, ddParam, minFreq,(minFreq*maxMul).min(1000),ampScale,durScale,50,kNum)*amp;
+((sig*mix.linlin(0,1,0,1))+(in*mix.linlin(0,1,1,0))) + (in)
+} ] ]

@@ -58,4 +58,6 @@ SinOsc.ar(freq, 0, amp);
 	var amp;
     amp = LFPulse.kr(0.5,0,0.5);
         Formlet.ar(Dust.ar(12,[0.05,0.05]) * amp, my * exprand(0.5,2.0), 0.005, 0.1);
+} ], [ 'sinenv', {arg trig = 1 -> [0,1,{|val| val.round(1)}], freq=440 -> [20, 20000, \exp], phase=0 -> [-2pi, 2pi], mul=0.4 -> [0,2], attack=0.01 -> [0.0001,0.5], decay = 0.3 -> [0.001,0.4], sustain= 0.5 -> [0.1,1], release = 1 -> [0.01,3]; 
+	SinOsc.ar(freq,phase,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
 } ] ]

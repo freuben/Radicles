@@ -2,8 +2,8 @@ HIDMap : Radicles {
 	classvar <hidNodes, <hidInfoArr, hidIndex=0, <lagArr;
 
 	*map {arg ndef, key=\freq, type=\midicc, spec=[-1,1], extraArgs, func, mul=1, add=0,
-		min, val, warp, lag, action;
-		var hidMap, keyVals, defaultVal, inFunc;
+		min, val, warp, lag, action, defaultVal;
+		var hidMap, keyVals, inFunc;
 		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
 		if(hidNodes.isNil, {
@@ -14,22 +14,24 @@ HIDMap : Radicles {
 			});
 		});
 		keyVals = ndef.getKeysValues;
-		defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];
+		defaultVal ?? {defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];};
 		spec = spec.specFactor(mul, add, min, val, warp);
 		if(action.isNil, {
-		inFunc = ("{|val| (\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
-			", \" ++ val ++ \")\").radpostcont.interpret; }").interpret;
+			inFunc = ("{|val| (\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
+				", \" ++ val ++ \")\").radpostcont.interpret; }").interpret;
 		}, {
-		inFunc = action;
+			inFunc = action;
 		});
 		hidMap = this.getFunc(inFunc, type, spec, extraArgs, func);
 		/*hidNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
-			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
-			hidNodes.remove(item);
-			hidInfoArr.removeAt(index);
+		(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
+		hidNodes.remove(item);
+		hidInfoArr.removeAt(index);
 		}); };*/
 		hidNodes = hidNodes.add([hidMap[0], ndef, key, defaultVal]);
-		hidInfoArr = hidInfoArr.add([hidMap[1], type, spec, extraArgs, func, mul, add, min, val, warp, lag]);
+		/*hidInfoArr = hidInfoArr.add([hidMap[1], type, spec, extraArgs, func, mul, add, min, val, warp, lag]);*/
+		hidInfoArr = hidInfoArr.add([ndef, key, type, spec, extraArgs, func, mul, add, min, val,
+			warp, lag, action, defaultVal]);
 		if(lag.notNil, {
 			this.lag(ndef, key, lag);
 		});
@@ -46,8 +48,8 @@ HIDMap : Radicles {
 			{
 				value ?? {value = hidNodes[index][3]};
 				(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;
-				(this.getHIDType(hidInfoArr[index][1]).split($.)[0] ++ "(" ++ hidNodes[index][0] ++
-				").free;").radpost.interpret;
+				(this.getHIDType(hidInfoArr[index][2]).split($.)[0] ++ "(" ++ hidNodes[index][0] ++
+					").free;").radpost.interpret;
 				hidNodes.removeAt(index);
 				hidInfoArr.removeAt(index);
 		});
@@ -55,10 +57,27 @@ HIDMap : Radicles {
 	}
 
 	*unmapAt {arg index;
-		if((hidNodes.isNil).or(hidNodes.isEmpty).not, {
+			if(hidNodes.notNil, {
+			if(hidNodes.notEmpty, {
 			this.unmap(hidNodes[index][1], hidNodes[index][2]);
 		}, {
 			"no maps left".warn;
+		});
+		}, {
+			"no hid mapplings found".warn;
+		});
+	}
+
+	*unmapAll {arg action={};
+			if(hidNodes.notNil, {
+			if(hidNodes.notEmpty, {
+			{
+			hidNodes.size.do{HIDMap.unmapAt(0);
+				server.sync;
+			};
+			action.();
+			}.fork;
+			});
 		});
 	}
 
@@ -100,19 +119,19 @@ HIDMap : Radicles {
 			});
 			if(func.notNil, {
 				if(type == \osc, {
-				hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ func.cs ++ ".(" ++ spec.cs
+					hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ func.cs ++ ".(" ++ spec.cs
 					++ ".asSpec.map(args[0][1].postln.linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0))) )}";
 				}, {
-				hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ func.cs ++ ".(" ++ spec.cs
-				++ ".asSpec.map(args[0].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0))) )}";
+					hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ func.cs ++ ".(" ++ spec.cs
+					++ ".asSpec.map(args[0].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0))) )}";
 				});
 			}, {
-					if(type == \osc, {
-				hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ spec.cs ++
+				if(type == \osc, {
+					hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ spec.cs ++
 					".asSpec.map(args[0][1].postln.linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0)) )}";
 				}, {
-				hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ spec.cs ++
-				".asSpec.map(args[0].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0)) )}";
+					hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ spec.cs ++
+					".asSpec.map(args[0].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0)) )}";
 				});
 			});
 			if(extraArgs.isNil, {
@@ -123,11 +142,11 @@ HIDMap : Radicles {
 						extraArgs[1] = ("~" ++ extraArgs[1]);
 						extraArgs = extraArgs.collect({|item, index| if(index == 1, {item}, {item.cs}); });
 					});
-				compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ "," ++
-				extraArgs.asString.replace("[", "").replace("]", "") ++ ");";
+					compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ "," ++
+					extraArgs.asString.replace("[", "").replace("]", "") ++ ");";
 				}, {
-				compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ "," ++
-				extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
+					compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ "," ++
+					extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
 				});
 			});
 			compile.radpost.interpret;
@@ -152,29 +171,61 @@ HIDMap : Radicles {
 		^hidNodes.flop[0];
 	}
 
-/*	*getPresets {var result;
-		if(HIDMap.lagArr.notNil, {
-			result = hidNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
-				item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs]
-			++ [HIDMap.lagArr[index].collect({|it| it.cs }) ] };
+	*writePreset {arg key;
+		if(hidInfoArr.notNil, {
+			//change to new preset file for hid, instead of dstore - this is only temporary
+			PresetFile.write(\dstore, key, hidInfoArr);
 		}, {
-			result = hidNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
-				item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs] };
+			"not hid mappings found".warn;
 		});
-		^result;
+	}
+
+	*loadPreset {arg key, replace=false, action={};
+		var dataArr, cond;
+		{
+		if(replace, {
+			cond = Condition(false);
+			if(hidNodes.notNil, {
+					if(hidNodes.notEmpty, {
+			this.unmapAll({cond.test=true; cond.signal});
+			cond.wait;
+					});
+				});
+		});
+		dataArr = PresetFile.read(\dstore, key);
+		if(dataArr.notNil, {
+			dataArr.do{|item| ("HIDMap.map" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
+				++ ";" ).interpret;
+			server.sync;
+			};
+		});
+		action.();
+		}.fork;
+	}
+
+	/*	*getPresets {var result;
+	if(HIDMap.lagArr.notNil, {
+	result = hidNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
+	item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs]
+	++ [HIDMap.lagArr[index].collect({|it| it.cs }) ] };
+	}, {
+	result = hidNodes.collect{|item, index| [item[0].key.cs, item[0].source.cs,
+	item[0].controlKeysValues.cs] ++ [item[1].cs, item[2].cs] };
+	});
+	^result;
 	}
 
 	* presetToCode {arg arr, newNdef;
-		newNdef ?? {newNdef = arr[3]};
-		if(newNdef.isString.not, {newNdef = newNdef.cs});
-		^[
-			("Ndef(" ++ arr[0] ++ ", " ++ arr[1] ++ ");"),
-			("Ndef(" ++ arr[0] ++ ").set(" ++ arr[2].replace("[", "").replace("]", ");");),
-			if(arr[5].notNil, {
-				(arr[5][0] ++ ".lag(" ++ arr[5][1] ++  ", " ++ arr[5][2] ++ ");");
-			}),
-			(newNdef ++ ".set(" ++ arr[4] ++ ", " ++ "Ndef(" ++ arr[0] ++ "));";)
-		]
+	newNdef ?? {newNdef = arr[3]};
+	if(newNdef.isString.not, {newNdef = newNdef.cs});
+	^[
+	("Ndef(" ++ arr[0] ++ ", " ++ arr[1] ++ ");"),
+	("Ndef(" ++ arr[0] ++ ").set(" ++ arr[2].replace("[", "").replace("]", ");");),
+	if(arr[5].notNil, {
+	(arr[5][0] ++ ".lag(" ++ arr[5][1] ++  ", " ++ arr[5][2] ++ ");");
+	}),
+	(newNdef ++ ".set(" ++ arr[4] ++ ", " ++ "Ndef(" ++ arr[0] ++ "));";)
+	]
 	}*/
 
 }

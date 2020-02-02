@@ -7,4 +7,42 @@
 	CuspN.ar(freq,a,b,xi, mul).map + add} ], [ 'cspn', {arg freq=0.1, a=1, b=1.99, xi=0; CuspN.ar(freq,a,b,xi).map } ], [ 'henn', {arg freq=0.1, a=1.4, b=0.3, x0=0, x1=0, mul=1, add=0; HenonN.ar(freq,a,b,x0,x1,mul).map + add } ], [ 'henl', {arg freq=0.1, a=1.4, b=0.3, x0=0, x1=0, mul=1, add=0; HenonL.ar(freq,a,b,x0,x1,mul).map + add } ], [ 'henc', {arg freq=0.1, a=1.4, b=0.3, x0=0, x1=0, mul=1, add=0; HenonC.ar(freq,a,b,x0,x1,mul).map + add } ], [ 'lfp', {arg freq=0.1, iphase=0, width=0.5, mul=1, add=0; 
 	LFPulse.ar(freq, iphase, width, mul).map + add } ], [ 'lfs', {arg freq=0.1, iphase=0; LFSaw.ar(freq, iphase).map } ], [ 'lfc', {arg freq=0.1, iphase=0, mul=1, add=0; 
 	LFCub.ar(freq, iphase, mul).map + add } ], [ 'lft', {arg freq=0.1, iphase=0, mul=1, add=0; 
-	LFTri.ar(freq, iphase, mul).map + add } ] ]
+	LFTri.ar(freq, iphase, mul).map + add } ], [ 'ons', {arg thresh=0.1, in=1, mul=1, add=0; 
+var sig, chain;
+sig = SoundIn.ar( (in-1).max(0) );
+chain = FFT(LocalBuf(512), sig);
+	((Onsets.kr(chain, thresh, \rcomplex) * 2 - 1 ) * mul).map + add;} ], [ 'ons2', {arg thresh=0.1, in=1, mul=1, add=0; 
+var sig, chain;
+sig = SoundIn.ar( (in-1).max(0) );
+chain = FFT(LocalBuf(512), sig);
+	((Onsets.kr(chain, thresh, \wphase) * 2 - 1 ) * mul).map + add;} ], [ 'ons3', {arg thresh=0.1, in=1, mul=1, add=0; 
+var sig, chain;
+sig = SoundIn.ar( (in-1).max(0) );
+chain = FFT(LocalBuf(512), sig);
+	((Onsets.kr(chain, thresh, \magsum) * 2 - 1 ) * mul).map + add;} ], [ 'ons4', {arg thresh=0.1, in=1, mul=1, add=0; 
+var sig, chain;
+sig = SoundIn.ar( (in-1).max(0) );
+chain = FFT(LocalBuf(512), sig);
+	((Onsets.kr(chain, thresh, \power) * 2 - 1 ) * mul).map + add;} ], [ 'pch', {arg in=1, mul=1, add=0, minFreq=60, maxFreq=4000, ampThreshold=0.01, median=1;
+	var sig, chain, freq, hasFreq;
+	sig = SoundIn.ar( (in-1).max(0) );
+	 # freq, hasFreq = Pitch.kr(sig, minFreq: minFreq, maxFreq: maxFreq, 
+		ampThreshold: ampThreshold, median: median).explin(minFreq, maxFreq, -1, 1);
+	(freq * mul).map + add} ], [ 'hpch', {arg in=1, mul=1, add=0, minFreq=60, maxFreq=4000, ampThreshold=0.01, median=1;
+	var sig, chain, freq, hasFreq;
+	sig = SoundIn.ar( (in-1).max(0) );
+	 # freq, hasFreq = Pitch.kr(sig, minFreq: minFreq, maxFreq: maxFreq, 
+		ampThreshold: ampThreshold, median: median);
+	((hasFreq * 2 - 1) * mul).map + add;} ], [ 'pch2', {arg in=1, mul=1, add=0, thresh=0.93;
+	var sig, chain, freq, hasFreq, minFreq, maxFreq;
+	minFreq = 43;
+	maxFreq = 15000;
+	sig = SoundIn.ar( (in-1).max(0) );
+	 # freq, hasFreq = Tartini.kr(sig, thresh).min(maxFreq).max(minFreq).explin(minFreq, maxFreq, -1, 1);
+	(freq * mul).map + add} ], [ 'hpch2', {arg in=1, mul=1, add=0, thresh=0.93;
+	var sig, chain, freq, hasFreq, minFreq, maxFreq;
+	minFreq = 43;
+	maxFreq = 15000;
+	sig = SoundIn.ar( (in-1).max(0) );
+	 # freq, hasFreq = Tartini.kr(sig, thresh).min(maxFreq);
+	((hasFreq * 2 - 1) * mul).map + add} ] ]
