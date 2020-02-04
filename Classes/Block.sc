@@ -139,13 +139,18 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 									bufferID = bufferArr[2];
 									if(bufInfo.notNil.or(bufInfo == \nobuf), {
 										server.sync;
+										/*buffer*/
 										BStore.add(storeType, bufInfo, {arg buf;
+											if(buf.notNil, {
 											bufString = BufferSystem.getGlobVar(buf);
 											/*bufIndex = BufferSystem.bufferArray.indexOf(buf);
 											bufString = BufferSystem.globVarArray[bufIndex];*/
-											blockFunc.postln;
+											/*blockFunc.postln;*/
 											blockFunc = blockFuncString.replace("\\buffer",
 												bufString).replace("'buffer'", bufString).interpret;
+											}, {
+												blockFunc = nil;
+											});
 											if(data.notNil, {
 												this.readWavetable(data, buf);
 											});
@@ -260,12 +265,16 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					if(liveBlocks[blockIndex].notNil, {
 						if((liveBlocks[blockIndex][2] == bufferID).not, {
 							/*"free buffer from play".postln;*/
+								if(blockFunc.notNil, {
 							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
+							});
 						});
 					});
+					if(blockFunc.notNil, {
 					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
 						++ blockFunc.cs ++ ");");
 					ndefCS.radpost;
+					});
 					if((blockName == 'pattern').not, {
 						if(extraArgs.notNil, {
 							if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
@@ -302,8 +311,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 					server.sync;
 					//replace out with cs string using presetToNdef
+					if(blockFunc.notNil, {
 					ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
 					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
+					});
 					action.();
 				}.fork;
 			}, {

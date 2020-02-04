@@ -55,6 +55,87 @@ SinOsc.ar(freq, 0, amp);
 	var amp;
     amp = LFPulse.kr(0.5,0,0.5);
         Formlet.ar(Dust.ar(12,[0.05,0.05]) * amp, my * exprand(0.5,2.0), 0.005, 0.1);
-} ], [ 'sinenv', {arg trig = 1 , freq=440 , phase=0 , mul=0.4 , attack=0.01 , decay = 0.3 , sustain= 0.5 , release = 1 ; 
-	SinOsc.ar(freq,phase,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
+} ], [ 'sinenv', {arg trig = 1 , freq=440 , phase=0 , mul=0.4 , attack=0.01 , decay = 0.3 , sustain= 0.5 , release = 1 , octMul=1 ;
+	var cps;
+	cps = Latch.ar(freq*octMul, trig);
+	SinOsc.ar(cps,phase,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
+} ], [ 'blipenv', {arg trig = 1 , freq=440 , numharm=0 , mul=0.4 , attack=0.01 , decay = 0.3 , sustain= 0.5 , release = 1 ; 
+	Blip.ar(freq,numharm,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
+} ], [ 'blipdissenv', {arg trig = 1 , freq=440 , diss=0 , mul=0.4 , attack=0.01 , decay = 0.3 , sustain= 0.5 , release = 1 ; 
+	Blip.ar(freq,(diss.sqrt)*200,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
+} ], [ 'sinekey', {arg key=0 , oct=1 , phase=0 , mul=0.4 , lag = 0.01 => [0,0.1]; 
+	var chord;
+	chord = Select.kr(key, [
+		([60, 64, 67]+0).midicps*oct,
+		([60, 64, 67]+1).midicps*oct,
+		([60, 64, 67]+2).midicps*oct,
+		([60, 64, 67]+3).midicps*oct,
+		([60, 64, 67]+4).midicps*oct,
+		([60, 64, 67]+5).midicps*oct,
+		([60, 64, 67]+6).midicps*oct,
+		([60, 64, 67]+7).midicps*oct,
+		([60, 64, 67]+8).midicps*oct,
+		([60, 64, 67]+9).midicps*oct,
+		([60, 64, 67]+10).midicps*oct,
+		([60, 64, 67]+11).midicps*oct,
+		([60, 63, 67]+0).midicps*oct,
+		([60, 63, 67]+1).midicps*oct,
+		([60, 63, 67]+2).midicps*oct,
+		([60, 63, 67]+3).midicps*oct,
+		([60, 63, 67]+4).midicps*oct,
+		([60, 63, 67]+5).midicps*oct,
+		([60, 63, 67]+6).midicps*oct,
+		([60, 63, 67]+7).midicps*oct,
+		([60, 63, 67]+8).midicps*oct,
+		([60, 63, 67]+9).midicps*oct,
+		([60, 63, 67]+10).midicps*oct,
+		([60, 63, 67]+11).midicps*oct,
+	]);	
+	Mix.ar(SinOsc.ar([chord[0].lag(lag), chord[1].lag(lag), chord[2].(lag)],phase,mul/3));
+	} ], [ 'sinekey2', {arg key=0 , oct=1 , phase=0 , mul=0.4 , lag = 0.01 => [0,0.1], inv1=0 , inv2=0 , inv3=0 ; 
+	var chord;
+	chord = Select.kr(key, [
+		([60+inv1, 64+inv2, 67+inv3]+0).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+1).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+2).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+3).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+4).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+5).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+6).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+7).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+8).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+9).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+10).midicps*oct,
+		([60+inv1, 64+inv2, 67+inv3]+11).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+0).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+1).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+2).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+3).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+4).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+5).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+6).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+7).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+8).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+9).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+10).midicps*oct,
+		([60+inv1, 63+inv2, 67+inv3]+11).midicps*oct,
+	]);	
+	Mix.ar(SinOsc.ar([chord[0].lag(lag), chord[1].lag(lag), chord[2].(lag)],phase,mul/3));
+	} ], [ 'karplus', {arg trig = 1 , freq=440 , decayTime = 2.0 , att = 0 , dec = 0.001 ;
+    var burstEnv, signalOut, delayTime;
+    delayTime = freq.min(2000).reciprocal;
+	delayTime = Latch.ar(delayTime, trig);
+    burstEnv = EnvGen.kr(Env.perc(att, dec), trig);
+	signalOut = CombL.ar(PinkNoise.ar(burstEnv), 0.1, delayTime, decayTime)} ], [ 'sinenv2', {arg trig = 1 , freq=440 , phase=0 , mul=0.4 , attack=0.01 , decay = 0.3 , sustain= 0.5 , release = 1 ; 
+	var cps;
+	cps = Latch.ar(freq, trig);
+	SinOsc.ar(cps,phase,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
+} ], [ 'sawenv', {arg trig = 1 , freq=440 , mul=0.4 , attack=0.01 , decay = 0.3 , sustain= 0.5 , release = 1 , octMul=1 ; 
+	var cps;
+	cps = Latch.ar(freq*octMul, trig);
+	Saw.ar(cps,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
+} ], [ 'squarenv', {arg trig = 1 , freq=440 , width=0.5 , mul=0.4 , attack=0.01 , decay = 0.3 , sustain= 0.5 , release = 1 , octMul=1 ;
+	var cps;
+	cps = Latch.ar(freq*octMul, trig);
+	Pulse.ar(cps,width,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
 } ] ]

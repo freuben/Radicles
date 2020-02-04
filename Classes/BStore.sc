@@ -2,7 +2,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	classvar <>samplerFormat=\audio, <>diskStart=0, <>diskBufSize=1, <>cueCount=1, <>allocCount=1;
 
 	*addRaw {arg type, format, settings, function;
-		var path, boolean, typeStore, existFormat, bstoreIDs;
+		var path, boolean, typeStore, existFormat, bstoreIDs, filesInFolder;
 		this.updateFree;
 		bstoreIDs = this.bstoreIDs;
 		case
@@ -23,14 +23,21 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		};
 		case
 		{type == \play} {
-			typeStore = this.addPlay(settings, path, {|buf|
-				if(typeStore.notNil, {
-					boolean = this.store(\bstore, type, format, settings);
-					if(boolean, {
-						stores = stores.add(buf);
+			filesInFolder = PathName(path).files.collect{|item| item.fileNameWithoutExtension.asSymbol;};
+			if(filesInFolder.includes(settings), {
+				typeStore = this.addPlay(settings, path, {|buf|
+					if(typeStore.notNil, {
+						boolean = this.store(\bstore, type, format, settings);
+						if(boolean, {
+							stores = stores.add(buf);
+						});
 					});
+					function.(buf);
 				});
-				function.(buf);
+
+			}, {
+				"Buffer: file not found".warn;
+				function.(nil);
 			});
 		}
 		{type == \sampler} {
@@ -46,54 +53,66 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		}
 		{type == \alloc} {
 			if(bstoreIDs.notNil, {
-			existFormat = bstoreIDs.flop[1].indexOf(format);
+				existFormat = bstoreIDs.flop[1].indexOf(format);
 			});
 			if(existFormat.notNil, {
 				typeStore = this.buffByID(bstoreIDs[existFormat]);
 				("//Buffer already been used as: ~buffer" ++
 					typeStore.bufnum).radpost;
 			}, {
-			typeStore = this.addAlloc(path, function: {|buf|
-				if(typeStore.notNil, {
-					boolean = this.store(\bstore, type, format, path);
-					if(boolean, {
-						stores = stores.add(buf);
+				typeStore = this.addAlloc(path, function: {|buf|
+					if(typeStore.notNil, {
+						boolean = this.store(\bstore, type, format, path);
+						if(boolean, {
+							stores = stores.add(buf);
+						});
 					});
+					function.(buf);
 				});
-				function.(buf);
-			});
 			});
 		}
 		{type == \cue} {
-			if(bstoreIDs.notNil, {
-			existFormat = bstoreIDs.flop[1].indexOf(format);
-			});
-			if(existFormat.notNil, {
-				typeStore = this.buffByID(bstoreIDs[existFormat]);
-				("//Buffer already been used as: ~buffer" ++
-					typeStore.bufnum).radpost;
-			}, {
-			typeStore = this.addCue(settings, path, function: {|buf|
-				if(typeStore.notNil, {
-					boolean = this.store(\bstore, type, format, settings);
-					if(boolean, {
-						stores = stores.add(buf);
+			filesInFolder = PathName(path).files.collect{|item| item.fileNameWithoutExtension.asSymbol};
+			if(filesInFolder.includes(settings), {
+				if(bstoreIDs.notNil, {
+					existFormat = bstoreIDs.flop[1].indexOf(format);
+				});
+				if(existFormat.notNil, {
+					typeStore = this.buffByID(bstoreIDs[existFormat]);
+					("//Buffer already been used as: ~buffer" ++
+						typeStore.bufnum).radpost;
+				}, {
+					typeStore = this.addCue(settings, path, function: {|buf|
+						if(typeStore.notNil, {
+							boolean = this.store(\bstore, type, format, settings);
+							if(boolean, {
+								stores = stores.add(buf);
+							});
+						});
+						function.(buf);
 					});
 				});
-				function.(buf);
+				}, {
+				"Buffer: file not found".warn;
+				function.(nil);
 			});
-				});
 		}
 		{type == \ir} {
-			typeStore = this.addIR(settings, path, {|buf|
-				if(typeStore.notNil, {
-					boolean = this.store(\bstore, type, format, settings);
-					if(boolean, {
-						stores = stores.add(buf);
+			/*filesInFolder = PathName(path).files.collect{|item| item.fileNameWithoutExtension.asSymbol};
+			if(filesInFolder.includes(settings), {*/
+				typeStore = this.addIR(settings, path, {|buf|
+					if(typeStore.notNil, {
+						boolean = this.store(\bstore, type, format, settings);
+						if(boolean, {
+							stores = stores.add(buf);
+						});
 					});
+					function.(buf);
 				});
-				function.(buf);
-			});
+				/*}, {
+				"Buffer: file not found".warn;
+				function.(nil);
+			});*/
 		}
 		;
 	}
@@ -145,49 +164,49 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	*remove {arg type, format, settings, action;
 		var bstoreIDs, bstoreIndex, bstores, thisBStore, freeBufArr, cond;
 		{
-		cond = Condition(false);
-		bstoreIDs = this.bstoreIDs;
-		bstores = this.bstores;
-		if(type == \alloc, {
-			bstoreIndex = bstoreIDs.flop[1].indexOfEqual(format);
-		}, {
-			bstoreIndex = bstoreIDs.indexOfEqual([type, format, settings]);
-		});
-		if(bstoreIndex.notNil, {
-			thisBStore = bstores[bstoreIndex];
-			case
-			{ [\play, \alloc, \cue, \ir].includes(type)} {
-				BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore), {
+			cond = Condition(false);
+			bstoreIDs = this.bstoreIDs;
+			bstores = this.bstores;
+			if(type == \alloc, {
+				bstoreIndex = bstoreIDs.flop[1].indexOfEqual(format);
+			}, {
+				bstoreIndex = bstoreIDs.indexOfEqual([type, format, settings]);
+			});
+			if(bstoreIndex.notNil, {
+				thisBStore = bstores[bstoreIndex];
+				case
+				{ [\play, \alloc, \cue, \ir].includes(type)} {
+					BufferSystem.freeAt(BufferSystem.bufferArray.indexOf(thisBStore), {
 						cond.test = true; cond.signal;
 					});
 					this.removeAt(bstoreIndex);
 					cond.wait;
 					action.();
-			}
-			{type == \sampler} {
-				thisBStore.do{|item|
-					if((bstores.flat.indicesOfEqual( item).size > 1).not, {
-						freeBufArr = freeBufArr.add(BufferSystem.bufferArray.indexOf(item));
-					});
-				};
-				BufferSystem.freeAtAll(freeBufArr.sort, {
+				}
+				{type == \sampler} {
+					thisBStore.do{|item|
+						if((bstores.flat.indicesOfEqual( item).size > 1).not, {
+							freeBufArr = freeBufArr.add(BufferSystem.bufferArray.indexOf(item));
+						});
+					};
+					BufferSystem.freeAtAll(freeBufArr.sort, {
 						cond.test = true; cond.signal;
 					});
 					this.removeAt(bstoreIndex);
 					cond.wait;
 					action.();
-			}
-		});
-	}.fork;
+				}
+			});
+		}.fork;
 	}
 
 	*removeID {arg ids;
 		var currentIDs;
 		currentIDs = this.bstoreIDs;
 		if(currentIDs.notNil, {
-		if(currentIDs.indexOfEqual(ids).notNil, {
-		this.remove(ids[0], ids[1], ids[2]);
-		});
+			if(currentIDs.indexOfEqual(ids).notNil, {
+				this.remove(ids[0], ids[1], ids[2]);
+			});
 		});
 	}
 
@@ -206,8 +225,8 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 	*removeIndices {arg indices;
 		var count=0;
 		{
-		indices.do{|item|
-			this.removeByIndex((item-count));
+			indices.do{|item|
+				this.removeByIndex((item-count));
 				count = count+1;
 				server.sync;
 			}
@@ -270,7 +289,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^this.getDirPath(format, ("Sampler" ++ dash), "");
 	}
 
-		*getIRPath {arg format=\audio, samplerName=\str;
+	*getIRPath {arg format=\audio, samplerName=\str;
 		var dash, irpath;
 		dash = "/";
 		Platform.case(\windows, {dash = "\\"; });
@@ -301,7 +320,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^BufferSystem.add([settings, 'cue', [diskStart,diskBufSize]], path, function);
 	}
 
-		*addIR {arg settings, path, function;
+	*addIR {arg settings, path, function;
 		^BufferSystem.add(settings, path, function);
 	}
 
@@ -345,7 +364,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^this.bstores[this.bstoreTags.indexOfEqual(bstoreID)];
 	}
 
-		*setBufferID {arg buffer, blockFuncString;
+	*setBufferID {arg buffer, blockFuncString;
 		var storeType, bufferID;
 		case
 		{buffer.isNumber} {
@@ -382,7 +401,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 		^BufferSystem.getGlobVar(buffer);
 	}
 
-		*buffIDstoStrArr {arg bstoreIDArr;
+	*buffIDstoStrArr {arg bstoreIDArr;
 		^bstoreIDArr.collect({|item| this.buffStrByID(item) });
 	}
 
