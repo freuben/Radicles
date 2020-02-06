@@ -4029,7 +4029,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		^[thisBusIn, volArg];
 	}
 
-	modSend  {arg trackType, trackNum, sendSlot, modType, extraArgs,
+	modSend {arg trackType, trackNum, sendSlot, modType, extraArgs,
 		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier=\mod;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn, modNdef;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
@@ -4048,7 +4048,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	unmapMix {arg trackType, trackNum, modArg, value;
+	unmodMix {arg trackType, trackNum, modArg, value, modifier=\mod;
 		var typeKey, ndefKey;
 		{
 			typeKey = trackType.asString;
@@ -4058,17 +4058,25 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
 			{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
 			ndefKey = ndefKey.asSymbol;
-			ModMap.unmap(Ndef(ndefKey), modArg, value);
+			if(modifier == \mod, {
+				ModMap.unmap(Ndef(ndefKey), modArg, value);
+			}, {
+				HIDMap.unmap(Ndef(ndefKey), modArg, value);
+			});
 			server.sync;
 			this.refreshFunc;
 		}.fork(AppClock);
 	}
 
-	unmapFx {arg filterNum, modArg, value;
+	unmodFx {arg filterNum, modArg, value, modifier=\mod;
 		this.fxWarn(filterNum, {|ndefKey|
 			if(modArg.notNil, {
 				{
-					ModMap.unmap(Ndef(ndefKey), modArg-1, value);
+					if(modifier == \mod, {
+						ModMap.unmap(Ndef(ndefKey), modArg-1, value);
+					}, {
+						HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
+					});
 					server.sync;
 					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
@@ -4076,13 +4084,49 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	unmapFxTrack {arg trackType, trackNum, trackSlot, modArg, value, post=true;
+	unmodFunc {arg ndefKey, modArg;
+		var modifier;
+		if(modArg.isInteger, {
+			modArg = Ndef(ndefKey).controlKeys[modArg-1];
+		});
+		if(ModMap.modNodes.notNil, {
+			if(ModMap.modNodes.notEmpty, {
+				if((ModMap.modNodes.flop[1].includes(Ndef(ndefKey)))
+					.and(ModMap.modNodes.flop[2].includes(modArg)), {
+						modifier = \mod;
+				});
+			});
+		});
+		if(HIDMap.hidNodes.notNil, {
+			if(HIDMap.hidNodes.notEmpty, {
+				if((HIDMap.hidNodes.flop[1].includes(Ndef(ndefKey)))
+					.and(HIDMap.hidNodes.flop[2].includes(modArg)), {
+						modifier = \hid;
+				});
+			});
+		});
+		^modifier;
+	}
+
+	unmodFxTrack {arg trackType, trackNum, trackSlot, modArg, value, post=true;
+		var modifier;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			if(modArg.notNil, {
 				{
-					ModMap.unmap(Ndef(ndefKey), modArg-1, value);
-					server.sync;
-					this.updateFxWin(ndefKey);
+					if((ModMap.modNodes.notNil).or(HIDMap.hidNodes.notNil), {
+						modifier = this.unmodFunc(ndefKey, modArg);
+						case
+						{modifier == \mod} {
+							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
+						}
+						{modifier == \hid} {
+							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
+						};
+						server.sync;
+						this.updateFxWin(ndefKey);
+					}, {
+						"no mod in this argument".warn;
+					});
 				}.fork(AppClock);
 			});
 		}, post: post);
@@ -4164,14 +4208,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	unmapSend {arg trackType, trackNum, sendSlot, value;
+	unmodSend {arg trackType, trackNum, sendSlot, value, modifier=\mod;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
 			{
 				thisBusIn = busInArr[0];
 				volArg = busInArr[1];
-				ModMap.unmap(Ndef(thisBusIn), volArg, value);
+				if(modifier == \mod, {
+					ModMap.unmap(Ndef(thisBusIn), volArg, value);
+				}, {
+					HIDMap.unmap(Ndef(thisBusIn), volArg, value);
+				});
 				modSendArr.collect{|item| item.copyFromStart(2) }.collect{|it, ind|
 					if(it == [trackType, trackNum, sendSlot], {modSendArr.removeAt(ind);});
 				};
@@ -4799,7 +4847,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					activeMods = ModMap.modNodes.select({|item| item[1].key == ndefKey });
 					if(activeMods.notNil, {
 						activeMods.flop[2].do{|item|
-							this.unmapFxTrack(keyArr[0], keyArr[1], keyArr[2], item, nil, false);
+							this.unmodFxTrack(keyArr[0], keyArr[1], keyArr[2], item, nil, false);
 						};
 						server.sync;
 						ModMap.clearLooseMods;
@@ -4948,6 +4996,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					(modNdefs = modNdefs ++ item) });
 				cond.wait;
 			});
+			//what about unmodding HIDs?
 			keys = masterNdefs.flat.collect({|item| item.key });
 			keys = keys ++ ['masterOut', 'AssemblageGUI'];
 			if(busArr.notNil, {

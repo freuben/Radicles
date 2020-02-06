@@ -1,18 +1,11 @@
 HIDMap : Radicles {
-	classvar <hidNodes, <hidInfoArr, hidIndex=0, <lagArr;
+	classvar <hidNodes, <hidCmds, <hidInfoArr, hidIndex=0, <lagArr;
 
 	*map {arg ndef, key=\freq, type=\midicc, spec=[-1,1], extraArgs, func, mul=1, add=0,
 		min, val, warp, lag, action, defaultVal;
 		var hidMap, keyVals, inFunc;
 		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
 		if((spec.isArray).and(spec[0].isSymbol), {spec = SpecFile.read(spec[0], spec[1]); });
-		if(hidNodes.isNil, {
-			hidIndex=0;
-		}, {
-			if(hidNodes.isEmpty, {
-				hidIndex=0;
-			});
-		});
 		keyVals = ndef.getKeysValues;
 		defaultVal ?? {defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];};
 		spec = spec.specFactor(mul, add, min, val, warp);
@@ -23,13 +16,7 @@ HIDMap : Radicles {
 			inFunc = action;
 		});
 		hidMap = this.getFunc(inFunc, type, spec, extraArgs, func);
-		/*hidNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
-		(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
-		hidNodes.remove(item);
-		hidInfoArr.removeAt(index);
-		}); };*/
 		hidNodes = hidNodes.add([hidMap[0], ndef, key, defaultVal]);
-		/*hidInfoArr = hidInfoArr.add([hidMap[1], type, spec, extraArgs, func, mul, add, min, val, warp, lag]);*/
 		hidInfoArr = hidInfoArr.add([ndef, key, type, spec, extraArgs, func, mul, add, min, val,
 			warp, lag, action, defaultVal]);
 		if(lag.notNil, {
@@ -40,7 +27,6 @@ HIDMap : Radicles {
 
 	*unmap {arg ndef, key, value;
 		var indexNodes, thisArr, num;
-
 		if(key.isInteger, {
 			key = ndef.controlKeys[key];
 		});
@@ -79,6 +65,26 @@ HIDMap : Radicles {
 			}.fork;
 			});
 		});
+	}
+
+	*mapFunc {arg inFunc, type, spec, extraArgs;
+		var hidMap;
+		hidMap = this.getFunc(inFunc, type, spec, extraArgs);
+		/*hidMap = [hidMap[0].interpret,  hidMap[1]];*/
+		hidCmds = hidCmds.add([inFunc, type, spec, extraArgs]);
+		^hidMap;
+	}
+
+	*unmapFunc {
+
+	}
+
+	*unmapFuncAt {
+
+	}
+
+	*unmapFuncAll {
+
 	}
 
 	*getHIDType {arg type;
@@ -172,9 +178,9 @@ HIDMap : Radicles {
 	}
 
 	*writePreset {arg key;
-		if(hidInfoArr.notNil, {
+		if((hidInfoArr.notNil).or(hidCmds.notNil), {
 			//change to new preset file for hid, instead of dstore - this is only temporary
-			PresetFile.write(\dstore, key, hidInfoArr);
+			PresetFile.write(\dstore, key, [hidInfoArr, hidCmds]);
 		}, {
 			"not hid mappings found".warn;
 		});
@@ -194,10 +200,22 @@ HIDMap : Radicles {
 		});
 		dataArr = PresetFile.read(\dstore, key);
 		if(dataArr.notNil, {
-			dataArr.do{|item| ("HIDMap.map" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
+			/*dataArr.do{|item|
+					item.postln;*/
+					if(dataArr[0].notNil, {
+					dataArr[0].do{|item|
+					("HIDMap.map" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
 				++ ";" ).interpret;
 			server.sync;
-			};
+					};
+					});
+					if(dataArr[1].notNil, {
+					dataArr[1].do{|item|
+						("HIDMap.mapFunc" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
+				++ ";" ).interpret;
+					};
+					});
+			/*};*/
 		});
 		action.();
 		}.fork;

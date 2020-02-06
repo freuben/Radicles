@@ -570,7 +570,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		arr3 = arr3.collect{|item| if(item.isString, {item.asSymbol }, {item }); };
 		arr3.do{|item| item.isArray; if(item.isArray, {spec = item }, {str2 = (str2 ++ item)}); };
 		if(spec.isNil, {spec = [0,1]});
-		("HIDMap.getFunc({|val| ~callWindowGlobVar.callFunc(" ++ str ++ ") }, " ++
+		("HIDMap.mapFunc({|val| ~callWindowGlobVar.callFunc(" ++ str ++ ") }, " ++
 			arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 	}
 

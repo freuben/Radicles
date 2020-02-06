@@ -1,7 +1,8 @@
 Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedFuncAction, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
-	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning, <>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
+	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
+	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
 	<>filesPath, <>soundFilePath, <>postWindow, <>memorySize=50, <>beatsFuncArr;
 
 	*new {
@@ -1760,9 +1761,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodfx, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapFxTrack(\track, 1, num1, num2);}
-				{str2 == 'b'} {aZ.unmapFxTrack(\bus, 1, num1, num2);}
-				{str2 == 'm'} {aZ.unmapFxTrack(\master, 1, num1, num2);};
+				{str2 == 't'} {aZ.unmodFxTrack(\track, 1, num1, num2);}
+				{str2 == 'b'} {aZ.unmodFxTrack(\bus, 1, num1, num2);}
+				{str2 == 'm'} {aZ.unmodFxTrack(\master, 1, num1, num2);};
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1771,9 +1772,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodfx, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapFxTrack(\track, 1, num1, str3);}
-				{str2 == 'b'} {aZ.unmapFxTrack(\bus, 1, num1, str3);}
-				{str2 == 'm'} {aZ.unmapFxTrack(\master, 1, num1, str3);};
+				{str2 == 't'} {aZ.unmodFxTrack(\track, 1, num1, str3);}
+				{str2 == 'b'} {aZ.unmodFxTrack(\bus, 1, num1, str3);}
+				{str2 == 'm'} {aZ.unmodFxTrack(\master, 1, num1, str3);};
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1782,9 +1783,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodfx, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapFxTrack(\track, num1, num2, num3);}
-				{str2 == 'b'} {aZ.unmapFxTrack(\bus, num1, num2, num3);}
-				{str2 == 'm'} {aZ.unmapFxTrack(\master, 1, num2, num3);};
+				{str2 == 't'} {aZ.unmodFxTrack(\track, num1, num2, num3);}
+				{str2 == 'b'} {aZ.unmodFxTrack(\bus, num1, num2, num3);}
+				{str2 == 'm'} {aZ.unmodFxTrack(\master, 1, num2, num3);};
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1793,9 +1794,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodfx, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapFxTrack(\track, num1, num2, str3);}
-				{str2 == 'b'} {aZ.unmapFxTrack(\bus, num1, num2, str3);}
-				{str2 == 'm'} {aZ.unmapFxTrack(\master, 1, num2, str3);};
+				{str2 == 't'} {aZ.unmodFxTrack(\track, num1, num2, str3);}
+				{str2 == 'b'} {aZ.unmodFxTrack(\bus, num1, num2, str3);}
+				{str2 == 'm'} {aZ.unmodFxTrack(\master, 1, num2, str3);};
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1804,9 +1805,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodfx, [\str, \str, \num, \str, \num], {|str1, str2, num1, str3, num3|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapFxTrack(\track, 1, num1, str3, num3);}
-				{str2 == 'b'} {aZ.unmapFxTrack(\bus, 1, num1, str3, num3);}
-				{str2 == 'm'} {aZ.unmapFxTrack(\master, 1, num1, str3, num3);};
+				{str2 == 't'} {aZ.unmodFxTrack(\track, 1, num1, str3, num3);}
+				{str2 == 'b'} {aZ.unmodFxTrack(\bus, 1, num1, str3, num3);}
+				{str2 == 'm'} {aZ.unmodFxTrack(\master, 1, num1, str3, num3);};
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1815,9 +1816,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodfx, [\str, \str, \num, \num, \num, \num], {|str1, str2, num1, num2, num3, num4|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapFxTrack(\track, num1, num2, num3, num4);}
-				{str2 == 'b'} {aZ.unmapFxTrack(\bus, num1, num2, num3, num4);}
-				{str2 == 'm'} {aZ.unmapFxTrack(\master, 1, num2, num3, num4);};
+				{str2 == 't'} {aZ.unmodFxTrack(\track, num1, num2, num3, num4);}
+				{str2 == 'b'} {aZ.unmodFxTrack(\bus, num1, num2, num3, num4);}
+				{str2 == 'm'} {aZ.unmodFxTrack(\master, 1, num2, num3, num4);};
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1826,9 +1827,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodfx, [\str, \str, \num, \num, \str, \num], {|str1, str2, num1, num2, str3, num3|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapFxTrack(\track, num1, num2, str3, num3);}
-				{str2 == 'b'} {aZ.unmapFxTrack(\bus, num1, num2, str3, num3);}
-				{str2 == 'm'} {aZ.unmapFxTrack(\master, 1, num2, str3, num3);};
+				{str2 == 't'} {aZ.unmodFxTrack(\track, num1, num2, str3, num3);}
+				{str2 == 'b'} {aZ.unmodFxTrack(\bus, num1, num2, str3, num3);}
+				{str2 == 'm'} {aZ.unmodFxTrack(\master, 1, num2, str3, num3);};
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1841,7 +1842,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.unmapFxTrack(thisArr[0].asSymbol, thisArr[1], num1, num2);
+					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], 1, num2);
 				}, {
 					"track not found".warn;
 				});
@@ -1857,7 +1858,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.unmapFxTrack(thisArr[0].asSymbol, thisArr[1], num1, str2);
+					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], 1, str2);
 				}, {
 					"track not found".warn;
 				});
@@ -1870,7 +1871,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			var filterKey;
 			if(aZ.notNil, {
 				filterKey = aZ.convFilterTag(aZ.filters[num1-1][0]);
-				aZ.unmapFxTrack(filterKey[0], filterKey[1], filterKey[1], num2);
+				aZ.unmodFxTrack(filterKey[0], filterKey[1], filterKey[1], num2);
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1880,7 +1881,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			var filterKey;
 			if(aZ.notNil, {
 				filterKey = aZ.convFilterTag(aZ.filters[num1-1][0]);
-				aZ.unmapFxTrack(filterKey[0], filterKey[1], filterKey[1], str2);
+				aZ.unmodFxTrack(filterKey[0], filterKey[1], filterKey[1], str2);
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1893,7 +1894,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.unmapFxTrack(thisArr[0].asSymbol, thisArr[1], num1, num2, num3);
+					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], num1, num2, num3);
 				}, {
 					"track not found".warn;
 				});
@@ -1909,7 +1910,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.unmapFxTrack(thisArr[0].asSymbol, thisArr[1], num1, str2, num2);
+					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], num1, str2, num2);
 				}, {
 					"track not found".warn;
 				});
@@ -1922,7 +1923,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			var filterKey;
 			if(aZ.notNil, {
 				filterKey = aZ.convFilterTag(aZ.filters[num1-1][0]);
-				aZ.unmapFxTrack(filterKey[0], filterKey[1], filterKey[1], num2, num3);
+				aZ.unmodFxTrack(filterKey[0], filterKey[1], filterKey[1], num2, num3);
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1932,7 +1933,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			var filterKey;
 			if(aZ.notNil, {
 				filterKey = aZ.convFilterTag(aZ.filters[num1-1][0]);
-				aZ.unmapFxTrack(filterKey[0], filterKey[1], filterKey[1], str2, num2);
+				aZ.unmodFxTrack(filterKey[0], filterKey[1], filterKey[1], str2, num2);
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -3521,8 +3522,8 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodsnd, [\str, \str, \num], {|str1, str2, num1|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapSend(\track, num1, 1);}
-				{str2 == 'b'} {aZ.unmapSend(\bus, num1, 1);}
+				{str2 == 't'} {aZ.unmodSend(\track, num1, 1);}
+				{str2 == 'b'} {aZ.unmodSend(\bus, num1, 1);}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -3535,7 +3536,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
 				if(num1 < (trackArr.size-1), {
 					thisArr = trackArr[num1-1];
-					aZ.unmapSend(thisArr[0].asSymbol, thisArr[1], 1);
+					aZ.unmodSend(thisArr[0].asSymbol, thisArr[1], 1);
 				}, {
 					"track not found".warn;
 				});
@@ -3547,8 +3548,8 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.add(\unmodsnd, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.unmapSend(\track, num1, num2);}
-				{str2 == 'b'} {aZ.unmapSend(\bus, num1, num2);}
+				{str2 == 't'} {aZ.unmodSend(\track, num1, num2);}
+				{str2 == 'b'} {aZ.unmodSend(\bus, num1, num2);}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -3561,7 +3562,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
 				if(num1 < (trackArr.size-1), {
 					thisArr = trackArr[num1-1];
-					aZ.unmapSend(thisArr[0].asSymbol, thisArr[1], num2);
+					aZ.unmodSend(thisArr[0].asSymbol, thisArr[1], num2);
 				}, {
 					"track not found".warn;
 				});
