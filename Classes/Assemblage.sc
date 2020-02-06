@@ -3736,6 +3736,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	modMix {arg trackType, trackNum, modArg, modType, extraArgs,
 		mul=1, add=0, min, val, warp, lag, thisSpec, func, modifier=\mod;
 		var typeKey, ndefKey;
+		if(trackType == \master, {
+			trackNum = "";
+		});
 		typeKey = trackType.asString;
 		case
 		{(modArg == \vol).or(modArg == \volume)} {
@@ -4048,42 +4051,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	unmodMix {arg trackType, trackNum, modArg, value, modifier=\mod;
-		var typeKey, ndefKey;
-		{
-			typeKey = trackType.asString;
-			case
-			{(modArg == \vol).or(modArg == \volume)} {
-				ndefKey = (typeKey ++ trackNum); modArg = \volume }
-			{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
-			{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
-			ndefKey = ndefKey.asSymbol;
-			if(modifier == \mod, {
-				ModMap.unmap(Ndef(ndefKey), modArg, value);
-			}, {
-				HIDMap.unmap(Ndef(ndefKey), modArg, value);
-			});
-			server.sync;
-			this.refreshFunc;
-		}.fork(AppClock);
-	}
-
-	unmodFx {arg filterNum, modArg, value, modifier=\mod;
-		this.fxWarn(filterNum, {|ndefKey|
-			if(modArg.notNil, {
-				{
-					if(modifier == \mod, {
-						ModMap.unmap(Ndef(ndefKey), modArg-1, value);
-					}, {
-						HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
-					});
-					server.sync;
-					this.updateFxWin(ndefKey);
-				}.fork(AppClock);
-			});
-		});
-	}
-
 	unmodFunc {arg ndefKey, modArg;
 		var modifier;
 		if(modArg.isInteger, {
@@ -4108,6 +4075,73 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		^modifier;
 	}
 
+	unmodMix {arg trackType, trackNum, modArg, value;
+		var typeKey, ndefKey, modifier;
+		if(modArg.notNil, {
+			{
+				{
+					if((ModMap.modNodes.notNil).or(HIDMap.hidNodes.notNil), {
+						typeKey = trackType.asString;
+						case
+						{(modArg == \vol).or(modArg == \volume)} {
+							ndefKey = (typeKey ++ trackNum); modArg = \volume }
+						{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
+						{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
+						ndefKey = ndefKey.asSymbol;
+						modifier = this.unmodFunc(ndefKey, modArg);
+						case
+						{modifier == \mod} {
+							value ?? {value = ModMap.modNodes.flop[3]
+								[ModMap.modNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							ModMap.unmap(Ndef(ndefKey), modArg, value);
+						}
+						{modifier == \hid} {
+							value ?? {value = HIDMap.hidNodes.flop[3]
+								[HIDMap.hidNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							HIDMap.unmap(Ndef(ndefKey), modArg, value);
+						};
+						server.sync;
+						this.refreshFunc;
+					}, {
+						"no mod in this argument".warn;
+					});
+				}.fork(AppClock);
+				server.sync;
+				this.refreshFunc;
+			}.fork(AppClock);
+		}, {
+			"no mod in this argument".warn;
+		});
+	}
+
+	unmodFx {arg filterNum, modArg, value;
+		var modifier;
+		this.fxWarn(filterNum, {|ndefKey|
+			if(modArg.notNil, {
+				{
+					if((ModMap.modNodes.notNil).or(HIDMap.hidNodes.notNil), {
+						modifier = this.unmodFunc(ndefKey, modArg);
+						case
+						{modifier == \mod} {
+							value ?? {value = ModMap.modNodes.flop[3]
+								[ModMap.modNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
+						}
+						{modifier == \hid} {
+							value ?? {value = HIDMap.hidNodes.flop[3]
+								[HIDMap.hidNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
+						};
+						server.sync;
+						this.updateFxWin(ndefKey);
+					}, {
+						"no mod in this argument".warn;
+					});
+				}.fork(AppClock);
+			});
+		});
+	}
+
 	unmodFxTrack {arg trackType, trackNum, trackSlot, modArg, value, post=true;
 		var modifier;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
@@ -4117,9 +4151,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						modifier = this.unmodFunc(ndefKey, modArg);
 						case
 						{modifier == \mod} {
+							value ?? {value = ModMap.modNodes.flop[3]
+								[ModMap.modNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
 							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 						}
 						{modifier == \hid} {
+							value ?? {value = HIDMap.hidNodes.flop[3]
+								[HIDMap.hidNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
 							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
 						};
 						server.sync;
@@ -4181,6 +4219,61 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
+	findMixModNdef {arg trackType, trackNum, modArg;
+		var mixTag, findMods, findModArr, modIndex, modKey, modInfo, result, typeKey, ndefKey;
+		typeKey = trackType.asString;
+		case
+		{(modArg == \vol).or(modArg == \volume)} {
+			ndefKey = (typeKey ++ trackNum); modArg = \volume }
+		{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
+		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
+		if(ndefKey.notNil, {
+			ndefKey = ndefKey.asSymbol;
+			modInfo = ModMap.modNodes;
+			if(modInfo.notNil, {
+				findMods = ModMap.modNodes.flop[1].indicesOfEqual(Ndef(ndefKey));
+				if(findMods.notNil, {
+					findModArr = ModMap.modNodes.atAll(findMods);
+					if(modArg.isSymbol, {
+						modIndex = findModArr.flop[2].indexOf(modArg);
+					}, {
+						modKey = 	findModArr.flop[1][0].controlKeys[modArg-1];
+						modIndex = findModArr.flop[2].indexOf(modKey);
+					});
+					if(modIndex.notNil, {
+						result = findModArr.flop[0][modIndex];
+					}, {
+						"key not found".warn;
+					});
+				}, {
+					"no modulation in this track".warn;
+				});
+			}, {
+				"no modulation in this track".warn;
+			});
+		}, {
+			"track doesn't exist".warn;
+		});
+		^result;
+	}
+
+	setMixMod {arg trackType, trackNum, trackArg, extraArgs;
+		var ndefString;
+		ndefString = this.findMixModNdef(trackType, trackNum, trackArg);
+		if(ndefString.notNil, {
+			(ndefString.cs ++ ".setn" ++ extraArgs.cs.replaceAt("(",0)
+				.replaceAt(")", extraArgs.cs.size-1)).radpost.interpret;
+		});
+	}
+
+	getMixMod {arg trackType, trackNum, trackArg;
+		var ndefString;
+		ndefString = this.findMixModNdef(trackType, trackNum, trackArg);
+		if(ndefString.notNil, {
+			^ndefString.controlKeysValues;
+		});
+	}
+
 	findSndModNdef {arg trackType, trackNum, trackSlot;
 		var arr, arr1, arr2, result;
 		arr = modSendArr;
@@ -4208,23 +4301,32 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	unmodSend {arg trackType, trackNum, sendSlot, value, modifier=\mod;
-		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
+	unmodSend {arg trackType, trackNum, sendSlot, value;
+		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn, modifier;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);
 		if(busInArr.includes(nil).not, {
 			{
 				thisBusIn = busInArr[0];
 				volArg = busInArr[1];
-				if(modifier == \mod, {
-					ModMap.unmap(Ndef(thisBusIn), volArg, value);
-				}, {
-					HIDMap.unmap(Ndef(thisBusIn), volArg, value);
+				if((ModMap.modNodes.notNil).or(HIDMap.hidNodes.notNil), {
+					modifier = this.unmodFunc(thisBusIn, volArg);
+					case
+					{modifier == \mod} {
+						value ?? {value = ModMap.modNodes.flop[3]
+							[ModMap.modNodes.flop[1].indexOfEqual(Ndef(thisBusIn))];};
+						ModMap.unmap(Ndef(thisBusIn), volArg, value);
+					}
+					{modifier == \hid} {
+						value ?? {value = HIDMap.hidNodes.flop[3]
+							[HIDMap.hidNodes.flop[1].indexOfEqual(Ndef(thisBusIn))];};
+						HIDMap.unmap(Ndef(thisBusIn), volArg, value);
+					};
+					modSendArr.collect{|item| item.copyFromStart(2) }.collect{|it, ind|
+						if(it == [trackType, trackNum, sendSlot], {modSendArr.removeAt(ind);});
+					};
+					server.sync;
+					this.refreshFunc;
 				});
-				modSendArr.collect{|item| item.copyFromStart(2) }.collect{|it, ind|
-					if(it == [trackType, trackNum, sendSlot], {modSendArr.removeAt(ind);});
-				};
-				server.sync;
-				this.refreshFunc;
 			}.fork(AppClock);
 		}, {
 			"Track and slot numers don't match active send".warn;
