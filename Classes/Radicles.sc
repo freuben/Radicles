@@ -1729,7 +1729,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.setFxMod(thisArr[0].asSymbol, thisArr[1], num1, num2, arr1);
+					aZ.setFxMod(thisArr[0].asSymbol, thisArr[1], 1, num2, arr1);
 				}, {
 					"track not found".warn;
 				});
@@ -1745,7 +1745,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.setFxMod(thisArr[0].asSymbol, thisArr[1], num1, str2, arr1);
+					aZ.setFxMod(thisArr[0].asSymbol, thisArr[1], 1, str2, arr1);
 				}, {
 					"track not found".warn;
 				});
@@ -1754,21 +1754,53 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "modfxset: mixTrackNum, trackSlot, arg");
 
-		cW.add(\modsetfx, [\str, \num, \num, \arr], {|str1, num1, num2, arr1|
+		cW.add(\modfxset, [\str, \num, \num, \num, \arr], {|str1, num1, num2, num3, arr1|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.setFxMod(thisArr[0].asSymbol, thisArr[1], num2, num3, arr1);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "modfxset: mixTrackNum, trackSlot, arg");
+
+		cW.add(\modfxset, [\str, \num, \num, \str, \arr], {|str1, num1, num2, str2, arr1|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.setFxMod(thisArr[0].asSymbol, thisArr[1], num2, str2, arr1);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "modfxset: mixTrackNum, trackSlot, arg");
+
+		cW.add(\modsetfx, [\str, \num, \num, \num, \arr], {|str1, num1, num2, num3, arr1|
 			var filterKey;
 			if(aZ.notNil, {
 				filterKey = aZ.convFilterTag(aZ.filters[num1-1][0]);
-				aZ.setFxMod(filterKey[0], filterKey[1], filterKey[1], num2, arr1);
+				aZ.setFxMod(filterKey[0], filterKey[1], num2, num3, arr1);
 			}, {
 				"could not find assemblage".warn;
 			});
 		}, "setfx: filterNum, fxArg");
 
-		cW.add(\modsetfx, [\str, \num, \str, \arr], {|str1, num1, str2, arr1|
+		cW.add(\modsetfx, [\str, \num, \num, \str, \arr], {|str1, num1, num2, str2, arr1|
 			var filterKey;
 			if(aZ.notNil, {
 				filterKey = aZ.convFilterTag(aZ.filters[num1-1][0]);
-				aZ.setFxMod(filterKey[0], filterKey[1], filterKey[1], str2, arr1);
+				aZ.setFxMod(filterKey[0], filterKey[1], num2, str2, arr1);
 			}, {
 				"could not find assemblage".warn;
 			});
