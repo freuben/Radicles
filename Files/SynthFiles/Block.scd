@@ -138,4 +138,6 @@ SinOsc.ar(freq, 0, amp);
 	var cps;
 	cps = Latch.ar(freq*octMul, trig);
 	Pulse.ar(cps,width,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
+} ], [ 'noise', {arg mul=0.5;
+	WhiteNoise.ar(mul);
 } ] ]
