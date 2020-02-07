@@ -793,7 +793,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			ndefCS2.radpost.interpret;
 			server.sync;
 			if(setVal, {
-				"setVal ".post; setVal.postln;
+				/*"setVal ".post; setVal.postln;*/
 				argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));
 				ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set('vol" ++ (argIndex+1)
 				++ "', " ++ mix ++ ");";
@@ -4091,13 +4091,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						modifier = this.unmodFunc(ndefKey, modArg);
 						case
 						{modifier == \mod} {
-							value ?? {value = ModMap.modNodes.flop[3]
-								[ModMap.modNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							value ?? {
+								value = ModMap.modNodes.select({|item|
+									(item[1] == Ndef(ndefKey) ).and(item[2] == modArg);
+								})[0].last;
+							};
 							ModMap.unmap(Ndef(ndefKey), modArg, value);
 						}
 						{modifier == \hid} {
-							value ?? {value = HIDMap.hidNodes.flop[3]
-								[HIDMap.hidNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							value ?? {
+								value = HIDMap.hidNodes.select({|item|
+									(item[1] == Ndef(ndefKey) ).and(item[2] == modArg);
+								})[0].last;
+							};
 							HIDMap.unmap(Ndef(ndefKey), modArg, value);
 						};
 						server.sync;
@@ -4123,13 +4129,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						modifier = this.unmodFunc(ndefKey, modArg);
 						case
 						{modifier == \mod} {
-							value ?? {value = ModMap.modNodes.flop[3]
-								[ModMap.modNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							value ?? {
+								value = ModMap.modNodes.select({|item|
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+								})[0].last;
+							};
 							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 						}
 						{modifier == \hid} {
-							value ?? {value = HIDMap.hidNodes.flop[3]
-								[HIDMap.hidNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							value ?? {
+								value = HIDMap.hidNodes.select({|item|
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+								})[0].last;
+							};
 							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
 						};
 						server.sync;
@@ -4151,13 +4163,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						modifier = this.unmodFunc(ndefKey, modArg);
 						case
 						{modifier == \mod} {
-							value ?? {value = ModMap.modNodes.flop[3]
-								[ModMap.modNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+							value ?? {
+								value = ModMap.modNodes.select({|item|
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+								})[0].last;
+							};
 							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 						}
 						{modifier == \hid} {
-							value ?? {value = HIDMap.hidNodes.flop[3]
-								[HIDMap.hidNodes.flop[1].indexOfEqual(Ndef(ndefKey))];};
+
+							value ?? {
+								value = HIDMap.hidNodes.select({|item|
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+								})[0].last;
+							};
 							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
 						};
 						server.sync;
@@ -4312,13 +4331,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					modifier = this.unmodFunc(thisBusIn, volArg);
 					case
 					{modifier == \mod} {
-						value ?? {value = ModMap.modNodes.flop[3]
-							[ModMap.modNodes.flop[1].indexOfEqual(Ndef(thisBusIn))];};
+						value ?? {
+								value = ModMap.modNodes.select({|item|
+									(item[1] == Ndef(thisBusIn) ).and(item[2] == volArg);
+								})[0].last;
+							};
 						ModMap.unmap(Ndef(thisBusIn), volArg, value);
 					}
 					{modifier == \hid} {
-						value ?? {value = HIDMap.hidNodes.flop[3]
-							[HIDMap.hidNodes.flop[1].indexOfEqual(Ndef(thisBusIn))];};
+						value ?? {
+								value = HIDMap.hidNodes.select({|item|
+									(item[1] == Ndef(thisBusIn) ).and(item[2] == volArg);
+								})[0].last;
+							};
 						HIDMap.unmap(Ndef(thisBusIn), volArg, value);
 					};
 					modSendArr.collect{|item| item.copyFromStart(2) }.collect{|it, ind|

@@ -1617,7 +1617,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.getFxMod(thisArr[0].asSymbol, thisArr[1], num1, num2).radpostwarn;
+					aZ.getFxMod(thisArr[0].asSymbol, thisArr[1], num2, 1).radpostwarn;
 				}, {
 					"track not found".warn;
 				});
@@ -1626,14 +1626,30 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "modfxset: mixTrackNum, trackSlot, arg");
 
-		cW.add(\modfxset, [\str, \num, \str], {|str1, num1, str2|
+		cW.add(\modfxset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var trackArr, thisArr;
 			if(aZ.notNil, {
 				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.getFxMod(thisArr[0].asSymbol, thisArr[1], num1, str2).radpostwarn;
+					aZ.getFxMod(thisArr[0].asSymbol, thisArr[1], num2, num3).radpostwarn;
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "modfxset: mixTrackNum, trackSlot, arg");
+
+		cW.add(\modfxset, [\str, \num, \num, \str], {|str1, num1, num2, str2|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.getFxMod(thisArr[0].asSymbol, thisArr[1], num2, str2).radpostwarn;
 				}, {
 					"track not found".warn;
 				});
@@ -1835,37 +1851,37 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "modfxset: trackType, trackNum, trackSlot, arg");
 
-		cW.add(\unmodfx, [\str, \num, \num], {|str1, num1, num2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], 1, num2);
-				}, {
-					"track not found".warn;
-				});
-			}, {
-				"could not find assemblage".warn;
-			});
+		/*		cW.add(\unmodfx, [\str, \num, \num], {|str1, num1, num2|
+		var trackArr, thisArr;
+		if(aZ.notNil, {
+		trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+		if(num1 <= (trackArr.size), {
+		thisArr = trackArr[num1-1];
+		if(thisArr[1].isNil, {thisArr[1] = 1});
+		aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], 1, num2);
+		}, {
+		"track not found".warn;
+		});
+		}, {
+		"could not find assemblage".warn;
+		});
 		}, "modfxset: mixTrackNum, trackSlot, arg");
 
 		cW.add(\unmodfx, [\str, \num, \str], {|str1, num1, str2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], 1, str2);
-				}, {
-					"track not found".warn;
-				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "modfxset: mixTrackNum, trackSlot, arg");
+		var trackArr, thisArr;
+		if(aZ.notNil, {
+		trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+		if(num1 <= (trackArr.size), {
+		thisArr = trackArr[num1-1];
+		if(thisArr[1].isNil, {thisArr[1] = 1});
+		aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], 1, str2);
+		}, {
+		"track not found".warn;
+		});
+		}, {
+		"could not find assemblage".warn;
+		});
+		}, "modfxset: mixTrackNum, trackSlot, arg");*/
 
 		cW.add(\fxunmod, [\str, \num, \num], {|str1, num1, num2|
 			var filterKey;
@@ -1894,14 +1910,14 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], num1, num2, num3);
+					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], num2, num3);
 				}, {
 					"track not found".warn;
 				});
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "modfxset: mixTrackNum, trackSlot, arg");
+		}, "unmodfx: mixTrackNum, trackSlot, arg");
 
 		cW.add(\unmodfx, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			var trackArr, thisArr;
@@ -1910,14 +1926,46 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], num1, str2, num2);
+					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], num2, str2);
 				}, {
 					"track not found".warn;
 				});
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "modfxset: mixTrackNum, trackSlot, arg");
+		}, "unmodfx: mixTrackNum, trackSlot, arg");
+
+		cW.add(\unmodfx, [\str, \num, \num, \num, \num], {|str1, num1, num2, num3, num4|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], num2, num3, num4);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "unmodfx: mixTrackNum, trackSlot, arg");
+
+		cW.add(\unmodfx, [\str, \num, \str, \num, \num], {|str1, num1, str2, num2, num3|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.unmodFxTrack(thisArr[0].asSymbol, thisArr[1], num2, str2, num3);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "unmodfx: mixTrackNum, trackSlot, arg");
 
 		cW.add(\fxunmod, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var filterKey;
@@ -3574,7 +3622,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "snd: [mixTrackNum, slotNum, busNum, val]");
 
-		cW.add(\setsnd, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+		cW.add(\sndset, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {aZ.setSendKnob(\track, num1, 1, num2);}
@@ -3585,7 +3633,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "setsnd: [mixTrackNum, slotNum, busNum, val]");
 
-		cW.add(\setsnd, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+		cW.add(\sndset, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {aZ.setSendKnob(\track, num1, num2, num3);}
@@ -3596,7 +3644,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "setsnd: [trackType, trackNum, slotNum, busNum]");
 
-		cW.add(\setsnd, [\str, \str, \num, \num, \num, \num], {|str1, str2, num1, num2, num3, num4|
+		cW.add(\sndset, [\str, \str, \num, \num, \num, \num], {|str1, str2, num1, num2, num3, num4|
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {aZ.setSendKnob(\track, num1, num2, num3, num4);}
@@ -3607,7 +3655,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "setsnd: [trackType, trackNum, slotNum, busNum, val]");
 
-		cW.add(\setsnd, [\str, \num, \num], {|str1, num1, num2|
+		cW.add(\sndset, [\str, \num, \num], {|str1, num1, num2|
 			var trackArr, thisArr;
 			if(aZ.notNil, {
 				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
@@ -3622,7 +3670,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "setsnd: [mixTrackNum, busNum]");
 
-		cW.add(\setsnd, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+		cW.add(\sndset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var trackArr, thisArr;
 			if(aZ.notNil, {
 				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
@@ -3637,7 +3685,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "setsnd: [mixTrackNum, slotNum, busNum]");
 
-		cW.add(\setsnd, [\str, \num, \num, \num, \num], {|str1, num1, num2, num3, num4|
+		cW.add(\sndset, [\str, \num, \num, \num, \num], {|str1, num1, num2, num3, num4|
 			var trackArr, thisArr;
 			if(aZ.notNil, {
 				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
@@ -3652,7 +3700,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "setsnd: [mixTrackNum, slotNum, busNum, val]");
 
-		cW.add(\setsnd, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+		cW.add(\sndset, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			var modArgs, modifier;
 			if(aZ.notNil, {
 				modArgs = str3.asString.radStringMod;
@@ -3669,7 +3717,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "sndset: trackType, fxArg, modType");
 
-		cW.add(\setsnd, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
+		cW.add(\sndset, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
 			var modArgs, modifier;
 			if(aZ.notNil, {
 				modArgs = str3.asString.radStringMod;
@@ -3686,7 +3734,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "sndset: trackType, trackNum, fxArg, modType");
 
-		cW.add(\setsnd, [\str, \num, \num, \str], {|str1, num1, num2, str2|
+		cW.add(\sndset, [\str, \num, \num, \str], {|str1, num1, num2, str2|
 			var trackArr, thisArr, modArgs, modifier;
 			if(aZ.notNil, {
 				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
@@ -3706,7 +3754,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "sndset: mixTrackNum, filter");
 
-		cW.add(\setsnd, [\str, \num, \str], {|str1, num1, str2|
+		cW.add(\sndset, [\str, \num, \str], {|str1, num1, str2|
 			var trackArr, thisArr, modArgs, modifier;
 			if(aZ.notNil, {
 				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
@@ -4936,17 +4984,19 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num, \str], {|str1, num1, num2, str2|
-			var thisIndex, thisKey, modArgs;
+			var thisIndex, thisKey, modArgs, modifier;
 			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			modArgs = str2.asString.radStringMod;
-			Block.modBlk(num1, thisKey, modArgs[0], modArgs[1]);
+			if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
+			Block.modBlk(num1, thisKey, modArgs[0], modArgs[1], modifier: modifier);
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \str, \str], {|str1, num1, str2, str3|
-			var modArgs;
+			var modArgs, modifier;
 			modArgs = str3.asString.radStringMod;
-			Block.modBlk(num1, str2, modArgs[0], modArgs[1]);
+			if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
+			Block.modBlk(num1, str2, modArgs[0], modArgs[1], modifier: modifier);
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blklag, [\str, \num, \num, \num], {|str1, num1, num2, num3|
@@ -5017,20 +5067,20 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, "blocksetn: blk, arg");
 
 		cW.add(\unmodblk, [\str, \num, \num], {|str1, num1, num2|
-			Block.unmapBlk(num1, num2);
-		}, "modblockget: blk, arg");
+			Block.unmodBlk(num1, num2);
+		}, "unmodblk: blkNum, arg");
 
 		cW.add(\unmodblk, [\str, \num, \str], {|str1, num1, str2|
-			Block.unmapBlk(num1, str2);
-		}, "modblockget: blk, arg");
+			Block.unmodBlk(num1, str2);
+		}, "unmodblk: blkNum, arg");
 
 		cW.add(\unmodblk, [\str, \num, \num, \num], {|str1, num1, num2, num3|
-			Block.unmapBlk(num1, num2, num3);
-		}, "modblockget: blk, arg");
+			Block.unmodBlk(num1, num2, num3);
+		}, "unmodblk: blkNum, arg");
 
 		cW.add(\unmodblk, [\str, \num, \str, \num], {|str1, num1, str2, num2|
-			Block.unmapBlk(num1, str2, num2);
-		}, "modblockget: blk, arg");
+			Block.unmodBlk(num1, str2, num2);
+		}, "unmodblk: blkNum, arg");
 
 		//blk shortcuts
 		cW.add(\pl, [\str, \num, \str], {|str1, num1, str2|
@@ -5566,6 +5616,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 		cW.add('clock', [\str], {|str1|
 			Block.clock;
+		}, "starts a clock");
+
+		cW.add('bpm', [\str], {|str1|
+			("bpm: " ++ Block.bpm).radpostwarn;
 		}, "starts a clock");
 
 		cW.add('bpm', [\str, \num], {|str1, num1|

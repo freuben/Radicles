@@ -755,7 +755,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*modFunc {arg ndefKey, argIn, type, extraArgs, func,
-		mul=1, add=0, min, val, warp, lag, thisSpec;
+		mul=1, add=0, min, val, warp, lag, thisSpec, modifier=\mod;
 		var filterType, index, keyValues, spec, liveBlks;
 		if(argIn.isNumber, {
 			index = argIn-1;
@@ -769,39 +769,87 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 				liveBlks.flop[1][liveBlks.flop[0].indexOf(ndefKey);]
 			)[index][1];
 			if(spec.isNil, {spec = [-1,1] });
-			^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
-				func, mul, add, min, val, warp, lag);
+
+			if(modifier == \mod, {
+				^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
+					func, mul, add, min, val, warp, lag);
+			}, {
+				^HIDMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
+					func, mul, add, min, val, warp, lag);
+			});
+
 		}, {
 			"Argument doesn't match synth".warn;
 		});
 	}
 
 	*modBlk {arg blkNum, modArg, modType, extraArgs,
-		func, mul=1, add=0, min, val, warp, lag, thisSpec;
+		func, mul=1, add=0, min, val, warp, lag, thisSpec, modifier=\mod;
 		var typeKey, ndefKey;
 		ndefKey = ("block" ++ blkNum).asSymbol;
 		if(modArg.notNil, {
-			/*{*/
 			this.modFunc(ndefKey, modArg, modType, extraArgs, func,
-				mul, add, min, val, warp, lag, thisSpec);
-			/*server.sync;
-			this.updateFxWin(ndefKey);
-			}.fork(AppClock);*/
+				mul, add, min, val, warp, lag, thisSpec, modifier);
 		}, {
 			Ndef(ndefKey).controlKeys.postln;
 		});
 	}
 
-	*	unmapBlk {arg blkNum, modArg, value;
-		var ndefKey;
+	*	unmodBlk {arg blkNum, modArg, value;
+		var ndefKey, modifier;
 		ndefKey = ("block" ++ blkNum).asSymbol;
 		if(modArg.notNil, {
-			/*{*/
-			ModMap.unmap(Ndef(ndefKey), modArg-1, value);
-			/*server.sync;
-			this.updateFxWin(ndefKey);
-			}.fork(AppClock);*/
+				{
+					if((ModMap.modNodes.notNil).or(HIDMap.hidNodes.notNil), {
+						modifier = this.unmodFunc(ndefKey, modArg);
+						case
+						{modifier == \mod} {
+							value ?? {
+								value = ModMap.modNodes.select({|item|
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+								})[0].last;
+							};
+							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
+						}
+						{modifier == \hid} {
+							value ?? {
+								value = HIDMap.hidNodes.select({|item|
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+								})[0].last;
+							};
+							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
+						};
+						server.sync;
+						/*this.updateFxWin(ndefKey);*/
+					}, {
+						"no mod in this argument".warn;
+					});
+				}.fork(AppClock);
+			});
+	}
+
+	*unmodFunc {arg ndefKey, modArg;
+		var modifier;
+		if(modArg.isInteger, {
+			modArg = Ndef(ndefKey).controlKeys[modArg-1];
 		});
+		if(ModMap.modNodes.notNil, {
+			if(ModMap.modNodes.notEmpty, {
+				if((ModMap.modNodes.flop[1].includes(Ndef(ndefKey)))
+					.and(ModMap.modNodes.flop[2].includes(modArg)), {
+						modifier = \mod;
+				});
+			});
+		});
+		if(HIDMap.hidNodes.notNil, {
+			if(HIDMap.hidNodes.notEmpty, {
+				if((HIDMap.hidNodes.flop[1].includes(Ndef(ndefKey)))
+					.and(HIDMap.hidNodes.flop[2].includes(modArg)), {
+						modifier = \hid;
+				});
+			});
+		});
+		^modifier;
 	}
 
 	*findBlkModNdef {arg blkNum, trackArg;
