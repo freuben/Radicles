@@ -61,8 +61,8 @@
 		var bol, item;
 		item = this;
 		if(item.findAll(".").size > 1, {bol = false}, {
-		if(item.contains("."), {item = item.replace(".")});
-		bol = "1234567890".ascii.includesAll(item.ascii);
+			if(item.contains("."), {item = item.replace(".")});
+			bol = "1234567890".ascii.includesAll(item.ascii);
 		});
 		^bol;
 	}
@@ -232,12 +232,21 @@
 		modString = this;
 		if(modString.contains("_"), {
 			modStr1 = modString.split($_);
-			modStr2 =	modStr1[1].replaceAt("[", 0).replaceAt("]", modStr1[1].size-1).interpretRad;
+			modStr2 =	modStr1[1].replaceAt("[", 0).replaceAt("]",
+				modStr1[1].size-1).interpretRad;
 			result = [modStr1[0].asSymbol, modStr2];
 		}, {
 			result = [modString.asSymbol, nil];
 		});
 		^result;
+	}
+
+	nospaceFunc {
+		var replace;
+		replace = this;
+		if(replace.last == $ , {replace = replace.copyFromStart(replace.size-2) });
+		if(replace[0] == $ , {replace = replace.copyToEnd(1) });
+		^replace.asString;
 	}
 
 }

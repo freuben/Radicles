@@ -4,8 +4,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<setVolSlider, <mixTrackNames, <>systemChanNum, <mixTrackNdefs, <basicFont,
 	<sysChans, <sysPan, <setBusIns, <setKnobIns, <setPanKnob, <outputSettings,
 	<filtersWindow, <scrollPoint, <winRefresh=false, <fxsNum, <soloStates, <muteStates,
-	<recStates, recBStoreArr, <mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
-	<recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
+	<>recStates, recBStoreArr, <>mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
+	<>recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob;
 
@@ -3494,6 +3494,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	mastOutSynth	{
 		var arr2, arr3, selArr;
+		if(mastOutArr.notNil, {
 		if(mastOutArr.flat.includes(1), {
 			arr2 = mastOutArr.flop.collect({|item| item.collect({|it, in|
 				if(it != 0, {it = "out[" ++ in ++ "]" }, {it =  it}); }); });
@@ -3516,6 +3517,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		("Ndef('masterOut', {var out; \nout = Ndef.ar('spaceMaster', " ++
 			Ndef(\spaceMaster).numChannels ++ ");\n\t" ++	arr3.asString ++ ";\n\t});")
 		.radpost.interpret;
+		});
 	}
 
 	mastOutGUI {arg boundArr, scrollOrg;
@@ -3721,6 +3723,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			});
 			if(thisSpec.notNil, {spec = thisSpec});
 			if(spec.isNil, {spec = [-1,1] });
+			{nodeTime.yield;
+			this.refreshFunc;
+			}.fork(AppClock);
 			if(modifier == \mod, {
 				^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
 					func, mul, add, min, val, warp, lag);
@@ -3728,6 +3733,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				^HIDMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
 					func, mul, add, min, val, warp, lag);
 			});
+
 		}, {
 			"Argument doesn't match synth".warn;
 		});
@@ -4990,10 +4996,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		addFunc = {arg presetArr;
 			presetArr[1].do{|item, index|
 				item[1].do{|it|
+					if(it[1].isNumber.not, {
+					/*it[1][0].postln;*/
 					if(it[1][0].cs.find("mod").notNil, {
 						hasMod = hasMod.add([item[0], it]);
 					}, {
 						extraArgs = extraArgs.add([item[0], it]); //extra args
+					});
+					}, {
+						extraArgs = extraArgs.add([item[0], it]);
 					});
 				}
 			};
@@ -5010,16 +5021,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			var in, space;
 			in = ("in" ++ item.asString.capitalise).asSymbol;
 			space =("space" ++ item.asString.capitalise).asSymbol;
+			/*[in, item, space].cs.postln;*/
 			inPreset = this.rawFxPreset(in, false);
+			/*inPreset.cs.postln;*/
 			trackPreset = this.rawFxPreset(item, false);
+			/*trackPreset.cs.postln;*/
 			spacePreset = this.rawFxPreset(space, false);
+			/*spacePreset.cs.postln;*/
 			addFunc.(inPreset);
 			hasModFunc.();
 			addFunc.(trackPreset);
 			hasModFunc.();
 			addFunc.(spacePreset);
 			hasModFunc.();
-
 		});
 		dataArr = [extraArgs, hasMod2];
 		^dataArr;
@@ -5143,6 +5157,48 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			this.garbage(fadeTime, (modNdefs ++ busNdefs).postln);
 			action.();
 		}.fork;
+	}
+
+	saveFileInfo {arg presetName;
+		var resultArr, trk, bs, ms, mastArr, arr1, arr2, arr3;
+		trk = mixTrackNdefs.select{|item| item.key.asString.contains("track") };
+		bs = mixTrackNdefs.select{|item| item.key.asString.contains("bus") };
+		ms = mixTrackNdefs.select{|item| item.key.asString.contains("master") };
+		mastArr = [trk, bs, ms];
+		arr1 = mastArr.copyFromStart(1).collect{|item| item.size};
+		arr2 = mastArr.collect{|item| item.collect{|it| it.numChannels } };
+		arr2 = arr2.collect{|item| if(item.size == 1, {item[0]}, {item});};
+		arr3 = [arr1, arr2];
+		resultArr = [arr3] ++ [this.prepWritePreset];
+		resultArr.postln;
+		PresetFile.write(\assemblage, presetName, resultArr);
+	}
+
+	prepWritePreset {
+		var filterKeyArr, mixDataArr, dataArr2, busSettings, ioSettings;
+		mixDataArr = this.mixControlKeyValues;
+		if(filters.notNil, {
+			filterKeyArr = filters.flop[0];
+			mixTrackNames.do{|item|
+				var trackInfo, labelStr, dataArr;
+				trackInfo = item.asString.divNumStr;
+				if(trackInfo[1].isNil, {trackInfo[1] = 1});
+				labelStr = ("filter" ++ trackInfo[0].asString.capitalise ++ "_" ++ trackInfo[1]);
+				filterKeyArr = filters.flop[0].select{|item| item.cs.find(labelStr).notNil };
+				filterKeyArr.do{|it|
+					dataArr = dataArr.add([item, this.prepareWriteFxPreset(it)]);
+				};
+				if(dataArr.notNil, {
+					dataArr2 = dataArr2.add(dataArr);
+				});
+			};
+		});
+		if(this.getBusInLabels.notNil, {
+			busSettings = [busArr, busArr.flop[0].collect({|item| Ndef(item).controlKeysValues});];
+		});
+		ioSettings = [recStates, recInputArr, mastOutArr];
+			^[mixDataArr, dataArr2, busSettings, outputSettings, ioSettings];
+			/*PresetFile.write(\tracks, presetName, [mixDataArr, dataArr2, busSettings, outputSettings, ioSettings]);*/
 	}
 
 	nomixer {

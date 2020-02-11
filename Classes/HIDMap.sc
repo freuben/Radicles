@@ -1,5 +1,5 @@
 HIDMap : Radicles {
-	classvar <hidNodes, <hidCmds, <hidInfoArr, hidIndex=0, <lagArr;
+	classvar <hidNodes, <hidIDs, <hidCmds, <hidInfoArr, hidIndex=0, <lagArr;
 
 	*map {arg ndef, key=\freq, type=\midicc, spec=[-1,1], extraArgs, func, mul=1, add=0,
 		min, val, warp, lag, action, defaultVal;
@@ -43,26 +43,26 @@ HIDMap : Radicles {
 	}
 
 	*unmapAt {arg index;
-			if(hidNodes.notNil, {
+		if(hidNodes.notNil, {
 			if(hidNodes.notEmpty, {
-			this.unmap(hidNodes[index][1], hidNodes[index][2]);
-		}, {
-			"no maps left".warn;
-		});
+				this.unmap(hidNodes[index][1], hidNodes[index][2]);
+			}, {
+				"no maps left".warn;
+			});
 		}, {
 			"no hid mapplings found".warn;
 		});
 	}
 
 	*unmapAll {arg action={};
-			if(hidNodes.notNil, {
+		if(hidNodes.notNil, {
 			if(hidNodes.notEmpty, {
-			{
-			hidNodes.size.do{HIDMap.unmapAt(0);
-				server.sync;
-			};
-			action.();
-			}.fork;
+				{
+					hidNodes.size.do{HIDMap.unmapAt(0);
+						server.sync;
+					};
+					action.();
+				}.fork;
 			});
 		});
 	}
@@ -106,7 +106,8 @@ HIDMap : Radicles {
 	}
 
 	*getFunc {arg inFunc={}, type=\midicc, spec=[-1,1], extraArgs, func, inMin, inMax, replaceIndex;
-		var hidFuncString, compile, hidString, funcData;
+		var hidFuncString, compile, hidString, funcData, hidKey,
+		arrIDs, thisItem, indexID, indexNdef, thisHidNode;
 		if(spec.isSymbol, {spec = SpecFile.read(\common, spec); });
 		funcData = this.getHIDType(type);
 		if([\midicc, \midion, \midioff, \midiptouch, \miditouch, \midibend, \midiprogram].includes(type), {
@@ -117,16 +118,34 @@ HIDMap : Radicles {
 			inMax ?? {inMax=1};
 		});
 		if(funcData.notNil, {
+			if(hidIDs.notNil, {
+			arrIDs = hidIDs.collect{|item| (item[1] ++ " " ++ item[2]).asSymbol };
+			thisItem = (type ++ " " ++ extraArgs).asSymbol;
+			indexID = arrIDs.indexOfEqual(thisItem);
+			if(indexID.notNil, {
+				replaceIndex = hidIDs.flop[0][indexID].asString.divNumStr[1];
+					if(hidNodes.notNil, {
+				indexNdef = hidNodes.flop[0].collect{|item| item.interpret}
+					.indexOfEqual(hidIDs.flop[0][indexID]);
+					});
+				if(indexNdef.notNil, {
+					thisHidNode = hidNodes[indexNdef].postln;
+					this.unmap(thisHidNode[1], thisHidNode[2], thisHidNode[3]);
+			});
+			});
+			});
 			if(replaceIndex.isNil, {
 				hidIndex = hidIndex + 1;
-				hidString = "('hid" ++ hidIndex;
+				hidKey = ("'hid" ++ hidIndex ++ "'");
 			}, {
-				hidString = "('hid" ++ replaceIndex;
+				hidKey = ("'hid" ++ replaceIndex ++ "'");
 			});
+			hidIDs = hidIDs.add([hidKey.interpret, type, extraArgs]);
+			hidString = "(" ++ hidKey;
 			if(func.notNil, {
 				if(type == \osc, {
 					hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ func.cs ++ ".(" ++ spec.cs
-					++ ".asSpec.map(args[0][1].postln.linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0))) )}";
+					++ ".asSpec.map(args[0][1].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0))) )}";
 				}, {
 					hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ func.cs ++ ".(" ++ spec.cs
 					++ ".asSpec.map(args[0].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0))) )}";
@@ -134,29 +153,29 @@ HIDMap : Radicles {
 			}, {
 				if(type == \osc, {
 					hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ spec.cs ++
-					".asSpec.map(args[0][1].postln.linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0)) )}";
+					".asSpec.map(args[0][1].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0)) )}";
 				}, {
 					hidFuncString = "{arg ...args; " ++ inFunc.cs ++ ".(" ++ spec.cs ++
 					".asSpec.map(args[0].linlin(" ++ inMin ++ ", " ++ inMax ++ ", 0, 1.0)) )}";
 				});
 			});
 			if(extraArgs.isNil, {
-				compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ ");";
+				compile = funcData ++ hidString ++ ", " ++ hidFuncString ++ ");";
 			}, {
 				if(type == \osc, {
 					if(extraArgs.size > 1, {
-						extraArgs[1] = ("~" ++ extraArgs[1]);
-						extraArgs = extraArgs.collect({|item, index| if(index == 1, {item}, {item.cs}); });
+						hidFuncString = hidFuncString.replace("args[0][1].linlin",
+							"args[0][" ++ extraArgs[1] ++ "].linlin");
 					});
-					compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ "," ++
-					extraArgs.asString.replace("[", "").replace("]", "") ++ ");";
+					compile = funcData ++ hidString ++ ", " ++ hidFuncString ++
+					"," ++ extraArgs[0].cs ++ ");";
 				}, {
-					compile = funcData ++ hidString ++ "', " ++ hidFuncString ++ "," ++
-					extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
+					compile = funcData ++ hidString ++ ", " ++ hidFuncString ++
+					"," ++ extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
 				});
 			});
 			compile.radpost.interpret;
-			^[(hidString ++ "'").replace("(", ""), compile];
+			^[hidString.replace("(", ""), compile];
 		}, {
 			"HID type not Found".warn;
 		});
@@ -189,35 +208,35 @@ HIDMap : Radicles {
 	*loadPreset {arg key, replace=false, action={};
 		var dataArr, cond;
 		{
-		if(replace, {
-			cond = Condition(false);
-			if(hidNodes.notNil, {
+			if(replace, {
+				cond = Condition(false);
+				if(hidNodes.notNil, {
 					if(hidNodes.notEmpty, {
-			this.unmapAll({cond.test=true; cond.signal});
-			cond.wait;
+						this.unmapAll({cond.test=true; cond.signal});
+						cond.wait;
 					});
 				});
-		});
-		dataArr = PresetFile.read(\dstore, key);
-		if(dataArr.notNil, {
-			/*dataArr.do{|item|
-					item.postln;*/
-					if(dataArr[0].notNil, {
+			});
+			dataArr = PresetFile.read(\dstore, key);
+			if(dataArr.notNil, {
+				/*dataArr.do{|item|
+				item.postln;*/
+				if(dataArr[0].notNil, {
 					dataArr[0].do{|item|
-					("HIDMap.map" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
-				++ ";" ).interpret;
-			server.sync;
+						("HIDMap.map" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
+							++ ";" ).interpret;
+						server.sync;
 					};
-					});
-					if(dataArr[1].notNil, {
+				});
+				if(dataArr[1].notNil, {
 					dataArr[1].do{|item|
 						("HIDMap.mapFunc" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
-				++ ";" ).interpret;
+							++ ";" ).interpret;
 					};
-					});
-			/*};*/
-		});
-		action.();
+				});
+				/*};*/
+			});
+			action.();
 		}.fork;
 	}
 

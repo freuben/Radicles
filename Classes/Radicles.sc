@@ -3,7 +3,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
 	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>filesPath, <>soundFilePath, <>postWindow, <>memorySize=50, <>beatsFuncArr;
+	<>filesPath, <>soundFilePath, <>postWindow, <>memorySize=50, <>beatsFuncArr, traceFunc, <>liveBlockArr;
 
 	*new {
 		this.setColors;
@@ -15,7 +15,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-		mainPath = Quark("Radicles").localPath;
+				mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
 /*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
 		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
@@ -127,6 +127,159 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		colorBus = Color.new255(132, 124, 10);
 		colorMaster = Color.new255(102, 57, 130);
 		colorTextField = Color.new255(246, 246, 246);
+	}
+
+	* savePreset {arg presetName;
+		var resultArr, trk, bs, ms, mastArr, arr1, arr2, arr3,
+		blkArr, blkArrSettings;
+		if(aZ.notNil, {
+			trk = aZ.mixTrackNdefs.select{|item|
+				item.key.asString.contains("track") };
+			bs = aZ.mixTrackNdefs.select{|item|
+				item.key.asString.contains("bus") };
+			ms = aZ.mixTrackNdefs.select{|item|
+				item.key.asString.contains("master") };
+			mastArr = [trk, bs, ms];
+			arr1 = mastArr.copyFromStart(1).collect{|item| item.size};
+			arr2 = mastArr.collect{|item| item.collect{|it| it.numChannels } };
+			arr2 = arr2.collect{|item| if(item.size == 1, {item[0]}, {item});};
+			arr3 = [arr1, arr2];
+			blkArr = Block.liveBlocks;
+			if(blkArr.notNil, {
+				blkArrSettings = blkArr.flop[0].select{|item| item.notNil}.collect{|item|
+					Ndef(item).controlKeysValues };
+			});
+			resultArr = [arr3] ++ [aZ.prepWritePreset] ++
+			[[blkArr, blkArrSettings]];
+			resultArr.postln;
+			PresetFile.write(\assemblage, presetName, resultArr);
+		});
+	}
+
+	* loadPreset {arg presetName, playblks=false;
+		var firstArr, dataArr, cond, modSettings, mixSettings, fxSettings,
+		arrSettings, prepSettings, trackInfoArr, extraArgs, modMixSettings,
+		busSettings, outSettings, ioSettings, assemblageArr;
+		{
+			firstArr = PresetFile.read(\assemblage, presetName);
+			assemblageArr = firstArr[0];
+			dataArr = firstArr[1];
+			liveBlockArr = firstArr[2];
+			cond = Condition(false);
+			if(aZ.isNil, {
+				aZ = Assemblage(assemblageArr[0][0], assemblageArr[1][1],
+					assemblageArr[1], action: {|number, channels|
+						/*[number, channels].postln;*/
+						Block.addNum(number, channels[0], {|arr|
+							arr.do{|item, index|
+								aZ.input(item, \track, (index+1));
+							};
+						});
+						cond.test = true; cond.signal;
+				});
+				cond.wait;
+				mixSettings = dataArr[0];
+				prepSettings = dataArr[1];
+				busSettings = dataArr[2];
+				outSettings = dataArr[3];
+				ioSettings = dataArr[4];
+				prepSettings.do{|item|
+					var infoArr;
+					infoArr = item.flop[0][0].asString.divNumStr;
+					if(infoArr[1].isNil, {infoArr[1] = 1});
+					arrSettings = aZ.prepLoadTrackPreset(infoArr[0].asSymbol,
+						infoArr[1], item.flop[1]);
+					fxSettings = fxSettings ++ arrSettings[0];
+					if(arrSettings[1].notNil, {
+						modSettings = modSettings ++ arrSettings[1];
+					});
+				};
+				extraArgs = aZ.prepMixSettings(mixSettings);
+				extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
+					item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
+				server.sync;
+				case
+				{item[1].includes(\mute)} {
+					aZ.muteStates[aZ.mixTrackNames.indexOf(item[0])] =
+					item[1][(item[1].indexOfEqual(\mute)+1)];
+				}
+				{item[1].includes(\solo)} {
+					aZ.soloStates[aZ.mixTrackNames.indexOf(item[0])] =
+					item[1][(item[1].indexOfEqual(\solo)+1)];
+				};
+				});
+				modMixSettings =mixSettings[1];
+				if(modMixSettings.notNil, {
+					modMixSettings.flop[1].do{|item|
+						cond.test = false;
+						aZ.modRawPreset(item[0][0], item, {
+							cond.test = true; cond.signal;});
+						cond.wait;
+					};
+				});
+				if(outSettings.notNil, {
+					aZ.setOutputSettings(outSettings);
+					nodeTime.yield;
+				});
+				if(busSettings.notNil, {
+					cond.test = false;
+					aZ.setBusForPreset(busSettings, false, {
+						cond.test = true; cond.signal;});
+					cond.wait;
+				});
+				if(ioSettings.notNil, {
+					aZ.recStates = ioSettings[0];
+					aZ.recInputArr = ioSettings[1];
+					aZ.mastOutArr = ioSettings[2];
+					aZ.mapOutFunc;
+					nodeTime.yield;
+				});
+				if(fxSettings.notNil, {
+					cond.test = false;
+					aZ.setFxs(fxSettings, {
+						cond.test = false;
+						modSettings.do{|item|
+							server.sync;
+							aZ.modRawPreset(item[0], item[1], {
+								cond.test = true; cond.signal;});
+							cond.wait;
+						};
+						nodeTime.yield;
+						cond.test = true; cond.signal;
+					});
+				}, {
+					cond.test = true; cond.signal;
+				});
+				cond.wait;
+				this.start;
+					Ndef('master').play;
+					nodeTime.yield;
+					if(playblks, {
+						liveBlockArr.postln;
+						this.runLiveBlocks;
+					});
+			});
+		}.fork(AppClock);
+	}
+
+	* runLiveBlocks {
+		if(liveBlockArr.notNil, {
+			liveBlockArr[0].flop[0].do{|item, index|
+				if(item.notNil, {
+					("Ndef(" ++ item.cs ++ ").setn" ++
+						liveBlockArr[1][index].cs.replace("[", "(").replace("]", ")"))
+					.radpost.interpret;
+				});
+			};
+			liveBlockArr[0].do{|item|
+				if(item.notNil, {
+					item[0] = item[0].asString.divNumStr[1];
+					item[2] = item[2][2];
+					("Block.play" ++ item.cs.replaceAt("(", 0).replaceAt(")",
+						item.cs.size-1) ).radpost.interpret;
+				});
+			};
+		});
 	}
 
 	*callWindow {arg name;
@@ -850,6 +1003,22 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				{str2 == 'b'} {aZ.fxTrackLags(\bus, num1, num2, num3);}
 				{str2 == 'm'} {aZ.fxTrackLags(\master, 1, num2, num3);}
 				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "fxlagn: trackType, trackNum, fxArg");
+
+		cW.add(\fxlagn, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.fxTrackLags(thisArr[0].asSymbol, thisArr[1], num2, num3);
+				}, {
+					"track not found".warn;
+				});
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -5780,11 +5949,39 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				"assemblage is already running".warn;
 			});
 		}, "assemblage: trackNum, busNum, chanNum");
+		cW.add(\start, [\str, \num, \num, \arr], {|str, num1, num2, arr1|
+			if(aZ.isNil, {
+				aZ = Assemblage(num1, num2, arr1, action: {|number, channels|
+					[number, channels].postln;
+					Block.addNum(number, channels[0], {|arr|
+						arr.do{|item, index|
+							aZ.input(item, \track, (index+1));
+						};
+					});
+				});
+			}, {
+				"assemblage is already running".warn;
+			});
+		}, "assemblage: trackNum, busNum, chanNum");
 
-		cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
-			("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
-				num2 ++ ");").radpost.interpret;
-		}, "netaddrs: id, ip, port");
+		/*		cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
+		("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
+		num2 ++ ");").radpost.interpret;
+		}, "netaddrs: id, ip, port");*/
+
+		cW.add(\osc, [\str], {|str1|
+			traceFunc = {|msg, time, addr, recvPort|
+				if(((msg[0] == '/status.reply').not).and(
+					(msg[0] == '/AssemblageGUI').not), {
+					msg.postln;
+				});
+			};
+			thisProcess.addOSCRecvFunc(traceFunc);
+		}, "prints osc messages");
+
+		cW.add(\oscst, [\str], {|str1|
+			thisProcess.removeOSCRecvFunc(traceFunc);
+		}, "stop printing osc messages");
 
 		cW.add(\color, [\str, \str], {|str1, str2|
 			cW.background(Color.newName(str2););
@@ -5962,6 +6159,12 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			cW.add(\midi, [\str], {|str1|
 				MIDIIn.connectAll;
 			}, "start midiin");
+			cW.add(\midipost, [\str], {|str1|
+				MIDIFunc.trace(true);
+			}, "post all incomming midi messages");
+			cW.add(\midipostst, [\str], {|str1|
+				MIDIFunc.trace(false);
+			}, "stop posting all incomming midi messages");
 			cW.add(\midicc, [\str], {|str1|
 				MIDIdef.cc(\postcc, {arg ...args; args.postln});
 			}, "post midi cc");
@@ -5987,6 +6190,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			cW.add(\hidload, [\str, \str], {|str1, str2|
 				HIDMap.loadPreset(str2, true);
 			}, "load hid mappings");
+			cW.add(\hidload, [\str], {|str1|
+				PresetFile.read(\dstore).sort.dopostln;
+			}, "post hid mappings");
 
 			cW.add(\memory, [\str], {|str1|
 				Radicles.memorySize.radpostwarn;
