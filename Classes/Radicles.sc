@@ -27,7 +27,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	*start {
 		this.callWindow;
 		this.synthDefsPn;
-		/*MIDIIn.connectAll;*/
+		MIDIIn.connectAll;
 	}
 
 	*version {
