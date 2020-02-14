@@ -3020,6 +3020,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			settingsArr.do{|item, index|
 				cond.test = false;
 				this.filter(item[0], item[1], item[2], item[3], item[4], item[5], item[6], {
+					server.sync;
 					cond.test = true; cond.signal;
 				}, true);
 				cond.wait;
@@ -5074,7 +5075,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{
 			thisBusArr = arr[0];
 			busSettings = this.getBusInArr(thisBusArr);
-			"busSettings ".post; busSettings.postln;
+			/*"busSettings ".post; busSettings.postln;*/
 			busSettings.do{|item|
 				var trackSetting;
 				trackSetting = item[0].asString.divNumStr;
@@ -5085,8 +5086,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				};
 			};
 			nodeTime.yield;
-			thisBusArr.flop[0].do{|item, index| ("Ndef(" ++ item.cs ++ ").set" ++
+			thisBusArr.flop[0].do{|item, index|
+				if(item.notNil, {
+				("Ndef(" ++ item.cs ++ ").set" ++
 				arr[1][index].cs.replace("[", "(").replace("]", ")") ++ ";" ).radpost.interpret;
+				});
 			};
 			server.sync;
 			if(refresh, { {this.refreshMixGUI}.defer });
@@ -5194,7 +5198,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			};
 		});
 		if(this.getBusInLabels.notNil, {
-			busSettings = [busArr, busArr.flop[0].collect({|item| Ndef(item).controlKeysValues});];
+			busSettings = [busArr, busArr.flop[0].collect({|item|
+				if(item.notNil, {Ndef(item).controlKeysValues}); });];
 		});
 		ioSettings = [recStates, recInputArr, mastOutArr];
 			^[mixDataArr, dataArr2, busSettings, outputSettings, ioSettings];

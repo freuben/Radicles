@@ -15,7 +15,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-				mainPath = Quark("Radicles").localPath;
+		mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
 /*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
 		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
@@ -129,9 +129,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		colorTextField = Color.new255(246, 246, 246);
 	}
 
-	* savePreset {arg presetName;
+	* savePreset {arg presetName, saveCmds=true;
 		var resultArr, trk, bs, ms, mastArr, arr1, arr2, arr3,
-		blkArr, blkArrSettings;
+		blkArr, blkArrSettings, hids, cmds;
 		if(aZ.notNil, {
 			trk = aZ.mixTrackNdefs.select{|item|
 				item.key.asString.contains("track") };
@@ -149,22 +149,29 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				blkArrSettings = blkArr.flop[0].select{|item| item.notNil}.collect{|item|
 					Ndef(item).controlKeysValues };
 			});
+			hids = [HIDMap.hidInfoArr, HIDMap.hidCmds];
+			cmds = [Radicles.cW.text.string, Radicles.aZ.mixerWin.visible];
 			resultArr = [arr3] ++ [aZ.prepWritePreset] ++
-			[[blkArr, blkArrSettings]];
-			resultArr.postln;
-			PresetFile.write(\assemblage, presetName, resultArr);
+			[[blkArr, blkArrSettings]] ++ [hids] ++ [cmds];
+			/*resultArr.postln;*/
+			PresetFile.write(\radicles, presetName, resultArr, path: 0);
 		});
 	}
 
 	* loadPreset {arg presetName, playblks=false;
 		var firstArr, dataArr, cond, modSettings, mixSettings, fxSettings,
 		arrSettings, prepSettings, trackInfoArr, extraArgs, modMixSettings,
-		busSettings, outSettings, ioSettings, assemblageArr;
+		busSettings, outSettings, ioSettings, assemblageArr, hidArr,
+		cmdArr, string, mixView;
 		{
-			firstArr = PresetFile.read(\assemblage, presetName);
+			firstArr = PresetFile.read(\radicles, presetName);
 			assemblageArr = firstArr[0];
 			dataArr = firstArr[1];
 			liveBlockArr = firstArr[2];
+			hidArr = firstArr[3];
+			cmdArr = firstArr[4];
+			string = cmdArr[0];
+			mixView = cmdArr[1];
 			cond = Condition(false);
 			if(aZ.isNil, {
 				aZ = Assemblage(assemblageArr[0][0], assemblageArr[1][1],
@@ -241,9 +248,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 						modSettings.do{|item|
 							server.sync;
 							aZ.modRawPreset(item[0], item[1], {
+								server.sync;
 								cond.test = true; cond.signal;});
 							cond.wait;
 						};
+						server.sync;
 						nodeTime.yield;
 						cond.test = true; cond.signal;
 					});
@@ -251,13 +260,36 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 					cond.test = true; cond.signal;
 				});
 				cond.wait;
-				this.start;
+				if(hidArr[0].notNil, {
+					hidArr[0].do{|item|
+						("HIDMap.map" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
+							++ ";" ).interpret;
+						server.sync;
+					};
+				});
+				if(hidArr[1].notNil, {
+					hidArr[1].do{|item|
+						("HIDMap.mapFunc" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
+							++ ";" ).interpret;
+					};
+				});
+				server.sync;
+				Radicles.cW.text.string = string;
+				Radicles.cW.text.select(string.size,string.size);
+
+				if(Ndef(\masterOut).source.isNil, {
 					Ndef('master').play;
+				}, {
+					Ndef(\masterOut).play;
+				});
 					nodeTime.yield;
 					if(playblks, {
-						liveBlockArr.postln;
 						this.runLiveBlocks;
 					});
+				server.sync;
+				if(mixView.notNil, {
+					{Radicles.aZ.mixer;}.defer;
+				});
 			});
 		}.fork(AppClock);
 	}
@@ -274,7 +306,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			liveBlockArr[0].do{|item|
 				if(item.notNil, {
 					item[0] = item[0].asString.divNumStr[1];
+					if(item[2].notNil, {
 					item[2] = item[2][2];
+					});
 					("Block.play" ++ item.cs.replaceAt("(", 0).replaceAt(")",
 						item.cs.size-1) ).radpost.interpret;
 				});
@@ -6193,6 +6227,26 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			cW.add(\hidload, [\str], {|str1|
 				PresetFile.read(\dstore).sort.dopostln;
 			}, "post hid mappings");
+
+			cW.add(\save, [\str, \str], {|str1, str2|
+				Radicles.savePreset(str2);
+			}, "save radicles project");
+			cW.add(\load, [\str], {|str1|
+				PresetFile.read(\radicles).sort.dopostln;
+			}, "post saved projects");
+			cW.add(\load, [\str, \str], {|str1, str2|
+				Radicles.loadPreset(str2);
+			}, "load saved project");
+			cW.add(\load, [\str, \str, \str], {|str1, str2, str3|
+				if(str3 == \run, {
+				Radicles.loadPreset(str2, true);
+				}, {
+				Radicles.loadPreset(str2, false);
+				});
+			}, "load saved project, and run blocks");
+			cW.add(\run, [\str], {|str1|
+				Radicles.runLiveBlocks;
+			}, "run saved blocks");
 
 			cW.add(\memory, [\str], {|str1|
 				Radicles.memorySize.radpostwarn;

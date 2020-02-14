@@ -219,8 +219,6 @@ HIDMap : Radicles {
 			});
 			dataArr = PresetFile.read(\dstore, key);
 			if(dataArr.notNil, {
-				/*dataArr.do{|item|
-				item.postln;*/
 				if(dataArr[0].notNil, {
 					dataArr[0].do{|item|
 						("HIDMap.map" ++ item.cs.replaceAt("(", 0).replaceAt(")", item.cs.size-1)
