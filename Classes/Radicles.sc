@@ -5908,27 +5908,63 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, "modMap: ndef, key, type, spec");
 
 		cW.add(\unmod, [\str, \str, \str], {|str1, str2, str3|
+			var index, ndef;
+			if(str2.asString.contains("hid"), {
+				if(HIDMap.hidNodes.notNil, {
+				index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					if(index.notNil, {
+				ndef = HIDMap.hidNodes.flop[1][index];
+				HIDMap.unmap(ndef, str3);
+					});
+				});
+			}, {
 			ModMap.unmap(Ndef(str2), str3);
+		});
 		}, "mod unmap: ndef, key, type");
 
 		cW.add(\unmod, [\str, \str, \str, \num], {|str1, str2, str3, num1|
+			var ndef, index;
+			if(str2.asString.contains("hid"), {
+				if(HIDMap.hidNodes.notNil, {
+				index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					if(index.notNil, {
+				ndef = HIDMap.hidNodes.flop[1][index];
+				HIDMap.unmap(ndef, str3, num1);
+					});
+				});
+			}, {
 			ModMap.unmap(Ndef(str2), str3, num1);
+			});
 		}, "mod unmap: ndef, key, type, value");
 
 		cW.add(\unmod, [\str, \num], {|str1, num1|
 			var nodes;
+			/*if(str2.asString.contains("hid"), {
+					HIDMap.unmapAt(num1-1);
+			}, {*/
 			ModMap.unmapAt(num1-1);
+			/*});*/
 		}, "mod unmap: index");
 
 		cW.add(\unmod, [\str, \num, \num], {|str1, num1, num2|
 			var nodes;
+			/*if(str2.asString.contains("hid"), {
+				nodes = HIDMap.hidNodes[num1-1];
+				HIDMap.unmap(nodes[1], nodes[2], num2);
+				}, {*/
 			nodes = ModMap.modNodes[num1-1];
 			ModMap.unmap(nodes[1], nodes[2], num2);
+			/*});*/
 		}, "mod unmap: index, val");
 
 		cW.add(\getmods, [\str], {|str1|
-			var nodes;
-			ModMap.modNodes.dopostln;
+			var nodes, modmap, count=0;
+			modmap = ModMap.modNodes.collect({|item|
+				[item[0].key.cs, item[1], item[2], item[3]] });
+			nodes = [modmap, HIDMap.hidNodes];
+			nodes = nodes.reject({|item| item.isNil });
+			nodes.do{|item| item.do{|it| ([count] ++ it).postln;
+				count = count + 1 } };
 		}, "getmods: modNodes");
 
 		//radicles

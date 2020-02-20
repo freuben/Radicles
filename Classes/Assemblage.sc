@@ -4172,16 +4172,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						{modifier == \mod} {
 							value ?? {
 								value = ModMap.modNodes.select({|item|
-									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+									(item[1] == Ndef(ndefKey) ).and(item[2] ==
+										Ndef(ndefKey).controlKeys[modArg-1]);
 								})[0].last;
 							};
 							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
 						}
 						{modifier == \hid} {
-
 							value ?? {
 								value = HIDMap.hidNodes.select({|item|
-									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+									(item[1] == Ndef(ndefKey) ).and(item[2] ==
+										Ndef(ndefKey).controlKeys[modArg-1]);
 								})[0].last;
 							};
 							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
