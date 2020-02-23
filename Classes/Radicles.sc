@@ -15,7 +15,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-		mainPath = Quark("Radicles").localPath;
+				mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
 /*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
 		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
@@ -282,10 +282,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				}, {
 					Ndef(\masterOut).play;
 				});
-					nodeTime.yield;
-					if(playblks, {
-						this.runLiveBlocks;
-					});
+				nodeTime.yield;
+				if(playblks, {
+					this.runLiveBlocks;
+				});
 				server.sync;
 				if(mixView.notNil, {
 					{Radicles.aZ.mixer;}.defer;
@@ -307,7 +307,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				if(item.notNil, {
 					item[0] = item[0].asString.divNumStr[1];
 					if(item[2].notNil, {
-					item[2] = item[2][2];
+						item[2] = item[2][2];
 					});
 					("Block.play" ++ item.cs.replaceAt("(", 0).replaceAt(")",
 						item.cs.size-1) ).radpost.interpret;
@@ -338,6 +338,44 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			sig = WhiteNoise.ar(amp)*Env.perc(0.001,0.04).kr(doneAction: 2);
 			Out.ar(out, sig);
 		}).add;
+	}
+
+	*hidconnect {arg string;
+		var str, str2, arr, ind, arr1, arr2, arr3, spec;
+		str = string.copyRange(1, string.size-2);
+		str = str.replace(" ,", ",").replace(", ", ",").replace("[ ", "[").replace(" ]", "]");
+		arr = str.split($ );
+		ind = arr.indexOfEqual("<>");
+		arr1 = arr.copyFromStart(ind-1);
+		arr2 = arr.copyToEnd(ind+1);
+		arr2 = arr2.collect({|item, index| if((item == "$").and(index == (arr2.size-1)), {"#"}, {item});});
+		str = arr2.asString;
+		str = str.copyRange(2, str.size-3).replace(",");
+		str = str.cs;
+		str = str.replace("$", "\" ++ val ++ \"");
+		str = str.replace("#\"", "\" ++ val");
+		arr3 = arr1.copyToEnd(1);
+		arr3 = arr3.collect({|item| if(item.isStringNumber, {item.interpret}, {item}); });
+		str2 = [];
+		arr3 = arr3.collect{|item| if(item.isString, {
+			if((item.contains("[")).and(item.contains("]")), {
+				item.interpret
+			}, {
+			item.asSymbol
+			});
+		}, {item}); };
+		arr3.do{|item| if(item.isArray, {spec = item }, {str2 = (str2 ++ item)}); };
+		if(spec.isNil, {spec = [0,1]});
+		if(str.contains("%").not, {
+		("HIDMap.mapFunc({|val| {~callWindowGlobVar.callFunc(" ++ str ++ ")}.defer }, " ++
+			arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
+		}, {
+			str = str.split($%);
+			("HIDMap.mapFunc({|val| {if(val != 0, {~callWindowGlobVar.callFunc("
+				++ str[0].nospaceFunc ++ "\") }, {~callWindowGlobVar.callFunc(\""
+				++ str[1].nospaceFunc ++ ") }); }.defer }, " ++ arr1[0].asSymbol.cs
+				++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
+		});
 	}
 
 	*loadAssemblageCmds {
@@ -5888,83 +5926,136 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, "mods: posts mod types");
 
 		cW.add(\mod, [\str, \str, \str, \str], {|str1, str2, str3, str4|
-			ModMap.map(Ndef(str2), str3, str4);
-		}, "modMap: ndef, key, type");
+			var index, ndef;
+			if(str2.asString.contains("hid"), {
+				if(HIDMap.hidNodes.notNil, {
+					index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					if(index.notNil, {
+						ndef = HIDMap.hidNodes.flop[1][index];
+						HIDMap.map(ndef, str3, str4);
+					});
+				});
+			}, {
+				ModMap.map(Ndef(str2), str3, str4);
+			});
+		}, "map: ndef, key, type");
 
 		cW.add(\mod, [\str, \str, \str, \str, \str], {|str1, str2, str3, str4, str5|
-			ModMap.map(Ndef(str2), str3, str4, str5);
+			var index, ndef;
+			if(str2.asString.contains("hid"), {
+				if(HIDMap.hidNodes.notNil, {
+					index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					if(index.notNil, {
+						ndef = HIDMap.hidNodes.flop[1][index];
+						HIDMap.map(ndef, str3, str4, str5);
+					});
+				});
+			}, {
+				ModMap.map(Ndef(str2), str3, str4, str5);
+			});
 		}, "modMap: ndef, key, type, spec");
 
 		cW.add(\mod, [\str, \str, \str, \str, \arr], {|str1, str2, str3, str4, arr1|
-			ModMap.map(Ndef(str2), str3, str4, arr1);
+			var index, ndef;
+			if(str2.asString.contains("hid"), {
+				if(HIDMap.hidNodes.notNil, {
+					index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					if(index.notNil, {
+						ndef = HIDMap.hidNodes.flop[1][index];
+						HIDMap.map(ndef, str3, str4, arr1);
+					});
+				});
+			}, {
+				ModMap.map(Ndef(str2), str3, str4, arr1);
+			});
 		}, "modMap: ndef, key, type, spec");
 
 		cW.add(\mod, [\str, \str, \str, \str, \arr, \arr], {|str1, str2, str3, str4, arr1, arr2|
-			ModMap.map(Ndef(str2), str3, str4, arr1, arr2);
+			var index, ndef;
+				if(str2.asString.contains("hid"), {
+				if(HIDMap.hidNodes.notNil, {
+					index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					if(index.notNil, {
+						ndef = HIDMap.hidNodes.flop[1][index];
+						HIDMap.map(ndef, str3, str4, arr1, arr2);
+					});
+				});
+			}, {
+				ModMap.map(Ndef(str2), str3, str4, arr1, arr2);
+			});
 		}, "modMap: ndef, key, type, spec");
 
 		cW.add(\mod, [\str, \str, \str, \str, \str, \arr], {|str1, str2, str3, str4, str5, arr1|
-			ModMap.map(Ndef(str2), str3, str4, str5, arr1);
+			var index, ndef;
+			if(str2.asString.contains("hid"), {
+				if(HIDMap.hidNodes.notNil, {
+					index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					if(index.notNil, {
+						ndef = HIDMap.hidNodes.flop[1][index];
+						HIDMap.map(ndef, str3, str4, str5, arr1);
+					});
+				});
+			}, {
+				ModMap.map(Ndef(str2), str3, str4, str5, arr1);
+			});
 		}, "modMap: ndef, key, type, spec");
 
 		cW.add(\unmod, [\str, \str, \str], {|str1, str2, str3|
 			var index, ndef;
 			if(str2.asString.contains("hid"), {
 				if(HIDMap.hidNodes.notNil, {
-				index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
 					if(index.notNil, {
-				ndef = HIDMap.hidNodes.flop[1][index];
-				HIDMap.unmap(ndef, str3);
+						ndef = HIDMap.hidNodes.flop[1][index];
+						HIDMap.unmap(ndef, str3);
 					});
 				});
 			}, {
-			ModMap.unmap(Ndef(str2), str3);
-		});
+				ModMap.unmap(Ndef(str2), str3);
+			});
 		}, "mod unmap: ndef, key, type");
 
 		cW.add(\unmod, [\str, \str, \str, \num], {|str1, str2, str3, num1|
 			var ndef, index;
 			if(str2.asString.contains("hid"), {
 				if(HIDMap.hidNodes.notNil, {
-				index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
+					index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
 					if(index.notNil, {
-				ndef = HIDMap.hidNodes.flop[1][index];
-				HIDMap.unmap(ndef, str3, num1);
+						ndef = HIDMap.hidNodes.flop[1][index];
+						HIDMap.unmap(ndef, str3, num1);
 					});
 				});
 			}, {
-			ModMap.unmap(Ndef(str2), str3, num1);
+				ModMap.unmap(Ndef(str2), str3, num1);
 			});
 		}, "mod unmap: ndef, key, type, value");
 
-		cW.add(\unmod, [\str, \num], {|str1, num1|
-			var nodes;
-			/*if(str2.asString.contains("hid"), {
-					HIDMap.unmapAt(num1-1);
-			}, {*/
-			ModMap.unmapAt(num1-1);
-			/*});*/
-		}, "mod unmap: index");
+		cW.add(\unmod, [\str, \str, \num], {|str1, str2, num1|
+			if(str2 == \hid, {
+				HIDMap.unmapAt(num1-1);
+			}, {
+				ModMap.unmapAt(num1-1);
+			});
+		}, "unmap: type, index");
 
-		cW.add(\unmod, [\str, \num, \num], {|str1, num1, num2|
+		cW.add(\unmod, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			var nodes;
-			/*if(str2.asString.contains("hid"), {
+			if(str2 == \hid, {
 				nodes = HIDMap.hidNodes[num1-1];
-				HIDMap.unmap(nodes[1], nodes[2], num2);
-				}, {*/
-			nodes = ModMap.modNodes[num1-1];
-			ModMap.unmap(nodes[1], nodes[2], num2);
-			/*});*/
-		}, "mod unmap: index, val");
+				ModMap.unmap(nodes[1], nodes[2], num2);
+			}, {
+				nodes = ModMap.modNodes[num1-1];
+				ModMap.unmap(nodes[1], nodes[2], num2);
+			});
+		}, "unmap: type, index, val");
 
 		cW.add(\getmods, [\str], {|str1|
-			var nodes, modmap, count=0;
+			var nodes, modmap;
 			modmap = ModMap.modNodes.collect({|item|
 				[item[0].key.cs, item[1], item[2], item[3]] });
 			nodes = [modmap, HIDMap.hidNodes];
 			nodes = nodes.reject({|item| item.isNil });
-			nodes.do{|item| item.do{|it| ([count] ++ it).postln;
-				count = count + 1 } };
+			nodes.do{|item| item.do{|it| it.postln;} };
 		}, "getmods: modNodes");
 
 		//radicles
@@ -6034,10 +6125,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "assemblage: trackNum, busNum, chanNum");
 
-		/*		cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
+				cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 		("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
 		num2 ++ ");").radpost.interpret;
-		}, "netaddrs: id, ip, port");*/
+		}, "netaddrs: id, ip, port");
 
 		cW.add(\osc, [\str], {|str1|
 			traceFunc = {|msg, time, addr, recvPort|
@@ -6275,9 +6366,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			}, "load saved project");
 			cW.add(\load, [\str, \str, \str], {|str1, str2, str3|
 				if(str3 == \run, {
-				Radicles.loadPreset(str2, true);
+					Radicles.loadPreset(str2, true);
 				}, {
-				Radicles.loadPreset(str2, false);
+					Radicles.loadPreset(str2, false);
 				});
 			}, "load saved project, and run blocks");
 			cW.add(\run, [\str], {|str1|

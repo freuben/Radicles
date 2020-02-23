@@ -228,12 +228,12 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 								arr1 = inputArr.copyRange(1, inputArr.size-2);
 								thisInd = arr1.find(" = ");
 								arr2 = arr1.copyFromStart(thisInd-1);
-								arr3 = arr1.copyRange(thisInd+3, arr1.size);
+								arr3 = arr1.copyRange(thisInd+3, arr1.size+1);
 								("~callWindowGlobVar.add(" ++ arr2.asSymbol.cs ++
 									", ['str'], {~callWindowGlobVar.callFunc(" ++ arr3.cs ++ ") });").radpost.interpret;
 							}
 							{inputArr.contains("<>")} {
-								this.hidconnect(inputArr);
+								Radicles.hidconnect(inputArr);
 							}
 							{inputArr.contains("&")} {
 								inputArr = inputArr.replace(" &", "&").replace("& ", "&");
@@ -549,37 +549,6 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			++ ", callIndex: " ++ callIndex ++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : "
 		++ assoArr[1].flop[0] ++ "\", replace: " ++ replace.cs ++ ");";
 		firstFunc.radpost.interpret;
-	}
-
-	hidconnect {arg string;
-		var str, str2, arr, ind, arr1, arr2, arr3, spec;
-		str = string.copyRange(1, string.size-2);
-		arr = str.split($ );
-		ind = arr.indexOfEqual("<>");
-		arr1 = arr.copyFromStart(ind-1);
-		arr2 = arr.copyToEnd(ind+1);
-		arr2 = arr2.collect({|item, index| if((item == "$").and(index == (arr2.size-1)), {"#"}, {item});});
-		str = arr2.asString;
-		str = str.copyRange(2, str.size-3).replace(",");
-		str = str.cs;
-		str = str.replace("$", "\" ++ val ++ \"");
-		str = str.replace("#\"", "\" ++ val");
-		arr3 = arr1.copyToEnd(1);
-		arr3 = arr3.collect({|item| if(item.isStringNumber, {item.interpret}, {item}); });
-		str2 = [];
-		arr3 = arr3.collect{|item| if(item.isString, {item.asSymbol }, {item }); };
-		arr3.do{|item| item.isArray; if(item.isArray, {spec = item }, {str2 = (str2 ++ item)}); };
-		if(spec.isNil, {spec = [0,1]});
-		if(str.contains("%").not, {
-		("HIDMap.mapFunc({|val| {~callWindowGlobVar.callFunc(" ++ str ++ ")}.defer }, " ++
-			arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
-		}, {
-			str = str.split($%);
-			("HIDMap.mapFunc({|val| {if(val != 0, {~callWindowGlobVar.callFunc("
-				++ str[0].nospaceFunc ++ "\") }, {~callWindowGlobVar.callFunc(\""
-				++ str[1].nospaceFunc ++ ") }); }.defer }, " ++ arr1[0].asSymbol.cs
-				++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
-		});
 	}
 
 	loadStartUp {

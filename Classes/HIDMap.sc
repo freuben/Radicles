@@ -70,7 +70,6 @@ HIDMap : Radicles {
 	*mapFunc {arg inFunc, type, spec, extraArgs;
 		var hidMap;
 		hidMap = this.getFunc(inFunc, type, spec, extraArgs);
-		/*hidMap = [hidMap[0].interpret,  hidMap[1]];*/
 		hidCmds = hidCmds.add([inFunc, type, spec, extraArgs]);
 		^hidMap;
 	}
@@ -168,7 +167,8 @@ HIDMap : Radicles {
 							"args[0][" ++ extraArgs[1] ++ "].linlin");
 					});
 					compile = funcData ++ hidString ++ ", " ++ hidFuncString ++
-					"," ++ extraArgs[0].cs ++ ");";
+					"," ++ extraArgs.reject({|item, index| index == 1}).cs
+					.replace("[", "").replace("]", "") ++ ");";
 				}, {
 					compile = funcData ++ hidString ++ ", " ++ hidFuncString ++
 					"," ++ extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
@@ -232,7 +232,6 @@ HIDMap : Radicles {
 							++ ";" ).interpret;
 					};
 				});
-				/*};*/
 			});
 			action.();
 		}.fork;
