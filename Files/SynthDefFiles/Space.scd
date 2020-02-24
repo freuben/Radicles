@@ -12,4 +12,19 @@
 	PanAz.ar(5, \in, pan);
 } ], [ 'panAz6', {arg pan = 0 -> [-1,1];
 	PanAz.ar(6, \in, pan);
+} ], [ 'split', {arg pan=0 -> [0,8,{|val| val.round(1)}];
+	var sig;
+	sig = \in;
+	sig = Out.ar(pan, sig);
+} ], [ 'linpan2', {arg pan=0 -> [-1,1];
+    LinPan2.ar(\in, pan);
+} ], [ 'panB', {arg pan1=0 -> [-pi, pi], pan2=0 -> [-0.5pi,0.5pi];
+	var  w, x, y, z, sig;
+	sig = \in;
+	#w, x, y, z = PanB.ar(sig, pan1, pan2);
+	sig = DecodeB2.ar(\num, w, x, y);
+} ], [ 'dir', {arg mul=1->[0.5,2];
+	var  sig;
+	sig = \in;
+	sig*mul;
 } ] ]

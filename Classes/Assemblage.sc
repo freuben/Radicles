@@ -130,7 +130,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{spaceType == \panAz3} {chanNum = 3}
 		{spaceType == \pan4} {chanNum = 4}
 		{spaceType == \panAz5} {chanNum = 5}
-		{spaceType == \panAz6} {chanNum = 6};
+		{spaceType == \panAz6} {chanNum = 6}
+		{spaceType == \dir} {chanNum = systemChanNum};
 		^chanNum;
 	}
 
@@ -1599,7 +1600,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
 			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel,
 			inputLabelArr, mixInputLabelArr, fxLabel, fxSlot, trackLabel, trackColor,
-			thisInputVal, butUIHeight, butUIWidth, sendsString, soloButtonFunc;
+			thisInputVal, butUIHeight, butUIWidth, sendsString, soloButtonFunc, panKeyValues, panKey;
 			//volume slider
 			sliderText = StaticText(canvas).align_(\center)
 			.background_(Color.black).stringColor_(Color.white)
@@ -1629,6 +1630,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			hlay = HLayout(sliderText, levelText);
 
 			//panning knob(s)/slider2D(s)
+			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
+			panKeyValues = Ndef(panKey).controlKeysValues;
+			if((panKeyValues.includes(\pan)).or(panKeyValues.includes(\panx)), {
 			if(sysPan[index] == 0, {
 				panKnob = Knob().minWidth_(knobSize).maxWidth_(knobSize)
 				.maxHeight_(knobSize).minHeight_(knobSize).centered_(true);
@@ -1649,6 +1653,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
 
 				panKnobText = [panKnobText1, panKnobText2];
+			});
+
+			}, {
+				panKnob = nil;
 			});
 
 			panKnobTextArr = panKnobTextArr.add(panKnobText);
@@ -1996,7 +2004,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		};
 		peakMax = -inf!levelTextArr.size;
 		//panning
-		panKnobTextArr.flat.do{|item| item.font = basicFont;};
+		panKnobTextArr.flat.do{|item| if(item.notNil, {item.font = basicFont});};
 		panSpec = \pan.asSpec;
 		panKnobArr.do{|item, index|
 			var panKey, panKeyValues, panValues, hidNodes, hidPan;
@@ -2008,6 +2016,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					hidPan = hidNodes.flop[1].includes(Ndef(panKey));
 				}, {hidPan = false});
 			}, {hidPan = false});
+			if((panKeyValues.includes(\pan)).or(panKeyValues.includes(\panx)), {
 			case
 			{panKeyValues.size == 0} {panValues = 0}
 			{panKeyValues.includes(\pan)} {
@@ -2015,7 +2024,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			{panKeyValues.includes(\panx)} {
 				panValues = [panKeyValues[panKeyValues.indexOf(\panx)+1],
 					panKeyValues[panKeyValues.indexOf(\pany)+1]
-			]};
+			]}
+			;
 			if(sysPan[index] == 0, {
 				if((panValues.cs.find("mod").notNil).or(hidPan), {
 					item.background = colorCritical;
@@ -2045,6 +2055,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					("Ndef(" ++ panKey.cs ++ ").set('pany', " ++
 						newPanVal2 ++ ");").radpostcont.interpret;
 				});
+			});
 			});
 		};
 
@@ -2122,7 +2133,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 
 		gapHeight = 6;
-		sumHeight = panKnobArr.collect{|item| item.bounds.height }.maxItem + gapHeight;
+		sumHeight = panKnobArr.collect{|item| if(item.notNil, {item.bounds.height}, {30});
+		}.maxItem + gapHeight;
 		sumHeight = 45 + 9 + sumHeight + (7 * (10+gapHeight)) + (2 * (12+gapHeight)) +
 		(180+gapHeight) + (sendsMenuArr[0].size*(14+gapHeight)) +
 		(fxSlotArr[0].size*(14+gapHeight));
@@ -3580,7 +3592,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					Ndef(\spaceMaster).fadeTime.yield;
 					server.sync;
 					("Ndef('spaceMaster', " ++ funcSource.cs ++ ");").radpost.interpret;
-					"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radpost.interpret;
+					/*"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radpost.interpret;*/
 					"Ndef('masterOut').play;".radpost.interpret;
 					"Ndef('masterOut').reshaping = 'elastic';".radpost.interpret;
 					this.mastOutSynth;

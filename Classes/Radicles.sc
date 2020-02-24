@@ -15,7 +15,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-				mainPath = Quark("Radicles").localPath;
+		mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
 /*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
 		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
@@ -361,14 +361,14 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			if((item.contains("[")).and(item.contains("]")), {
 				item.interpret
 			}, {
-			item.asSymbol
+				item.asSymbol
 			});
 		}, {item}); };
 		arr3.do{|item| if(item.isArray, {spec = item }, {str2 = (str2 ++ item)}); };
 		if(spec.isNil, {spec = [0,1]});
 		if(str.contains("%").not, {
-		("HIDMap.mapFunc({|val| {~callWindowGlobVar.callFunc(" ++ str ++ ")}.defer }, " ++
-			arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
+			("HIDMap.mapFunc({|val| {~callWindowGlobVar.callFunc(" ++ str ++ ")}.defer }, " ++
+				arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 		}, {
 			str = str.split($%);
 			("HIDMap.mapFunc({|val| {if(val != 0, {~callWindowGlobVar.callFunc("
@@ -5972,7 +5972,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 		cW.add(\mod, [\str, \str, \str, \str, \arr, \arr], {|str1, str2, str3, str4, arr1, arr2|
 			var index, ndef;
-				if(str2.asString.contains("hid"), {
+			if(str2.asString.contains("hid"), {
 				if(HIDMap.hidNodes.notNil, {
 					index = HIDMap.hidNodes.flop[0].indexOfEqual(str2.cs);
 					if(index.notNil, {
@@ -6125,9 +6125,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "assemblage: trackNum, busNum, chanNum");
 
-				cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
-		("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
-		num2 ++ ");").radpost.interpret;
+		cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
+			("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
+				num2 ++ ");").radpost.interpret;
 		}, "netaddrs: id, ip, port");
 
 		cW.add(\osc, [\str], {|str1|

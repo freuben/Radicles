@@ -1,16 +1,12 @@
 [ [ 'pan2', {arg pan = 0 ;
 	Pan2.ar(\in, pan) * 3.dbamp;
-} ], [ 'panB', {arg pan1, pan2;
+} ], [ 'panB', {arg pan1=0 , pan2=0 ;
 	var  w, x, y, z, sig;
 	sig = \in;
 	#w, x, y, z = PanB.ar(sig, pan1, pan2);
 	sig = DecodeB2.ar(\num, w, x, y);
-} ], [ 'split', {arg pan;
-	var sig;
-	sig = \in;
-	sig = Out.ar(pan, sig);
-} ], [ 'linpan2', {arg pan;
-    LinPan2.ar(\in, pan);
+} ], [ 'linpan2', {arg pan=0 ;
+    LinPan2.ar(\in, pan);
 } ], [ 'bal2', {arg pan = 0 ;
 	var source;
 	source = \in;
@@ -23,4 +19,12 @@
 	PanAz.ar(5, \in, pan);
 } ], [ 'panAz6', {arg pan = 0 ;
 	PanAz.ar(6, \in, pan);
+} ], [ 'split', {arg pan=0 ;
+	var sig;
+	sig = \in;
+	sig = Out.ar(pan, sig);
+} ], [ 'dir', {arg mul=1;
+	var  sig;
+	sig = \in;
+	sig*mul;
 } ] ]
