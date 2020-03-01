@@ -139,7 +139,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		spaceSynth, trackInSpecs, spaceSpecs, trackSpecs, thisTrackInfo;
 		if([\track, \bus, \master].includes(type), {
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
-
+			if(chanNum > 2, {
+			if(type == \master, {spaceType = \dir;});
+			});
 			trackInSynth = {arg trim=0, lagTime=0;
 				(\in * trim.dbamp.lag(lagTime) )};
 			trackInSpecs = [ ['trim', [-23, 23] ], ['lagTime', [0, 10] ] ];
@@ -1472,10 +1474,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			var spatialType;
 			spatialType = space.flop[1][space.flop[0].indexOf(("space" ++
 				item.asString.capitalise).asSymbol)];
-			if([\pan4, \pan6].includes(spatialType).not, {
+			/*if([\pan4, \pan6].includes(spatialType).not, {
 				sysPan = sysPan.add(0);
 			}, {sysPan = sysPan.add(1)
-			});
+			});*/
 		};
 
 		sysChans[mixTrackNdefs.size-1] = Ndef(("space" ++
@@ -1491,12 +1493,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	mixGUI {arg updateFreq=10;
-		var sends, knobColors, winHeight, winWidth, knobSize, canvas,
+		var sends, knobColors, winHeight, winWidth, knobSize, knobTextSize, canvas,
 		panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, outputMenuArr,
 		muteButton, recButton, soloButton, spaceButton, volButtons, buttonsLay1,
 		buttonsLay2, oscDefFunc, levelSoloStates, fxSlotArr, trackLabelArr, spaceTextLay, panKnobLay,
-		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
+		popupmenusize, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
 		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap,
 		sumHeight, inKnob, gapHeight, peakMax, inKnobArr, inputMenuArr;
@@ -1634,15 +1636,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			panKeyValues = Ndef(panKey).getKeysValues.reject({|item| item.asString.contains("wet") });
 			knobSize = 30 * (1.2 - (0.2* panKeyValues.size ) );
+			knobTextSize = 24 * (1.2 - (0.2* panKeyValues.size ) );
 			if(panKeyValues.flop[0].includes(\dirmul).not, {
-				if(sysPan[index] == 0, {
+				/*if(sysPan[index] == 0, {
 					panKnob = Knob().minWidth_(knobSize).maxWidth_(knobSize)
 					.maxHeight_(knobSize).minHeight_(knobSize).centered_(true);
 					panKnob.color = knobColors;
 					panKnobText = StaticText(canvas).align_(\center).background_(Color.black)
 					.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
 					panKnobText = [panKnobText];
-				}, {
+				}, {*/
 					panKeyValues.do{
 						var knob, staticText;
 						knob = Knob().minWidth_(knobSize).maxWidth_(knobSize)
@@ -1650,11 +1653,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						knob.color = knobColors;
 						panKnob = panKnob.add(knob);
 						staticText = 	StaticText(canvas).align_(\center).background_(Color.black)
-							.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+					.stringColor_(Color.white).minWidth_(knobTextSize).maxWidth_(knobTextSize)
+					.maxHeight_(10).minHeight_(10);
 						staticText.string = "0";
 						panKnobText = panKnobText.add(staticText);
 					};
-				});
+				/*});*/
 			}, {
 				panKnob = nil;
 			});
@@ -2009,12 +2013,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		};
 		peakMax = -inf!levelTextArr.size;
 		//panning
-		panKnobTextArr.flat.do{|item| if(item.notNil, {item.font = basicFont});};
-		panSpec = \pan.asSpec;
+		/*panKnobTextArr.flat.do{|item| if(item.notNil, {item.font = basicFont});};*/
+		panKnobTextArr.flat.do{|item| if(item.notNil, {
+			item.bounds.postln;
+			case
+			{item.bounds.width >= 24} { item.font = basicFont }
+			{item.bounds.width == 19} { item.font = Font("Monaco", 7); }
+			{item.bounds.width <= 14} { item.font =  Font("Monaco", 6); };
+
+		});};
+		/*panSpec = \pan.asSpec;*/
+
+
 		panKnobArr.do{|item, index|
-			var panKey, getKeyValues, panKeyValues, panValues, hidNodes, hidPan;
+			var panKey, getKeyValues, panKeyValues, panValues, hidNodes, hidPan, panSpec;
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			getKeyValues = Ndef(panKey).getKeysValues;
+
+			panSpec = specs.flop[2].flop[1][specs.flop[2].flop[0].indexOfEqual(panKey)];
+			/*panSpec = \pan.asSpec;*/
+
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
 				if(hidNodes.notEmpty, {
@@ -2026,52 +2044,35 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				panKeyValues = getKeyValues.flat;
 				case
 				{panKeyValues.size == 0} {panValues = 0}
-				{panKeyValues.includes(\pan)} {
+				/*{panKeyValues.includes(\pan)} {
 					panValues = panKeyValues[panKeyValues.indexOf(\pan)+1]}
 				{panKeyValues.includes(\panx)} {
 					panValues = [panKeyValues[panKeyValues.indexOf(\panx)+1],
 						panKeyValues[panKeyValues.indexOf(\pany)+1]
-				]}
+				]}*/
 				;
-				if(sysPan[index] == 0, {
-					if((panValues.cs.find("mod").notNil).or(hidPan), {
-						item.background = colorCritical;
-						item.enabled = false;
-						panValues = 0;
-					});
-					item.value = panSpec.unmap(panValues);
-					panKnobTextArr[index][0].string_(panValues);
-					item.action = {|val|
-						var newPanVal;
-						newPanVal = panSpec.map(val.value).round(0.01);
-						panKnobTextArr[index][0].string_(newPanVal.asString);
-						("Ndef(" ++ panKey.cs ++ ").set('pan', " ++ newPanVal ++ ");").radpostcont.interpret;
-					};
-				}, {
 					//this needs work
 					item.do{|it, ind|
 						it.postln;
 						getKeyValues[ind].postln;
 						panValues = getKeyValues[ind][1];
+					panValues.postln;
 						if((panValues.cs.find("mod").notNil).or(hidPan), {
 							it.background = colorCritical;
 							it.enabled = false;
 							panValues = 0;
 						});
-						it.value = panSpec.unmap(panValues);
-						panKnobTextArr[index].postln;
-						panKnobTextArr[index][ind].postln;
+
+					it.value = panSpec[ind][1].asSpec.unmap(panValues);
 						panKnobTextArr[index][ind].string_(panValues);
 						it.action = {|val|
 							var newPanVal;
-							newPanVal = panSpec.map(val.value).round(0.01);
-							panKnobTextArr[index][ind].string_(newPanVal.asString);
-							/*getKeyValues[ind][0].cs.postln;*/
+						newPanVal = panSpec[ind][1].asSpec.map(val.value).round(0.01);
+						panKnobTextArr[index][ind].string_(newPanVal.round(0.1).asString);
 							("Ndef(" ++ panKey.cs ++ ").set(" ++ getKeyValues[ind][0].cs ++ ", "
 								++ newPanVal ++ ");").radpostcont.interpret;
 						};
 					};
-				});
 			});
 		};
 
@@ -2109,23 +2110,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			sliderTextArr[index].string_(value.round(0.1).asString);
 		};
 
-		setPanKnob = {|index, value, indXY=0|
-			if(sysPan[index] == 0, {
-				panKnobArr[index].value = panSpec.unmap(value);
-				panKnobTextArr[index][0].string_(value);
-			}, {
-
-				panKnobArr[index].value = panSpec.unmap(value);
-				panKnobTextArr[index][0].string_(value);
-
-				/*if(indXY == 0, {
-				panKnobArr[index].x_(panSpec.unmap(value));
-				}, {
-				panKnobArr[index].y_(panSpec.unmap(value));
-				});
-				panKnobTextArr[index][indXY].string_(value);*/
-			});
-
+		setPanKnob = {|index, value, ind=0|
+			var panKey, getKeyValues, panSpec;
+			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
+			getKeyValues = Ndef(panKey).getKeysValues;
+			panSpec = specs.flop[2].flop[1][specs.flop[2].flop[0].indexOfEqual(panKey)];
+			panKnobArr[index].postln;
+			panKnobArr[index].value = panSpec[ind][1].asSpec.unmap(value);
+			panKnobTextArr[index][0].string_(value);
 		};
 
 		setInKnob = {|index, value|
@@ -2165,7 +2157,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 		slotsSizeArr.postln;
 
+
 		sumWidth = 9 + slotsSizeArr.sum + spaceGap.sum + (9-spaceGap.last+2);
+		//provisional fix for space interface
+		panKnobTextArr.postln;
+		/*panKnobTextArr.collect{|it| it.size }.maxIndex;*/
+/*		panKnobTextArr.size.postln;
+		sumWidth = sumWidth + (20 * panKnobTextArr.collect{|it| it.size }.maxItem; );*/
 		if(sumWidth > screenBounds.width, {
 			sumWidth = screenBounds.width;
 		});

@@ -17,10 +17,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-		mainPath = Quark("Radicles").localPath;
-		libPath = Quark("RadiclesLibs").localPath;
-/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
-		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
+/*		mainPath = Quark("Radicles").localPath;
+		libPath = Quark("RadiclesLibs").localPath;*/
+		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
 		server = Server.default;
@@ -6126,9 +6126,20 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "assemblage: trackNum, busNum");
 		cW.add(\start, [\str, \num, \num, \num], {|str, num1, num2, num3|
+			var array, spaceArr;
 			if(aZ.isNil, {
-				aZ = Assemblage(num1, num2, num3, action: {|number, channels|
-					Block.addNum(number, channels, {|arr|
+				array = [1!num1, 1!num2, num3];
+				/*array.postln;*/
+				/*array.size.postln;
+				num3.spaceType.postln;*/
+				spaceArr = Array.fill(array.size, num3.spaceType);
+				spaceArr[spaceArr.size-1] = \dir;
+				spaceArr.postln;
+				/*findSpaceType*/
+				/*(array.size!num3.spaceType).postln;*/
+				aZ = Assemblage(num1, num2, array, spaceArr, action: {|number, channels|
+					/*channels[0].postln;*/
+					Block.addAll(channels[0], {|arr|
 						arr.do{|item, index|
 							aZ.input(item, \track, (index+1));
 						};
@@ -6142,7 +6153,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			if(aZ.isNil, {
 				aZ = Assemblage(num1, num2, arr1, action: {|number, channels|
 					[number, channels].postln;
-					Block.addNum(number, channels[0], {|arr|
+					Block.addAll(channels[0], {|arr|
 						arr.do{|item, index|
 							aZ.input(item, \track, (index+1));
 						};

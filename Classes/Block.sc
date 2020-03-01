@@ -36,10 +36,17 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		}.fork;
 	}
 
-	*addAll {arg arr;
+	*addAll {arg arr, action;
+		var cond, ndefArr;
+		{
+		cond = Condition(false);
 		arr.do{|item|
-			this.add(item);
-		}
+				cond.test = false;
+			this.add(item, {|val| cond.test = true; cond.signal; ndefArr = ndefArr.add(val) });
+			cond.wait;
+		};
+			action.(ndefArr);
+	}.fork;
 	}
 
 	*remove {arg block=1;
