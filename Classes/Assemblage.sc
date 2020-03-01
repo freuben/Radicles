@@ -15,13 +15,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType, memSize, action;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
-		server.options.numOutputBusChannels = 8;
-		server.options.numInputBusChannels = 8;
-		server.options.numWireBufs = 128*4;
-		server.options.numAudioBusChannels = 128*8;
-		server.options.numControlBusChannels = 128*128;
-		memSize ?? {Radicles.new; memSize = memorySize};
-		server.options.memSize = memSize*8192;
+		Radicles.serveroptions;
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
@@ -118,7 +112,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{chanNum == 3} {spaceType = \panAz3}
 		{chanNum == 4} {spaceType = \pan4}
 		{chanNum == 5} {spaceType = \panAz5}
-		{chanNum == 6} {spaceType = \panAz6};
+		{chanNum == 6} {spaceType = \panAz6}
+		{chanNum == 7} {spaceType = \panAz7}
+		{chanNum == 8} {spaceType = \panAz8}
+		;
 		^spaceType;
 	}
 
@@ -131,6 +128,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{spaceType == \pan4} {chanNum = 4}
 		{spaceType == \panAz5} {chanNum = 5}
 		{spaceType == \panAz6} {chanNum = 6}
+		{spaceType == \panAz7} {chanNum = 7}
+		{spaceType == \panAz8} {chanNum = 8}
 		{spaceType == \dir} {chanNum = systemChanNum};
 		^chanNum;
 	}
@@ -1496,7 +1495,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, outputMenuArr,
 		muteButton, recButton, soloButton, spaceButton, volButtons, buttonsLay1,
-		buttonsLay2, oscDefFunc, levelSoloStates, fxSlotArr, trackLabelArr, spaceTextLay,
+		buttonsLay2, oscDefFunc, levelSoloStates, fxSlotArr, trackLabelArr, spaceTextLay, panKnobLay,
 		popupmenusize, panSpec, mixInputLabels, trackInputSel, inputArray,
 		numBuses, thisInputLabel, busInLabels, maxBusIn, knobFunc, busInSettings,
 		guiFunc, fltMenuWindow, oldMixerWin, slotsSizeArr, sumWidth, spaceGap,
@@ -1552,7 +1551,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 		winHeight = 504 + ((sends-2)*15) + ((fxsNum-2)*15);
 		winWidth = (42*(sysChans.sum));
-		if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });
+		/*if(sysPan.includes(1), {knobSize = 40;}, {knobSize = 30; });*/
+
 		if(winRefresh, {oldMixerWin=mixerWin; winRefresh = false;
 			{
 				nodeTime.yield;
@@ -1597,7 +1597,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 		sysChans.do{|item, index|
 			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout, slotsSize,
-			panKnob, panKnobText, panKnobText1, panKnobText2, outputMenu, outputLabel,
+			panKnob, panKnob1, panKnob2, panKnob3, panKnobText, panKnobText1,
+			panKnobText2, panKnobText3, outputMenu, outputLabel,
 			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel,
 			inputLabelArr, mixInputLabelArr, fxLabel, fxSlot, trackLabel, trackColor,
 			thisInputVal, butUIHeight, butUIWidth, sendsString, soloButtonFunc, panKeyValues, panKey;
@@ -1631,30 +1632,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 			//panning knob(s)/slider2D(s)
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
-			panKeyValues = Ndef(panKey).controlKeysValues;
-			if((panKeyValues.includes(\pan)).or(panKeyValues.includes(\panx)), {
-			if(sysPan[index] == 0, {
-				panKnob = Knob().minWidth_(knobSize).maxWidth_(knobSize)
-				.maxHeight_(knobSize).minHeight_(knobSize).centered_(true);
-				panKnob.color = knobColors;
-				panKnobText = StaticText(canvas).align_(\center).background_(Color.black)
-				.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
-				panKnobText = [panKnobText];
-			}, {
-				panKnob = Slider2D().minWidth_(knobSize).maxWidth_(knobSize)
-				.maxHeight_(knobSize).minHeight_(knobSize);
-				panKnob.x = 0.5;
-				panKnob.y = 0.5;
-
-				panKnobText1 = StaticText(canvas).align_(\center).background_(Color.black)
-				.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
-
-				panKnobText2 = StaticText(canvas).align_(\center).background_(Color.black)
-				.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
-
-				panKnobText = [panKnobText1, panKnobText2];
-			});
-
+			panKeyValues = Ndef(panKey).getKeysValues.reject({|item| item.asString.contains("wet") });
+			knobSize = 30 * (1.2 - (0.2* panKeyValues.size ) );
+			if(panKeyValues.flop[0].includes(\dirmul).not, {
+				if(sysPan[index] == 0, {
+					panKnob = Knob().minWidth_(knobSize).maxWidth_(knobSize)
+					.maxHeight_(knobSize).minHeight_(knobSize).centered_(true);
+					panKnob.color = knobColors;
+					panKnobText = StaticText(canvas).align_(\center).background_(Color.black)
+					.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+					panKnobText = [panKnobText];
+				}, {
+					panKeyValues.do{
+						var knob, staticText;
+						knob = Knob().minWidth_(knobSize).maxWidth_(knobSize)
+							.maxHeight_(knobSize).minHeight_(knobSize).centered_(true);
+						knob.color = knobColors;
+						panKnob = panKnob.add(knob);
+						staticText = 	StaticText(canvas).align_(\center).background_(Color.black)
+							.stringColor_(Color.white).minWidth_(24).maxWidth_(24).maxHeight_(10).minHeight_(10);
+						staticText.string = "0";
+						panKnobText = panKnobText.add(staticText);
+					};
+				});
 			}, {
 				panKnob = nil;
 			});
@@ -1662,6 +1662,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			panKnobTextArr = panKnobTextArr.add(panKnobText);
 			spaceTextLay = HLayout(*panKnobText);
 			panKnobArr = panKnobArr.add(panKnob);
+			if(panKnob.notNil, {
+				panKnobLay = HLayout(*panKnob);
+			}, {
+				panKnobLay = 	panKnob;
+			});
 
 			butUIHeight = 12;
 			butUIWidth = 25;
@@ -1973,7 +1978,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				finalLayout = finalLayout.add(lay);
 			};
 			//spatialisation interface
-			[[spaceTextLay, align: \bottom], [panKnob, align: \bottom]].do{|lay|
+			[[spaceTextLay, align: \bottom], [panKnobLay, align: \bottom]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
 			//slider and levelIndicators
@@ -2007,55 +2012,66 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		panKnobTextArr.flat.do{|item| if(item.notNil, {item.font = basicFont});};
 		panSpec = \pan.asSpec;
 		panKnobArr.do{|item, index|
-			var panKey, panKeyValues, panValues, hidNodes, hidPan;
+			var panKey, getKeyValues, panKeyValues, panValues, hidNodes, hidPan;
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
-			panKeyValues = Ndef(panKey).controlKeysValues;
+			getKeyValues = Ndef(panKey).getKeysValues;
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
 				if(hidNodes.notEmpty, {
 					hidPan = hidNodes.flop[1].includes(Ndef(panKey));
 				}, {hidPan = false});
 			}, {hidPan = false});
-			if((panKeyValues.includes(\pan)).or(panKeyValues.includes(\panx)), {
-			case
-			{panKeyValues.size == 0} {panValues = 0}
-			{panKeyValues.includes(\pan)} {
-				panValues = panKeyValues[panKeyValues.indexOf(\pan)+1]}
-			{panKeyValues.includes(\panx)} {
-				panValues = [panKeyValues[panKeyValues.indexOf(\panx)+1],
-					panKeyValues[panKeyValues.indexOf(\pany)+1]
-			]}
-			;
-			if(sysPan[index] == 0, {
-				if((panValues.cs.find("mod").notNil).or(hidPan), {
-					item.background = colorCritical;
-					item.enabled = false;
-					panValues = 0;
+
+			if(getKeyValues.flop[0].includes(\dirmul).not, {
+				panKeyValues = getKeyValues.flat;
+				case
+				{panKeyValues.size == 0} {panValues = 0}
+				{panKeyValues.includes(\pan)} {
+					panValues = panKeyValues[panKeyValues.indexOf(\pan)+1]}
+				{panKeyValues.includes(\panx)} {
+					panValues = [panKeyValues[panKeyValues.indexOf(\panx)+1],
+						panKeyValues[panKeyValues.indexOf(\pany)+1]
+				]}
+				;
+				if(sysPan[index] == 0, {
+					if((panValues.cs.find("mod").notNil).or(hidPan), {
+						item.background = colorCritical;
+						item.enabled = false;
+						panValues = 0;
+					});
+					item.value = panSpec.unmap(panValues);
+					panKnobTextArr[index][0].string_(panValues);
+					item.action = {|val|
+						var newPanVal;
+						newPanVal = panSpec.map(val.value).round(0.01);
+						panKnobTextArr[index][0].string_(newPanVal.asString);
+						("Ndef(" ++ panKey.cs ++ ").set('pan', " ++ newPanVal ++ ");").radpostcont.interpret;
+					};
+				}, {
+					//this needs work
+					item.do{|it, ind|
+						it.postln;
+						getKeyValues[ind].postln;
+						panValues = getKeyValues[ind][1];
+						if((panValues.cs.find("mod").notNil).or(hidPan), {
+							it.background = colorCritical;
+							it.enabled = false;
+							panValues = 0;
+						});
+						it.value = panSpec.unmap(panValues);
+						panKnobTextArr[index].postln;
+						panKnobTextArr[index][ind].postln;
+						panKnobTextArr[index][ind].string_(panValues);
+						it.action = {|val|
+							var newPanVal;
+							newPanVal = panSpec.map(val.value).round(0.01);
+							panKnobTextArr[index][ind].string_(newPanVal.asString);
+							/*getKeyValues[ind][0].cs.postln;*/
+							("Ndef(" ++ panKey.cs ++ ").set(" ++ getKeyValues[ind][0].cs ++ ", "
+								++ newPanVal ++ ");").radpostcont.interpret;
+						};
+					};
 				});
-				item.value = panSpec.unmap(panValues);
-				panKnobTextArr[index][0].string_(panValues);
-				item.action = {|val|
-					var newPanVal;
-					newPanVal = panSpec.map(val.value).round(0.01);
-					panKnobTextArr[index][0].string_(newPanVal.asString);
-					("Ndef(" ++ panKey.cs ++ ").set('pan', " ++ newPanVal ++ ");").radpostcont.interpret;
-				};
-			}, {
-				item.setXY(panSpec.unmap(panValues[0]), panSpec.unmap(panValues[1]));
-				panKnobTextArr[index][0].string_(panValues[0]);
-				panKnobTextArr[index][1].string_(panValues[1]);
-				item.action_({|sl|
-					var newPanVal1, newPanVal2;
-					newPanVal1 = panSpec.map(sl.x).round(0.01);
-					newPanVal2 = panSpec.map(sl.y).round(0.01);
-					panKnobTextArr[index][0].string_(newPanVal1);
-					panKnobTextArr[index][1].string_(newPanVal2);
-					("Ndef(" ++ panKey.cs ++ ").set('panx', " ++
-						newPanVal1 ++ ");").radpostcont.interpret;
-					("Ndef(" ++ panKey.cs ++ ").set('pany', " ++
-						newPanVal2 ++ ");").radpostcont.interpret;
-				});
-			});
 			});
 		};
 
@@ -2098,13 +2114,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				panKnobArr[index].value = panSpec.unmap(value);
 				panKnobTextArr[index][0].string_(value);
 			}, {
-				if(indXY == 0, {
-					panKnobArr[index].x_(panSpec.unmap(value));
+
+				panKnobArr[index].value = panSpec.unmap(value);
+				panKnobTextArr[index][0].string_(value);
+
+				/*if(indXY == 0, {
+				panKnobArr[index].x_(panSpec.unmap(value));
 				}, {
-					panKnobArr[index].y_(panSpec.unmap(value));
+				panKnobArr[index].y_(panSpec.unmap(value));
 				});
-				panKnobTextArr[index][indXY].string_(value);
+				panKnobTextArr[index][indXY].string_(value);*/
 			});
+
 		};
 
 		setInKnob = {|index, value|
@@ -2133,12 +2154,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 
 		gapHeight = 6;
-		sumHeight = panKnobArr.collect{|item| if(item.notNil, {item.bounds.height}, {30});
+		sumHeight = panKnobArr.flat.collect{|item|
+			/*if(item.notNil, {item.bounds.height}, {30});*/
+			if(item.notNil, {30}, {30});
 		}.maxItem + gapHeight;
 		sumHeight = 45 + 9 + sumHeight + (7 * (10+gapHeight)) + (2 * (12+gapHeight)) +
 		(180+gapHeight) + (sendsMenuArr[0].size*(14+gapHeight)) +
 		(fxSlotArr[0].size*(14+gapHeight));
 		sumHeight = sumHeight + 4;
+
+		slotsSizeArr.postln;
 
 		sumWidth = 9 + slotsSizeArr.sum + spaceGap.sum + (9-spaceGap.last+2);
 		if(sumWidth > screenBounds.width, {
@@ -3508,28 +3533,28 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	mastOutSynth	{
 		var arr2, arr3, selArr;
 		if(mastOutArr.notNil, {
-		if(mastOutArr.flat.includes(1), {
-			arr2 = mastOutArr.flop.collect({|item| item.collect({|it, in|
-				if(it != 0, {it = "out[" ++ in ++ "]" }, {it =  it}); }); });
-			arr2 = arr2.collect{|item| item.select({|it| it != 0 }) };
-			arr2.do{|item, index| if(item.isEmpty.not, {selArr = selArr.add(index)}) };
-			arr2 = arr2.copyRange(0, selArr.last);
-			arr3 = arr2.collect{|item|
-				if(item.size == 1, {
-					item = item[0].asString;
-				}, {
-					if(item.isEmpty, {
-						item = "DC.ar(0)";
+			if(mastOutArr.flat.includes(1), {
+				arr2 = mastOutArr.flop.collect({|item| item.collect({|it, in|
+					if(it != 0, {it = "out[" ++ in ++ "]" }, {it =  it}); }); });
+				arr2 = arr2.collect{|item| item.select({|it| it != 0 }) };
+				arr2.do{|item, index| if(item.isEmpty.not, {selArr = selArr.add(index)}) };
+				arr2 = arr2.copyRange(0, selArr.last);
+				arr3 = arr2.collect{|item|
+					if(item.size == 1, {
+						item = item[0].asString;
 					}, {
-						item =  (item.asString ++ ".sum";)
-					});
-			}); };
-		}, {
-			arr3 = "DC.ar(0)"!Ndef(\master).numChannels ;
-		});
-		("Ndef('masterOut', {var out; \nout = Ndef.ar('spaceMaster', " ++
-			Ndef(\spaceMaster).numChannels ++ ");\n\t" ++	arr3.asString ++ ";\n\t});")
-		.radpost.interpret;
+						if(item.isEmpty, {
+							item = "DC.ar(0)";
+						}, {
+							item =  (item.asString ++ ".sum";)
+						});
+				}); };
+			}, {
+				arr3 = "DC.ar(0)"!Ndef(\master).numChannels ;
+			});
+			("Ndef('masterOut', {var out; \nout = Ndef.ar('spaceMaster', " ++
+				Ndef(\spaceMaster).numChannels ++ ");\n\t" ++	arr3.asString ++ ";\n\t});")
+			.radpost.interpret;
 		});
 	}
 
@@ -3737,7 +3762,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(thisSpec.notNil, {spec = thisSpec});
 			if(spec.isNil, {spec = [-1,1] });
 			{nodeTime.yield;
-			this.refreshFunc;
+				this.refreshFunc;
 			}.fork(AppClock);
 			if(modifier == \mod, {
 				^ModMap.map(Ndef(ndefKey), keyValues[0], type, spec, extraArgs,
@@ -4352,18 +4377,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					case
 					{modifier == \mod} {
 						value ?? {
-								value = ModMap.modNodes.select({|item|
-									(item[1] == Ndef(thisBusIn) ).and(item[2] == volArg);
-								})[0].last;
-							};
+							value = ModMap.modNodes.select({|item|
+								(item[1] == Ndef(thisBusIn) ).and(item[2] == volArg);
+							})[0].last;
+						};
 						ModMap.unmap(Ndef(thisBusIn), volArg, value);
 					}
 					{modifier == \hid} {
 						value ?? {
-								value = HIDMap.hidNodes.select({|item|
-									(item[1] == Ndef(thisBusIn) ).and(item[2] == volArg);
-								})[0].last;
-							};
+							value = HIDMap.hidNodes.select({|item|
+								(item[1] == Ndef(thisBusIn) ).and(item[2] == volArg);
+							})[0].last;
+						};
 						HIDMap.unmap(Ndef(thisBusIn), volArg, value);
 					};
 					modSendArr.collect{|item| item.copyFromStart(2) }.collect{|it, ind|
@@ -5011,12 +5036,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			presetArr[1].do{|item, index|
 				item[1].do{|it|
 					if(it[1].isNumber.not, {
-					/*it[1][0].postln;*/
-					if(it[1][0].cs.find("mod").notNil, {
-						hasMod = hasMod.add([item[0], it]);
-					}, {
-						extraArgs = extraArgs.add([item[0], it]); //extra args
-					});
+						/*it[1][0].postln;*/
+						if(it[1][0].cs.find("mod").notNil, {
+							hasMod = hasMod.add([item[0], it]);
+						}, {
+							extraArgs = extraArgs.add([item[0], it]); //extra args
+						});
 					}, {
 						extraArgs = extraArgs.add([item[0], it]);
 					});
@@ -5101,8 +5126,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			nodeTime.yield;
 			thisBusArr.flop[0].do{|item, index|
 				if(item.notNil, {
-				("Ndef(" ++ item.cs ++ ").set" ++
-				arr[1][index].cs.replace("[", "(").replace("]", ")") ++ ";" ).radpost.interpret;
+					("Ndef(" ++ item.cs ++ ").set" ++
+						arr[1][index].cs.replace("[", "(").replace("]", ")") ++ ";" ).radpost.interpret;
 				});
 			};
 			server.sync;
@@ -5215,8 +5240,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				if(item.notNil, {Ndef(item).controlKeysValues}); });];
 		});
 		ioSettings = [recStates, recInputArr, mastOutArr];
-			^[mixDataArr, dataArr2, busSettings, outputSettings, ioSettings];
-			/*PresetFile.write(\tracks, presetName, [mixDataArr, dataArr2, busSettings, outputSettings, ioSettings]);*/
+		^[mixDataArr, dataArr2, busSettings, outputSettings, ioSettings];
+		/*PresetFile.write(\tracks, presetName, [mixDataArr, dataArr2, busSettings, outputSettings, ioSettings]);*/
 	}
 
 	nomixer {

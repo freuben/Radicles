@@ -3,7 +3,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
 	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>filesPath, <>soundFilePath, <>postWindow, <>memorySize=50, <>beatsFuncArr, traceFunc, <>liveBlockArr;
+	<>filesPath, <>soundFilePath, <>postWindow, <>beatsFuncArr, traceFunc, <>liveBlockArr,
+	<>numOutputs = 8, <>numInputs = 8, <>numBuffers = 512, <>numBuses = 1024,
+	<>numControlBuses=16384, <>memorySize=409600;
 
 	*new {
 		this.setColors;
@@ -49,6 +51,32 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		var result;
 		result = this.libraries.indexOfEqual(library);
 		^result;
+	}
+
+	*options {arg outputs, inputs, buffers, buses, controlBuses, memory;
+		outputs ?? {outputs = numOutputs};
+		numOutputs = outputs;
+		inputs ?? {inputs = numInputs};
+		numInputs = inputs;
+		buffers ?? {buffers = numBuffers};
+		numBuffers = buffers;
+		buses ?? {buses = numBuses};
+		numBuses = buses;
+		controlBuses ?? {controlBuses = numControlBuses};
+		numControlBuses = controlBuses;
+		memory ?? {memory = memorySize};
+		memorySize = memory;
+
+	}
+
+	*serveroptions {
+		this.new;
+		server.options.numOutputBusChannels = numOutputs;
+		server.options.numInputBusChannels = numInputs;
+		server.options.numWireBufs = numBuffers;
+		server.options.numAudioBusChannels = numBuses;
+		server.options.numControlBusChannels = numControlBuses;
+		server.options.memSize = memorySize;
 	}
 
 	*clock {var clock, tclock;
@@ -6376,11 +6404,19 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			}, "run saved blocks");
 
 			cW.add(\memory, [\str], {|str1|
-				Radicles.memorySize.radpostwarn;
+				Radicles.memory.radpostwarn;
 			}, "posts memory size");
 			cW.add(\memory, [\str, \num], {|str1, num1|
-				Radicles.memorySize = num1;
+				Radicles.memory = num1;
 			}, "change memory size");
+
+			cW.add(\outputs, [\str], {|str1|
+				Radicles.numOutputs.radpostwarn;
+			}, "posts amount of outputs");
+			cW.add(\outputs, [\str, \num], {|str1, num1|
+				Radicles.options(num1);
+			}, "change amount of outputs");
+
 		};
 		cW.storeIndex = 0;
 	}

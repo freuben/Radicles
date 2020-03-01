@@ -6,12 +6,12 @@
 	Balance2.ar(source[0], source[1], pan) * 3.dbamp;
 } ], [ 'pan4', {arg panx = 0 -> [-1,1], pany = 0 -> [-1, 1];
 	Pan4.ar(\in, panx, pany);
-} ], [ 'panAz3', {arg pan = 0 -> [-1,1];
-	PanAz.ar(3, \in, pan);
-} ], [ 'panAz5', {arg pan = 0 -> [-1,1];
-	PanAz.ar(5, \in, pan);
-} ], [ 'panAz6', {arg pan = 0 -> [-1,1];
-	PanAz.ar(6, \in, pan);
+} ], [ 'panAz3', {arg pan = 0 -> [-1,1], width=2->[1,4], orientation=0.5->[0,3];
+	PanAz.ar(3, \in, pan, 1, width, orientation);
+} ], [ 'panAz5', {arg pan = 0 -> [-1,1], width=2->[1,6], orientation=0.5->[0,5];
+	PanAz.ar(5, \in, pan, 1, width, orientation);
+} ], [ 'panAz6', {arg pan = 0 -> [-1,1], width=2->[1,7], orientation=0.5->[0,6];
+	PanAz.ar(6, \in, pan, 1, width, orientation);
 } ], [ 'split', {arg pan=0 -> [0,8,{|val| val.round(1)}];
 	var sig;
 	sig = \in;
@@ -23,8 +23,14 @@
 	sig = \in;
 	#w, x, y, z = PanB.ar(sig, pan1, pan2);
 	sig = DecodeB2.ar(\num, w, x, y);
-} ], [ 'dir', {arg mul=1->[0.5,2];
+} ], [ 'dir', {arg dirmul=1->[0.5,2];
 	var  sig;
 	sig = \in;
-	sig*mul;
+	sig*dirmul;
+} ], [ 'panAz8', {arg pan = 0 -> [-1,1], width=2->[1,9], orientation=0.5->[0,8];
+	PanAz.ar(8, \in, pan, 1, width, orientation);
+} ], [ 'panAz7', {arg pan = 0 -> [-1,1], width=2->[1,8], orientation=0.5->[0,7];
+	PanAz.ar(7, \in, pan, 1, width, orientation);
+} ], [ 'panAz4', {arg pan = 0 -> [-1,1], width=2->[1,5], orientation=0.5->[0,4];
+	PanAz.ar(4, \in, pan, 1, width, orientation);
 } ] ]
