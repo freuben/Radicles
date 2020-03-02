@@ -106,17 +106,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	findSpaceType {arg chanNum=1;
 		var spaceType;
-		/*case
-		{chanNum == 1} {spaceType = \pan2}
-		{chanNum == 2} {spaceType = \bal2}
-		{chanNum == 3} {spaceType = \panAz3}
-		{chanNum == 4} {spaceType = \pan4}
-		{chanNum == 5} {spaceType = \panAz5}
-		{chanNum == 6} {spaceType = \panAz6}
-		{chanNum == 7} {spaceType = \panAz7}
-		{chanNum == 8} {spaceType = \panAz8}
-		{chanNum == 16} {spaceType =\rymer1}
-		;*/
 		spaceType = chanNum.spaceType;
 		^spaceType;
 	}
@@ -128,18 +117,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}, {
 			chanNum = spaceType.spaceToChans;
 		});
-		/*case
-		{spaceType == \pan2} {chanNum = 2}
-		{spaceType == \bal2} {chanNum = 2}
-		{spaceType == \panAz3} {chanNum = 3}
-		{spaceType == \pan4} {chanNum = 4}
-		{spaceType == \panAz5} {chanNum = 5}
-		{spaceType == \panAz6} {chanNum = 6}
-		{spaceType == \panAz7} {chanNum = 7}
-		{spaceType == \panAz8} {chanNum = 8}
-		{spaceType == \rymer1} {chanNum = 16}
-		{spaceType == \rymer2} {chanNum = 16}
-		{spaceType == \dir} {chanNum = systemChanNum};*/
 		^chanNum;
 	}
 
@@ -974,6 +951,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			tracks[setArr[0]] = arr1;
 			masterNdefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
 			trackTags = specs[setArr[0]].flop[0];
+			//aqui talvez
+			specs[setArr[0]].postln;
 			specs[setArr[0]] = arr1.flop[0].collect{|item|
 				if(trackTags.includes(item), {
 					specs[setArr[0]][trackTags.indexOf(item)];
@@ -981,6 +960,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					filterSpecs;
 				});
 			};
+			specs[setArr[0]].postln;
 			if(insert, {
 				/*"insert is true".postln;*/
 				routInd = routArr1.flop[0].indexOf(filterTag);
@@ -1061,6 +1041,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(type == \master, {num=""});
 					setArr = this.findTrackArr((type ++ num).asSymbol);
 					masterNdefs[setArr[0]].removeAt(thisFilterIndex);
+					//aqui talvez
 					specs[setArr[0]].removeAt(thisFilterIndex);
 
 					this.removeBufFromFilter(thisSlot, actionBuf);
@@ -1105,6 +1086,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						if(type == \master, {num=""});
 						setArr = this.findTrackArr((type ++ num).asSymbol);
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));
+						//aqui??
 						specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
 						tracks[setArr[0]] = tracks[setArr[0]].reject({|it| it[0] == item[0] });
 						filters = filters.reject({|it| it[0] == item[0] });
@@ -2031,40 +2013,46 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 		});};
 		/*panSpec = \pan.asSpec;*/
-
-
 		panKnobArr.do{|item, index|
-			var panKey, getKeyValues, panKeyValues, panValues, hidNodes, hidPan, panSpec;
+			var panKey, getKeyValues, panKeyValues, panValues, hidNodes, hidPan, panSpec, spaceSpecs;
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			getKeyValues = Ndef(panKey).getKeysValues;
 
-			panSpec = specs.flop[2].flop[1][specs.flop[2].flop[0].indexOfEqual(panKey)];
+			spaceSpecs = specs.collect{|item| item.last };
+			panSpec = spaceSpecs.flop[1][spaceSpecs.flop[0].indexOfEqual(panKey)];
+			/*panSpec = specs.flop[2].flop[1][specs.flop[2].flop[0].indexOfEqual(panKey)];*/
 			/*panSpec = \pan.asSpec;*/
-
 			hidNodes = HIDMap.hidNodes;
-			if(hidNodes.notNil, {
-				if(hidNodes.notEmpty, {
-					hidPan = hidNodes.flop[1].includes(Ndef(panKey));
-				}, {hidPan = false});
-			}, {hidPan = false});
-
 			if(getKeyValues.flop[0].includes(\dirmul).not, {
-				panKeyValues = getKeyValues.flat;
+				/*panKeyValues = getKeyValues.flat;
 				case
-				{panKeyValues.size == 0} {panValues = 0}
+				{panKeyValues.size == 0} {panValues = 0}*/
 				/*{panKeyValues.includes(\pan)} {
 					panValues = panKeyValues[panKeyValues.indexOf(\pan)+1]}
 				{panKeyValues.includes(\panx)} {
 					panValues = [panKeyValues[panKeyValues.indexOf(\panx)+1],
 						panKeyValues[panKeyValues.indexOf(\pany)+1]
-				]}*/
-				;
+				]};*/
 					//this needs work
+				/*"item".postln;
+				item.postln;*/
 					item.do{|it, ind|
 						/*it.postln;
 						getKeyValues[ind].postln;*/
 						panValues = getKeyValues[ind][1];
 					/*panValues.postln;*/
+
+					if(hidNodes.notNil, {
+				if(hidNodes.notEmpty, {
+							/*Ndef(panKey).postln;
+							hidNodes.postln;
+							getKeyValues[ind][0].postln;*/
+					/*		[ [ 'hid1', Ndef('spaceTrack1'), pan, 0 ] ]*/
+							hidPan = (hidNodes.flop[1].includes(Ndef(panKey)))
+							.and(hidNodes.flop[2].includes(getKeyValues[ind][0]));
+				}, {hidPan = false});
+			}, {hidPan = false});
+
 						if((panValues.cs.find("mod").notNil).or(hidPan), {
 							it.background = colorCritical;
 							it.enabled = false;
