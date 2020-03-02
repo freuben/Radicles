@@ -12,6 +12,8 @@
 		{chanNum == 6} {spaceType = \panAz6}
 		{chanNum == 7} {spaceType = \panAz7}
 		{chanNum == 8} {spaceType = \panAz8}
+		{chanNum == 16} {spaceType =\rymer1}
+		{chanNum == 18} {spaceType =\rymer2}
 		;
 		^spaceType;
 	}

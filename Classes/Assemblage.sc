@@ -106,7 +106,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	findSpaceType {arg chanNum=1;
 		var spaceType;
-		case
+		/*case
 		{chanNum == 1} {spaceType = \pan2}
 		{chanNum == 2} {spaceType = \bal2}
 		{chanNum == 3} {spaceType = \panAz3}
@@ -115,13 +115,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{chanNum == 6} {spaceType = \panAz6}
 		{chanNum == 7} {spaceType = \panAz7}
 		{chanNum == 8} {spaceType = \panAz8}
-		;
+		{chanNum == 16} {spaceType =\rymer1}
+		;*/
+		spaceType = chanNum.spaceType;
 		^spaceType;
 	}
 
 	spaceTypeToChanOut {arg spaceType=1;
 		var chanNum;
-		case
+		if(spaceType == \dir, {
+			chanNum = systemChanNum;
+		}, {
+			chanNum = spaceType.spaceToChans;
+		});
+		/*case
 		{spaceType == \pan2} {chanNum = 2}
 		{spaceType == \bal2} {chanNum = 2}
 		{spaceType == \panAz3} {chanNum = 3}
@@ -130,7 +137,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{spaceType == \panAz6} {chanNum = 6}
 		{spaceType == \panAz7} {chanNum = 7}
 		{spaceType == \panAz8} {chanNum = 8}
-		{spaceType == \dir} {chanNum = systemChanNum};
+		{spaceType == \rymer1} {chanNum = 16}
+		{spaceType == \rymer2} {chanNum = 16}
+		{spaceType == \dir} {chanNum = systemChanNum};*/
 		^chanNum;
 	}
 
@@ -755,11 +764,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		busAdd, argIndex, thisBusLabel;
 		{
 			thisBusLabel = ("inBus" ++ busNum).asSymbol;
-			"thisBusLabel ".post; thisBusLabel.postln;
+			/*"thisBusLabel ".post; thisBusLabel.postln;*/
 			numChan = Ndef(thisBusLabel).numChannels;
 			busTag = ("busIn" ++ busNum).asSymbol;
-			"busArr ".post; busArr.postln;
-			"busArr[busNum-1][0] ".post; busArr[busNum-1][0].postln;
+			/*"busArr ".post; busArr.postln;
+			"busArr[busNum-1][0] ".post; busArr[busNum-1][0].postln;*/
 			if(busArr[busNum-1][0].isNil, {
 				busArr[busNum-1][0] = busTag;
 				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
@@ -995,7 +1004,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					};
 				});
 				cond.test = false;
-				this.autoRoute(routArr1.postln, {cond.test = true; cond.signal; });
+				this.autoRoute(routArr1, {cond.test = true; cond.signal; });
 				cond.wait;
 			});
 			server.sync;
@@ -2015,7 +2024,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		//panning
 		/*panKnobTextArr.flat.do{|item| if(item.notNil, {item.font = basicFont});};*/
 		panKnobTextArr.flat.do{|item| if(item.notNil, {
-			item.bounds.postln;
 			case
 			{item.bounds.width >= 24} { item.font = basicFont }
 			{item.bounds.width == 19} { item.font = Font("Monaco", 7); }
@@ -2053,21 +2061,23 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				;
 					//this needs work
 					item.do{|it, ind|
-						it.postln;
-						getKeyValues[ind].postln;
+						/*it.postln;
+						getKeyValues[ind].postln;*/
 						panValues = getKeyValues[ind][1];
-					panValues.postln;
+					/*panValues.postln;*/
 						if((panValues.cs.find("mod").notNil).or(hidPan), {
 							it.background = colorCritical;
 							it.enabled = false;
-							panValues = 0;
-						});
-
+							/*panValues = panSpec[ind][1].asSpec.map(0.5);*/
+						it.value = 0.5;
+						panKnobTextArr[index][ind].string_("mod");
+						}, {
 					it.value = panSpec[ind][1].asSpec.unmap(panValues);
 						panKnobTextArr[index][ind].string_(panValues);
+					});
 						it.action = {|val|
 							var newPanVal;
-						newPanVal = panSpec[ind][1].asSpec.map(val.value).round(0.01);
+						newPanVal = panSpec[ind][1].asSpec.map(val.value);
 						panKnobTextArr[index][ind].string_(newPanVal.round(0.1).asString);
 							("Ndef(" ++ panKey.cs ++ ").set(" ++ getKeyValues[ind][0].cs ++ ", "
 								++ newPanVal ++ ");").radpostcont.interpret;
@@ -2115,9 +2125,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			getKeyValues = Ndef(panKey).getKeysValues;
 			panSpec = specs.flop[2].flop[1][specs.flop[2].flop[0].indexOfEqual(panKey)];
-			panKnobArr[index].postln;
-			panKnobArr[index].value = panSpec[ind][1].asSpec.unmap(value);
-			panKnobTextArr[index][0].string_(value);
+			panKnobArr[index][ind].value = panSpec[ind][1].asSpec.unmap(value);
+			panKnobTextArr[index][ind].string_(value);
 		};
 
 		setInKnob = {|index, value|
@@ -2155,12 +2164,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		(fxSlotArr[0].size*(14+gapHeight));
 		sumHeight = sumHeight + 4;
 
-		slotsSizeArr.postln;
+		/*slotsSizeArr.postln;*/
 
 
 		sumWidth = 9 + slotsSizeArr.sum + spaceGap.sum + (9-spaceGap.last+2);
 		//provisional fix for space interface
-		panKnobTextArr.postln;
+		/*panKnobTextArr.postln;*/
 		/*panKnobTextArr.collect{|it| it.size }.maxIndex;*/
 /*		panKnobTextArr.size.postln;
 		sumWidth = sumWidth + (20 * panKnobTextArr.collect{|it| it.size }.maxItem; );*/
@@ -2811,8 +2820,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				if(busNum == 0, {
 					this.removeBus(trackNum, busNum, trackType);
 				}, {
-					"setVal ".post; setVal.postln;
-					"	this.bus ".post; [trackNum, busNum, val, trackType].postln;
+					/*"setVal ".post; setVal.postln;
+					"	this.bus ".post; [trackNum, busNum, val, trackType].postln;*/
 					this.bus(trackNum, busNum, val, trackType, setVal: setVal);
 				});
 			}; //track, bus, mix, type
@@ -2911,27 +2920,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
-	setPanLag {arg trackType=\track, trackNum=1, lag=0, panTag=\pan;
-		var tag, ndefCS, symString;
+	setPanLag {arg trackType=\track, trackNum=1, lag=0, panNum=1;
+		var tag, ndefCS, symString, getKeys;
 		if(trackType == \master, {
 			symString = trackType.asString.capitalise;
 		}, {
 			symString = trackType.asString.capitalise ++ trackNum;
 		});
 		tag = ("space" ++ symString).asSymbol;
-		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++panTag.cs ++ ", " ++ lag ++ ");";
+		getKeys = Ndef(tag).getKeysValues;
+		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++getKeys[panNum-1][0].cs ++ ", " ++ lag ++ ");";
 		ndefCS.radpost.interpret;
 	}
 
-	setPan {arg trackType=\track, trackNum=1, val=0, panTag=\pan;
-		var tag, ndefCS, trackKey, symString;
+	setPan {arg trackType=\track, trackNum=1, val=0, panNum=1;
+		var tag, ndefCS, trackKey, symString, getKeys;
 		if(trackType == \master, {
 			symString = trackType.asString.capitalise;
 		}, {
 			symString = trackType.asString.capitalise ++ trackNum;
 		});
 		tag = ("space" ++ symString).asSymbol;
-		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++panTag.cs ++ ", " ++ val ++ ");";
+		getKeys = Ndef(tag).getKeysValues;
+		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++getKeys[panNum-1][0].cs ++ ", " ++ val ++ ");";
 		ndefCS.radpost.interpret;
 		this.mixWinBool({
 			if(trackType == \master, {
@@ -2939,15 +2950,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			}, {
 				trackKey = (trackType ++ trackNum).asSymbol;
 			});
-			if(panTag == \pan, {
-				setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val);
-			}, {
-				if(panTag == \panx, {
-					setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 0);
-				}, {
-					setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, 1);
-				});
-			});
+			setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, panNum-1);
 		});
 	}
 
@@ -3739,7 +3742,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						spec =specInd.detect({|item| item[0] == keyValues[0] });
 						func ?? {if(spec[2].notNil, {func = spec[2] }) };
 						spec = spec[1];
-						spec.postln;
+						/*spec.postln;*/
 						if(spec.includes(\db), {
 							spec = spec.copyFromStart(1);
 							spec = spec.collect({|item| if(item == -inf, {item = -90}, {item = item});});
@@ -3789,8 +3792,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				func = {|val| val.round(0.1)}; lag = 0.01;
 			});
 		}
-		{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
 		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
+
+		if(ndefKey.isNil, {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);});
+
 		ndefKey = ndefKey.asSymbol;
 		{
 			this.modFunc(ndefKey, modArg, modType, extraArgs, func,
@@ -4127,8 +4132,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						case
 						{(modArg == \vol).or(modArg == \volume)} {
 							ndefKey = (typeKey ++ trackNum); modArg = \volume }
-						{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
+						/*{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}*/
 						{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
+
+						if(ndefKey.isNil, {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);});
+
 						ndefKey = ndefKey.asSymbol;
 						modifier = this.unmodFunc(ndefKey, modArg);
 						case
@@ -4287,8 +4295,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		case
 		{(modArg == \vol).or(modArg == \volume)} {
 			ndefKey = (typeKey ++ trackNum); modArg = \volume }
-		{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}
+		/*{modArg == \pan} {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);}*/
 		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};
+
+		if(ndefKey.isNil, {ndefKey = (\space ++ typeKey.capitalise ++ trackNum);});
+
 		if(ndefKey.notNil, {
 			ndefKey = ndefKey.asSymbol;
 			modInfo = ModMap.modNodes;

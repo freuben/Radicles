@@ -33,4 +33,14 @@
 	PanAz.ar(7, \in, pan, 1, width, orientation);
 } ], [ 'panAz4', {arg pan = 0 , width=2, orientation=0.5;
 	PanAz.ar(4, \in, pan, 1, width, orientation);
+} ], [ 'rymer1', {arg azimuth = 0 , elevation = 0 , rho = 1 ;
+	var w, x, y, z, rymerSpeakers;
+	rymerSpeakers = [ [25, 0], [-25, 0], [-60, 0], [-110, 0], [-160, 0], [160, 0], [110, 0], [60, 0], [-40, 40], [-120, 40], [120, 40], [40, 40], [-25, -40], [-130, -40], [130, -40], [25, -40] ];
+	#w, x, y, z = BFEncode1.ar(\in, azimuth, elevation, rho);
+  BFDecode1.ar(w, x, y, z, rymerSpeakers.flop[0], rymerSpeakers.flop[1]);
+} ], [ 'rymer2', {arg panx = 0 , pany = 0 , elevation = 0 ;
+	var w, x, y, z, rymerSpeakers;
+	rymerSpeakers = [ [25, 0], [-25, 0], [-60, 0], [-110, 0], [-160, 0], [160, 0], [110, 0], [60, 0], [-40, 40], [-120, 40], [120, 40], [40, 40], [-25, -40], [-130, -40], [130, -40], [25, -40] ];
+	#w, x, y, z = BFEncode2.ar(\in, panx, pany, elevation);
+  BFDecode1.ar(w, x, y, z, rymerSpeakers.flop[0], rymerSpeakers.flop[1]);
 } ] ]

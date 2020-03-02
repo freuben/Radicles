@@ -143,4 +143,6 @@ SinOsc.ar(freq, 0, amp);
 	Pulse.ar(cps,width,mul) * EnvGen.kr(Env.adsr(attack, decay, sustain, release), trig);
 } ], [ 'noise', {arg mul=0.5->[0,1];
 	WhiteNoise.ar(mul);
+} ], [ 'blip', {arg freq=10 -> [0.1,30], mul=0.5->[0,1], freq2 = 1200 -> [200,2000,\exp];
+	Decay.ar(Impulse.ar(freq), 0.25, LFCub.ar(freq2, 0, 0.1)) *mul;
 } ] ]
