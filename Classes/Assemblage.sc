@@ -952,7 +952,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			masterNdefs[setArr[0]] = arr1.flop[0].collect({|item| Ndef(item)});
 			trackTags = specs[setArr[0]].flop[0];
 			//aqui talvez
-			specs[setArr[0]].postln;
+			/*specs[setArr[0]].postln;*/
 			specs[setArr[0]] = arr1.flop[0].collect{|item|
 				if(trackTags.includes(item), {
 					specs[setArr[0]][trackTags.indexOf(item)];
@@ -960,7 +960,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					filterSpecs;
 				});
 			};
-			specs[setArr[0]].postln;
+			/*specs[setArr[0]].postln;*/
 			if(insert, {
 				/*"insert is true".postln;*/
 				routInd = routArr1.flop[0].indexOf(filterTag);
@@ -4504,7 +4504,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		presetArr = this.rawFxPreset(filterKey);
 		presetArr[1].do{|item, index|
 			item[1].do{|it|
-				if(it.rank != 1 , {
+				if(it[1].isArray, {
 					if(it[1][0].cs.find("mod").notNil, {
 						hasMod = hasMod.add([item[0], it]);
 					}, {

@@ -2610,6 +2610,46 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		}, "cssave: mixTrackNum, slot1, preset");
 
+			cW.add(\csfree, [\str, \str], {|str1, str2|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.removeTrackFilters(\track, 1);}
+				{str2 == 'b'} {aZ.removeTrackFilters(\bus, 1);}
+				{str2 == 'm'} {aZ.removeTrackFilters(\master, 1);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "csfree: [trackType]");
+
+		cW.add(\csfree, [\str, \str, \num], {|str1, str2, num1, str3|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.removeTrackFilters(\track, num1);}
+				{str2 == 'b'} {aZ.removeTrackFilters(\bus, num1);}
+				{str2 == 'm'} {aZ.removeTrackFilters(\master, 1);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "cssave: [trackType, trackNum, presetName]");
+
+		cW.add(\csfree, [\str, \num], {|str1, num1|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.removeTrackFilters(thisArr[0].asSymbol, thisArr[1]);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "cssave: mixTrackNum, slot1, preset");
+
 	}
 
 	*loadMixCmds {
@@ -6860,10 +6900,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			}, "run saved blocks");
 
 			cW.add(\memory, [\str], {|str1|
-				Radicles.memory.radpostwarn;
+				Radicles.memorySize.radpostwarn;
 			}, "posts memory size");
 			cW.add(\memory, [\str, \num], {|str1, num1|
-				Radicles.memory = num1;
+				Radicles.memorySize = num1;
 			}, "change memory size");
 
 			cW.add(\outputs, [\str], {|str1|
