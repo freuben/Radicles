@@ -77,7 +77,7 @@
 	input = \in * Line.kr(0,1,0.1);
 	output = \convrev;
 	(output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
-} ], [ 'gdy1', {arg mix=0 -> [0,1], maxMul=1 -> [1, 8], ampdist=2 -> [0, 6, {|val| val.round(1)}], durDist=3 -> [0.0001, 8, \exp], adParam=1 -> [0.0001, 1, \exp], ddParam=1 -> [0.0001, 1, \exp], ampScale=0.5 -> [0,1], durScale=0.0 -> [0,1], kNum=40 -> [2, 50], transp=1 -> [0.1, 4]; 
+} ], [ 'gdy1', {arg mix=0 -> [0,1], maxMul=1 -> [1, 8], ampdist=2 -> [0, 6, {|val| val.round(1)}], durDist=3 -> [0.0001, 8, \exp], adParam=1 -> [0.0001, 1, \exp], ddParam=1 -> [0.0001, 1, \exp], ampScale=0.5 -> [0,1], durScale=0.0 -> [0,1], kNum=40 -> [2, 50], transp=1 -> [0.1, 4];
 	var freq, hasFreq, amp, minFreq, sig, in;
 	in = \in;
 #freq, hasFreq = Pitch.kr(in, minFreq: 20, ampThreshold: 0.0, median: 7);
@@ -90,7 +90,7 @@ var concat, control;
 control= SinOsc.ar(0.5)*Saw.ar(SinOsc.kr(LFNoise0.kr(lffreq,3,4.5),0,50,sinadd));
 concat= Concat2.ar(control,\in,4.0,4.0,4.0,match,0,0.5,1.0,0.5,0.0);
 ((concat*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
-} ], [ 'fds1', {arg mix=0 -> [0,1], alpha= -0.001 -> [-0.1,0.1, {|val| val.round(0.001)}], adjVol=0 -> [-20,20]; 
+} ], [ 'fds1', {arg mix=0 -> [0,1], alpha= -0.001 -> [-0.1,0.1, {|val| val.round(0.001)}], adjVol=0 -> [-20,20];
 var kernel, kernel2, signal, signal2, signal3, freq, hasFreq;
 signal = \in;
 #freq, hasFreq = Pitch.kr(signal);
@@ -109,7 +109,7 @@ adjVol.dbamp * ((signal3*mix.linlin(0,1,0,1))+(in*mix.linlin(0,1,1,0)));} ], [ '
 var chain, frameSize=2048, input;
 	input = \in;
 chain = FFT(LocalBuf(frameSize, input.numChannels), input);
-chain = PV_MagAbove(chain, thresh); 
+chain = PV_MagAbove(chain, thresh);
 (adjVol * IFFT(chain));} ], [ 'mrk1', {arg mix=0 -> [0,1], rec=1 -> [0,1,{|val| val.round(1)}], time=2 -> [0.1, 4];
 	var sig, table;
 	table=2;
@@ -119,7 +119,7 @@ var input, sig, modulators, numDelays;
 numDelays = 12;
 input = \in * numDelays.reciprocal;
 modulators = Array.fill(numDelays, {arg i;
-LFPar.kr(speed * rrand(0.94, 1.06), ph_diff * i, depth.lag(lagTime), predelay.lag(lagTime));}); 
+LFPar.kr(speed * rrand(0.94, 1.06), ph_diff * i, depth.lag(lagTime), predelay.lag(lagTime));});
 sig = DelayC.ar(input, 2.0, modulators);
 sig = sig.sum;
 sig = sig * 3;
@@ -141,52 +141,52 @@ sig = sig * 3;
 	signal = (on7.linlin(0,1,1,0).lag(lagOn)*signal) + (on7.lag(lagOn)*BHiShelf.ar(signal,freq7.lag(lag),1/(q7).lag(lag),gain7.dbamp.lag(lag)));
 	signal = (on8.linlin(0,1,1,0).lag(lagOn)*signal) + (on8.lag(lagOn)*BLowPass.ar(signal,freq8.lag(lag),1/q8.lag(lag), gain8.dbamp.lag(lag)));
 	signal * masterGain.dbamp;
-} ], [ 'ds1', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).distort * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds2', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).softclip * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds3', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).clip2 * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds4', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).fold2(1) * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds5', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).wrap2(1) * (lagdr.sqrt/lagdr))*adjVol} ], [ 'fvrb', {arg mix=0->[0,1], room=0->[0,1], damp=0.0->[0,1], lag=0.0->[0,15], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
-	FreeVerb.ar(\in, mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol} ], [ 'fvrb2', {arg mix=0->[0,1], room=0->[0,1], damp=0.0->[0,1], lag=0.0->[0,15], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+} ], [ 'ds1', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).distort * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds2', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).softclip * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds3', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).clip2 * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds4', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).fold2(1) * (lagdr.sqrt/lagdr))*adjVol} ], [ 'ds5', {arg drive=1->[1,200], adjVol=1->[0.2,2.0, {|val| val.round(0.01)-0.01}], lag=0.1->[0.01,15]; var lagdr; lagdr = drive.lag(lag);((\in*lagdr).wrap2(1) * (lagdr.sqrt/lagdr))*adjVol} ], [ 'fvrb', {arg mix=0->[0,1], room=0->[0,1], damp=0.0->[0,1], lag=0.0->[0,15], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}];
+	FreeVerb.ar(\in, mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol} ], [ 'fvrb2', {arg mix=0->[0,1], room=0->[0,1], damp=0.0->[0,1], lag=0.0->[0,15], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}];
 	var sig;
 	sig = \in;
-	FreeVerb2.ar(sig[0], sig[1], mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol} ], [ 'gvrb1', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	FreeVerb2.ar(sig[0], sig[1], mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol} ], [ 'gvrb1', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}];
 	var drysig, wetsig;
 	drysig = \in;
 	wetsig= GVerb.ar(\in, 5, 0.6, 0.62, 0.48, 15, -6, -11, -13,300,-40.dbamp);
-	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb2', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb2', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}];
 	var drysig, wetsig;
 	drysig = \in;
 	wetsig= GVerb.ar(\in, 16, 1.24, 0.1, 0.95, 15, -3, -15, -17, 300,-40.dbamp);
-	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb3', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb3', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}];
 	var drysig, wetsig;
 	drysig = \in;
 	wetsig= GVerb.ar(\in, 80, 4.85, 0.41, 0.19, 15, -3, -9, -11, 300,-40.dbamp);
-	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb4', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb4', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}];
 	var drysig, wetsig;
 	drysig = \in;
 	wetsig= GVerb.ar(\in, 243, 1, 0.1, 0.19, 15, -3, -9, -11, 300,-40.dbamp);
-	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb5', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'gvrb5', {arg mix=0.5->[0,1], adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}];
 	var drysig, wetsig;
 	drysig = \in;
 	wetsig= GVerb.ar(\in, 300, 103, 0.43, 0.51, 15, -5, -26, -20, 300,-40.dbamp);
 	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'amp', {arg bus=1->[1,8,{|val| val.round(1)}], adjVol=1->[1,30, {|val| val.round(0.01)-0.01}], lag=0.1->[0,10]; (\in*Amplitude.kr(SoundIn.ar((bus-1).round(1))).lag(lag))*adjVol
-} ], [ 'dl1', {arg delayTime=0->[0,12], decayTime=1->[0,24]; CombL.ar(\in, 12, delayTime, decayTime)} ], [ 'cvt1', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}]; 
+} ], [ 'dl1', {arg delayTime=0->[0,12], decayTime=1->[0,24]; CombL.ar(\in, 12, delayTime, decayTime)} ], [ 'cvt1', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}];
 	var signal, input;
 	signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
 	input = \in;
 	(Convolution.ar(input,signal, frameSize,adjVol*0.15)*mix)
-		+(input*mix.linlin(0,1,1,0))} ], [ 'cvt2', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}]; 
+		+(input*mix.linlin(0,1,1,0))} ], [ 'cvt2', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}];
 	var signal, input;
 	signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
 	input = \in;
 	(Convolution.ar(signal,input, frameSize,adjVol*0.15)*mix)
-		+(input*mix.linlin(0,1,1,0))} ], [ 'cvi1', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}]; 
+		+(input*mix.linlin(0,1,1,0))} ], [ 'cvi1', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}];
 	var signal, input;
 	signal = SoundIn.ar((soundin+1).round(1));
 	input = \in;
 	(Convolution.ar(input,signal,frameSize,adjVol*0.15)*mix)
-	+(input*mix.linlin(0,1,1,0))} ], [ 'cvi2', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}]; 
+	+(input*mix.linlin(0,1,1,0))} ], [ 'cvi2', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}];
 	var signal, input;
 	signal = SoundIn.ar((soundin+1).round(1));
 	input = \in;
 	(Convolution.ar(signal, input, frameSize,adjVol*0.15)*mix)
-	+(input*mix.linlin(0,1,1,0))} ], [ 'mmi', {arg mix=0->[0,1], soundin=1->[1,8, {|val| val.round(1)}], adjVol=1->[1,4]; 
+	+(input*mix.linlin(0,1,1,0))} ], [ 'mmi', {arg mix=0->[0,1], soundin=1->[1,8, {|val| val.round(1)}], adjVol=1->[1,4];
 var input, inA, chainA, chainB, chain, frameSize=2048;
 	input = \in;
 	inA = SoundIn.ar((soundin-1).round(1));
@@ -194,7 +194,7 @@ chainA = FFT(LocalBuf(frameSize), input);
 chainB = FFT(LocalBuf(frameSize), inA);
 chain = PV_MagMul(chainA, chainB);
 Mix.new(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-} ], [ 'mmt', {arg mix=0->[0,1], track=1->[1,8, {|val| val.round(1)}], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}]; 
+} ], [ 'mmt', {arg mix=0->[0,1], track=1->[1,8, {|val| val.round(1)}], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}];
 var input, inA, chainA, chainB, chain, frameSize=2048;
 	input = \in;
 	inA = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
@@ -206,13 +206,13 @@ chain = PV_MagMul(chainA, chainB);
 var chain, input, frameSize=2048;
 	input = \in;
 chain = FFT(LocalBuf(frameSize, input.numChannels), input);
-chain = PV_MagFreeze(chain, freeze); 
+chain = PV_MagFreeze(chain, freeze);
 	(adjVol * IFFT(chain));} ], [ 'frz2', {arg thresh=1->[0,2], adjVol=1->[1,4], lagTime=0.1->[0,0.4];
 var freeze, chain, input, frameSize=2048;
 	input = \in;
 	chain = FFT(LocalBuf(frameSize, input.numChannels), input);
 	freeze = Onsets.kr(chain, thresh).lag(lagTime);
-	chain = PV_MagFreeze(chain, freeze); 
+	chain = PV_MagFreeze(chain, freeze);
 	(adjVol * IFFT(chain));} ], [ 'srt', {arg mix=0->[0,1], adjVol=1->[0,4];
 	var chain, origmagsphases, magsphases, input;
 	input = \in;
@@ -263,55 +263,55 @@ var freeze, chain, input, frameSize=2048;
 	magsphases = magsphases.collect(_.sqrt);
 	chain = PackFFT(chain, 1024, magsphases);
 	(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-} ], [ 'gate', {arg gates=1->[0,1,{|val| val.round}], adjVol=1->[0,10]; 
-	Gate.ar(\in, gates.round(1))*adjVol} ], [ 'gain', {arg gain=0->[ -inf, 24, \db, 0, -inf,  "dB" ]; 
-	(\in*gain.dbamp)} ], [ 'lmt', {arg mix = 1 -> [0,1], thresh= -1 -> [0,-53], ratio=10 -> [10, 100, \exp, {|val| val.round(1)}], attack=0.002 -> [0,0.1], release=0.002-> [0.002, 2], gain=0 -> [-10,40], outLevel=0 -> [-10, 1]; 
+} ], [ 'gate', {arg gates=1->[0,1,{|val| val.round}], adjVol=1->[0,10];
+	Gate.ar(\in, gates.round(1))*adjVol} ], [ 'gain', {arg gain=0->[ -inf, 24, \db, 0, -inf,  "dB" ];
+	(\in*gain.dbamp)} ], [ 'lmt', {arg mix = 1 -> [0,1], thresh= -1 -> [0,-53], ratio=10 -> [10, 100, \exp, {|val| val.round(1)}], attack=0.002 -> [0,0.1], release=0.002-> [0.002, 2], gain=0 -> [-10,40], outLevel=0 -> [-10, 1];
 	var sig;
 sig = Compander.ar(\in*gain.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*outLevel.dbamp;
 	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
-} ], [ 'cmp', {arg mix = 1 -> [0,1], thresh= -12 -> [0,-53], ratio= 2 -> [1, 30, \exp, {|val| val.round(0.1)}], attack=0.001 -> [0,0.2], release=0.048-> [0.005, 5], preLevel=0 -> [-10,40], gain=4 -> [-20,50]; 
+} ], [ 'cmp', {arg mix = 1 -> [0,1], thresh= -12 -> [0,-53], ratio= 2 -> [1, 30, \exp, {|val| val.round(0.1)}], attack=0.001 -> [0,0.2], release=0.048-> [0.005, 5], preLevel=0 -> [-10,40], gain=4 -> [-20,50];
 var sig;
 sig = Compander.ar(\in*preLevel.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*gain.dbamp;
 ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
 } ], [ 'lpc1', {arg mix=0 -> [0,1], num=64 -> [64,1], adjVol=0 -> [-20,20];
 var signal;
 signal = LPCError.ar(\in, num);
-adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'rm1', {arg mix=0 -> [0,1], freq=493.8833 -> [20,20000, \exp], sinamp=0.5 -> [0,1], lagTime=10 -> [0,10], adjVol=0-> [-20,20]; 
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'rm1', {arg mix=0 -> [0,1], freq=493.8833 -> [20,20000, \exp], sinamp=0.5 -> [0,1], lagTime=10 -> [0,10], adjVol=0-> [-20,20];
 var signal;
 	signal = \in*SinOsc.ar(freq.lag(lagTime),0,sinamp);
-adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'rm2', {arg mix=0 -> [0,1], sinamp=0.5 -> [0,1], lagTime=0.1 -> [0,10], adjVol=0-> [-20,20]; 
-	var signal, freq, hasFreq; 
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'rm2', {arg mix=0 -> [0,1], sinamp=0.5 -> [0,1], lagTime=0.1 -> [0,10], adjVol=0-> [-20,20];
+	var signal, freq, hasFreq;
 # freq, hasFreq = Pitch.kr(\in, ampThreshold: 0.0, median: 7);
 signal = \in*SinOsc.ar(freq.lag(lagTime),0,sinamp);
 adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'rm3', {arg mix=0 -> [0,1], sinamp=0.5 -> [0,1], lagTime=0.1 -> [0,10], adjVol=0-> [-20,20];
-var signal, freq, hasFreq, amp; 
+var signal, freq, hasFreq, amp;
 # freq, hasFreq = Pitch.kr(\in, ampThreshold: 0.0, median: 7);
 amp = Amplitude.kr(\in, 0.05, 0.05);
 signal = \in*SinOsc.ar(freq.lag(lagTime),0,sinamp*amp);
-adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'bpf', {arg freq=600 -> [20,20000,\exp], q=30 -> [0.01,30.0], vol=0 -> [-53, 0], mix=1 -> [0,1], lagTime=40 -> [0,10]; 
-var signal; 
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'bpf', {arg freq=600 -> [20,20000,\exp], q=30 -> [0.01,30.0], vol=0 -> [-53, 0], mix=1 -> [0,1], lagTime=40 -> [0,10];
+var signal;
 signal = BPF.ar(\in, freq, q.lag(lagTime))*q.lag(lagTime).linlin(0.01,30,10,1);
 vol.dbamp * ((signal*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));} ], [ 'chr2', {arg mix=0 -> [0,1], depth=0.1 -> [0,2], predelay=0.08 -> [0,2], speed=0.05 -> [0.01, 10], ph_diff=0.5 -> [0, 6.2831], lagTime=0.1 -> [0,10];
 var input, sig, modulators, numDelays;
 numDelays = 24;
 input = \in * numDelays.reciprocal;
 modulators = Array.fill(numDelays, {arg i;
-LFPar.kr(speed * rrand(0.94, 1.06), ph_diff * i, depth.lag(lagTime), predelay.lag(lagTime));}); 
+LFPar.kr(speed * rrand(0.94, 1.06), ph_diff * i, depth.lag(lagTime), predelay.lag(lagTime));});
 sig = DelayC.ar(input, 7.0, modulators);
 sig = sig.sum;
 sig = sig * 3;
 ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
-} ], [ 'cut1', {arg freq=3 -> [0.01, 100, \exp], decayTime=0.025 -> [0.0001,0.1, \exp]; 
+} ], [ 'cut1', {arg freq=3 -> [0.01, 100, \exp], decayTime=0.025 -> [0.0001,0.1, \exp];
 	var trig;
 	trig = Decay.kr(Impulse.kr(freq), decayTime);
-	Gate.ar(\in, trig)} ], [ 'cut2', {arg freq=3 -> [0.01, 100, \exp], decayTime=0.025 -> [0.0001,0.1, \exp]; 
+	Gate.ar(\in, trig)} ], [ 'cut2', {arg freq=3 -> [0.01, 100, \exp], decayTime=0.025 -> [0.0001,0.1, \exp];
 	var trig;
 	trig = Decay.kr(Dust.kr(freq), decayTime);
 	Gate.ar(\in, trig)} ], [ 'cut3', {arg freq=3 -> [0.01, 100, \exp], decayTime=0.025 -> [0.0001,0.1, \exp],
-	minFreq=0.1 -> [0.01, 10, \exp], maxFreq=10 -> [10.01, 50, \exp]; 
+	minFreq=0.1 -> [0.01, 10, \exp], maxFreq=10 -> [10.01, 50, \exp];
 	var trig;
 	trig = Decay.kr(Impulse.kr(LFNoise1.kr(freq).linlin(-1,1,minFreq,maxFreq)), decayTime);
-	Gate.ar(\in, trig)} ], [ 'gdy2', {arg mix=0 -> [0,1], maxMul=1 -> [1, 8], ampdist=2 -> [0, 6, {|val| val.round(1)}], durDist=3 -> [0.0001, 8, \exp], adParam=1 -> [0.0001, 1, \exp], ddParam=1 -> [0.0001, 1, \exp], ampScale=0.5 -> [0,1], durScale=0.0 -> [0,1], kNum=40 -> [2, 50], transp=1 -> [0.1, 4], rate=1 -> [1/12, 10]; 
+	Gate.ar(\in, trig)} ], [ 'gdy2', {arg mix=0 -> [0,1], maxMul=1 -> [1, 8], ampdist=2 -> [0, 6, {|val| val.round(1)}], durDist=3 -> [0.0001, 8, \exp], adParam=1 -> [0.0001, 1, \exp], ddParam=1 -> [0.0001, 1, \exp], ampScale=0.5 -> [0,1], durScale=0.0 -> [0,1], kNum=40 -> [2, 50], transp=1 -> [0.1, 4], rate=1 -> [1/12, 10];
 	var freq, hasFreq, amp, minFreq, sig, latch1, latch2, latch3, maxDelay, in;
 	maxDelay=12;
 	in = \in;
@@ -323,7 +323,7 @@ amp = Amplitude.kr(in, 0.05, 0.05).lag(0.1);
 minFreq = ((latch3 * transp).fold2(1000)).abs.max(20);
 sig = Gendy1.ar(ampdist.max(0).min(6), durDist, adParam, ddParam, minFreq,(minFreq*maxMul).min(1000),ampScale,durScale,50,kNum)*amp;
 ((sig*mix.linlin(0,1,0,1))+(in*mix.linlin(0,1,1,0)))
-} ], [ 'cct2', {arg match=0.05 -> [0,0.1], gendur=0.01 -> [0.001, 0.016], freeze=0 -> [0,1, {|val| val.round(1)}], zcr=1 -> [0,1], genfreq=400 -> [100,3780, \exp], genamp= 0.02 -> [0.01,0.05]; 
+} ], [ 'cct2', {arg match=0.05 -> [0,0.1], gendur=0.01 -> [0.001, 0.016], freeze=0 -> [0,1, {|val| val.round(1)}], zcr=1 -> [0,1], genfreq=400 -> [100,3780, \exp], genamp= 0.02 -> [0.01,0.05];
 var concat, control, amp;
 control= Mix(Gendy3.ar(3,5,1.0,1.0,(Array.fill(5,{LFNoise0.kr(1.3.rand,1,2)})*genfreq), genamp, gendur, 5, mul:0.1));
 amp=Amplitude.ar(control);
@@ -341,7 +341,7 @@ concat;
 	var sig, table;
 	table=3;
 	sig = MarkovSynth.ar(\in, rec, time, table);
-	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))} ], [ 'gdy3', {arg mix=0 -> [0,1], maxMul=1 -> [1, 8], ampdist=2 -> [0, 6, {|val| val.round(1)}], durDist=3 -> [0.0001, 8, \exp], adParam=1 -> [0.0001, 1, \exp], ddParam=1 -> [0.0001, 1, \exp], ampScale=0.5 -> [0,1], durScale=0.0 -> [0,1], kNum=40 -> [2, 50], transp=1 -> [0.1, 4], rate=1 -> [1/12, 10]; 
+	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))} ], [ 'gdy3', {arg mix=0 -> [0,1], maxMul=1 -> [1, 8], ampdist=2 -> [0, 6, {|val| val.round(1)}], durDist=3 -> [0.0001, 8, \exp], adParam=1 -> [0.0001, 1, \exp], ddParam=1 -> [0.0001, 1, \exp], ampScale=0.5 -> [0,1], durScale=0.0 -> [0,1], kNum=40 -> [2, 50], transp=1 -> [0.1, 4], rate=1 -> [1/12, 10];
 var freq, hasFreq, amp, minFreq, sig, latch1, latch2, latch3, maxDelay, in;
 in = \in;
 maxDelay=12;
@@ -353,4 +353,118 @@ amp = Amplitude.kr(in, 0.05, 0.05).lag(0.1);
 minFreq = ((latch3 * transp).fold2(1000)).abs.max(20);
 sig = Gendy1.ar(ampdist.max(0).min(6), durDist, adParam, ddParam, minFreq,(minFreq*maxMul).min(1000),ampScale,durScale,50,kNum)*amp;
 ((sig*mix.linlin(0,1,0,1))+(in*mix.linlin(0,1,1,0))) + (in)
+} ], [ 'limiter', {arg mix = 1 -> [0,1], level= 1 -> [0,1];
+	var sig;
+	sig = Limiter.ar(\in, level);
+	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));
+} ], [ 'limiterst', {arg mix = 1 -> [0,1], level= 1 -> [0,1];
+	var sig;
+	sig = Limiter.ar(\in, level);
+	sig = ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));
+} ], [ 'volgate', {arg thresh = 0.006->[0,1.0], 
+	time = 1.152->[0.01,2], amp = 1->[0.1,2];
+	var input, trig;
+	input = \in;
+	trig = (input.abs > thresh);
+	SelectX.ar(trig.lag(time), [DC.ar(0), input]) * amp;
+} ], [ 'noisegate', {arg thresh = 0.006->[0,1.0], 
+	atk = 0.01->[0,0.5], rel = 0.1 -> [0.01,2], amp = 1->[0.1,2];
+	var input;
+	input = \in;
+	Compander.ar(input, input, thresh, 10, 1, atk, rel) * amp;
+} ], [ 'echo', {arg delayTime=0.08->[0.08,0.2], mix=0.5->[0,1], 
+	adjVol=1->[0.2,2.0,{|val| val.round(0.01)-0.01}]; 
+	var drysig, wetsig;
+	drysig = \in;
+	wetsig = CombL.ar(\in, 12, delayTime, 0);
+	((drysig * mix.linlin(0,1,1,0)) + (wetsig * mix))*adjVol;
+} ], [ 'convrevbfenc2_10in', {arg mix=1.0 -> [ 0, 1],
+	pan1_1=0 -> [-1,1], pan2_1=0 -> [-1,1], elev1=0 -> [-90,90],
+	pan1_2=0 -> [-1,1], pan2_2=0 -> [-1,1], elev2=0 -> [-90,90],
+	pan1_3=0 -> [-1,1], pan2_3=0 -> [-1,1], elev3=0 -> [-90,90],
+	pan1_4=0 -> [-1,1], pan2_4=0 -> [-1,1], elev4=0 -> [-90,90],
+	pan1_5=0 -> [-1,1], pan2_5=0 -> [-1,1], elev5=0 -> [-90,90],
+	pan1_6=0 -> [-1,1], pan2_6=0 -> [-1,1], elev6=0 -> [-90,90],
+	pan1_7=0 -> [-1,1], pan2_7=0 -> [-1,1], elev7=0 -> [-90,90],
+	pan1_8=0 -> [-1,1], pan2_8=0 -> [-1,1], elev8=0 -> [-90,90],
+	pan1_9=0 -> [-1,1], pan2_9=0 -> [-1,1], elev9=0 -> [-90,90],
+	pan1_10=0 -> [-1,1], pan2_10=0 -> [-1,1], elev10=0 -> [-90,90],
+	wComp=0 -> [0, 1];
+	var input, output, dryoutput, elevation, spksDeg, sig;
+	var w1,x1,y1,z1,w2,x2,y2,z2,w3,x3,y3,z3,w4,x4,y4,z4,w5,x5,y5,z5;
+	var w6,x6,y6,z6,w7,x7,y7,z7,w8,x8,y8,z8,w9,x9,y9,z9,w10,x10,y10,z10;
+	var lag=0.1;
+	sig = \in * Line.kr(0,1,0.1);
+	#w1,x1,y1,z1 = BFEncode2.ar(sig[0], pan1_1.lag(lag),
+		pan2_1.lag(lag), elev1.degrad.lag(lag));
+	#w2,x2,y2,z2 = BFEncode2.ar(sig[1], pan1_2.lag(lag), pan2_2.lag(lag),
+		elev2.degrad.lag(lag));
+	#w3,x3,y3,z3 = BFEncode2.ar(sig[2], pan1_3.lag(lag), pan2_3.lag(lag),
+		elev3.degrad.lag(lag));
+	#w4,x4,y4,z4 = BFEncode2.ar(sig[3], pan1_4.lag(lag), pan2_4.lag(lag),
+		elev4.degrad.lag(lag));
+	#w5,x5,y5,z5 = BFEncode2.ar(sig[4], pan1_5.lag(lag), pan2_5.lag(lag),
+		elev5.degrad.lag(lag));
+	#w6,x6,y6,z6 = BFEncode2.ar(sig[5], pan1_6.lag(lag), pan2_6.lag(lag),
+		elev6.degrad.lag(lag));
+	#w7,x7,y7,z7 = BFEncode2.ar(sig[6], pan1_7.lag(lag), pan2_7.lag(lag),
+		elev7.degrad.lag(lag));
+	#w8,x8,y8,z8 = BFEncode2.ar(sig[7], pan1_8.lag(lag), pan2_8.lag(lag),
+		elev8.degrad.lag(lag));
+	#w9,x9,y9,z9 = BFEncode2.ar(sig[8], pan1_8.lag(lag), pan2_8.lag(lag),
+		elev8.degrad.lag(lag));
+	#w10,x10,y10,z10 = BFEncode2.ar(sig[9], pan1_8.lag(lag), pan2_8.lag(lag),
+		elev8.degrad.lag(lag));
+input = [(w1+w2+w3+w4+w5+w6+w7+w8+w9+w10), (x1+x2+x3+x4+x5+x6+x7+x8+x9+x10),
+		(y1+y2+y3+y4+y5+y6+y7+y8+y9+y10), (z1+z2+z3+z4+z5+z6+z7+z8+z9+z10)];
+output = \convrev;
+spksDeg = ~speakDeg.degrad;
+elevation = ~elev;
+	dryoutput = BFDecode1.ar(input[0], input[1], input[2], input[3], spksDeg, elevation.degrad);
+	output = BFDecode1.ar(output[0], output[1], output[2], output[3], spksDeg, elevation.degrad);
+	(output*mix.max(0).min(1)) + (dryoutput*mix.linlin(0,1,1,0));
+} ], [ 'convrevbfenc1_10in', {arg mix=1.0 -> [ 0, 1],
+	azi1=0 -> [-180, 180], elev1=0 -> [-90,90], rho1=0 -> [0,4.0],
+	azi2=0 -> [-180, 180], elev2=0 -> [-90,90], rho2=0 -> [0,4.0],
+	azi3=0 -> [-180, 180], elev3=0 -> [-90,90], rho3=0 -> [0,4.0],
+	azi4=0 -> [-180, 180], elev4=0 -> [-90,90], rho4=0 -> [0,4.0],
+	azi5=0 -> [-180, 180], elev5=0 -> [-90,90], rho5=0 -> [0,4.0],
+	azi6=0 -> [-180, 180], elev6=0 -> [-90,90], rho6=0 -> [0,4.0],
+	azi7=0 -> [-180, 180], elev7=0 -> [-90,90], rho7=0 -> [0,4.0],
+	azi8=0 -> [-180, 180], elev8=0 -> [-90,90], rho8=0 -> [0,4.0],
+	azi9=0 -> [-180, 180], elev9=0 -> [-90,90], rho9=0 -> [0,4.0],
+	azi10=0 -> [-180, 180], elev10=0 -> [-90,90], rho10=0 -> [0,4.0];
+	var input, output, dryoutput, elevation, spksDeg, sig;
+	var w1,x1,y1,z1,w2,x2,y2,z2,w3,x3,y3,z3,w4,x4,y4,z4,w5,x5,y5,z5;
+	var w6,x6,y6,z6,w7,x7,y7,z7,w8,x8,y8,z8,w9,x9,y9,z9,w10,x10,y10,z10;
+	var lag=0.1;
+	sig = \in * Line.kr(0,1,0.1);
+	#w1,x1,y1,z1 = BFEncode1.ar(sig[0], azi1.degrad.lag(lag), elev1.degrad.lag(lag),
+		rho1.lag(lag));
+	#w2,x2,y2,z2 = BFEncode1.ar(sig[1], azi2.degrad.lag(lag), elev2.degrad.lag(lag),
+		rho2.lag(lag));
+	#w3,x3,y3,z3 = BFEncode1.ar(sig[2], azi3.degrad.lag(lag), elev3.degrad.lag(lag),
+		rho3.lag(lag));
+	#w4,x4,y4,z4 = BFEncode1.ar(sig[3], azi4.degrad.lag(lag), elev4.degrad.lag(lag),
+		rho4.lag(lag));
+	#w5,x5,y5,z5 = BFEncode1.ar(sig[4], azi5.degrad.lag(lag), elev5.degrad.lag(lag),
+		rho5.lag(lag));
+	#w6,x6,y6,z6 = BFEncode1.ar(sig[5], azi6.degrad.lag(lag), elev6.degrad.lag(lag),
+		rho6.lag(lag));
+	#w7,x7,y7,z7 = BFEncode1.ar(sig[6], azi7.degrad.lag(lag), elev7.degrad.lag(lag),
+		rho7.lag(lag));
+	#w8,x8,y8,z8 = BFEncode1.ar(sig[7], azi8.degrad.lag(lag), elev8.degrad.lag(lag),
+		rho8.lag(lag));
+	#w9,x9,y9,z9 = BFEncode1.ar(sig[8], azi9.degrad.lag(lag), elev9.degrad.lag(lag),
+		rho9.lag(lag));
+	#w10,x10,y10,z10 = BFEncode1.ar(sig[9], azi10.degrad.lag(lag), elev10.degrad.lag(lag),
+		rho10.lag(lag));
+input = [(w1+w2+w3+w4+w5+w6+w7+w8+w9+w10), (x1+x2+x3+x4+x5+x6+x7+x8+x9+x10),
+		(y1+y2+y3+y4+y5+y6+y7+y8+y9+y10), (z1+z2+z3+z4+z5+z6+z7+z8+z9+z10)];
+output = \convrev;
+spksDeg = ~speakDeg.degrad;
+elevation = ~elev;
+	dryoutput = BFDecode1.ar(input[0], input[1], input[2], input[3], spksDeg, elevation.degrad);
+	output = BFDecode1.ar(output[0], output[1], output[2], output[3], spksDeg, elevation.degrad);
+	(output*mix.max(0).min(1)) + (dryoutput*mix.linlin(0,1,1,0));
 } ] ]

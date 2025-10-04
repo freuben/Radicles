@@ -1526,7 +1526,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(filters.notNil, {
 			if(filters.notEmpty, {
 				fxsNum = filters.flop[0].collect({|item|
-					item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
+					item.asString.split($_).last.asInteger }).maxItem.max(1) + 1;
 			});
 		});
 
@@ -2353,8 +2353,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(filters.notEmpty, {
 						thisFltTags = filters.flop[0].collect({|item| this.convFilterTag(item) });
 						fltTagArr = thisFltTags.collect({|item|
-							[item[0], item[1].asInt, item[2].asInt] });
-						thisFltInfo = thisFltTags.collect({|item| [item[0], item[1].asInt] });
+							[item[0], item[1].asInteger, item[2].asInteger] });
+						thisFltInfo = thisFltTags.collect({|item| [item[0], item[1].asInteger] });
 						tracksFlt = ([thisFltInfo.flop[0], thisFltInfo.flop[1]].flop);
 						trackInfoInt = [trackInfoArr[0].asSymbol, trackInfoArr[1]];
 						if(trackInfoInt[1].isNil, {trackInfoInt[1] = 1 });
@@ -3317,7 +3317,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			.action = { arg menu;
 				var filterInfoArr, fxsNum2;
 				filterInfoArr = this.convFilterTag(filterTag);
-				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInt, filterInfoArr[2].asInt, {
+				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInteger, filterInfoArr[2].asInteger, {
 					filtersWin.close;
 					if(mixButton.notNil, {
 						mixButton.string = "";
@@ -3325,7 +3325,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(filters.notNil, {
 						if(filters.notEmpty, {
 							fxsNum2 = filters.flop[0].collect({|item|
-								item.asString.split($_).last.asInt }).maxItem.max(1) + 1;
+								item.asString.split($_).last.asInteger }).maxItem.max(1) + 1;
 							{
 								if(fxsNum2 < fxsNum, {
 									server.sync; this.refreshMixGUI;
@@ -3403,6 +3403,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		inArr = inputs.flop[1][inputs.flop[0].indexOf(\inMaster);];
 		newCS = inArr.collect {|item, index|  "Ndef.ar(" ++ item.key.cs ++
 			", " ++ item.numChannels ++ ") * "	++ buttstates[index] };
+		newCS = newCS.cs.replace("\"", "");
 		finalCS = cs.replace(cs.copyRange(startCS+1,endCS), newCS);
 		("Ndef('inMaster').source = " ++ finalCS).radpost.interpret;
 	}
@@ -3852,7 +3853,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(fxArg.isArray, {
 			if(fxArg.rank == 2, {fxArg = fxArg.flat});
 			if(fxArg.select({|item| item.isSymbol }).isEmpty, {
-				newArr1 = fxArg.reshape((fxArg.size/2).asInt,2);
+				newArr1 = fxArg.reshape((fxArg.size/2).asInteger,2);
 				newArr2 = newArr1.flop[0].collect{|item| Ndef(ndefKey).controlKeys[item-1] };
 				thisArg = [newArr2, newArr1.flop[1]].flop.flat;
 				("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++

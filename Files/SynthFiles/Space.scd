@@ -43,4 +43,21 @@
 	rymerSpeakers = [ [25, 0], [-25, 0], [-60, 0], [-110, 0], [-160, 0], [160, 0], [110, 0], [60, 0], [-40, 40], [-120, 40], [120, 40], [40, 40], [-25, -40], [-130, -40], [130, -40], [25, -40] ];
 	#w, x, y, z = BFEncode2.ar(\in, panx, pany, elevation);
   BFDecode1.ar(w, x, y, z, rymerSpeakers.flop[0], rymerSpeakers.flop[1]);
+} ], [ 'bfenc2', {arg pan1=0 , pan2=0 , elev = 0 ;
+	var  w, x, y, z, sig, spksDeg, spkElevation;
+	var lag=0.1;
+	sig = \in;
+	#w, x, y, z = BFEncode2.ar(sig, pan1.lag(lag), pan2.lag(lag), elev.degrad.lag(lag));
+	spksDeg = ~speakDeg;
+	spkElevation = ~elev;
+	sig = BFDecode1.ar(w, x, y, z, spksDeg.degrad, spkElevation.degrad);
+} ], [ 'bfenc1', {arg azi=0 , elev=0 ,
+	rho = 0 ;
+	var  w, x, y, z, sig, spksDeg, spkElevation;
+	var lag=0.1;
+	sig = \in;
+	#w, x, y, z = BFEncode1.ar(sig, azi.degrad.lag(lag), elev.degrad.lag(lag), rho.lag(lag));
+	spksDeg = ~speakDeg;
+	spkElevation = ~elev;
+	sig = BFDecode1.ar(w, x, y, z, spksDeg.degrad, spkElevation.degrad);
 } ] ]

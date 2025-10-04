@@ -353,4 +353,118 @@ amp = Amplitude.kr(in, 0.05, 0.05).lag(0.1);
 minFreq = ((latch3 * transp).fold2(1000)).abs.max(20);
 sig = Gendy1.ar(ampdist.max(0).min(6), durDist, adParam, ddParam, minFreq,(minFreq*maxMul).min(1000),ampScale,durScale,50,kNum)*amp;
 ((sig*mix.linlin(0,1,0,1))+(in*mix.linlin(0,1,1,0))) + (in)
+} ], [ 'limiter', {arg mix = 1 , level= 1 ;
+	var sig;
+	sig = Limiter.ar(\in, level);
+	((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));
+} ], [ 'limiterst', {arg mix = 1 , level= 1 ;
+	var sig;
+	sig = Limiter.ar(\in, level);
+	sig = ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)));
+} ], [ 'volgate', {arg thresh = 0.006, 
+	time = 1.152, amp = 1;
+	var input, trig;
+	input = \in;
+	trig = (input.abs > thresh);
+	SelectX.ar(trig.lag(time), [DC.ar(0), input]) * amp;
+} ], [ 'noisegate', {arg thresh = 0.006, 
+	atk = 0.01, rel = 0.1 , amp = 1;
+	var input;
+	input = \in;
+	Compander.ar(input, input, thresh, 10, 1, atk, rel) * amp;
+} ], [ 'echo', {arg delayTime=0.08, mix=0.5, 
+	adjVol=1; 
+	var drysig, wetsig;
+	drysig = \in;
+	wetsig = CombL.ar(\in, 12, delayTime, 0);
+	((drysig * mix.linlin(0,1,1,0)) + (wetsig * mix))*adjVol;
+} ], [ 'convrevbfenc2_10in', {arg mix=1.0 ,
+	pan1_1=0 , pan2_1=0 , elev1=0 ,
+	pan1_2=0 , pan2_2=0 , elev2=0 ,
+	pan1_3=0 , pan2_3=0 , elev3=0 ,
+	pan1_4=0 , pan2_4=0 , elev4=0 ,
+	pan1_5=0 , pan2_5=0 , elev5=0 ,
+	pan1_6=0 , pan2_6=0 , elev6=0 ,
+	pan1_7=0 , pan2_7=0 , elev7=0 ,
+	pan1_8=0 , pan2_8=0 , elev8=0 ,
+	pan1_9=0 , pan2_9=0 , elev9=0 ,
+	pan1_10=0 , pan2_10=0 , elev10=0 ,
+	wComp=0 ;
+	var input, output, dryoutput, elevation, spksDeg, sig;
+	var w1,x1,y1,z1,w2,x2,y2,z2,w3,x3,y3,z3,w4,x4,y4,z4,w5,x5,y5,z5;
+	var w6,x6,y6,z6,w7,x7,y7,z7,w8,x8,y8,z8,w9,x9,y9,z9,w10,x10,y10,z10;
+	var lag=0.1;
+	sig = \in * Line.kr(0,1,0.1);
+	#w1,x1,y1,z1 = BFEncode2.ar(sig[0], pan1_1.lag(lag),
+		pan2_1.lag(lag), elev1.degrad.lag(lag));
+	#w2,x2,y2,z2 = BFEncode2.ar(sig[1], pan1_2.lag(lag), pan2_2.lag(lag),
+		elev2.degrad.lag(lag));
+	#w3,x3,y3,z3 = BFEncode2.ar(sig[2], pan1_3.lag(lag), pan2_3.lag(lag),
+		elev3.degrad.lag(lag));
+	#w4,x4,y4,z4 = BFEncode2.ar(sig[3], pan1_4.lag(lag), pan2_4.lag(lag),
+		elev4.degrad.lag(lag));
+	#w5,x5,y5,z5 = BFEncode2.ar(sig[4], pan1_5.lag(lag), pan2_5.lag(lag),
+		elev5.degrad.lag(lag));
+	#w6,x6,y6,z6 = BFEncode2.ar(sig[5], pan1_6.lag(lag), pan2_6.lag(lag),
+		elev6.degrad.lag(lag));
+	#w7,x7,y7,z7 = BFEncode2.ar(sig[6], pan1_7.lag(lag), pan2_7.lag(lag),
+		elev7.degrad.lag(lag));
+	#w8,x8,y8,z8 = BFEncode2.ar(sig[7], pan1_8.lag(lag), pan2_8.lag(lag),
+		elev8.degrad.lag(lag));
+	#w9,x9,y9,z9 = BFEncode2.ar(sig[8], pan1_8.lag(lag), pan2_8.lag(lag),
+		elev8.degrad.lag(lag));
+	#w10,x10,y10,z10 = BFEncode2.ar(sig[9], pan1_8.lag(lag), pan2_8.lag(lag),
+		elev8.degrad.lag(lag));
+input = [(w1+w2+w3+w4+w5+w6+w7+w8+w9+w10), (x1+x2+x3+x4+x5+x6+x7+x8+x9+x10),
+		(y1+y2+y3+y4+y5+y6+y7+y8+y9+y10), (z1+z2+z3+z4+z5+z6+z7+z8+z9+z10)];
+output = \convrev;
+spksDeg = ~speakDeg.degrad;
+elevation = ~elev;
+	dryoutput = BFDecode1.ar(input[0], input[1], input[2], input[3], spksDeg, elevation.degrad);
+	output = BFDecode1.ar(output[0], output[1], output[2], output[3], spksDeg, elevation.degrad);
+	(output*mix.max(0).min(1)) + (dryoutput*mix.linlin(0,1,1,0));
+} ], [ 'convrevbfenc1_10in', {arg mix=1.0 ,
+	azi1=0 , elev1=0 , rho1=0 ,
+	azi2=0 , elev2=0 , rho2=0 ,
+	azi3=0 , elev3=0 , rho3=0 ,
+	azi4=0 , elev4=0 , rho4=0 ,
+	azi5=0 , elev5=0 , rho5=0 ,
+	azi6=0 , elev6=0 , rho6=0 ,
+	azi7=0 , elev7=0 , rho7=0 ,
+	azi8=0 , elev8=0 , rho8=0 ,
+	azi9=0 , elev9=0 , rho9=0 ,
+	azi10=0 , elev10=0 , rho10=0 ;
+	var input, output, dryoutput, elevation, spksDeg, sig;
+	var w1,x1,y1,z1,w2,x2,y2,z2,w3,x3,y3,z3,w4,x4,y4,z4,w5,x5,y5,z5;
+	var w6,x6,y6,z6,w7,x7,y7,z7,w8,x8,y8,z8,w9,x9,y9,z9,w10,x10,y10,z10;
+	var lag=0.1;
+	sig = \in * Line.kr(0,1,0.1);
+	#w1,x1,y1,z1 = BFEncode1.ar(sig[0], azi1.degrad.lag(lag), elev1.degrad.lag(lag),
+		rho1.lag(lag));
+	#w2,x2,y2,z2 = BFEncode1.ar(sig[1], azi2.degrad.lag(lag), elev2.degrad.lag(lag),
+		rho2.lag(lag));
+	#w3,x3,y3,z3 = BFEncode1.ar(sig[2], azi3.degrad.lag(lag), elev3.degrad.lag(lag),
+		rho3.lag(lag));
+	#w4,x4,y4,z4 = BFEncode1.ar(sig[3], azi4.degrad.lag(lag), elev4.degrad.lag(lag),
+		rho4.lag(lag));
+	#w5,x5,y5,z5 = BFEncode1.ar(sig[4], azi5.degrad.lag(lag), elev5.degrad.lag(lag),
+		rho5.lag(lag));
+	#w6,x6,y6,z6 = BFEncode1.ar(sig[5], azi6.degrad.lag(lag), elev6.degrad.lag(lag),
+		rho6.lag(lag));
+	#w7,x7,y7,z7 = BFEncode1.ar(sig[6], azi7.degrad.lag(lag), elev7.degrad.lag(lag),
+		rho7.lag(lag));
+	#w8,x8,y8,z8 = BFEncode1.ar(sig[7], azi8.degrad.lag(lag), elev8.degrad.lag(lag),
+		rho8.lag(lag));
+	#w9,x9,y9,z9 = BFEncode1.ar(sig[8], azi9.degrad.lag(lag), elev9.degrad.lag(lag),
+		rho9.lag(lag));
+	#w10,x10,y10,z10 = BFEncode1.ar(sig[9], azi10.degrad.lag(lag), elev10.degrad.lag(lag),
+		rho10.lag(lag));
+input = [(w1+w2+w3+w4+w5+w6+w7+w8+w9+w10), (x1+x2+x3+x4+x5+x6+x7+x8+x9+x10),
+		(y1+y2+y3+y4+y5+y6+y7+y8+y9+y10), (z1+z2+z3+z4+z5+z6+z7+z8+z9+z10)];
+output = \convrev;
+spksDeg = ~speakDeg.degrad;
+elevation = ~elev;
+	dryoutput = BFDecode1.ar(input[0], input[1], input[2], input[3], spksDeg, elevation.degrad);
+	output = BFDecode1.ar(output[0], output[1], output[2], output[3], spksDeg, elevation.degrad);
+	(output*mix.max(0).min(1)) + (dryoutput*mix.linlin(0,1,1,0));
 } ] ]

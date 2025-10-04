@@ -520,13 +520,16 @@ SynthDefFile {
 		^string;
 	}
 
-	* write {arg class=\filter, key, dataArr, desc, path, post=true;
-		var synthFile;
+	* write {arg class=\filter, key, dataArr, desc, path, post=true, extraArgs;
+		var synthFile, arguments;
 		synthFile = ModFile.new(\synthdef, class);
 		if(dataArr.specArr.notNil, {
+			if(extraArgs.notNil, {arguments =  dataArr.specArr ++ extraArgs},
+				arguments =  dataArr.specArr;
+			);
 			^synthFile.write(key, dataArr, true, {
 				SynthFile.write(class, key, dataArr.specFunc, false, path, false);
-				SpecFile.write(class, key, dataArr.specArr, false, path, false);
+				SpecFile.write(class, key, arguments, false, path, false);
 				if(desc.notNil, {
 					DescriptionFile.write(class, key, desc, false, path, false);
 				});

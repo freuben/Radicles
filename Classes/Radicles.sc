@@ -1,11 +1,11 @@
 Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedFuncAction, <>schedDiv=1,
-	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>reducePostControl=false,
+	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>oscCode, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
 	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
 	<>filesPath, <>soundFilePath, <>postWindow, <>beatsFuncArr, traceFunc, <>liveBlockArr,
 	<>numOutputs = 8, <>numInputs = 8, <>numBuffers = 512, <>numBuses = 1024,
-	<>numControlBuses=16384, <>memorySize=409600;
+	<>numControlBuses=16384, <>memorySize=409600, <>modelNum=0;
 
 	*new {
 		this.setColors;
@@ -29,6 +29,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	*start {
 		this.callWindow;
 		this.synthDefsPn;
+		this.raveFunc;
 		MIDIIn.connectAll;
 	}
 
@@ -5866,6 +5867,15 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				Block.play(num1, \play, Block.recBuf(string.divNumStr[1]););
 			});
 		}, "pl: block, buffer");
+		cW.add(\pl2, [\str, \num, \str], {|str1, num1, str2|
+			var string;
+			string = str2.asString;
+			if(string[0].ascii != 64, {
+				Block.play(num1, \play2, str2);
+			}, {
+				Block.play(num1, \play2, Block.recBuf(string.divNumStr[1]););
+			});
+		}, "pl2: block, buffer");
 		cW.add(\lp, [\str, \num, \str], {|str1, num1, str2|
 			var string;
 			string = str2.asString;
@@ -5875,7 +5885,15 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				Block.play(num1, \loop, Block.recBuf(string.divNumStr[1]););
 			});
 		}, "lp: block, buffer");
-
+		cW.add(\lp2, [\str, \num, \str], {|str1, num1, str2|
+			var string;
+			string = str2.asString;
+			if(string[0].ascii != 64, {
+				Block.play(num1, \loop2, str2);
+			}, {
+				Block.play(num1, \loop2, Block.recBuf(string.divNumStr[1]););
+			});
+		}, "lp2: block, buffer");
 		cW.add(\plpv, [\str, \num, \str], {|str1, num1, str2|
 			var string;
 			string = str2.asString;
@@ -5978,6 +5996,12 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		}, "audioin: bus, block");
 		cW.add(\in, [\str, \num, \num], {|str1, num1, num2|
 			Block.play(num2, \audioin, \nobuf, [\bus, num1]);
+		}, "audioin: bus, block");
+		cW.add(\in2, [\str, \num, \num], {|str1, num1, num2|
+			Block.play(num2, \audioin2, \nobuf, [\bus, num1]);
+		}, "audioin: bus, block");
+		cW.add(\in2, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+			Block.play(num2, \audioin2, \nobuf, [\bus, num1, \pan, num3]);
 		}, "audioin: bus, block");
 		cW.add(\blkn, [\str, \num], {|str1, num1|
 			Block.addNum(num1);
@@ -6620,7 +6644,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			if(aZ.isNil, {
 				aZ = Assemblage(num1, num2, arr1, action: {|number, channels|
 					[number, channels].postln;
-					Block.addAll(channels[0], {|arr|
+					Block.addAll(channels[0]!number, {|arr|
 						arr.do{|item, index|
 							aZ.input(item, \track, (index+1));
 						};
@@ -6629,7 +6653,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			}, {
 				"assemblage is already running".warn;
 			});
-		}, "assemblage: trackNum, busNum, chanNum");
+		}, "assemblage: trackNum, busNum, chanNumArr");
 		cW.add(\start, [\str, \num, \num, \str], {|str1, num1, num2, str2|
 			var array, spaceArr;
 			if(aZ.isNil, {
@@ -6638,6 +6662,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				spaceArr[spaceArr.size-1] = \dir;
 				spaceArr.postln;
 				aZ = Assemblage(num1, num2, array, spaceArr, action: {|number, channels|
+					//this line might be wrong... channels[0]!number :
 					Block.addAll(channels[0], {|arr|
 						arr.do{|item, index|
 							aZ.input(item, \track, (index+1));
@@ -6647,7 +6672,40 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			}, {
 				"assemblage is already running".warn;
 			});
-		}, "assemblage: trackNum, busNum, chanNum");
+		}, "assemblage: trackNum, busNum, spaceType");
+		//new
+		cW.add(\start, [\str, \num, \num, \arr, \str], {|str1, num1, num2, arr1, str2|
+			if(aZ.isNil, {
+				aZ = Assemblage(num1, num2, arr1, str2, action: {|number, channels|
+					[number, channels].postln;
+					Block.addAll(channels[0]!number, {|arr|
+						arr.postln;
+						arr.do{|item, index|
+							aZ.input(item, \track, (index+1));
+						};
+					});
+				});
+			}, {
+				"assemblage is already running".warn;
+			});
+		}, "assemblage: trackNum, busNum, chanNumArr, spaceType");
+
+		cW.add(\start, [\str, \num, \num, \arr, \arr], {|str1, num1, num2, arr1, arr2|
+			if(aZ.isNil, {
+				aZ = Assemblage(num1, num2, arr1, arr2, action: {|number, channels|
+					[number, channels].postln;
+					Block.addAll(channels[0]!number, {|arr|
+						arr.postln;
+						arr.do{|item, index|
+							aZ.input(item, \track, (index+1));
+						};
+					});
+				});
+			}, {
+				"assemblage is already running".warn;
+			});
+		}, "assemblage: trackNum, busNum, chanNumArr, spaceTypeArr");
+		//
 
 		cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
@@ -6921,6 +6979,233 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 		};
 		cW.storeIndex = 0;
+	}
+
+	*oscForCode {arg ip="127.0.0.1", port=57120;
+		oscCode = NetAddr(ip, port);
+	}
+
+	*raveFunc {var getModelPath, getModels, postModels, modelArr, modelLoad;
+		getModelPath = {arg type=\rave;
+			var modelPath;
+			case
+			{type == \rave} {modelPath = filesPath ++ "/Models/RAVE";}
+			{type == \prior} {modelPath = filesPath ++ "/Models/MSPrior";};
+			if(modelPath.notNil, {
+				modelPath;
+			}, {
+				"model type not found".postln;
+				nil
+			});
+		};
+
+		getModels = {arg type=\rave;
+			var modelPath;
+			modelPath = getModelPath.(type);
+			if(modelPath.notNil,{
+				PathName(modelPath).files.collect{|item| item.fileNameWithoutExtension };
+			});
+		};
+
+		postModels = {arg type = \rave; getModels.(type).do{|item, index| [index, item].radpost;} };
+
+		modelArr = nil!10;
+
+		modelLoad = {arg type=\rave, num=0, tsfile=0, action;
+			var key, fileName, indexFile, modelNames;
+			if((num.isPositive).and(num.isInteger), {
+				key = (type.asString ++ num.asString).asSymbol;
+				modelNames = getModels.(type);
+				if(modelNames.notNil, {
+					if(tsfile.isString, {
+						indexFile = modelNames.indexOfEqual(tsfile);
+						if(indexFile.notNil, {
+							fileName = modelNames[indexFile];
+						}, {
+							"Model not found : wrong file name".radpost;
+						});
+					}, {
+						if(tsfile < (modelNames.size), {
+							fileName = modelNames[tsfile];
+						}, {
+							"Model not found : wrong file index".radpost;
+						});
+					});
+					if(fileName.notNil, {
+						{
+							"/\/\Loading model...".radpost;
+							1.yield;
+							"/\/\Model loaded:".radpost;
+							("/\/\Model Type: " ++ type.asString.capitalise).radpost;
+							("/\/\Model Name: " ++ fileName).radpost;
+							("/\/\Model Key: " ++ key).radpost;
+						}.fork;
+						modelArr[num] = [key, fileName];
+						if(action.notNil, {
+						NN.load(key, (getModelPath.(type) ++ "/" ++ fileName ++ ".ts"),
+								action: action);
+						}, {
+						NN.load(key, (getModelPath.(type) ++ "/" ++ fileName ++ ".ts"),
+								action: _.describe);
+						});
+						modelNum = num; //changes automatically the key number
+					});
+				}, {
+					"model type not found".radpost;
+				});
+			}, {
+				"model number is wrong - try numbers between 0 and 9".radpost;
+			});
+		};
+
+		cW.addAll([
+			[\rave, [\str], { postModels.(\rave); }, "post rave models"],
+			[\prior, [\str], { postModels.(\prior); }, "post prior models"],
+			[\models, [\str], { modelArr.do({|item, index|
+				if(item.notNil, {([index+1] ++ item).radpost}); }); },
+				"post loaded models"],
+			[\modelNum, [\str], { ("/\/\Current model number: " ++ modelNum).radpost; },
+				"change current model number"],
+			[\modelNum, [\str, \num], {|str, num| modelNum = num; },
+				"change current model number"],
+			[\modelInfo, [\str], { NN.describeAll },
+				"post info about all loaded models"],
+			[\modelInfo, [\str, \str], {|str1, str2| NN(str2.asSymbol).describe },
+				"post info about this model key"],
+			[\rave, [\str, \num, \num], {|str, num1, num2| modelLoad.(\rave,num1,num2);},
+				"load rave model with index"],
+			[\rave, [\str, \num, \str], {|str1, num, str2| modelLoad.(\rave,num,str2.asString);},
+				"load rave model with name"],
+			[\prior, [\str, \num, \num], {|str, num1, num2| modelLoad.(\prior,num1,num2);},
+				"load rave model with index"],
+			[\prior, [\str, \num, \str], {|str1, num, str2| modelLoad.(\prior,num,str2.asString);},
+				"load rave model with name"],
+			[\raveins, [\str], {|str| cW.callFunc("(in 1 1 & in 2 2 & in 3 3 & in 4 4 & blk 5 audioins)" )},
+				"rave inputs"],
+			[\brave1, [\str, \num, \num], {|str, num1, num2|
+				var raveNum;
+				raveNum = num1-1;
+				modelLoad.(\rave,raveNum,num2, action: {
+					if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
+					Radicles.aZ.setFx(\bus, num1, 3, \nntImprov,
+						[\pan, ~panArr[raveNum]]);
+				});
+			},
+			"load rave model and fx in bus number"],
+
+			[\brave, [\str, \num, \num], {|str, num1, num2|
+				var raveNum;
+				raveNum = num1-1;
+				modelLoad.(\rave,raveNum,num2, action: {
+					Radicles.aZ.setFx(\bus, num1, 3, \nntImprov2);
+				});
+			},
+			"load rave model fake stereo and fx in bus number"],
+
+			[\brave1, [\str, \arr, \num], {|str, arr1, num2|
+				var raveNum, cond1;
+				cond1 = Condition.new(false);
+
+				arr1.postln;
+				{
+				arr1.do{|item|
+				raveNum = item-1;
+
+					if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
+
+					modelLoad.(\rave,raveNum,num2, action: {
+							Radicles.aZ.setFx(\bus, item, 3, \nntImprov,
+								[\pan, ~panArr[raveNum]], action:
+							{
+								cond1.test = true;
+								cond1.signal;
+						})
+					}
+					);
+
+					cond1.test = false;
+					cond1.wait;
+				};
+				}.fork;
+
+
+			},
+		"load array of rave models and fx in bus number"],
+
+			[\brave, [\str, \arr, \num], {|str, arr1, num2|
+				var raveNum, cond1;
+				cond1 = Condition.new(false);
+
+				arr1.postln;
+				{
+				arr1.do{|item|
+				raveNum = item-1;
+
+					modelLoad.(\rave,raveNum,num2, action: {
+						Radicles.aZ.setFx(\bus, item, 3, \nntImprov2, action:
+							{
+								cond1.test = true;
+								cond1.signal;
+						})
+					}
+					);
+
+					cond1.test = false;
+					cond1.wait;
+				};
+				}.fork;
+
+
+			},
+		"load array of fake stereo rave models and fx in bus number"],
+
+			[\braven, [\str, \num, \num], {|str, num1, num2|
+				var raveNum;
+				raveNum = num1-1;
+				modelLoad.(\rave,raveNum,num2, action: {
+					Radicles.aZ.setFx(\bus, num1, 3, \nnt);
+					/*cW.callFunc( ("fx b " ++ num1 ++ 	" 3 nntImprov") );*/
+				});
+			},
+			"load rave model and fx in bus number"],
+
+			[\braven, [\str, \arr, \num], {|str, arr1, num2|
+				var raveNum, cond1;
+				cond1 = Condition.new(false);
+
+				arr1.postln;
+				{
+				arr1.do{|item|
+				raveNum = item-1;
+
+					modelLoad.(\rave,raveNum,num2, action: {
+						Radicles.aZ.setFx(\bus, item, 3, \nnt, action:
+							{
+								cond1.test = true;
+								cond1.signal;
+						})
+					}
+					);
+
+					cond1.test = false;
+					cond1.wait;
+				};
+				}.fork;
+
+
+			},
+		"load array of rave models and fx in bus number"],
+
+		]);
+
+
+
+
+	}
+
+	*defaultNntImprov {arg ndef; var defaultRAVEVals;
+		defaultRAVEVals = "'lowCut', 20, 'hiCut', 20000, 'preVol', 6, 'cpthresh', -20, 'ratio', 1, 'cpatk', 0.01, 'cprel', 0.01, 'transp', 0, 'disper', 0, 'postVol', -6, 'amp', 1, 'dryDim', 1, 'wetDim', 0, 'mulSpace', 0, 'addSpace', 0, 'mul1 ', 0, 'mul2', 0, 'mul3', 0, 'mul4', 0, 'mul5', 0, 'mul6', 0, 'mul7', 0, 'mul8', 0, 'add1', 0, 'add2', 0, 'add3', 0, 'add4', 0, 'add5', 0, 'add6', 0, 'add7', 0, 'add8', 0, 'modWhich1', 0, 'modWhich2', 0, 'modWhich3', 0, 'modWhich4', 0, 'modWhich5', 0, 'modWhich6', 0, 'modWhich7', 0, 'modWhich8', 0, 'modFreq1', 23, 'modFreq2', 23, 'modFreq3', 23, 'modFreq4', 23, 'modFreq5', 23, 'modFreq6', 23, 'modFreq7', 23, 'modFreq8', 23";
+		(ndef.cs ++ ".set(" ++  defaultRAVEVals ++ ");").interpret;
 	}
 
 }

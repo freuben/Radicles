@@ -145,4 +145,1239 @@ SinOsc.ar(freq, 0, amp);
 	WhiteNoise.ar(mul);
 } ], [ 'blip', {arg freq=10 -> [0.1,30], mul=0.5->[0,1], freq2 = 1200 -> [200,2000,\exp];
 	Decay.ar(Impulse.ar(freq), 0.25, LFCub.ar(freq2, 0, 0.1)) *mul;
-} ] ]
+} ], [ 'ravein', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'ravein2', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'ravest', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts",
+			z)*amp;
+} ], [ 'ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts",
+			z)*amp; 
+} ], [ 'ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'pravein', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,1,{|val| val.round}], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'pravein2', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,1,{|val| val.round}], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'pravest', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,1,{|val| val.round}], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'pravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts", 4,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'pravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts", 4,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts",
+			z)*amp;
+} ], [ 'pravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts", 4,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts",
+			z)*amp;
+} ], [ 'pravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/percussion.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'vravein', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'vravein2', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'vravest', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'vravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts", 8,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'vravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts", 8,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts",
+			z)*amp;
+} ], [ 'vravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts", 8,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts",
+			z)*amp;
+} ], [ 'vravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'travein', {arg amp = 1->[0,1], prior=1->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}], model=0->[0,8,{|val| val.round(1).asInteger}];
+	var strArr, string, index;
+	strArr = ["/Users/fr650/Documents/SuperCollider/RAVE tests/rave_sax_march15.ts", "/Users/fr650/Documents/SuperCollider/RAVE tests/VCTK.ts"];
+	index = model.source.values.last;
+	string = strArr[index];
+	string.cs.postln;
+	RAVE.new(
+		string,
+		SoundIn.ar(bus-1), // input for timbre transfer
+		prior, // 0 for timbre transfer, 1 for generation
+		temp // temperature of generation
+	) * amp;
+} ], [ 'i1ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i1ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i1ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i1ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i1ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i1ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i1ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_motherbird_b2048_r48000_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i2ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i2ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i2ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i2ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts", 12,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i2ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts", 12,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts",
+			z)*amp;
+} ], [ 'i2ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts", 12,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts",
+			z)*amp;
+} ], [ 'i2ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/birds_pluma_b2048_r48000_z12.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i3ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i3ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i3ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i3ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i3ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i3ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i3ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/guitar_iil_b2048_r48000_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i4ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i4ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i4ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i4ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts", 20,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i4ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts", 20,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts",
+			z)*amp;
+} ], [ 'i4ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts", 20,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts",
+			z)*amp;
+} ], [ 'i4ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/humpbacks_pondbrain_b2048_r48000_z20.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i5ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i5ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i5ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i5ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts", 8,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i5ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts", 8,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts",
+			z)*amp;
+} ], [ 'i5ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts", 8,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts",
+			z)*amp;
+} ], [ 'i5ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/magnets_b2048_r48000_z8.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i6ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i6ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i6ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i6ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts", 20,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i6ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts", 20,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts",
+			z)*amp;
+} ], [ 'i6ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts", 20,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts",
+			z)*amp;
+} ], [ 'i6ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/marinemammals_pondbrain_b2048_r48000_z20.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i7ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i7ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i7ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i7ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i7ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts",
+			z)*amp;
+} ], [ 'i7ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts",
+			z)*amp;
+} ], [ 'i7ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/mrp_strengjavera_b2048_r44100_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i8ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i8ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i8ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i8ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i8ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i8ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i8ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_archive_b2048_r48000_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i9ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i9ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i9ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i9ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i9ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts",
+			z)*amp;
+} ], [ 'i9ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts",
+			z)*amp;
+} ], [ 'i9ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/organ_bach_b2048_sr48000_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i10ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i10ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i10ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i10ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i10ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i10ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i10ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_hifitts_b2048_r48000_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i11ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i11ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i11ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i11ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i11ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts",
+			z)*amp;
+} ], [ 'i11ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts",
+			z)*amp;
+} ], [ 'i11ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_jvs_b2048_r44100_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i12ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i12ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i12ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i12ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts", 22,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i12ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts", 22,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts",
+			z)*amp;
+} ], [ 'i12ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts", 22,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts",
+			z)*amp;
+} ], [ 'i12ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vctk_b2048_r44100_z22.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i13ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i13ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i13ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i13ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i13ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i13ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i13ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/voice_vocalset_b2048_r48000_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'i14ravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'i14ravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'i14ravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'i14ravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts", 16,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'i14ravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts", 16,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i14ravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts", 16,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts",
+			z)*amp;
+} ], [ 'i14ravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/victor/water_pondbrain_b2048_r48000_z16.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'mhravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'mhravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'mhravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'mhravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts", 8,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'mhravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts", 8,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts",
+			z)*amp;
+} ], [ 'mhravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts", 8,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts",
+			z)*amp;
+} ], [ 'mhravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/mark/mark.ts",
+            z,
+        ) *4 *amp;
+} ], [ 'dravein', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit",
+            SoundIn.ar(bus-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        ) * amp;
+} ], [ 'dravein2', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus=1->[1,8,{|val| val.round(1)}];
+RAVE.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit",
+		Mix.new([SoundIn.ar(bus-1),SoundIn.ar(bus)]), // input for timbre transfer
+        prior, // 0 for timbre transfer, 1 for generation
+        temp // temperature of generation
+        ) * amp;
+} ], [ 'dravest', {arg amp = 1->[0,1], prior=0->[0,1,{|val| val.round}], temp=1->[0,2], bus1=1->[1,8,{|val| val.round(1)}], bus2=2->[1,8,{|val| val.round(1)}];
+	var left, right;
+	left = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit",
+            SoundIn.ar(bus1-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	right = RAVE.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit",
+            SoundIn.ar(bus2-1), // input for timbre transfer
+            prior, // 0 for timbre transfer, 1 for generation
+            temp // temperature of generation
+        );
+	[left, right] * amp;
+} ], [ 'dravevan', {arg amp = 1->[0,1], bus=1->[1,8,{|val| val.round(1)}];
+	var z;
+	z = RAVEEncoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit", 8,
+		SoundIn.ar(bus-1),// input for latent embedding
+	);
+	RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit",
+		[z[0]]++(1-z[1..])
+	)*amp;
+} ], [ 'dravenoise', {arg amp = 1->[0,1], freq=0.5->[0,2], lo=1.0->[0,2], hi=1.5->[0.1,2.1];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit", 8,
+		LFNoise1.kr(freq).range(lo,hi),
+	);
+        RAVEDecoder.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit",
+			z)*amp;
+} ], [ 'dravedc', {arg amp = 1->[0,1], temp=1->[0,2];
+	var z;
+	 z = RAVEPrior.new(
+		"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit", 8,
+		DC.kr(temp), // prior temperature
+	);
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit",
+			z)*amp;
+} ], [ 'dravenoise2', {arg amp = 1->[0,1], lo=0.1->[0,2], hi=10->[0.1,2.1];
+	var z;
+	z = 16.collect{ |i| {LFNoise1.kr(Rand(lo,hi) )*1 }};
+        RAVEDecoder.new(
+			"/Users/fr650/Documents/SuperCollider/RAVE tests/drumkit",
+            z,
+        ) *4 *amp;
+} ], [ 'audioins', {arg bus=1 -> [1,8], mul= 1 -> [0,4];
+	[SoundIn.ar((bus.round(1)-1).max(0), mul), 
+	SoundIn.ar((bus.round(1)).max(0), mul)]
+	;} ], [ 'audioin2', {arg bus=1 -> [1,8], mul= 1 -> [0,4], pan=0 -> [-1,1], lagTime=0.1 -> [0,1];
+	Pan2.ar(SoundIn.ar((bus.round(1)-1).max(0)), pan.lag(lagTime))*mul;
+} ], [ 'play2', {arg rate=1 -> [0.1,10], trigger=1 -> [0,1, {|val| val.round(1)}], startPos=0 -> [0,1], mul=1 -> [0,2], pan=0 -> [-1,1], lagTime=0.1 -> [0,1];
+	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul, pan.lag(lagTime));} ], [ 'loop2', {arg rate=1 -> [0.1,10], trigger=1 -> [0,1, {|val| val.round(1)}], startPos=0 -> [0,1], mul=1 -> [0,2], pan=0 -> [-1,1], lagTime=0.1 -> [0,1];
+	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul, pan.lag(lagTime));} ] ]

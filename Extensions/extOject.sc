@@ -131,7 +131,7 @@
 		^bool;
 	}
 
-	radpost {arg type=\ln;
+	radpost {arg type=\ln, oscId="/code";
 		var string, doc, postUI;
 		if(Radicles.ignorePost.not, {
 		doc = Radicles.postDoc;
@@ -146,6 +146,10 @@
 		});
 		if(Radicles.logCodeTime, {
 			string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
+		});
+		if(Radicles.oscCode.notNil, {
+				Radicles.oscCode.sendMsg(oscId, string);
+			/*string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);*/
 		});
 		if(doc.isNil, {
 		string.postin(\ide, type);
