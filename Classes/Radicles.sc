@@ -3,9 +3,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>oscCode, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
 	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>filesPath, <>soundFilePath, <>postWindow, <>beatsFuncArr, traceFunc, <>liveBlockArr,
-	<>numOutputs = 8, <>numInputs = 8, <>numBuffers = 512, <>numBuses = 1024,
-	<>numControlBuses=16384, <>memorySize=409600, <>modelNum=0;
+	<>filesPath, <>soundFilePath, <>postWindow, <>beatsFuncArr, traceFunc, <>liveBlockArr, <>modelNum=0;
+/*	<>numOutputs = 16, <>numInputs = 16, <>numBuffers = 512, <>numBuses = 1024,
+	<>numControlBuses=16384, <>memorySize=409600, <>sampleRate=41000, */
 
 	*new {
 		this.setColors;
@@ -54,7 +54,8 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		^result;
 	}
 
-	*options {arg outputs, inputs, buffers, buses, controlBuses, memory;
+/*	*options {arg outputs, inputs, buffers, buses, controlBuses,
+		memory, samplingRate;
 		outputs ?? {outputs = numOutputs};
 		numOutputs = outputs;
 		inputs ?? {inputs = numInputs};
@@ -67,17 +68,20 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		numControlBuses = controlBuses;
 		memory ?? {memory = memorySize};
 		memorySize = memory;
+		samplingRate ?? {samplingRate = sampleRate};
+		sampleRate = samplingRate;
 
-	}
+	}*/
 
 	*serveroptions {
-		this.new;
-		server.options.numOutputBusChannels = numOutputs;
+		/*this.new;*/
+		/*server.options.numOutputBusChannels = numOutputs;
 		server.options.numInputBusChannels = numInputs;
 		server.options.numWireBufs = numBuffers;
 		server.options.numAudioBusChannels = numBuses;
 		server.options.numControlBusChannels = numControlBuses;
 		server.options.memSize = memorySize;
+		server.options.sampleRate = sampleRate;*/
 	}
 
 	*clock {var clock, tclock;
@@ -6985,7 +6989,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		oscCode = NetAddr(ip, port);
 	}
 
-	*raveFunc {var getModelPath, getModels, postModels, modelArr, modelLoad;
+	*raveFunc {var getModelPath, getModels, postModels, postModelsWith, modelArr, modelLoad;
 		getModelPath = {arg type=\rave;
 			var modelPath;
 			case
@@ -7008,6 +7012,8 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		};
 
 		postModels = {arg type = \rave; getModels.(type).do{|item, index| [index, item].radpost;} };
+
+		postModelsWith = {arg type = \rave, find=nil; getModels.(type).do{|item, index| if(item.cs.find(find).notNil, {[index, item].radpost;}); } };
 
 		modelArr = nil!10;
 
@@ -7061,6 +7067,8 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.addAll([
 			[\rave, [\str], { postModels.(\rave); }, "post rave models"],
 			[\prior, [\str], { postModels.(\prior); }, "post prior models"],
+			[\rave, [\str, \str], {|str1, str2| postModelsWith.(\rave, str2.asString); }, "post rave models with find"],
+			[\prior, [\str, \str], {|str1, str2| postModelsWith.(\prior, str2.asString); }, "post prior models with find"],
 			[\models, [\str], { modelArr.do({|item, index|
 				if(item.notNil, {([index+1] ++ item).radpost}); }); },
 				"post loaded models"],

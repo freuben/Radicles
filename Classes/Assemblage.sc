@@ -15,7 +15,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType, memSize, action;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
-		Radicles.serveroptions;
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
@@ -63,6 +62,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				this.play;
 				this.updateMixInfo;
 				oiIns = Ndef(\spaceMaster).numChannels;
+				/*oiOuts = Ndef(\spaceMaster).numChannels;*/
 				oiOuts = server.options.numOutputBusChannels;
 				basicFont = Font("Monaco", 8);
 				server.sync;
@@ -3550,6 +3550,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	mastOutGUI {arg boundArr, scrollOrg;
 		var butt, oi1, oi2, selButt, oiArr, funcSource, thisBounds;
+		oiIns = Ndef(\spaceMaster).numChannels;
 		thisBounds = 	Rect(boundArr[0]+mixerWin.bounds.left - scrollOrg[0],
 			(screenBounds.height-boundArr[1]-((oiOuts * 25+10)+45))-(mixerWin.bounds.top-45),
 			(oiIns*25+10), (oiOuts * 25+10));
