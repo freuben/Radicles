@@ -6994,7 +6994,8 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			var modelPath;
 			case
 			{type == \rave} {modelPath = filesPath ++ "/Models/RAVE";}
-			{type == \prior} {modelPath = filesPath ++ "/Models/MSPrior";};
+			{type == \prior} {modelPath = filesPath ++ "/Models/MSPrior";}
+			{type == \after} {modelPath = filesPath ++ "/Models/AFTER";};
 			if(modelPath.notNil, {
 				modelPath;
 			}, {
@@ -7067,8 +7068,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 		cW.addAll([
 			[\rave, [\str], { postModels.(\rave); }, "post rave models"],
 			[\prior, [\str], { postModels.(\prior); }, "post prior models"],
+			[\after, [\str], { postModels.(\after); }, "post after models"],
 			[\rave, [\str, \str], {|str1, str2| postModelsWith.(\rave, str2.asString); }, "post rave models with find"],
 			[\prior, [\str, \str], {|str1, str2| postModelsWith.(\prior, str2.asString); }, "post prior models with find"],
+			[\after, [\str, \str], {|str1, str2| postModelsWith.(\after, str2.asString); }, "post prior models with find"],
 			[\models, [\str], { modelArr.do({|item, index|
 				if(item.notNil, {([index+1] ++ item).radpost}); }); },
 				"post loaded models"],
@@ -7088,6 +7091,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				"load rave model with index"],
 			[\prior, [\str, \num, \str], {|str1, num, str2| modelLoad.(\prior,num,str2.asString);},
 				"load rave model with name"],
+			[\after, [\str, \num, \num], {|str, num1, num2| modelLoad.(\after,num1,num2);},
+				"load rave model with index"],
+			[\after, [\str, \num, \str], {|str1, num, str2| modelLoad.(\after,num,str2.asString);},
+				"load rave model with name"],
 			[\raveins, [\str], {|str| cW.callFunc("(in 1 1 & in 2 2 & in 3 3 & in 4 4 & blk 5 audioins)" )},
 				"rave inputs"],
 			[\brave1, [\str, \num, \num], {|str, num1, num2|
@@ -7100,7 +7107,16 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 				});
 			},
 			"load rave model and fx in bus number"],
-
+			[\bafter1, [\str, \num, \num], {|str, num1, num2|
+				var raveNum;
+				raveNum = num1-1;
+				modelLoad.(\after,raveNum,num2, action: {
+					if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
+					Radicles.aZ.setFx(\bus, num1, 3, \afterImprov,
+						[\pan, ~panArr[raveNum]]);
+				});
+			},
+			"load after model and fx in bus number"],
 			[\brave, [\str, \num, \num], {|str, num1, num2|
 				var raveNum;
 				raveNum = num1-1;
@@ -7139,6 +7155,34 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 			},
 		"load array of rave models and fx in bus number"],
+
+			[\bafter1, [\str, \arr, \num], {|str, arr1, num2|
+				var raveNum, cond1;
+				cond1 = Condition.new(false);
+
+				arr1.postln;
+				{
+				arr1.do{|item|
+				raveNum = item-1;
+
+					if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
+
+					modelLoad.(\rave,raveNum,num2, action: {
+							Radicles.aZ.setFx(\bus, item, 3, \afterImprov,
+								[\pan, ~panArr[raveNum]], action:
+							{
+								cond1.test = true;
+								cond1.signal;
+						})
+					}
+					);
+
+					cond1.test = false;
+					cond1.wait;
+				};
+				}.fork;
+			},
+		"load array of after models and fx in bus number"],
 
 			[\brave, [\str, \arr, \num], {|str, arr1, num2|
 				var raveNum, cond1;
@@ -7209,11 +7253,6 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 
 
 
-	}
-
-	*defaultNntImprov {arg ndef; var defaultRAVEVals;
-		defaultRAVEVals = "'lowCut', 20, 'hiCut', 20000, 'preVol', 6, 'cpthresh', -20, 'ratio', 1, 'cpatk', 0.01, 'cprel', 0.01, 'transp', 0, 'disper', 0, 'postVol', -6, 'amp', 1, 'dryDim', 1, 'wetDim', 0, 'mulSpace', 0, 'addSpace', 0, 'mul1 ', 0, 'mul2', 0, 'mul3', 0, 'mul4', 0, 'mul5', 0, 'mul6', 0, 'mul7', 0, 'mul8', 0, 'add1', 0, 'add2', 0, 'add3', 0, 'add4', 0, 'add5', 0, 'add6', 0, 'add7', 0, 'add8', 0, 'modWhich1', 0, 'modWhich2', 0, 'modWhich3', 0, 'modWhich4', 0, 'modWhich5', 0, 'modWhich6', 0, 'modWhich7', 0, 'modWhich8', 0, 'modFreq1', 23, 'modFreq2', 23, 'modFreq3', 23, 'modFreq4', 23, 'modFreq5', 23, 'modFreq6', 23, 'modFreq7', 23, 'modFreq8', 23";
-		(ndef.cs ++ ".set(" ++  defaultRAVEVals ++ ");").interpret;
 	}
 
 }

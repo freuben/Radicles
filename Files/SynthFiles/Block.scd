@@ -1377,4 +1377,6 @@ RAVE.new(
 	Pan2.ar(SoundIn.ar((bus.round(1)-1).max(0)), pan.lag(lagTime))*mul;
 } ], [ 'play2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 , pan=0 , lagTime=0.1 ;
 	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul, pan.lag(lagTime));} ], [ 'loop2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 , pan=0 , lagTime=0.1 ;
-	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul, pan.lag(lagTime));} ] ]
+	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul, pan.lag(lagTime));} ], [ 'impulse', {arg freq = 0.125 , amp = 1 , mul = 1 ;
+Pan2.ar(Decay.ar(Impulse.ar(freq), 0.2, WhiteNoise.ar(amp), 0), 0)*mul;
+} ] ]

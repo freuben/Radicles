@@ -472,90 +472,68 @@ var sig;
 sig = CompanderD.ar(\in*preLevel.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*gain.dbamp;
 ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
 } ], [ 'schbmultcmp', { arg
-		// wet/dry + IO
-		mix      = 1 ,
-		busNumber    = 1 ,
-		preLevel = 0 ,
-		busLevel  = 0 ,
-		outGain  = 0 ,
-
-		// crossovers
-		xover1   = 100  ,
-		xover2   = 5000 ,
-
-		// per-band bypass (0 = compress, 1 = bypass compression for that band)
-		bypassL  = 0 ,
-		bypassM  = 0 ,
-		bypassH  = 0 ,
-
-		// per-band mute (0 = normal, 1 = mute this band)
-		muteL    = 0 ,
-		muteM    = 0 ,
-		muteH    = 0 ,
-
-		// LOW band
-		threshL  = -12 ,
-		ratioL   = 2   ,
-		attackL  = 0.003 ,
-		releaseL = 0.08  ,
-		gainL    = 0   ,
-
-		// MID band
-		threshM  = -12 ,
-		ratioM   = 2   ,
-		attackM  = 0.003 ,
-		releaseM = 0.08  ,
-		gainM    = 0   ,
-
-		// HIGH band
-		threshH  = -12 ,
-		ratioH   = 2   ,
-		attackH  = 0.003 ,
-		releaseH = 0.08  ,
-		gainH    = 0   ;
-
-		var main, sc;
-		var low, mid, high;
-		var scLow, scMid, scHigh;
-		var compL, compM, compH;
-		var bandL, bandM, bandH;
-		var wet, dry, buses;
-
-		main = (\in * preLevel.dbamp);
-
-		buses = Radicles.aZ.getBuses.flop[1].flop[0].collect{|item| Ndef(item).bus.ar };
-		sc = Select.ar(busNumber-1, buses) * busLevel.dbamp;
-
-		// --- 3-band split ---
-		low  = BLowPass4.ar(main, xover1);
-		high = BHiPass4.ar(main, xover2);
-		mid  = BLowPass4.ar(BHiPass4.ar(main, xover1), xover2);
-
-		// Sidechain split (per-band key)
-		scLow  = BLowPass4.ar(sc, xover1);
-		scHigh = BHiPass4.ar(sc, xover2);
-		scMid  = BLowPass4.ar(BHiPass4.ar(sc, xover1), xover2);
-
-		// --- per-band comp ---
-		compL = Compander.ar(low,  scLow,  threshL.dbamp, 1, 1/ratioL, attackL, releaseL) * gainL.dbamp;
-		compM = Compander.ar(mid,  scMid,  threshM.dbamp, 1, 1/ratioM, attackM, releaseM) * gainM.dbamp;
-		compH = Compander.ar(high, scHigh, threshH.dbamp, 1, 1/ratioH, attackH, releaseH) * gainH.dbamp;
-
-		// --- bypass per band (0 => comp, 1 => original) ---
-		bandL = SelectX.ar(bypassL, [compL, low]);
-		bandM = SelectX.ar(bypassM, [compM, mid]);
-		bandH = SelectX.ar(bypassH, [compH, high]);
-
-		// --- mute per band (0 => normal, 1 => mute) ---
-		bandL = bandL * (1 - muteL);
-		bandM = bandM * (1 - muteM);
-		bandH = bandH * (1 - muteH);
-
-		wet = (bandL + bandM + bandH) * outGain.dbamp;
-		dry = main;
-
-		(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
-	} ], [ 'schincmp', {arg mix = 1 , thresh= -12 , ratio= 2 , attack=0.001 , release=0.048, preLevel=0 , gain=0 , input=1 , inLevel=0 ;
+	mix = 1 ,
+	busNumber = 1 ,
+	preLevel = 0 ,
+	inLevel = -inf ,
+	outGain = 0 ,
+	xover1 = 160  ,
+	xover2 = 1100 ,
+	bypassL = 0 ,
+	bypassM = 0 ,
+	bypassH = 0 ,
+	muteL = 0 ,
+	muteM = 0 ,
+	muteH = 0 ,
+	threshL = -18 ,
+	ratioL = 6 ,
+	attackL = 0.0 ,
+	releaseL = 0.08 ,
+	gainL = 0 ,
+	threshM = -15 ,
+	ratioM = 5 ,
+	attackM = 0.0 ,
+	releaseM = 0.08 ,
+	gainM = 0 ,
+	threshH = -12 ,
+	ratioH = 4 ,
+	attackH = 0.0 ,
+	releaseH = 0.08  ,
+	gainH = 0 ;
+	
+	var main, sc, low, mid, high, scLow, scMid, scHigh, compL, compM, compH,
+	bandL, bandM, bandH, wet, dry, buses;
+	
+	main = (\in * preLevel.dbamp);
+	
+	buses = Radicles.aZ.getBuses.flop[1].flop[0].collect{|item| Ndef(item).bus.ar };
+	sc = Select.ar(busNumber-1, buses) * inLevel.dbamp;
+	
+	low  = BLowPass4.ar(main, xover1);
+	high = BHiPass4.ar(main, xover2);
+	mid  = BLowPass4.ar(BHiPass4.ar(main, xover1), xover2);
+	
+	scLow  = BLowPass4.ar(sc, xover1);
+	scHigh = BHiPass4.ar(sc, xover2);
+	scMid  = BLowPass4.ar(BHiPass4.ar(sc, xover1), xover2);
+	
+	compL = Compander.ar(low,  scLow,  threshL.dbamp, 1, 1/ratioL, attackL, releaseL) * gainL.dbamp;
+	compM = Compander.ar(mid,  scMid,  threshM.dbamp, 1, 1/ratioM, attackM, releaseM) * gainM.dbamp;
+	compH = Compander.ar(high, scHigh, threshH.dbamp, 1, 1/ratioH, attackH, releaseH) * gainH.dbamp;
+	
+	bandL = SelectX.ar(bypassL, [compL, low]);
+	bandM = SelectX.ar(bypassM, [compM, mid]);
+	bandH = SelectX.ar(bypassH, [compH, high]);
+	
+	bandL = bandL * (1 - muteL);
+	bandM = bandM * (1 - muteM);
+	bandH = bandH * (1 - muteH);
+	
+	wet = (bandL + bandM + bandH) * outGain.dbamp;
+	dry = main;
+	
+	(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
+} ], [ 'schincmp', {arg mix = 1 , thresh= -12 , ratio= 2 , attack=0.001 , release=0.048, preLevel=0 , gain=0 , input=1 , inLevel=0 ;
 var sig;
 	sig = Compander.ar(\in*preLevel.dbamp, SoundIn.ar(input-1).poll*inLevel.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*gain.dbamp;
 ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
@@ -565,409 +543,361 @@ var sig, buses, selBus;
 	selBus = Select.ar(busNumber-1, buses);
 	sig = Compander.ar(\in*preLevel.dbamp, selBus*busLevel.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*gain.dbamp;
 ((sig*mix.linlin(0,1,0,1))+(\in*mix.linlin(0,1,1,0)))
-} ], [ 'schinmultcmp', { arg
-		// wet/dry + IO
-		mix      = 1 ,
-		input    = 1 ,
-		preLevel = 0 ,
-		inLevel  = 0 ,
-		outGain  = 0 ,
-
-		// crossovers
-		xover1   = 100  ,
-		xover2   = 5000 ,
-
-		// per-band bypass (0 = compress, 1 = bypass compression for that band)
-		bypassL  = 0 ,
-		bypassM  = 0 ,
-		bypassH  = 0 ,
-
-		// per-band mute (0 = normal, 1 = mute this band)
-		muteL    = 0 ,
-		muteM    = 0 ,
-		muteH    = 0 ,
-
-		// LOW band
-		threshL  = -12 ,
-		ratioL   = 2   ,
-		attackL  = 0.003 ,
-		releaseL = 0.08  ,
-		gainL    = 0   ,
-
-		// MID band
-		threshM  = -12 ,
-		ratioM   = 2   ,
-		attackM  = 0.003 ,
-		releaseM = 0.08  ,
-		gainM    = 0   ,
-
-		// HIGH band
-		threshH  = -12 ,
-		ratioH   = 2   ,
-		attackH  = 0.003 ,
-		releaseH = 0.08  ,
-		gainH    = 0   ;
-
-		var main, sc;
-		var low, mid, high;
-		var scLow, scMid, scHigh;
-		var compL, compM, compH;
-		var bandL, bandM, bandH;
-		var wet, dry, buses;
-
-		main = (\in * preLevel.dbamp);
-
-		sc   = SoundIn.ar(input - 1) * inLevel.dbamp;
-
-		// --- 3-band split ---
-		low  = BLowPass4.ar(main, xover1);
-		high = BHiPass4.ar(main, xover2);
-		mid  = BLowPass4.ar(BHiPass4.ar(main, xover1), xover2);
-
-		// Sidechain split (per-band key)
-		scLow  = BLowPass4.ar(sc, xover1);
-		scHigh = BHiPass4.ar(sc, xover2);
-		scMid  = BLowPass4.ar(BHiPass4.ar(sc, xover1), xover2);
-
-		// --- per-band comp ---
-		compL = Compander.ar(low,  scLow,  threshL.dbamp, 1, 1/ratioL, attackL, releaseL) * gainL.dbamp;
-		compM = Compander.ar(mid,  scMid,  threshM.dbamp, 1, 1/ratioM, attackM, releaseM) * gainM.dbamp;
-		compH = Compander.ar(high, scHigh, threshH.dbamp, 1, 1/ratioH, attackH, releaseH) * gainH.dbamp;
-
-		// --- bypass per band (0 => comp, 1 => original) ---
-		bandL = SelectX.ar(bypassL, [compL, low]);
-		bandM = SelectX.ar(bypassM, [compM, mid]);
-		bandH = SelectX.ar(bypassH, [compH, high]);
-
-		// --- mute per band (0 => normal, 1 => mute) ---
-		bandL = bandL * (1 - muteL);
-		bandM = bandM * (1 - muteM);
-		bandH = bandH * (1 - muteH);
-
-		wet = (bandL + bandM + bandH) * outGain.dbamp;
-		dry = main;
-
-		(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
-	} ], [ 'schbmulticmp10', { arg
-		// wet/dry + IO
-		mix       = 1 ,
-		busNumber = 1 ,
-		preLevel  = 0 ,
-		busLevel  = 0 ,
-		gain      = -12 ,
-
-		// band limits
-		fMin      = 30    ,
-		fMax      = 18000 ,
-
-		// shared compressor settings (applies to ALL bands)
-		thresh    = -12 ,
-		ratio     = 2   ,
-		attack    = 0.003 ,
-		release   = 0.08  ;
-
-		var main, sc, buses;
-		var edges, nBands = 10;
-
-		// enforced monotonic edges
-		var e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10, eps;
-
-		var bands, scBands, compBands;
-		var wet, dry;
+} ], [ 'schinmultcmp', {arg
+	mix = 0 ,
+	input = 10 ,
+	preLevel = 0 ,
+	inLevel = -inf ,
+	outGain = 0 ,
+	xover1 = 160  ,
+	xover2 = 1100 ,
+	bypassL = 0 ,
+	bypassM = 0 ,
+	bypassH = 0 ,
+	muteL = 0 ,
+	muteM = 0 ,
+	muteH = 0 ,
+	threshL = -18 ,
+	ratioL = 6 ,
+	attackL = 0.0 ,
+	releaseL = 0.08 ,
+	gainL = 0 ,
+	threshM = -15 ,
+	ratioM = 5 ,
+	attackM = 0.0 ,
+	releaseM = 0.08 ,
+	gainM = 0 ,
+	threshH = -12 ,
+	ratioH = 4 ,
+	attackH = 0.0 ,
+	releaseH = 0.08  ,
+	gainH = 0 ;
+	
+	var main, sc, low, mid, high, scLow, scMid, scHigh, compL, compM, compH,
+	bandL, bandM, bandH, wet, dry, buses;
+	
+	main = (\in * preLevel.dbamp);
+	
+	sc   = SoundIn.ar(input - 1) * inLevel.dbamp;
+	
+	low  = BLowPass4.ar(main, xover1);
+	high = BHiPass4.ar(main, xover2);
+	mid  = BLowPass4.ar(BHiPass4.ar(main, xover1), xover2);
+	
+	scLow  = BLowPass4.ar(sc, xover1);
+	scHigh = BHiPass4.ar(sc, xover2);
+	scMid  = BLowPass4.ar(BHiPass4.ar(sc, xover1), xover2);
+	
+	compL = Compander.ar(low,  scLow,  threshL.dbamp, 1, 1/ratioL, 
+		attackL, releaseL) * gainL.dbamp;
+	compM = Compander.ar(mid,  scMid,  threshM.dbamp, 1, 1/ratioM, 
+		attackM, releaseM) * gainM.dbamp;
+	compH = Compander.ar(high, scHigh, threshH.dbamp, 1, 1/ratioH, 
+		attackH, releaseH) * gainH.dbamp;
+	
+	bandL = SelectX.ar(bypassL, [compL, low]);
+	bandM = SelectX.ar(bypassM, [compM, mid]);
+	bandH = SelectX.ar(bypassH, [compH, high]);
+	
+	bandL = bandL * (1 - muteL);
+	bandM = bandM * (1 - muteM);
+	bandH = bandH * (1 - muteH);
+	
+	wet = (bandL + bandM + bandH) * outGain.dbamp;
+	dry = main;
+	
+	(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
+} ], [ 'schbmulticmp10', {arg
+	mix = 1 ,
+	busNumber = 1 ,
+	preLevel = 0 , inLevel = -inf ,
+	gain = 0 , 
+	fMin = 30 ,
+	fMax = 18000 ,
+	thresh = -20 ,
+	ratio = 5 ,
+	attack = 0.0 ,
+	release = 0.13 ;
+	
+	var main, sc, buses, edges, nBands, e0,e1,e2,e3,e4,e5,
+	e6,e7,e8,e9,e10, eps, bands, scBands, compBands,
+	wet, dry, x1, x2, x3, x4, x5, x6, x7, x8, x9;
+	
+	x1 = 57;
+	x2 = 108;
+	x3 = 204; 
+	x4 = 388; 
+	x5 = 735;
+	x6 = 1393; 
+	x7 = 2641; 
+	x8 = 5008; 
+	x9 = 9494;
+	
+	nBands=10;
+	
+	main = (\in * preLevel.dbamp);
+	
+	buses = Radicles.aZ.getBuses.flop[1].flop[0].collect{|item| Ndef(item).bus.ar };
+	sc = Select.ar(busNumber-1, buses) * inLevel.dbamp;
+	
+	// --- build band edges from args, forcing strictly increasing order ---
+	eps = 1.001; // tiny spacing to prevent equal/descending edges
+	
+	e0  = fMin;
+	e10 = fMax.max(e0 * eps);
+	
+	e1 = x1.max(e0 * eps);
+	e2 = x2.max(e1 * eps);
+	e3 = x3.max(e2 * eps);
+	e4 = x4.max(e3 * eps);
+	e5 = x5.max(e4 * eps);
+	e6 = x6.max(e5 * eps);
+	e7 = x7.max(e6 * eps);
+	e8 = x8.max(e7 * eps);
+	e9 = x9.max(e8 * eps);
+	
+	edges = [e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10];
+	
+	// --- split MAIN into 10 bands using the 11 edges ---
+	bands = Array.fill(nBands, { |i|
+		var lo = edges[i];
+		var hi = edges[i + 1];
 		
-		// 9 crossovers (10 bands). Defaults are log-spaced for 30..18000.
-		var x1 = 57, x2 = 108, x3 = 204, x4 = 388, x5 = 735;
-		var x6 = 1393, x7 = 2641, x8 = 5008, x9 = 9494;
-
-		main = (\in * preLevel.dbamp);
-
-		buses = Radicles.aZ.getBuses.flop[1].flop[0].collect{|item| Ndef(item).bus.ar };
-		sc = Select.ar(busNumber-1, buses) * busLevel.dbamp;
-
-		// --- build band edges from args, forcing strictly increasing order ---
-		eps = 1.001; // tiny spacing to prevent equal/descending edges
-
-		e0  = fMin;
-		e10 = fMax.max(e0 * eps);
-
-		e1 = x1.max(e0 * eps);
-		e2 = x2.max(e1 * eps);
-		e3 = x3.max(e2 * eps);
-		e4 = x4.max(e3 * eps);
-		e5 = x5.max(e4 * eps);
-		e6 = x6.max(e5 * eps);
-		e7 = x7.max(e6 * eps);
-		e8 = x8.max(e7 * eps);
-		e9 = x9.max(e8 * eps);
-
-		edges = [e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10];
-
-		// --- split MAIN into 10 bands using the 11 edges ---
-		bands = Array.fill(nBands, { |i|
-			var lo = edges[i];
-			var hi = edges[i + 1];
-
-			if(i == 0) {
-				BLowPass4.ar(main, hi)
+		if(i == 0) {
+			BLowPass4.ar(main, hi)
+		} {
+			if(i == (nBands - 1)) {
+				BHiPass4.ar(main, lo)
 			} {
-				if(i == (nBands - 1)) {
-					BHiPass4.ar(main, lo)
-				} {
-					BLowPass4.ar(BHiPass4.ar(main, lo), hi)
-				}
+				BLowPass4.ar(BHiPass4.ar(main, lo), hi)
 			}
-		});
-
-		// --- split SIDECHAIN into 10 matching bands ---
-		scBands = Array.fill(nBands, { |i|
-			var lo = edges[i];
-			var hi = edges[i + 1];
-
-			if(i == 0) {
-				BLowPass4.ar(sc, hi)
-			} {
-				if(i == (nBands - 1)) {
-					BHiPass4.ar(sc, lo)
-				} {
-					BLowPass4.ar(BHiPass4.ar(sc, lo), hi)
-				}
-			}
-		});
-
-		// --- compress each band with the matching sidechain band (shared settings) ---
-		compBands = Array.fill(nBands, { |i|
-			Compander.ar(
-				in: bands[i],
-				control: scBands[i],
-				thresh: thresh.dbamp,
-				slopeBelow: 1,
-				slopeAbove: 1 / ratio,
-				clampTime: attack,
-				relaxTime: release
-			)
-		});
-
-		wet = Mix(compBands) * gain.dbamp;
-		dry = main;
-
-		(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
-	} ], [ 'schinmulticmp10', { arg
-		// wet/dry + IO
-		mix       = 1 ,
-		input = 1 ,
-		preLevel  = 0 ,
-		inLevel  = 0 ,
-		gain      = -12 ,
-
-		// band limits
-		fMin      = 30    ,
-		fMax      = 18000 ,
-
-		// shared compressor settings (applies to ALL bands)
-		thresh    = -12 ,
-		ratio     = 2   ,
-		attack    = 0.003 ,
-		release   = 0.08  ;
-
-		var main, sc, buses;
-		var edges, nBands = 10;
-
-		// enforced monotonic edges
-		var e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10, eps;
-
-		var bands, scBands, compBands;
-		var wet, dry;
+		}
+	});
+	
+	// --- split SIDECHAIN into 10 matching bands ---
+	scBands = Array.fill(nBands, { |i|
+		var lo = edges[i];
+		var hi = edges[i + 1];
 		
-		// 9 crossovers (10 bands). Defaults are log-spaced for 30..18000.
-		var x1 = 57, x2 = 108, x3 = 204, x4 = 388, x5 = 735;
-		var x6 = 1393, x7 = 2641, x8 = 5008, x9 = 9494;
-
-		main = (\in * preLevel.dbamp);
-
-		sc   = SoundIn.ar(input - 1) * inLevel.dbamp;
-
-		// --- build band edges from args, forcing strictly increasing order ---
-		eps = 1.001; // tiny spacing to prevent equal/descending edges
-
-		e0  = fMin;
-		e10 = fMax.max(e0 * eps);
-
-		e1 = x1.max(e0 * eps);
-		e2 = x2.max(e1 * eps);
-		e3 = x3.max(e2 * eps);
-		e4 = x4.max(e3 * eps);
-		e5 = x5.max(e4 * eps);
-		e6 = x6.max(e5 * eps);
-		e7 = x7.max(e6 * eps);
-		e8 = x8.max(e7 * eps);
-		e9 = x9.max(e8 * eps);
-
-		edges = [e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10];
-
-		// --- split MAIN into 10 bands using the 11 edges ---
-		bands = Array.fill(nBands, { |i|
-			var lo = edges[i];
-			var hi = edges[i + 1];
-
-			if(i == 0) {
-				BLowPass4.ar(main, hi)
+		if(i == 0) {
+			BLowPass4.ar(sc, hi)
+		} {
+			if(i == (nBands - 1)) {
+				BHiPass4.ar(sc, lo)
 			} {
-				if(i == (nBands - 1)) {
-					BHiPass4.ar(main, lo)
-				} {
-					BLowPass4.ar(BHiPass4.ar(main, lo), hi)
-				}
+				BLowPass4.ar(BHiPass4.ar(sc, lo), hi)
 			}
-		});
-
-		// --- split SIDECHAIN into 10 matching bands ---
-		scBands = Array.fill(nBands, { |i|
-			var lo = edges[i];
-			var hi = edges[i + 1];
-
-			if(i == 0) {
-				BLowPass4.ar(sc, hi)
-			} {
-				if(i == (nBands - 1)) {
-					BHiPass4.ar(sc, lo)
-				} {
-					BLowPass4.ar(BHiPass4.ar(sc, lo), hi)
-				}
-			}
-		});
-
-		// --- compress each band with the matching sidechain band (shared settings) ---
-		compBands = Array.fill(nBands, { |i|
-			Compander.ar(
-				in: bands[i],
-				control: scBands[i],
-				thresh: thresh.dbamp,
-				slopeBelow: 1,
-				slopeAbove: 1 / ratio,
-				clampTime: attack,
-				relaxTime: release
-			)
-		});
-
-		wet = Mix(compBands) * gain.dbamp;
-		dry = main;
-
-		(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
-	} ], [ 'schinmulticmp20', { arg
-		// wet/dry + IO
-		mix       = 1 ,
-		input = 1 ,
-		preLevel  = 0 ,
-		inLevel  = 0 ,
-		gain      = 0 ,
-
-		// band limits
-		fMin      = 30    ,
-		fMax      = 18000 ,
-
-		// shared compressor settings (applies to ALL bands)
-		thresh    = -12 ,
-		ratio     = 2   ,
-		attack    = 0.003 ,
-		release   = 0.08  ;
-
-		var main, sc, buses;
-		var edges, nBands = 20;
-
-		// enforced monotonic edges
-		var e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11,e12,e13,e14,e15,e16,e17,e18,e19,e20, eps;
-
-		var bands, scBands, compBands;
-		var wet, dry;
+		}
+	});
+	
+	// --- compress each band with the matching sidechain band (shared settings) ---
+	compBands = Array.fill(nBands, { |i|
+		Compander.ar(
+			in: bands[i],
+			control: scBands[i],
+			thresh: thresh.dbamp,
+			slopeBelow: 1,
+			slopeAbove: 1 / ratio,
+			clampTime: attack,
+			relaxTime: release
+		)
+	});
+	
+	wet = Mix(compBands) * gain.dbamp;
+	dry = main;
+	
+	(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
+} ], [ 'schinmulticmp10', {arg mix = 0 , 
+	input = 9 ,
+	preLevel = 0 , inLevel = -inf ,
+	gain = 0 , 
+	fMin = 30 ,
+	fMax = 18000 ,
+	thresh = -20 ,
+	ratio = 5 ,
+	attack = 0.0 ,
+	release = 0.13 ;
+	var main, sc, buses, edges, nBands, e0,e1,e2,e3,e4,e5,
+	e6,e7,e8,e9,e10, eps, bands, scBands, compBands,
+	wet, dry, x1, x2, x3, x4, x5, x6, x7, x8, x9;
+	
+	x1 = 57;
+	x2 = 108;
+	x3 = 204; 
+	x4 = 388; 
+	x5 = 735;
+	x6 = 1393; 
+	x7 = 2641; 
+	x8 = 5008; 
+	x9 = 9494;
+	
+	nBands=10;
+	
+	main = (\in * preLevel.dbamp);
+	sc   = SoundIn.ar(input - 1) * inLevel.dbamp;
+	
+	eps = 1.001; 
+	e0  = fMin;
+	e10 = fMax.max(e0 * eps);
+	
+	e1 = x1.max(e0 * eps);
+	e2 = x2.max(e1 * eps);
+	e3 = x3.max(e2 * eps);
+	e4 = x4.max(e3 * eps);
+	e5 = x5.max(e4 * eps);
+	e6 = x6.max(e5 * eps);
+	e7 = x7.max(e6 * eps);
+	e8 = x8.max(e7 * eps);
+	e9 = x9.max(e8 * eps);
+	
+	edges = [e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10];
+	
+	bands = Array.fill(nBands, { |i|
+		var lo = edges[i];
+		var hi = edges[i + 1];
 		
-		// 19 crossovers (20 bands). Defaults are log-spaced for 30..18000.
-		var x1 = 41, x2 = 57, x3 = 78, x4 = 108, x5 = 148;
-		var x6 = 204, x7 = 281, x8 = 388, x9 = 534, x10 = 735;
-		var x11 = 1012, x12 = 1393, x13 = 1918, x14 = 2641, x15 = 3637;
-		var x16 = 5008, x17 = 6895, x18 = 9494, x19 = 13073;
-
-		main = (\in * preLevel.dbamp);
-
-		sc   = SoundIn.ar(input - 1) * inLevel.dbamp;
-
-		// --- build band edges from args, forcing strictly increasing order ---
-		eps = 1.001; // tiny spacing to prevent equal/descending edges
-
-		e0  = fMin;
-		e20 = fMax.max(e0 * eps);
-
-		e1  = x1.max(e0 * eps);
-		e2  = x2.max(e1 * eps);
-		e3  = x3.max(e2 * eps);
-		e4  = x4.max(e3 * eps);
-		e5  = x5.max(e4 * eps);
-		e6  = x6.max(e5 * eps);
-		e7  = x7.max(e6 * eps);
-		e8  = x8.max(e7 * eps);
-		e9  = x9.max(e8 * eps);
-		e10 = x10.max(e9 * eps);
-		e11 = x11.max(e10 * eps);
-		e12 = x12.max(e11 * eps);
-		e13 = x13.max(e12 * eps);
-		e14 = x14.max(e13 * eps);
-		e15 = x15.max(e14 * eps);
-		e16 = x16.max(e15 * eps);
-		e17 = x17.max(e16 * eps);
-		e18 = x18.max(e17 * eps);
-		e19 = x19.max(e18 * eps);
-
-		edges = [e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11,e12,e13,e14,e15,e16,e17,e18,e19,e20];
-
-		// --- split MAIN into 20 bands using the 21 edges ---
-		bands = Array.fill(nBands, { |i|
-			var lo = edges[i];
-			var hi = edges[i + 1];
-
-			if(i == 0) {
-				BLowPass4.ar(main, hi)
+		if(i == 0) {
+			BLowPass4.ar(main, hi)
+		} {
+			if(i == (nBands - 1)) {
+				BHiPass4.ar(main, lo)
 			} {
-				if(i == (nBands - 1)) {
-					BHiPass4.ar(main, lo)
-				} {
-					BLowPass4.ar(BHiPass4.ar(main, lo), hi)
-				}
+				BLowPass4.ar(BHiPass4.ar(main, lo), hi)
 			}
-		});
-
-		// --- split SIDECHAIN into 20 matching bands ---
-		scBands = Array.fill(nBands, { |i|
-			var lo = edges[i];
-			var hi = edges[i + 1];
-
-			if(i == 0) {
-				BLowPass4.ar(sc, hi)
+		}
+	});
+	
+	scBands = Array.fill(nBands, { |i|
+		var lo = edges[i];
+		var hi = edges[i + 1];
+		
+		if(i == 0) {
+			BLowPass4.ar(sc, hi)
+		} {
+			if(i == (nBands - 1)) {
+				BHiPass4.ar(sc, lo)
 			} {
-				if(i == (nBands - 1)) {
-					BHiPass4.ar(sc, lo)
-				} {
-					BLowPass4.ar(BHiPass4.ar(sc, lo), hi)
-				}
+				BLowPass4.ar(BHiPass4.ar(sc, lo), hi)
 			}
-		});
-
-		// --- compress each band with the matching sidechain band (shared settings) ---
-		compBands = Array.fill(nBands, { |i|
-			Compander.ar(
-				in: bands[i],
-				control: scBands[i],
-				thresh: thresh.dbamp,
-				slopeBelow: 1,
-				slopeAbove: 1 / ratio,
-				clampTime: attack,
-				relaxTime: release
-			)
-		});
-
-		wet = Mix(compBands) * gain.dbamp;
-		dry = main;
-
-		(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
-	} ], [ 'schbmulticmp20', { arg
+		}
+	});
+	
+	compBands = Array.fill(nBands, { |i|
+		Compander.ar(
+			in: bands[i],
+			control: scBands[i],
+			thresh: thresh.dbamp,
+			slopeBelow: 1,
+			slopeAbove: 1 / ratio,
+			clampTime: attack,
+			relaxTime: release
+		)
+	});
+	
+	wet = Mix(compBands) * gain.dbamp;
+	dry = main;
+	
+	(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
+} ], [ 'schinmulticmp20', {arg mix = 1 , 
+	input = 1 ,
+	preLevel = 0 , inLevel = -inf ,
+	gain = 0 , 
+	fMin = 30 ,
+	fMax = 18000 ,
+	thresh = -20 ,
+	ratio = 1 ,
+	attack = 0.003 ,
+	release = 0.08 ;
+	var main, sc, buses, edges, nBands, e0,e1,e2,e3,e4,e5,
+	e6,e7,e8,e9,e10,e11,e12,e13,e14,e15, e16,e17,e18,e19,e20, 
+	eps, bands, scBands, compBands,
+	wet, dry, x1, x2, x3, x4, x5, x6, x7, x8, x9, 
+	x10, x11, x12, x13, x14, x15, x16, x17, x18, x19;
+	
+	x1 = 41; x2 = 57; x3 = 78; x4 = 108; x5 = 148;
+	x6 = 204; x7 = 281; x8 = 388; x9 = 534; x10 = 735;
+	x11 = 1012; x12 = 1393; x13 = 1918; x14 = 2641; x15 = 3637;
+	x16 = 5008; x17 = 6895; x18 = 9494; x19 = 13073;
+	
+	nBands=20;
+	
+	main = (\in * preLevel.dbamp);
+	sc   = SoundIn.ar(input - 1) * inLevel.dbamp;
+	
+	eps = 1.001; 
+	e0  = fMin;
+	e20 = fMax.max(e0 * eps);
+	
+	e1  = x1.max(e0 * eps);
+	e2  = x2.max(e1 * eps);
+	e3  = x3.max(e2 * eps);
+	e4  = x4.max(e3 * eps);
+	e5  = x5.max(e4 * eps);
+	e6  = x6.max(e5 * eps);
+	e7  = x7.max(e6 * eps);
+	e8  = x8.max(e7 * eps);
+	e9  = x9.max(e8 * eps);
+	e10 = x10.max(e9 * eps);
+	e11 = x11.max(e10 * eps);
+	e12 = x12.max(e11 * eps);
+	e13 = x13.max(e12 * eps);
+	e14 = x14.max(e13 * eps);
+	e15 = x15.max(e14 * eps);
+	e16 = x16.max(e15 * eps);
+	e17 = x17.max(e16 * eps);
+	e18 = x18.max(e17 * eps);
+	e19 = x19.max(e18 * eps);
+	
+	edges = [e0,e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,
+		e11,e12,e13,e14,e15,e16,e17,e18,e19,e20];
+	
+	bands = Array.fill(nBands, { |i|
+		var lo = edges[i];
+		var hi = edges[i + 1];
+		
+		if(i == 0) {
+			BLowPass4.ar(main, hi)
+		} {
+			if(i == (nBands - 1)) {
+				BHiPass4.ar(main, lo)
+			} {
+				BLowPass4.ar(BHiPass4.ar(main, lo), hi)
+			}
+		}
+	});
+	
+	scBands = Array.fill(nBands, { |i|
+		var lo = edges[i];
+		var hi = edges[i + 1];
+		
+		if(i == 0) {
+			BLowPass4.ar(sc, hi)
+		} {
+			if(i == (nBands - 1)) {
+				BHiPass4.ar(sc, lo)
+			} {
+				BLowPass4.ar(BHiPass4.ar(sc, lo), hi)
+			}
+		}
+	});
+	
+	compBands = Array.fill(nBands, { |i|
+		Compander.ar(
+			in: bands[i],
+			control: scBands[i],
+			thresh: thresh.dbamp,
+			slopeBelow: 1,
+			slopeAbove: 1 / ratio,
+			clampTime: attack,
+			relaxTime: release
+		)
+	});
+	
+	wet = Mix(compBands) * gain.dbamp;
+	dry = main;
+	
+	(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
+} ], [ 'schbmulticmp20', { arg
 		// wet/dry + IO
 		mix       = 1 ,
 		busNumber = 1 ,

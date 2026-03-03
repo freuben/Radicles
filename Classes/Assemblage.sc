@@ -7,7 +7,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<>recStates, recBStoreArr, <>mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<>recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
-	<trackDataArr, <trackBufferArr, <setInKnob;
+	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);
@@ -1483,7 +1483,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	}
 
-	mixGUI {arg updateFreq=10;
+	mixGUI {
 		var sends, knobColors, winHeight, winWidth, knobSize, knobTextSize, canvas,
 		panKnobTextArr, panKnobArr, sliderTextArr, sliderArr, levelTextArr,
 		levelArr, vlay, sendsMenuArr, sendsKnobArr, outputMenuArr,
