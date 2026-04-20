@@ -4,7 +4,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
 	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
 	<>filesPath, <>soundFilePath, <>postWindow, <>beatsFuncArr, traceFunc, <>liveBlockArr, <>modelNum=0, <>codeTime=0, <>codeDev=0;
-/*	<>numOutputs = 16, <>numInputs = 16, <>numBuffers = 512, <>numBuses = 1024,
+	/*	<>numOutputs = 16, <>numInputs = 16, <>numBuffers = 512, <>numBuses = 1024,
 	<>numControlBuses=16384, <>memorySize=409600, <>sampleRate=41000, */
 
 	*new {
@@ -19,7 +19,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		);
 		mainPath = Quark("Radicles").localPath;
 		libPath = Quark("RadiclesLibs").localPath;
-/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
+		/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
 		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
 		filesPath = (Platform.userExtensionDir ++ dash ++ "RadiclesFiles");
 		soundFilePath = (filesPath ++ dash ++ "SoundFiles");
@@ -54,22 +54,22 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		^result;
 	}
 
-/*	*options {arg outputs, inputs, buffers, buses, controlBuses,
-		memory, samplingRate;
-		outputs ?? {outputs = numOutputs};
-		numOutputs = outputs;
-		inputs ?? {inputs = numInputs};
-		numInputs = inputs;
-		buffers ?? {buffers = numBuffers};
-		numBuffers = buffers;
-		buses ?? {buses = numBuses};
-		numBuses = buses;
-		controlBuses ?? {controlBuses = numControlBuses};
-		numControlBuses = controlBuses;
-		memory ?? {memory = memorySize};
-		memorySize = memory;
-		samplingRate ?? {samplingRate = sampleRate};
-		sampleRate = samplingRate;
+	/*	*options {arg outputs, inputs, buffers, buses, controlBuses,
+	memory, samplingRate;
+	outputs ?? {outputs = numOutputs};
+	numOutputs = outputs;
+	inputs ?? {inputs = numInputs};
+	numInputs = inputs;
+	buffers ?? {buffers = numBuffers};
+	numBuffers = buffers;
+	buses ?? {buses = numBuses};
+	numBuses = buses;
+	controlBuses ?? {controlBuses = numControlBuses};
+	numControlBuses = controlBuses;
+	memory ?? {memory = memorySize};
+	memorySize = memory;
+	samplingRate ?? {samplingRate = sampleRate};
+	sampleRate = samplingRate;
 
 	}*/
 
@@ -2615,7 +2615,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			});
 		}, "cssave: mixTrackNum, slot1, preset");
 
-			cW.add(\csfree, [\str, \str], {|str1, str2|
+		cW.add(\csfree, [\str, \str], {|str1, str2|
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {aZ.removeTrackFilters(\track, 1);}
@@ -7049,10 +7049,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 						}.fork;
 						modelArr[num] = [key, fileName];
 						if(action.notNil, {
-						NN.load(key, (getModelPath.(type) ++ "/" ++ fileName ++ ".ts"),
+							NN.load(key, (getModelPath.(type) ++ "/" ++ fileName ++ ".ts"),
 								action: action);
 						}, {
-						NN.load(key, (getModelPath.(type) ++ "/" ++ fileName ++ ".ts"),
+							NN.load(key, (getModelPath.(type) ++ "/" ++ fileName ++ ".ts"),
 								action: _.describe);
 						});
 						modelNum = num; //changes automatically the key number
@@ -7074,7 +7074,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			[\after, [\str, \str], {|str1, str2| postModelsWith.(\after, str2.asString); }, "post prior models with find"],
 			[\models, [\str], { modelArr.do({|item, index|
 				if(item.notNil, {([index+1] ++ item).radpost}); }); },
-				"post loaded models"],
+			"post loaded models"],
 			[\modelNum, [\str], { ("/\/\Current model number: " ++ modelNum).radpost; },
 				"change current model number"],
 			[\modelNum, [\str, \num], {|str, num| modelNum = num; },
@@ -7126,35 +7126,44 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			},
 			"load rave model fake stereo and fx in bus number"],
 
+			[\bafter, [\str, \num, \num], {|str, num1, num2|
+				var raveNum;
+				raveNum = num1-1;
+				modelLoad.(\after,raveNum,num2, action: {
+					Radicles.aZ.setFx(\bus, num1, 3, \afterImprov2);
+				});
+			},
+			"load after model fake stereo and fx in bus number"],
+
 			[\brave1, [\str, \arr, \num], {|str, arr1, num2|
 				var raveNum, cond1;
 				cond1 = Condition.new(false);
 
 				arr1.postln;
 				{
-				arr1.do{|item|
-				raveNum = item-1;
+					arr1.do{|item|
+						raveNum = item-1;
 
-					if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
+						if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
 
-					modelLoad.(\rave,raveNum,num2, action: {
+						modelLoad.(\rave,raveNum,num2, action: {
 							Radicles.aZ.setFx(\bus, item, 3, \nntImprov,
 								[\pan, ~panArr[raveNum]], action:
-							{
-								cond1.test = true;
-								cond1.signal;
-						})
-					}
-					);
+								{
+									cond1.test = true;
+									cond1.signal;
+							})
+						}
+						);
 
-					cond1.test = false;
-					cond1.wait;
-				};
+						cond1.test = false;
+						cond1.wait;
+					};
 				}.fork;
 
 
 			},
-		"load array of rave models and fx in bus number"],
+			"load array of rave models and fx in bus number"],
 
 			[\bafter1, [\str, \arr, \num], {|str, arr1, num2|
 				var raveNum, cond1;
@@ -7162,27 +7171,27 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 
 				arr1.postln;
 				{
-				arr1.do{|item|
-				raveNum = item-1;
+					arr1.do{|item|
+						raveNum = item-1;
 
-					if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
+						if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
 
-					modelLoad.(\rave,raveNum,num2, action: {
+						modelLoad.(\after,raveNum,num2, action: {
 							Radicles.aZ.setFx(\bus, item, 3, \afterImprov,
 								[\pan, ~panArr[raveNum]], action:
-							{
-								cond1.test = true;
-								cond1.signal;
-						})
-					}
-					);
+								{
+									cond1.test = true;
+									cond1.signal;
+							})
+						}
+						);
 
-					cond1.test = false;
-					cond1.wait;
-				};
+						cond1.test = false;
+						cond1.wait;
+					};
 				}.fork;
 			},
-		"load array of after models and fx in bus number"],
+			"load array of after models and fx in bus number"],
 
 			[\brave, [\str, \arr, \num], {|str, arr1, num2|
 				var raveNum, cond1;
@@ -7190,33 +7199,60 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 
 				arr1.postln;
 				{
-				arr1.do{|item|
-				raveNum = item-1;
+					arr1.do{|item|
+						raveNum = item-1;
 
-					modelLoad.(\rave,raveNum,num2, action: {
-						Radicles.aZ.setFx(\bus, item, 3, \nntImprov2, action:
-							{
-								cond1.test = true;
-								cond1.signal;
-						})
-					}
-					);
+						modelLoad.(\rave,raveNum,num2, action: {
+							Radicles.aZ.setFx(\bus, item, 3, \nntImprov2, action:
+								{
+									cond1.test = true;
+									cond1.signal;
+							})
+						}
+						);
 
-					cond1.test = false;
-					cond1.wait;
-				};
+						cond1.test = false;
+						cond1.wait;
+					};
 				}.fork;
 
 
 			},
-		"load array of fake stereo rave models and fx in bus number"],
+			"load array of fake stereo rave models and fx in bus number"],
+
+			[\bafter, [\str, \arr, \num], {|str, arr1, num2|
+				var raveNum, cond1;
+				cond1 = Condition.new(false);
+
+				arr1.postln;
+				{
+					arr1.do{|item|
+						raveNum = item-1;
+
+						modelLoad.(\after,raveNum,num2, action: {
+							Radicles.aZ.setFx(\bus, item, 3, \afterImprov2, action:
+								{
+									cond1.test = true;
+									cond1.signal;
+							})
+						}
+						);
+
+						cond1.test = false;
+						cond1.wait;
+					};
+				}.fork;
+
+
+			},
+			"load array of fake stereo after models and fx in bus number"],
 
 			[\braven, [\str, \num, \num], {|str, num1, num2|
 				var raveNum;
 				raveNum = num1-1;
 				modelLoad.(\rave,raveNum,num2, action: {
 					Radicles.aZ.setFx(\bus, num1, 3, \nnt);
-					/*cW.callFunc( ("fx b " ++ num1 ++ 	" 3 nntImprov") );*/
+					/*cW.callFunc( ("fx b " ++ num1 ++ " 3 nntImprov") );*/
 				});
 			},
 			"load rave model and fx in bus number"],
@@ -7227,30 +7263,28 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 
 				arr1.postln;
 				{
-				arr1.do{|item|
-				raveNum = item-1;
+					arr1.do{|item|
+						raveNum = item-1;
 
-					modelLoad.(\rave,raveNum,num2, action: {
-						Radicles.aZ.setFx(\bus, item, 3, \nnt, action:
-							{
-								cond1.test = true;
-								cond1.signal;
-						})
-					}
-					);
+						modelLoad.(\rave,raveNum,num2, action: {
+							Radicles.aZ.setFx(\bus, item, 3, \nnt, action:
+								{
+									cond1.test = true;
+									cond1.signal;
+							})
+						}
+						);
 
-					cond1.test = false;
-					cond1.wait;
-				};
+						cond1.test = false;
+						cond1.wait;
+					};
 				}.fork;
 
 
 			},
-		"load array of rave models and fx in bus number"],
+			"load array of rave models and fx in bus number"],
 
 		]);
-
-
 
 
 	}
