@@ -1,6 +1,6 @@
 BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 	<tags, countTag=0, <bufAlloc, <>defaultPath,
-	<>postWin, countCue=0,  bufcount=0;
+	<>postWin, countCue=0,  <>bufcount=0;
 
 	*bufferCount {
 		if(bufcount < server.options.numBuffers, {

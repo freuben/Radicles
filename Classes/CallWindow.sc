@@ -108,6 +108,11 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		var inputArr, typeArr, index, selectArr, selectItem, funcArr;
 		var arrString, arrInterpret, finalArr, callInd, thisStringArr, thisReplaceString;
 		var arr1, arr2, arr3, arr4, arr5, arrArr, arrArr2, thisInd;
+
+		if(Radicles.myImprov.notNil, {
+			("[ " ++ string ++ " ]").radpost;
+		});
+
 		if(lang != \sc, {
 
 			if(string.contains("{").and(string.contains("}")), {

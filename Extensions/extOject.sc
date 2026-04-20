@@ -26,10 +26,10 @@
 		var string;
 		string = this;
 		{
-		string.do{|item|
+			string.do{|item|
 				item.asString.docpost(doc);
-			rrand(time-dev, time+dev).yield;
-		};
+				rrand(time-dev, time+dev).yield;
+			};
 			action.();
 		}.fork(AppClock);
 	}
@@ -45,7 +45,7 @@
 		string = this;
 		string = "(" ++ 10.asAscii ++ string ++ 10.asAscii ++ ")";
 		string.docforkln(doc, time, dev, {
-		doc.selectRange(doc.text.size-1, 0);
+			doc.selectRange(doc.text.size-1, 0);
 		});
 	}
 
@@ -102,7 +102,7 @@
 			};
 		}
 		{type == \br} {
-		brackets =	("(" ++ 10.asAscii ++ this ++ 10.asAscii ++ ")";);
+			brackets =	("(" ++ 10.asAscii ++ this ++ 10.asAscii ++ ")";);
 			case
 			{where == \ide} {brackets.postln}
 			{where == \gui} {extraPost.addLine(brackets);}
@@ -132,30 +132,44 @@
 	}
 
 	radpost {arg type=\ln, oscId="/code";
-		var string, doc, postUI;
+		var string, doc, postUI, radImprov;
 		if(Radicles.ignorePost.not, {
-		doc = Radicles.postDoc;
-		postUI = Radicles.postWindow;
+			doc = Radicles.postDoc;
+			postUI = Radicles.postWindow;
+			radImprov = Radicles.myImprov;
 			string = this;
 			if(postUI.notNil, {
 				string = string.replace(9.asAscii, " ");
 			});
-		string = string.asString.lineFormat(Radicles.lineSize);
-		if(string.includesString(10.asAscii), {
-			type = \br
-		});
-		if(Radicles.logCodeTime, {
-			string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
-		});
-		if(Radicles.oscCode.notNil, {
+			string = string.asString.lineFormat(Radicles.lineSize);
+			if(string.includesString(10.asAscii), {
+				type = \br
+			});
+			if(Radicles.logCodeTime, {
+				string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
+			});
+			if(Radicles.oscCode.notNil, {
 				Radicles.oscCode.sendMsg(oscId, string);
-			/*string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);*/
-		});
-		if(doc.isNil, {
-		string.postin(\ide, type);
-		}, {
-			string.postallin([\ide, \doc], type, doc);
-		});
+			});
+			if(radImprov.notNil, {
+				if(type == \post, {
+					string.postln;
+					radImprov.postCount = radImprov.postCount + 1;
+
+					if((radImprov.postCount%radImprov.postModulo) == 1, {
+						{string.postIn(radImprov.extraPost2, \post);
+							radImprov.extraPost2.clearFrom(radImprov.maxPostChars);
+						}.defer;
+					});
+				}, {
+					{string.postIn(radImprov.extraDoc, \ln);}.defer;
+				});
+			});
+			if(doc.isNil, {
+				string.postin(\ide, type);
+			}, {
+				string.postallin([\ide, \doc], type, doc);
+			});
 			if(postUI.notNil, {
 				string.postin(\gui, type, postUI);
 			});
@@ -165,25 +179,25 @@
 	radpostcont {arg type=\ln, postDoc=false, postWin=true, win=\ide;
 		var string, doc;
 		if(Radicles.ignorePostcont.not, {
-		string = this.asString;
-		if(Radicles.reducePostControl, {
-			string = string.replace(",", "(").replace(").set").replace(");").split($().copyToEnd(1);
-		});
-		if(postDoc, {
-		doc = Radicles.postDoc;
-		if(Radicles.logCodeTime, {
-			string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
-		});
-		if(doc.isNil, {
-		string.postin(\ide, type);
-		}, {
-			string.postallin([\ide, \doc], type, doc);
-		});
-		}, {
-			if(postWin, {
-			string.postin(win, type);
+			string = this.asString;
+			if(Radicles.reducePostControl, {
+				string = string.replace(",", "(").replace(").set").replace(");").split($().copyToEnd(1);
 			});
-		});
+			if(postDoc, {
+				doc = Radicles.postDoc;
+				if(Radicles.logCodeTime, {
+					string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
+				});
+				if(doc.isNil, {
+					string.postin(\ide, type);
+				}, {
+					string.postallin([\ide, \doc], type, doc);
+				});
+			}, {
+				if(postWin, {
+					string.postin(win, type);
+				});
+			});
 		});
 	}
 
@@ -193,8 +207,8 @@
 		string = this.asString.lineFormat(Radicles.lineSize);
 		string.postin(\ide, type);
 		if(postUI.notNil, {
-				string.postin(\gui, type, postUI);
-			});
+			string.postin(\gui, type, postUI);
+		});
 
 	}
 

@@ -1,9 +1,9 @@
-Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=nil,
+Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedFuncAction, <>schedDiv=1,
-	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>oscCode, <>reducePostControl=false,
+	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>oscCode, <>myImprov, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>colorCritical, <>colorMeter, <>colorWarning,
 	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>filesPath, <>soundFilePath, <>postWindow, <>beatsFuncArr, traceFunc, <>liveBlockArr, <>modelNum=0;
+	<>filesPath, <>soundFilePath, <>postWindow, <>beatsFuncArr, traceFunc, <>liveBlockArr, <>modelNum=0, <>codeTime=0, <>codeDev=0;
 /*	<>numOutputs = 16, <>numInputs = 16, <>numBuffers = 512, <>numBuses = 1024,
 	<>numControlBuses=16384, <>memorySize=409600, <>sampleRate=41000, */
 
@@ -7012,9 +7012,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <server, <>postWin=ni
 			});
 		};
 
-		postModels = {arg type = \rave; getModels.(type).do{|item, index| [index, item].radpost;} };
+		postModels = {arg type = \rave; getModels.(type).do{|item, index| [index, item].postln;} };
 
-		postModelsWith = {arg type = \rave, find=nil; getModels.(type).do{|item, index| if(item.cs.find(find).notNil, {[index, item].radpost;}); } };
+		postModelsWith = {arg type = \rave, find=nil; getModels.(type).do{|item, index| if(item.cs.find(find).notNil, {[index, item].postln;}); } };
 
 		modelArr = nil!10;
 
