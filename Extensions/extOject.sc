@@ -158,7 +158,9 @@
 
 					if((radImprov.postCount%radImprov.postModulo) == 1, {
 						{string.postIn(radImprov.extraPost2, \post);
-							radImprov.extraPost2.clearFrom(radImprov.maxPostChars);
+							radImprov.extraPost2.clearFrom(
+								radImprov.extraPost2.calcMaxChar + radImprov.maxPostChars;
+								);
 						}.defer;
 					});
 				}, {
