@@ -153,7 +153,7 @@
 			});
 			if(radImprov.notNil, {
 				if(type == \post, {
-					string.postln;
+					/*string.postln;*/
 					radImprov.postCount = radImprov.postCount + 1;
 
 					if((radImprov.postCount%radImprov.postModulo) == 1, {

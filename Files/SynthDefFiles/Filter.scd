@@ -1012,4 +1012,37 @@ var sig, buses, selBus;
 		dry = main;
 
 		(wet * mix.linlin(0, 1, 0, 1)) + (dry * mix.linlin(0, 1, 1, 0))
-	} ] ]
+	} ], [ 'eqpeak3', {arg loFreq = 80->[20,20000,\exp], 
+			loGain = 0->[-15,15,\lin], midFreq = 2500->[20,20000,\exp], 
+			midGain = 0->[-15,15,\lin], hiFreq = 12000->[20,20000,\exp], 
+			hiGain = 0->[-15,15,\lin], gain = 0->[-15,15,\lin];
+			
+			var sig, lo, mid, hi, loRQ, midRQ, hiRQ, qCurve, loRQMin, loRQMax, 
+			midRQMin, midRQMax, hiRQMin, hiRQMax, loAmt, midAmt, hiAmt;
+			
+			qCurve = 2.0;
+			
+			loRQMin = 0.45; loRQMax = 1.4;
+			midRQMin = 0.5; midRQMax = 1.6;
+			hiRQMin = 0.45; hiRQMax = 1.4;
+			
+			lo  = loGain.clip(-15, 15);
+			mid = midGain.clip(-15, 15);
+			hi  = hiGain.clip(-15, 15);
+			
+			loAmt  = (lo.abs  / 15).clip(0, 1).pow(qCurve);
+			midAmt = (mid.abs / 15).clip(0, 1).pow(qCurve);
+			hiAmt  = (hi.abs  / 15).clip(0, 1).pow(qCurve);
+			
+			loRQ  = loRQMin  + (loAmt  * (loRQMax  - loRQMin));
+			midRQ = midRQMin + (midAmt * (midRQMax - midRQMin));
+			hiRQ  = hiRQMin  + (hiAmt  * (hiRQMax  - hiRQMin));
+			
+			sig = \in;
+			
+			sig = BPeakEQ.ar(sig, loFreq,  loRQ,  lo);
+			sig = BPeakEQ.ar(sig, midFreq, midRQ, mid);
+			sig = BPeakEQ.ar(sig, hiFreq,  hiRQ,  hi);
+			
+			sig * gain.dbamp;
+		} ] ]
