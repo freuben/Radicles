@@ -6995,7 +6995,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			case
 			{type == \rave} {modelPath = filesPath ++ "/Models/RAVE";}
 			{type == \prior} {modelPath = filesPath ++ "/Models/MSPrior";}
-			{type == \after} {modelPath = filesPath ++ "/Models/AFTER";};
+			{type == \after} {modelPath = filesPath ++ "/Models/AFTER";}
+			{type == \muslat} {modelPath = filesPath ++ "/Models/Music2Latent";}
+			{type == \stable} {modelPath = filesPath ++ "/Models/StableAudio";}
+			;
 			if(modelPath.notNil, {
 				modelPath;
 			}, {
@@ -7069,6 +7072,8 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			[\rave, [\str], { postModels.(\rave); }, "post rave models"],
 			[\prior, [\str], { postModels.(\prior); }, "post prior models"],
 			[\after, [\str], { postModels.(\after); }, "post after models"],
+			[\muslat, [\str], { postModels.(\muslat); }, "post music2latent models"],
+			[\stable, [\str], { postModels.(\stable); }, "post stable audio models"],
 			[\rave, [\str, \str], {|str1, str2| postModelsWith.(\rave, str2.asString); }, "post rave models with find"],
 			[\prior, [\str, \str], {|str1, str2| postModelsWith.(\prior, str2.asString); }, "post prior models with find"],
 			[\after, [\str, \str], {|str1, str2| postModelsWith.(\after, str2.asString); }, "post prior models with find"],
@@ -7095,6 +7100,14 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 				"load rave model with index"],
 			[\after, [\str, \num, \str], {|str1, num, str2| modelLoad.(\after,num,str2.asString);},
 				"load rave model with name"],
+			[\muslat, [\str, \num, \num], {|str, num1, num2| modelLoad.(\muslat,num1,num2);},
+				"load music2latent model with index"],
+			[\muslat, [\str, \num, \str], {|str1, num, str2| modelLoad.(\muslat,num,str2.asString);},
+				"load music2latent model with name"],
+			[\stable, [\str, \num, \num], {|str, num1, num2| modelLoad.(\stable,num1,num2);},
+				"load stable audio model with index"],
+			[\stable, [\str, \num, \str], {|str1, num, str2| modelLoad.(\stable,num,str2.asString);},
+				"load stable audio model with name"],
 			[\raveins, [\str], {|str| cW.callFunc("(in 1 1 & in 2 2 & in 3 3 & in 4 4 & blk 5 audioins)" )},
 				"rave inputs"],
 			[\brave1, [\str, \num, \num], {|str, num1, num2|
@@ -7117,6 +7130,16 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 				});
 			},
 			"load after model and fx in bus number"],
+			[\bmuslat1, [\str, \num, \num], {|str, num1, num2|
+				var raveNum;
+				raveNum = num1-1;
+				modelLoad.(\muslat,raveNum,num2, action: {
+					if(~panArr.isNil, {~panArr = 0!Radicles.aZ.busCount;});
+					Radicles.aZ.setFx(\bus, num1, 3, \nntImprov64,
+						[\pan, ~panArr[raveNum]]);
+				});
+			},
+			"load muslat model and fx in bus number"],
 			[\brave, [\str, \num, \num], {|str, num1, num2|
 				var raveNum;
 				raveNum = num1-1;

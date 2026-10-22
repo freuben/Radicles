@@ -142,8 +142,131 @@
 			Color.new255(255,68,54),
 			Color.new255(169,235,0)
 		]);
+		colorPalettes.add(\whiteToOrange -> [
+			Color.new255(255,255,255),
+Color.new255(255,224,204),
+Color.new255(255,179,128),
+Color.new255(255,138,77),
+Color.new255(255,72,0)
+		]);
+		colorPalettes.add(\oranges -> [
+			Color.new255(255,111,0),
+Color.new255(255,111,0),
+Color.new255(255,98,0),
+Color.new255(255,98,0),
+Color.new255(255,72,0)
+		]);
+
 
 		^colorPalettes;
 	}
+
+	*colorToHSL { |c| var r, g, b, maxc, minc, l, d, h, s;
+		r = c.red;
+		g = c.green;
+		b = c.blue;
+		maxc = [r, g, b].maxItem;
+		minc = [r, g, b].minItem;
+		l = (maxc + minc) / 2;
+		d = maxc - minc;
+		h = 0;
+		s = 0;
+
+		if(d == 0) {
+			h = 0;
+			s = 0;
+		} {
+			s = if(l < 0.5) {
+				d / (maxc + minc)
+			} {
+				d / (2 - maxc - minc)
+			};
+
+			if(maxc == r) {
+				h = (g - b) / d + if(g < b) { 6 } { 0 };
+			} {
+				if(maxc == g) {
+					h = (b - r) / d + 2;
+				} {
+					h = (r - g) / d + 4;
+				};
+			};
+
+			h = h / 6;
+		};
+
+		^[h, s, l];
+	}
+
+	*paletteScore { |palette|
+		var hsl, lightnesses, saturations;
+		var avgLightness, avgSaturation, neutralRatio, chromaticHues, hueSpread;
+		var neutralThreshold = 0.12;
+
+		hsl = palette.collect { |c| this.colorToHSL(c) };
+
+		lightnesses = hsl.collect(_[2]);
+		saturations = hsl.collect(_[1]);
+
+		avgLightness = lightnesses.sum / lightnesses.size;
+		avgSaturation = saturations.sum / saturations.size;
+
+		neutralRatio = saturations.count { |s| s < neutralThreshold } / saturations.size;
+
+		chromaticHues = hsl.select { |triple| triple[1] >= neutralThreshold }.collect(_[0]);
+
+		hueSpread = if(chromaticHues.size <= 1) {
+			0
+		} {
+			var sorted = chromaticHues.sort;
+			var gaps, maxGap;
+
+			gaps = sorted.copyRange(1, sorted.size - 1).collect { |x, i|
+				x - sorted[i]
+			};
+
+			gaps = gaps.add((sorted[0] + 1) - sorted.last);
+			maxGap = gaps.maxItem;
+
+			1 - maxGap
+		};
+
+		^((0.45 * avgSaturation)
+		+ (0.30 * hueSpread)
+		+ (0.25 * avgLightness)
+			- (0.20 * neutralRatio))
+	}
+
+	*paletteOrder {arg index=0;
+		var orderArr;
+
+		orderArr = [
+			\depressednightclub,  // -0.081
+			\club,                //  0.040
+			\clubHouse,           //  0.092
+			\nightclub,           //  0.131
+			\vibersclub,          //  0.154
+			\nightclubbing,       //  0.244
+			\jazz_club,           //  0.308
+			\jazzclub,            //  0.339
+			\samsclub,            //  0.362
+			\nightclubMemories,   //  0.448
+			\clubParadise,        //  0.452
+			\dramaclub,           //  0.469
+			\clubLights,          //  0.509
+			\devilsnightclub,     //  0.534
+			\binightclub,         //  0.543
+			\night_club,          //  0.546
+			\clubneonlights,      //  0.601
+			\warmTones,           //  0.619
+			\purpleclub,          //  0.625
+			\aliennightclub,       //  0.730
+			\whiteToOrange,
+			\oranges
+		]
+		^[orderArr[index], Color.colorPalettes.at(orderArr[index])];
+	}
+
+
 
 }

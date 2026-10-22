@@ -153,7 +153,6 @@
 			});
 			if(radImprov.notNil, {
 				if(type == \post, {
-					/*string.postln;*/
 					radImprov.postCount = radImprov.postCount + 1;
 
 					if((radImprov.postCount%radImprov.postModulo) == 1, {
@@ -163,6 +162,8 @@
 								);
 						}.defer;
 					});
+
+					"".postln;
 				}, {
 					{string.postIn(radImprov.extraDoc, \ln);}.defer;
 				});
