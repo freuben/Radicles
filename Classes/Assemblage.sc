@@ -243,7 +243,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{
 			if(soloStates.notNil, {
 				if(type == \track, {
-					insertInd = mixTrackNames.indexOf(\bus1);
+					//new tracks go before the first bus, or before the master if there are no buses
+					insertInd = mixTrackNames.detectIndex({|item|
+						item.asString.beginsWith("bus") or: { item == \master } });
 				}, {
 					insertInd = mixTrackNames.indexOf(\master);
 				});
@@ -1820,7 +1822,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					sendItems = mixTrackNames.select({|item|
 						item.asString.find("bus").notNil }).collect{|it|
 						it.asString.divNumStr[1] };
-					sendItems = sendItems ++ (sendItems.maxItem + 1);
+					//offer the next free bus number (bus1 when there are no buses yet)
+					sendItems = sendItems ++ ((sendItems.maxItem ? 0) + 1);
 
 					smenu.items = [""] ++ sendItems.collect({|item| "bus" ++ item });
 
@@ -2793,13 +2796,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	setSend {arg trackType=\track, trackNum=1, slotNum=1, busNum=1, val= -inf,
 		dirMaster=true, presetMode=false;
-		var trackIndex, funcThis, modArr, setThisVal;
+		var trackIndex, funcThis, setThisVal;
 		if(busNum == 0, {
-			modArr = ModMap.modNodes;
-			if(modArr.notNil, {
-				if(modArr.notEmpty, {
-					this.unmapSend(trackType, trackNum, slotNum, -inf);
-				});
+			//clearing a send: remove its modulation first, if this send is modulated
+			if(modSendArr.notNil and: {
+				modSendArr.any({|item| item.copyFromStart(2) == [trackType, trackNum, slotNum] })
+			}, {
+				this.unmodSend(trackType, trackNum, slotNum, -inf);
 			});
 		});
 		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
