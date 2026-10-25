@@ -12,8 +12,9 @@ GlobalHistory : Radicles {
 
 		path = (filesPath ++ "Settings/GlobalHistory/" ++ fileName ++ ".scd");
 
-		writeHistoryFunc = {
-			file = File(path, "a+");
+		writeHistoryFunc = {arg overwrite=false;
+			//"w" empties an existing file, "a+" creates it if missing
+			file = File(path, if(overwrite, {"w"}, {"a+"}));
 			file.close;
 			recordHistory = true;
 
@@ -24,9 +25,11 @@ GlobalHistory : Radicles {
 		};
 
 		if(File.existsCaseSensitive(path), {
-			if(replace.not, {
+			if(replace, {
+				writeHistoryFunc.(true);
+			}, {
 				Window.warnQuestion(("This global history already exist: " ++
-					"Are you sure you want to replace it?"), {writeHistoryFunc.();});
+					"Are you sure you want to replace it?"), {writeHistoryFunc.(true);});
 			});
 		}, {
 			writeHistoryFunc.();

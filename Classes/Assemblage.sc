@@ -2759,7 +2759,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					value ++ ", 'lagTime', " ++ lag ++ ");").radpostcont.interpret;
 			});
 			this.mixWinBool({
-				setVolSlider.(trackIndex, val);
+				setVolSlider.(trackIndex, value); //slider always shows dB
 			});
 		}, {
 			"Track not found".warn;
@@ -3369,7 +3369,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							defaultPos.();
 						}, {
 							top = filtersWindow.last.bounds.top + 10;
-							left = filtersWindow.last.bounds.top + 10;
+							left = filtersWindow.last.bounds.left + 10;
 						});
 					});
 				}, {
@@ -5083,7 +5083,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	prepMixSettings {arg arr;
 		var arr2, arr3, arr4;
 		arr2 = arr[0].flop[0];
-		arr2.rejectSame;
+		arr2 = arr2.rejectSame; //one entry per Ndef, so each .set runs once on load
 		arr3 = arr2.collect{|item|
 			arr[0].flop[0].indicesOfEqual(item);
 		};

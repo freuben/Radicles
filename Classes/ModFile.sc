@@ -473,7 +473,7 @@ PresetFile : ModFile {
 		^presetFile.write(key, dataArr, win, path: path, post: post);
 	}
 
-	* remove {arg class=\bstore, key, win=true, exclude, path, post;
+	* remove {arg class=\bstore, key, win=true, exclude, path, post=true;
 		var presetFile;
 		presetFile = this.new(\preset, class, exclude);
 		^presetFile.remove(key, win, path: path, post: post);

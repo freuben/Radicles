@@ -399,8 +399,9 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		fileName ?? {fileName = Date.getDate.asString};
 		historyPath = (rootDir ++ "History/" ++ fileName ++ ".scd");
 
-		writeHistoryFunc = {
-			file = File(historyPath, "a+");
+		writeHistoryFunc = {arg overwrite=false;
+			//"w" empties an existing file, "a+" creates it if missing
+			file = File(historyPath, if(overwrite, {"w"}, {"a+"}));
 			file.close;
 			recordHistory = true;
 			text.front;
@@ -410,9 +411,11 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			});
 		};
 		if(File.existsCaseSensitive(historyPath), {
-			if(replace.not, {
+			if(replace, {
+				writeHistoryFunc.(true);
+			}, {
 				Window.warnQuestion(("This history already exist: " ++
-					"Are you sure you want to replace it?"), {writeHistoryFunc.();});
+					"Are you sure you want to replace it?"), {writeHistoryFunc.(true);});
 			});
 		}, {
 			writeHistoryFunc.();
