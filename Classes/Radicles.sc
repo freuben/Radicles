@@ -240,15 +240,11 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 				extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
 					item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
 				server.sync;
-				case
-				{item[1].includes(\mute)} {
+				//solo is not an Ndef value (it stays 1); it is restored from soloStates below
+				if(item[1].includes(\mute), {
 					aZ.muteStates[aZ.mixTrackNames.indexOf(item[0])] =
 					item[1][(item[1].indexOfEqual(\mute)+1)];
-				}
-				{item[1].includes(\solo)} {
-					aZ.soloStates[aZ.mixTrackNames.indexOf(item[0])] =
-					item[1][(item[1].indexOfEqual(\solo)+1)];
-				};
+				});
 				});
 				modMixSettings =mixSettings[1];
 				if(modMixSettings.notNil, {
@@ -273,6 +269,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 					aZ.recStates = ioSettings[0];
 					aZ.recInputArr = ioSettings[1];
 					aZ.mastOutArr = ioSettings[2];
+					aZ.restoreSoloStates(ioSettings[3]);
 					aZ.mapOutFunc;
 					nodeTime.yield;
 				});

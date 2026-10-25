@@ -10,7 +10,9 @@ GlobalHistory : Radicles {
 
 		fileName ?? {fileName = Date.getDate.asString};
 
-		path = (filesPath ++ "Settings/GlobalHistory/" ++ fileName ++ ".scd");
+		path = (filesPath +/+ "Settings/GlobalHistory" +/+ (fileName ++ ".scd")); //filesPath has no trailing slash
+
+		File.mkdir(filesPath +/+ "Settings/GlobalHistory"); //create the folder if missing
 
 		writeHistoryFunc = {arg overwrite=false;
 			//"w" empties an existing file, "a+" creates it if missing

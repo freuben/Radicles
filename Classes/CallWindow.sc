@@ -74,7 +74,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			});
 
 			//add from file
-			rootDir = (filesPath ++ "Settings/CallWindow/");
+			rootDir = (filesPath +/+ "Settings/CallWindow/"); //filesPath has no trailing slash
 
 			if(settings.notNil, {
 				this.addSettings(settings.asString);
@@ -398,6 +398,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		var file, date, writeHistoryFunc;
 		fileName ?? {fileName = Date.getDate.asString};
 		historyPath = (rootDir ++ "History/" ++ fileName ++ ".scd");
+		File.mkdir(rootDir ++ "History"); //create the History folder if missing
 
 		writeHistoryFunc = {arg overwrite=false;
 			//"w" empties an existing file, "a+" creates it if missing
