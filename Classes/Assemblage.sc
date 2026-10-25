@@ -542,6 +542,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(thisIt[0] == argument, { ^thisIt[1]; }); };
 			}); };
 		};
+		^nil; //not found (previously returned the Assemblage itself)
 	}
 
 	replaceFunc {arg name, function;
@@ -651,9 +652,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	getTrackInput {arg type=\master, num=1;
 		var inTag, index, trackTag;
-		if(type == \master, {inTag = ("space" ++ type.asString.capitalise).asSymbol;
+		//inputs are stored under 'in' keys, e.g. inTrack1, inMaster
+		if(type == \master, {inTag = ("in" ++ type.asString.capitalise).asSymbol;
 			trackTag = type;
-		}, {inTag = (("space" ++ type.asString.capitalise) ++ num).asSymbol;
+		}, {inTag = (("in" ++ type.asString.capitalise) ++ num).asSymbol;
 			trackTag = (type ++ num).asSymbol;
 		});
 		if(trackNames.includes(trackTag), {
@@ -666,6 +668,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}, {
 			"Track doesn't exist".warn;
 		});
+		^nil;
 	}
 
 	getInputs {arg type=\master;
@@ -701,7 +704,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(num.isArray, {
 				numArr = num;
 			}, {
-				numArr = (num..ndefIns.size);
+				numArr = (num..(num + ndefIns.size - 1)); //one track number per input, starting at num
 			});
 			ndefIns.do{|item, index|
 				this.input(item, typeArr[index], numArr[index]);
@@ -727,7 +730,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			}, {
 				if(item == Ndef(key), { ind = ind.add(index) });
 		});  };
-		if(ind.notNil, {
+		if(ind.notEmpty, {
 			if(ind.size == 1, {
 				^Ndef(inputs.flop[0][ind[0]]);
 			}, {
@@ -735,6 +738,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			});
 		}, {
 			"Destination not found".warn;
+			^nil;
 		});
 	}
 
@@ -832,7 +836,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 				("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radpost.interpret;
 			});
-			spaceInNdef = inputs.flop[1][spaceInInd];
+			//look the bus input up again: entries may have been removed above
+			spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
+			if(spaceInInd.notNil, {spaceInNdef = inputs.flop[1][spaceInInd]});
 			if(spaceInNdef.isArray, {
 				spaceInSel = spaceInNdef.select{|item| item.key !=  oldLabel};
 				if(spaceInSel.size == 1, {
@@ -858,7 +864,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				if(bufIndex.notNil, {
 					bufFunc = {
 						(nodeTime+fadeTime).yield;
-						bufIndex.do{|index|
+						bufIndex.reverseDo{|index| //from the end, so removeAt keeps earlier indices valid
 							filterBuff.flop[1][index].do{|item|
 								BStore.removeID(item);
 								server.sync;
@@ -928,16 +934,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					filters[filterIndex] = [filterTag, filter];
 				}, {
 					arr2 = arr2.add(filterInfo);
-					arr2.sort({arg a, b; a[0] <= b[0] });
+					arr2.sort({arg a, b; this.filterTagBefore(a[0], b[0]) });
 					filters = filters.add([filterTag, filter]);
-					filters.sort({arg a, b; a[0] <= b[0] });
+					filters.sort({arg a, b; this.filterTagBefore(a[0], b[0]) });
 				});
 				arr1.insert(1, arr2);
 				arrSize = (arr1.flat.size/2);
 				arr1 = arr1.reshape(arrSize.asInteger, 2)
 			}, {
 				filters = filters.add([filterTag, filter]);
-				filters.sort({arg a, b; a[0] <= b[0] });
+				filters.sort({arg a, b; this.filterTagBefore(a[0], b[0]) });
 				arr1 = ndefArr;
 				arr2 = filterInfo;
 				arr1.insert(1, arr2);
@@ -1068,27 +1074,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	removeTrackFilters {arg type=\track, num= 1, post=true, clear=false, action, refresh=true;
-		var thisTrack, thisSlot, ndefCS, arr1, arr2, setArr, cond, condBuf, bufBool=false;
+		var thisTrack, ndefCS, arr1, arr2, setArr, cond, bufSlots;
 		thisTrack = this.getThisTrack(type, num);
 		if(thisTrack.notNil, {
 			thisTrack = thisTrack.copyRange(0, thisTrack.size-2);
 			if(thisTrack.size > 2, {
 				arr1 = [thisTrack[0], thisTrack.last];
 				arr2 = thisTrack.copyRange(1, thisTrack.size-2);
-				if(filterBuff.notNil, {
-					bufBool = filterBuff.flop[0].detect({|item|
-						item.cs.find(type.asString.capitalise ++ "_" ++ num).notNil; }).notNil;
-				});
+				//effect slots on this strip that hold buffers (exact tags, not substrings)
+				bufSlots = arr2.flop[0].select({|tag|
+					filterBuff.notNil and: { filterBuff.flop[0].includes(tag) } });
+				setArr = this.findTrackArr(if(type == \master, {type}, {(type ++ num).asSymbol}));
+				//one routine, so action only runs once routing and buffer cleanup are done
 				{
 					arr2.do{|item|
 						this.ndefModClear(item[0]);
 						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
 						ndefCS.radpost.interpret;
-						thisTrack.remove(item);
-						if(type == \master, {num=""});
-						setArr = this.findTrackArr((type ++ num).asSymbol);
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));
-						//aqui??
 						specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
 						tracks[setArr[0]] = tracks[setArr[0]].reject({|it| it[0] == item[0] });
 						filters = filters.reject({|it| it[0] == item[0] });
@@ -1097,32 +1100,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						server.sync;
 					};
 					if(clear.not, {
-						cond = Condition.new;
-						this.autoRoute(arr1, {
-							cond.test=true; cond.signal;
-						});
+						cond = Condition(false);
+						this.autoRoute(arr1, {cond.test = true; cond.signal;});
+						cond.wait;
 					});
-					if(bufBool.not, {
-						action.();
-						if(refresh, {
-							{this.refreshFunc;}.defer;
-						});
-					});
-				}.fork;
-				{
-					condBuf = Condition.new;
-					arr2.flop[0].do{|item|
-						condBuf.test = false;
-						this.removeBufFromFilter(item, {
-							condBuf.test = true; condBuf.signal;
-						});
+					//removeBufFromFilter only calls back for slots that hold buffers
+					bufSlots.do{|tag|
+						cond = Condition(false);
+						this.removeBufFromFilter(tag, {cond.test = true; cond.signal;});
+						cond.wait;
 					};
-					if(bufBool, {
-						condBuf.wait;
-						action.();
-						if(refresh, {
-							{this.refreshFunc;}.defer;
-						});
+					action.();
+					if(refresh, {
+						{this.refreshFunc;}.defer;
 					});
 				}.fork;
 			}, {
@@ -1207,6 +1197,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		modSpec = thisSpec[1].specFactor(mul, add, min, val, warp);
 		thisVal = thisSpec[2].(modSpec.asSpec.map(arg2));
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
+	}
+
+	filterTagBefore {arg tagA, tagB;
+		//sort effect tags by strip type, then track and slot as numbers (so slot 2 comes before slot 10)
+		var a, b;
+		a = tagA.asString.split($_);
+		b = tagB.asString.split($_);
+		if(a[0] != b[0], {^a[0].compare(b[0]) <= 0});
+		if(a[1].asInteger != b[1].asInteger, {^a[1].asInteger < b[1].asInteger});
+		^a[2].asInteger <= b[2].asInteger;
 	}
 
 	argToFilterTag {arg type, arg1, arg2;
@@ -2480,10 +2480,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 			});
 			in = in.flat;
-			imp = Impulse.ar(10);
+			imp = Impulse.ar(updateFreq); //same rate the OSC handler assumes
 			SendReply.ar(imp, '/AssemblageGUI',
 				[
-					RunningSum.ar(in.squared, server.sampleRate / 10),
+					RunningSum.ar(in.squared, server.sampleRate / updateFreq),
 					Peak.ar(in, Delay1.ar(imp)).lag(0, 3)
 				].flop.flat
 			);
@@ -2810,8 +2810,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
 		if(trackIndex.notNil, {
 			funcThis = {arg setVal;
+				var slotBus;
 				if(busNum == 0, {
-					this.removeBus(trackNum, busNum, trackType);
+					//clearing: remove the bus this send slot uses
+					slotBus = this.sendSlotBus(trackType, trackNum, slotNum);
+					if(slotBus.notNil, {
+						this.removeBus(trackNum, slotBus, trackType);
+					}, {
+						"No send in this slot".warn;
+					});
 				}, {
 					/*"setVal ".post; setVal.postln;
 					"	this.bus ".post; [trackNum, busNum, val, trackType].postln;*/
@@ -4053,6 +4060,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
+	sendSlotBus {arg trackType, trackNum, sendSlot;
+		//the bus number used by a track's send slot (slots follow bus order, as in the mixer)
+		var busIn;
+		if(busArr.isNil, {^nil});
+		busIn = this.prepareModSend(trackType, trackNum, sendSlot)[0];
+		^if(busIn.notNil, {busIn.asString.divNumStr[1]}, {nil});
+	}
+
 	prepareModSend {arg trackType, trackNum, sendSlot;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn;
 		trackKey = (trackType ++ trackNum).asSymbol;
@@ -4098,21 +4113,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(modArg.isInteger, {
 			modArg = Ndef(ndefKey).controlKeys[modArg-1];
 		});
-		if(ModMap.modNodes.notNil, {
-			if(ModMap.modNodes.notEmpty, {
-				if((ModMap.modNodes.flop[1].includes(Ndef(ndefKey)))
-					.and(ModMap.modNodes.flop[2].includes(modArg)), {
-						modifier = \mod;
-				});
-			});
+		//a match needs the same entry to hold both this Ndef and this argument
+		if(ModMap.modNodes.notNil and: {
+			ModMap.modNodes.any({|item| (item[1] == Ndef(ndefKey)) and: {item[2] == modArg} })
+		}, {
+			modifier = \mod;
 		});
-		if(HIDMap.hidNodes.notNil, {
-			if(HIDMap.hidNodes.notEmpty, {
-				if((HIDMap.hidNodes.flop[1].includes(Ndef(ndefKey)))
-					.and(HIDMap.hidNodes.flop[2].includes(modArg)), {
-						modifier = \hid;
-				});
-			});
+		if(HIDMap.hidNodes.notNil and: {
+			HIDMap.hidNodes.any({|item| (item[1] == Ndef(ndefKey)) and: {item[2] == modArg} })
+		}, {
+			modifier = \hid;
 		});
 		^modifier;
 	}
@@ -4581,30 +4591,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	writeTracksPreset {arg presetName;
-		var filterKeyArr, mixDataArr, dataArr2, busSettings, ioSettings;
-		mixDataArr = this.mixControlKeyValues;
-		if(filters.notNil, {
-			filterKeyArr = filters.flop[0];
-			mixTrackNames.do{|item|
-				var trackInfo, labelStr, dataArr;
-				trackInfo = item.asString.divNumStr;
-				if(trackInfo[1].isNil, {trackInfo[1] = 1});
-				labelStr = ("filter" ++ trackInfo[0].asString.capitalise ++ "_" ++ trackInfo[1]);
-				filterKeyArr = filters.flop[0].select{|item| item.cs.find(labelStr).notNil };
-				filterKeyArr.do{|it|
-					dataArr = dataArr.add([item, this.prepareWriteFxPreset(it)]);
-				};
-				if(dataArr.notNil, {
-					dataArr2 = dataArr2.add(dataArr);
-				});
-			};
-		});
-		if(this.getBusInLabels.notNil, {
-			busSettings = [busArr, busArr.flop[0].collect({|item| Ndef(item).controlKeysValues});];
-		});
-		ioSettings = [recStates, recInputArr, mastOutArr, soloStates.copy]; //4th item: solo states
+		var dataArr;
+		//same data as projects use; prepWritePreset skips removed (nil) buses
+		dataArr = this.prepWritePreset;
 		if(presetName.notNil, {
-			PresetFile.write(\tracks, presetName, [mixDataArr, dataArr2, busSettings, outputSettings, ioSettings]);
+			PresetFile.write(\tracks, presetName, dataArr);
 		});
 	}
 
