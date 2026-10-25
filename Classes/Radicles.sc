@@ -183,7 +183,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 					Ndef(item).controlKeysValues };
 			});
 			hids = [HIDMap.hidInfoArr, HIDMap.hidCmds];
-			cmds = [Radicles.cW.text.string, Radicles.aZ.mixerWin.visible];
+			//mixerWin is nil until the mixer has been opened
+			cmds = [Radicles.cW.text.string,
+				Radicles.aZ.mixerWin.notNil and: { Radicles.aZ.mixerWin.visible == true }];
 			resultArr = [arr3] ++ [aZ.prepWritePreset] ++
 			[[blkArr, blkArrSettings]] ++ [hids] ++ [cmds];
 			/*resultArr.postln;*/
@@ -320,7 +322,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 					this.runLiveBlocks;
 				});
 				server.sync;
-				if(mixView.notNil, {
+				if(mixView == true, {
 					{Radicles.aZ.mixer;}.defer;
 				});
 			});
