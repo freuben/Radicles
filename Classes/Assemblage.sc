@@ -1188,7 +1188,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	setFilterSpec {arg filterInfo, arg1, arg2, mul=1, add=0, min, val, warp, post=\code;
 		var filterTag, specArr, thisSpec, modSpec, thisVal;
 		filterTag = this.filterInfoToTag(filterInfo);
-		specArr = this.collectSpecArr(filterTag)[0][1];
+		specArr = this.specsOf(filterTag);
 		if(arg1.isNumber, {
 			thisSpec =	specArr[arg1];
 		}, {
@@ -1197,6 +1197,21 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		modSpec = thisSpec[1].specFactor(mul, add, min, val, warp);
 		thisVal = thisSpec[2].(modSpec.asSpec.map(arg2));
 		this.setFilterTag(filterTag, thisSpec[0], thisVal, post);
+	}
+
+	filterTagOnStrip {arg tag, type, num;
+		//exact match of an effect tag (e.g. filterTrack_10_1) to a strip, so track 1 never matches track 10
+		var parts;
+		parts = tag.asString.split($_);
+		if(parts.size < 3, {^false});
+		if(parts[0].toLower != ("filter" ++ type.asString.toLower), {^false});
+		^(type.asSymbol == \master) or: { parts[1].asInteger == num.asInteger };
+	}
+
+	specsOf {arg key;
+		//the spec list stored for one Ndef key (exact match)
+		specs.do{|strip| strip.do{|item| if(item[0] == key, {^item[1]}) } };
+		^nil;
 	}
 
 	filterTagBefore {arg tagA, tagB;
@@ -1333,7 +1348,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}, {
 			filterTag = filterInfo;
 		});
-		specArr = this.collectSpecArr(filterTag)[0][1];
+		specArr = this.specsOf(filterTag);
 		if(argument.isNumber, {
 			argIndex = this.getFilterKeys(filterTag, \args)[argument];
 		}, {
@@ -2902,10 +2917,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			thisArr = thisArr.replace("),", ")%");
 			thisArr = thisArr.split($%);
 			thisString = thisArr.select({|item|
-				item.find((trackType.asString ++ trackNum)).notNil;
+				item.find((trackType.asString ++ trackNum).asSymbol.cs).notNil;
 			})[0];
 		}, {
-			if(synthString.find((trackType.asString ++ trackNum)).notNil, {
+			if(synthString.find((trackType.asString ++ trackNum).asSymbol.cs).notNil, {
 				thisString = 	synthString;
 			});
 		});
@@ -3812,7 +3827,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(filtersWindow.notNil, {
 			if(filtersWindow.notEmpty, {
 				getWin = filtersWindow.detect({|item, index|
-					item.name.find(ndefKey.asString).notNil });
+					item.name.beginsWith(ndefKey.asString ++ " ") });
 				if(getWin.notNil, {
 					getWin.close;
 				});
@@ -4579,9 +4594,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	writeTrackPreset {arg trackType=\track, trackNum=1, presetName;
-		var dataArr, labelStr, filterKeyArr;
-		labelStr = ("filter" ++ trackType.asString.capitalise ++ "_" ++ trackNum);
-		filterKeyArr = filters.flop[0].select{|item| item.cs.find(labelStr).notNil };
+		var dataArr, filterKeyArr;
+		filterKeyArr = (filters ? []).collect({|item| item[0] }).select{|item|
+			this.filterTagOnStrip(item, trackType, trackNum) };
 		filterKeyArr.do{|item|
 			dataArr = dataArr.add(this.prepareWriteFxPreset(item));
 		};
@@ -4973,7 +4988,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(filters.notNil, {
 			if(filters.notEmpty, {
 				filters.flop[0].do({|item, index|
-					if(item.cs.find((trackType.asString.capitalise ++ "_" ++ trackNum)).notNil, {
+					if(this.filterTagOnStrip(item, trackType, trackNum), {
 						arr = 	arr.add((index+1));
 					});
 				});
@@ -5219,11 +5234,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(filters.notNil, {
 			filterKeyArr = filters.flop[0];
 			mixTrackNames.do{|item|
-				var trackInfo, labelStr, dataArr;
+				var trackInfo, dataArr;
 				trackInfo = item.asString.divNumStr;
 				if(trackInfo[1].isNil, {trackInfo[1] = 1});
-				labelStr = ("filter" ++ trackInfo[0].asString.capitalise ++ "_" ++ trackInfo[1]);
-				filterKeyArr = filters.flop[0].select{|item| item.cs.find(labelStr).notNil };
+				filterKeyArr = filters.flop[0].select{|item|
+					this.filterTagOnStrip(item, trackInfo[0], trackInfo[1]) };
 				filterKeyArr.do{|it|
 					dataArr = dataArr.add([item, this.prepareWriteFxPreset(it)]);
 				};
