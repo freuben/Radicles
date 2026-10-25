@@ -2112,10 +2112,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		};
 
 		setPanKnob = {|index, value, ind=0|
-			var panKey, getKeyValues, panSpec;
+			var panKey, getKeyValues, panSpec, spaceSpecs;
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			getKeyValues = Ndef(panKey).getKeysValues;
-			panSpec = specs.flop[2].flop[1][specs.flop[2].flop[0].indexOfEqual(panKey)];
+			//the space spec is always the last entry of a strip, whatever effects it has
+			spaceSpecs = specs.collect{|item| item.last };
+			panSpec = spaceSpecs.flop[1][spaceSpecs.flop[0].indexOfEqual(panKey)];
 			panKnobArr[index][ind].value = panSpec[ind][1].asSpec.unmap(value);
 			panKnobTextArr[index][ind].string_(value);
 		};
@@ -2759,7 +2761,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					value ++ ", 'lagTime', " ++ lag ++ ");").radpostcont.interpret;
 			});
 			this.mixWinBool({
-				setVolSlider.(trackIndex, val);
+				setVolSlider.(trackIndex, value); //slider always shows dB
 			});
 		}, {
 			"Track not found".warn;
@@ -3369,7 +3371,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							defaultPos.();
 						}, {
 							top = filtersWindow.last.bounds.top + 10;
-							left = filtersWindow.last.bounds.top + 10;
+							left = filtersWindow.last.bounds.left + 10;
 						});
 					});
 				}, {
@@ -4600,7 +4602,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(this.getBusInLabels.notNil, {
 			busSettings = [busArr, busArr.flop[0].collect({|item| Ndef(item).controlKeysValues});];
 		});
-		ioSettings = [recStates, recInputArr, mastOutArr];
+		ioSettings = [recStates, recInputArr, mastOutArr, soloStates.copy]; //4th item: solo states
 		if(presetName.notNil, {
 			PresetFile.write(\tracks, presetName, [mixDataArr, dataArr2, busSettings, outputSettings, ioSettings]);
 		});
@@ -4799,15 +4801,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
 				item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
 			server.sync;
-			case
-			{item[1].includes(\mute)} {
+			//solo is not an Ndef value (it stays 1); it is restored from soloStates below
+			if(item[1].includes(\mute), {
 				muteStates[mixTrackNames.indexOf(item[0])] =
 				item[1][(item[1].indexOfEqual(\mute)+1)];
-			}
-			{item[1].includes(\solo)} {
-				soloStates[mixTrackNames.indexOf(item[0])] =
-				item[1][(item[1].indexOfEqual(\solo)+1)];
-			};
+			});
 			});
 			modMixSettings =mixSettings[1];
 			if(modMixSettings.notNil, {
@@ -4830,6 +4828,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				recStates = ioSettings[0];
 				recInputArr = ioSettings[1];
 				mastOutArr = ioSettings[2];
+				this.restoreSoloStates(ioSettings[3]);
 				this.mapOutFunc;
 				nodeTime.yield;
 			});
@@ -4893,15 +4892,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
 				item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
 			server.sync;
-			case
-			{item[1].includes(\mute)} {
+			//solo is not an Ndef value (it stays 1); it is restored from soloStates below
+			if(item[1].includes(\mute), {
 				muteStates[mixTrackNames.indexOf(item[0])] =
 				item[1][(item[1].indexOfEqual(\mute)+1)];
-			}
-			{item[1].includes(\solo)} {
-				soloStates[mixTrackNames.indexOf(item[0])] =
-				item[1][(item[1].indexOfEqual(\solo)+1)];
-			};
+			});
 			});
 
 			"mixSettings loaded".postln;
@@ -4932,6 +4927,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				recStates = ioSettings[0];
 				recInputArr = ioSettings[1];
 				mastOutArr = ioSettings[2];
+				this.restoreSoloStates(ioSettings[3]);
 				this.mapOutFunc;
 				nodeTime.yield;
 				/*this.mapOuts(ioSettings[2]);*/
@@ -4994,6 +4990,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					this.fxsLags([arr, lag!arr.size].flop);
 				});
 			});
+		});
+	}
+
+	restoreSoloStates {arg states;
+		//solo states saved in presets (absent in presets saved before Oct 2026)
+		if(states.notNil and: { states.size == mixTrackNames.size }, {
+			soloStates = states.copy;
+			this.masterSoloFunc2;
 		});
 	}
 
@@ -5083,7 +5087,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	prepMixSettings {arg arr;
 		var arr2, arr3, arr4;
 		arr2 = arr[0].flop[0];
-		arr2.rejectSame;
+		arr2 = arr2.rejectSame; //one entry per Ndef, so each .set runs once on load
 		arr3 = arr2.collect{|item|
 			arr[0].flop[0].indicesOfEqual(item);
 		};
@@ -5241,7 +5245,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			busSettings = [busArr, busArr.flop[0].collect({|item|
 				if(item.notNil, {Ndef(item).controlKeysValues}); });];
 		});
-		ioSettings = [recStates, recInputArr, mastOutArr];
+		ioSettings = [recStates, recInputArr, mastOutArr, soloStates.copy]; //4th item: solo states
 		^[mixDataArr, dataArr2, busSettings, outputSettings, ioSettings];
 		/*PresetFile.write(\tracks, presetName, [mixDataArr, dataArr2, busSettings, outputSettings, ioSettings]);*/
 	}

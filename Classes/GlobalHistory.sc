@@ -10,10 +10,13 @@ GlobalHistory : Radicles {
 
 		fileName ?? {fileName = Date.getDate.asString};
 
-		path = (filesPath ++ "Settings/GlobalHistory/" ++ fileName ++ ".scd");
+		path = (filesPath +/+ "Settings/GlobalHistory" +/+ (fileName ++ ".scd")); //filesPath has no trailing slash
 
-		writeHistoryFunc = {
-			file = File(path, "a+");
+		File.mkdir(filesPath +/+ "Settings/GlobalHistory"); //create the folder if missing
+
+		writeHistoryFunc = {arg overwrite=false;
+			//"w" empties an existing file, "a+" creates it if missing
+			file = File(path, if(overwrite, {"w"}, {"a+"}));
 			file.close;
 			recordHistory = true;
 
@@ -24,9 +27,11 @@ GlobalHistory : Radicles {
 		};
 
 		if(File.existsCaseSensitive(path), {
-			if(replace.not, {
+			if(replace, {
+				writeHistoryFunc.(true);
+			}, {
 				Window.warnQuestion(("This global history already exist: " ++
-					"Are you sure you want to replace it?"), {writeHistoryFunc.();});
+					"Are you sure you want to replace it?"), {writeHistoryFunc.(true);});
 			});
 		}, {
 			writeHistoryFunc.();
