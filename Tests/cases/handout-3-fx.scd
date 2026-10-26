@@ -66,5 +66,13 @@
 		(Radicles.aZ.filters.notNil and: { Radicles.aZ.filters.flop[1].includes('radtest_myfx') })
 			or: { "own effect not inserted: " ++ Radicles.aZ.filters.cs }
 	},
-	teardown: { SynthDefFile.remove('filter', 'radtest_myfx') }
+	// SynthDefFile.remove asks for confirmation in a window, so remove the four
+	// entries directly (same steps, no dialog).
+	teardown: {
+		var lib = Radicles.getLib("UserLib");
+		SynthFile.remove(\filter, 'radtest_myfx', false, nil, lib, false);
+		SpecFile.remove(\filter, 'radtest_myfx', false, nil, lib, false);
+		DescriptionFile.remove(\filter, 'radtest_myfx', false, nil, lib, false);
+		ModFile.new(\synthdef, \filter).remove('radtest_myfx', false, nil, lib, false);
+	}
 );

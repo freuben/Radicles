@@ -67,6 +67,17 @@
 		while({ end >= 0 and: { line[end].isSpace } }, { end = end - 1 });
 		line.copyRange(0, end)
 	})}.join("\n");
+	// Numbers measured from timing (a timed recording's length, for example) vary
+	// from run to run in the 3rd decimal, so numbers with 6 or more decimals are
+	// rounded to 2 decimals. Typed values (0.5, -10) are never that long.
+	s = {|str|
+		var out = "", pos = 0;
+		str.findRegexp("-?[0-9]+\\.[0-9]{6,}").do{|m|
+			out = out ++ str.copyRange(pos, m[0] - 1) ++ m[1].asFloat.round(0.01).asString;
+			pos = m[0] + m[1].size;
+		};
+		out ++ str.copyToEnd(pos)
+	}.(s);
 	// absolute paths to the Radicles folders
 	[Radicles.mainPath, Radicles.libPath, Radicles.filesPath].do{|p|
 		if(p.notNil, { s = s.replace(p.asString, "<" ++ p.asString.basename ++ ">") });
