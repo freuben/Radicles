@@ -1,0 +1,15 @@
+>> fx t 3 fvrb2
+== radpost ==
+Ndef.ar('filterTrack_3_1', 2);
+Ndef('filterTrack_3_1').fadeTime = 0.5;
+Ndef('filterTrack_3_1', {arg mix=0, room=0, damp=0.0, lag=0.0, adjVol=1;
+    var sig;
+    sig = Ndef.ar('inTrack3', 2);
+    FreeVerb2.ar(sig[0], sig[1], mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol});
+Ndef('track3', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_3_1', 2) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track3').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

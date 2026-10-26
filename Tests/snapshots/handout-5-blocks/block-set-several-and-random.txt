@@ -1,0 +1,18 @@
+>> blksetn 1 [key, 5, oct, 1]
+== radpost ==
+Ndef('block1').set('key', 5, 'oct', 1);
+== radpostcont ==
+(none)
+
+>> blkset 1 key {[0, 5, 7].choose}
+== radpost ==
+Ndef('block1').set('key', 5);
+== radpostcont ==
+(none)
+
+>> blksetn 1 [key, {[0, 5, 7].choose}, oct, {rrand(0.25,4)}]
+== radpost ==
+Ndef('block1').set('key', 7, 'oct', 3.92);
+== radpostcont ==
+(none)
+

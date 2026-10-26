@@ -1,0 +1,11 @@
+>> blkset 1 freq pch2
+== radpost ==
+Ndef('mod1', {arg in=1, mul=1, add=0, thresh=0.93, lag=0;
+    var sig, chain, freq, hasFreq;
+    sig = SoundIn.ar( (in-1).max(0) );
+    # freq, hasFreq = Tartini.kr(sig, thresh).explin(20, 20000, -1, 1).lag(lag);
+    (freq * mul).exprange(20.0, 20000.0) + add});
+Ndef('block1').xset('freq', Ndef('mod1'));
+== radpostcont ==
+(none)
+

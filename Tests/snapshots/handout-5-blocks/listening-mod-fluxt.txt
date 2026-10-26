@@ -1,0 +1,12 @@
+>> blkset 1 freq fluxt
+== radpost ==
+Ndef('mod1', {arg track=1, mul=1, add=0, lag=0;
+var sig, chain, flux;
+    sig = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+chain = FFT(LocalBuf(2048), sig);
+flux=FFTFlux.kr(chain).lag(lag);
+(flux.linlin(0,1,-1,1) * mul).exprange(20.0, 20000.0) + add;});
+Ndef('block1').xset('freq', Ndef('mod1'));
+== radpostcont ==
+(none)
+

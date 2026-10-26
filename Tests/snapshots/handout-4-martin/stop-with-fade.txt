@@ -1,0 +1,7 @@
+>> st 2 8
+== radpost ==
+Ndef('block2').fadeTime = 8;
+Ndef('block2').source = nil;
+== radpostcont ==
+(none)
+

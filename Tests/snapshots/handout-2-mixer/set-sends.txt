@@ -1,0 +1,30 @@
+>> setsnd t 1 0
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> setsnd t 1 1 0
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> setsnd t 1 1 0 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> setsnd 2 2 -10
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> setsnd 2 2 -10 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

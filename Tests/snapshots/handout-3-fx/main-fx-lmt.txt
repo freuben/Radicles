@@ -1,0 +1,16 @@
+>> fx 1 lmt
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg mix = 1 , thresh= -1 , ratio=10 , attack=0.002 , release=0.002, gain=0 , outLevel=0 ;
+    var sig;
+sig = Compander.ar(Ndef.ar('inTrack1', 1)*gain.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*outLevel.dbamp;
+    ((sig*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)))
+});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

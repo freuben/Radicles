@@ -57,6 +57,10 @@ fork {
 		if(done.not, { ("kill -9 " ++ pid).unixCmd(postOutput: false); 1.wait });
 		// never leave a test server behind (it would block the next test's port)
 		"pkill -f 'scsynt[h] -u 57150'".unixCmd(postOutput: false); 0.5.wait;
+		// wait until it has really gone (shared memory is released on exit)
+		10.do{
+			if("pgrep -f 'scsynt[h] -u 57150'".unixCmdGetStdOut.size > 0, { 0.5.wait });
+		};
 
 		res = ~radTestReadFile.(resultFile);
 		res = if(res.notNil, { res.interpret }, {
@@ -66,6 +70,10 @@ fork {
 
 		// "It runs": any SuperCollider error after setup started fails the test.
 		log = ~radTestReadFile.(logFile) ? "";
+		if(log.find("could not initialize audio").notNil or: { log.find("Server 'radtest' exited with exit code 1").notNil }, {
+			res[\status] = \error;
+			res[\message] = "the test server did not boot (audio not available: on Linux, is JACK running?)";
+		});
 		if(log.find("RADTEST:SETUP").notNil, {
 			errors = log.copyToEnd(log.find("RADTEST:SETUP")).split($\n)
 				.select{|l| l.beginsWith("ERROR:") or: { l.beginsWith("FAILURE IN SERVER") } };
@@ -82,6 +90,13 @@ fork {
 			warnings = section.split($\n).select{|l| l.beginsWith("WARNING:") };
 			if(warnings.notEmpty, { res[\status] = \fail; res[\message] = "warning posted: " ++ warnings[0] });
 		});
+		if(t[\known].notNil, {
+			case
+			{ res[\status] == \fail } {
+				res[\status] = \known; res[\message] = "known (" ++ t[\known] ++ "): " ++ res[\message] }
+			{ res[\status] == \pass or: { res[\status] == \updated } } {
+				res[\message] = res[\message] ++ " NOTE: marked known (" ++ t[\known] ++ ") but passed" };
+		});
 		results = results.add(res);
 		("RADTEST [" ++ (i + 1) ++ "/" ++ tests.size ++ "] " ++ res[\status].asString.toUpper
 			++ " " ++ t[\caseFile] ++ "/" ++ t[\name]
@@ -90,7 +105,7 @@ fork {
 
 	"".postln;
 	"RADTEST SUMMARY".postln;
-	[\pass, \updated, \fail, \skipped, \error].do{|st|
+	[\pass, \updated, \fail, \known, \skipped, \error].do{|st|
 		var n = results.count{|r| r[\status] == st };
 		if(n > 0, { ("  " ++ st ++ ": " ++ n).postln });
 	};

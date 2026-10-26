@@ -1,0 +1,30 @@
+>> vollag 1 10
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('track1').set('lagTime', 10);
+
+>> vol 1 -inf
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('track1').set('volume', -inf);
+
+>> vol 1 0
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('track1').set('volume', 0);
+
+>> vollag 1 0
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('track1').set('lagTime', 0);
+
+>> vol 1 -inf
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('track1').set('volume', -inf);
+

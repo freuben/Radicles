@@ -1,0 +1,30 @@
+>> pl 1 drums1
+== radpost ==
+~buffer0 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/drums1.wav", bufnum: 0);
+Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul;});
+== radpostcont ==
+(none)
+
+>> st 1
+== radpost ==
+Ndef('block1').source = nil;
+~buffer0.free;
+== radpostcont ==
+(none)
+
+>> lp 1 drums1
+== radpost ==
+~buffer1 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/drums1.wav", bufnum: 1);
+Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;});
+== radpostcont ==
+(none)
+
+>> st 1
+== radpost ==
+Ndef('block1').source = nil;
+~buffer1.free;
+== radpostcont ==
+(none)
+

@@ -1,0 +1,30 @@
+>> lp 1 @1
+== radpost ==
+Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
+== radpostcont ==
+(none)
+
+>> pl 2 @1
+== radpost ==
+Ndef('block2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 0)*mul;});
+== radpostcont ==
+(none)
+
+>> lp 1 @1 0.5
+== radpost ==
+Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
+Ndef('block1').xset('rate', 0.5);
+== radpostcont ==
+(none)
+
+>> pl 2 @1 2
+== radpost ==
+Ndef('block2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 0)*mul;});
+Ndef('block2').xset('rate', 2);
+== radpostcont ==
+(none)
+

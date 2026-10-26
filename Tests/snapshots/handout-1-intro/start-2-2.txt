@@ -1,0 +1,89 @@
+>> start 2 2
+== radpost ==
+Ndef.ar('inMaster', 2);
+Ndef('inMaster').fadeTime = 0.5;
+Ndef('inMaster').set('trim', 0);
+Ndef.ar('master', 2);
+Ndef('master').fadeTime = 0.5;
+Ndef.ar('spaceMaster', 2);
+Ndef('spaceMaster').fadeTime = 0.5;
+Ndef.ar('inTrack1', 1);
+Ndef('inTrack1').fadeTime = 0.5;
+Ndef('inTrack1').set('trim', 0);
+Ndef.ar('track1', 1);
+Ndef('track1').fadeTime = 0.5;
+Ndef.ar('spaceTrack1', 2);
+Ndef('spaceTrack1').fadeTime = 0.5;
+Ndef.ar('inTrack2', 1);
+Ndef('inTrack2').fadeTime = 0.5;
+Ndef('inTrack2').set('trim', 0);
+Ndef.ar('track2', 1);
+Ndef('track2').fadeTime = 0.5;
+Ndef.ar('spaceTrack2', 2);
+Ndef('spaceTrack2').fadeTime = 0.5;
+Ndef.ar('inBus1', 1);
+Ndef('inBus1').fadeTime = 0.5;
+Ndef('inBus1').set('trim', 0);
+Ndef.ar('bus1', 1);
+Ndef('bus1').fadeTime = 0.5;
+Ndef.ar('spaceBus1', 2);
+Ndef('spaceBus1').fadeTime = 0.5;
+Ndef.ar('inBus2', 1);
+Ndef('inBus2').fadeTime = 0.5;
+Ndef('inBus2').set('trim', 0);
+Ndef.ar('bus2', 1);
+Ndef('bus2').fadeTime = 0.5;
+Ndef.ar('spaceBus2', 2);
+Ndef('spaceBus2').fadeTime = 0.5;
+Ndef('master', {arg volume=0, lagTime=0, mute=0, off=0;
+                    (Ndef.ar('inMaster', 2) * volume.dbamp.lag(lagTime)
+                        *mute.linlin(0,1,1,0).lag(0.1)
+                        *off.linlin(0,1,1,0)
+                )});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack2', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('bus1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inBus1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('bus2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inBus2', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('inMaster', {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2), Ndef.ar('spaceTrack2', 2), Ndef.ar('spaceBus1', 2), Ndef.ar('spaceBus2', 2)].sum * trim.dbamp.lag(lagTime) )});
+Ndef('inMaster').set('trim', 0);
+Ndef('spaceMaster', {arg pan = 0 ;
+    var source;
+    source = Ndef.ar('master', 2);
+    Balance2.ar(source[0], source[1], pan) * 3.dbamp;
+});
+Ndef('spaceTrack1', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track1', 1), pan) * 3.dbamp;
+});
+Ndef('spaceTrack2', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track2', 1), pan) * 3.dbamp;
+});
+Ndef('spaceBus1', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('bus1', 1), pan) * 3.dbamp;
+});
+Ndef('spaceBus2', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('bus2', 1), pan) * 3.dbamp;
+});
+Ndef('spaceMaster')[1] = \filter -> {arg in; (in).clip2};
+Ndef.ar('block1', 1);
+Ndef('spaceMaster').play;
+Ndef('block1').fadeTime = 0.5;
+Ndef.ar('block2', 1);
+Ndef('block2').fadeTime = 0.5;
+Ndef('inTrack1', {arg trim=0, lagTime=0;
+                (Ndef.ar('block1', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack1').set('trim', 0);
+Ndef('inTrack2', {arg trim=0, lagTime=0;
+                (Ndef.ar('block2', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack2').set('trim', 0);
+== radpostcont ==
+(none)
+

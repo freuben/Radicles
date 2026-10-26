@@ -1,0 +1,48 @@
+>> @n 2 30
+== radpost ==
+Ndef.ar('recblock1', 1);
+Ndef.ar('recblock2', 1);
+~buffer0 = Buffer.alloc(s, 1440000.0, 1, bufnum: 0);
+~buffer1 = Buffer.alloc(s, 1440000.0, 1, bufnum: 1);
+== radpostcont ==
+(none)
+
+>> lp 1 @1
+== radpost ==
+Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
+== radpostcont ==
+(none)
+
+>> sr @1 1
+== radpost ==
+Ndef('recblock1', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+    var sig;
+    sig = SoundIn.ar(0);
+        sig = sig * Env.linen(fade,  (30.0-(fade*2)), fade, 1, 'sin').kr;
+    RecordBuf.ar(sig, ~buffer0.bufnum, 0, recLevel, preLevel, loop: 0); });
+== radpostcont ==
+(none)
+
+>> or @1 1
+== radpost ==
+Ndef('recblock1', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+    var sig;
+    sig = SoundIn.ar(0);
+        sig = sig * Env.linen(fade,  (30.0-(fade*2)), fade, 1, 'sin').kr;
+    RecordBuf.ar(sig, ~buffer0.bufnum, 0, recLevel, preLevel, loop: 0); });
+Ndef('recblock1').set(\recLevel, 0.5);
+Ndef('recblock1').set(\preLevel, 0.5);
+== radpostcont ==
+(none)
+
+>> sr @2 t 3
+== radpost ==
+Ndef('recblock2', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+    var sig;
+    sig = Ndef('track3');
+        sig = sig * Env.linen(fade,  (30.0-(fade*2)), fade, 1, 'sin').kr;
+    RecordBuf.ar(sig, ~buffer1.bufnum, 0, recLevel, preLevel, loop: 0); });
+== radpostcont ==
+(none)
+

@@ -1,0 +1,76 @@
+>> @
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> @ 2
+== radpost ==
+Ndef.ar('recblock1', 1);
+~buffer0 = Buffer.alloc(s, 96000.0, 1, bufnum: 0);
+== radpostcont ==
+(none)
+
+>> @ 2 2
+== radpost ==
+Ndef.ar('recblock2', 2);
+~buffer1 = Buffer.alloc(s, 96000.0, 2, bufnum: 1);
+== radpostcont ==
+(none)
+
+>> @pv 2
+== radpost ==
+Ndef.ar('recblock3', 1);
+~buffer2 = Buffer.alloc(s, 192515.0, 1, bufnum: 2);
+== radpostcont ==
+(none)
+
+>> @pv 2 2
+== radpost ==
+Ndef.ar('recblock4', 2);
+~buffer3 = Buffer.alloc(s, 192515.0, 2, bufnum: 3);
+== radpostcont ==
+(none)
+
+>> @n 2 2
+== radpost ==
+Ndef.ar('recblock5', 1);
+Ndef.ar('recblock6', 1);
+~buffer4 = Buffer.alloc(s, 96000.0, 1, bufnum: 4);
+~buffer5 = Buffer.alloc(s, 96000.0, 1, bufnum: 5);
+== radpostcont ==
+(none)
+
+>> @n 2 2 2
+== radpost ==
+Ndef.ar('recblock7', 2);
+Ndef.ar('recblock8', 2);
+~buffer6 = Buffer.alloc(s, 96000.0, 2, bufnum: 6);
+~buffer7 = Buffer.alloc(s, 96000.0, 2, bufnum: 7);
+== radpostcont ==
+(none)
+
+>> @npv 2 2
+== radpost ==
+Ndef.ar('recblock9', 1);
+Ndef.ar('recblock10', 1);
+~buffer8 = Buffer.alloc(s, 192515.0, 1, bufnum: 8);
+~buffer9 = Buffer.alloc(s, 192515.0, 1, bufnum: 9);
+== radpostcont ==
+(none)
+
+>> @npv 2 2 2
+== radpost ==
+Ndef.ar('recblock11', 2);
+Ndef.ar('recblock12', 2);
+~buffer10 = Buffer.alloc(s, 192515.0, 2, bufnum: 10);
+~buffer11 = Buffer.alloc(s, 192515.0, 2, bufnum: 11);
+== radpostcont ==
+(none)
+
+>> @
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

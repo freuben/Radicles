@@ -1,0 +1,30 @@
+>> setfx
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> setfx 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> setfx 1 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> setfx 1 1 1 0.5
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> setfx 1 1 pitchRatio 2
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

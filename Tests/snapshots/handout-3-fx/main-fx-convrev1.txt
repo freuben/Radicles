@@ -1,0 +1,13 @@
+>> fx 1 convrev1
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg mix=1.0 ;
+    var input, output;
+    input = Ndef.ar('inTrack1', 1) * Line.kr(0,1,0.1);
+    output = \convrev;
+    (output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
+});
+== radpostcont ==
+(none)
+

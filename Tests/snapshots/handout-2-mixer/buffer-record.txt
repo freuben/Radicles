@@ -1,0 +1,54 @@
+>> sr @1
+== radpost ==
+Ndef('recblock1', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+    var sig;
+    sig = SoundIn.ar(0);
+        sig = sig * Env.linen(fade,  (2.0-(fade*2)), fade, 1, 'sin').kr;
+    RecordBuf.ar(sig, ~buffer0.bufnum, 0, recLevel, preLevel, loop: 0); });
+== radpostcont ==
+(none)
+
+>> sr @1 2
+== radpost ==
+Ndef('recblock1', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+    var sig;
+    sig = SoundIn.ar(1);
+        sig = sig * Env.linen(fade,  (2.0-(fade*2)), fade, 1, 'sin').kr;
+    RecordBuf.ar(sig, ~buffer0.bufnum, 0, recLevel, preLevel, loop: 0); });
+== radpostcont ==
+(none)
+
+>> sr @1 2 0.5 0.5
+== radpost ==
+Ndef('recblock1', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+    var sig;
+    sig = SoundIn.ar(1);
+        sig = sig * Env.linen(fade,  (2.0-(fade*2)), fade, 1, 'sin').kr;
+    RecordBuf.ar(sig, ~buffer0.bufnum, 0, recLevel, preLevel, loop: 0); });
+Ndef('recblock1').set(\recLevel, 0.5);
+Ndef('recblock1').set(\preLevel, 0.5);
+== radpostcont ==
+(none)
+
+>> sr @1 t 1
+== radpost ==
+Ndef('recblock1', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+    var sig;
+    sig = Ndef('track1');
+        sig = sig * Env.linen(fade,  (2.0-(fade*2)), fade, 1, 'sin').kr;
+    RecordBuf.ar(sig, ~buffer0.bufnum, 0, recLevel, preLevel, loop: 0); });
+== radpostcont ==
+(none)
+
+>> sr @1 t 2 0.5 0.5
+== radpost ==
+Ndef('recblock1', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+    var sig;
+    sig = Ndef('track2');
+        sig = sig * Env.linen(fade,  (2.0-(fade*2)), fade, 1, 'sin').kr;
+    RecordBuf.ar(sig, ~buffer0.bufnum, 0, recLevel, preLevel, loop: 0); });
+Ndef('recblock1').set(\recLevel, 0.5);
+Ndef('recblock1').set(\preLevel, 0.5);
+== radpostcont ==
+(none)
+

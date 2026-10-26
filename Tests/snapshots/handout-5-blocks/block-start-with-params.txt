@@ -1,0 +1,36 @@
+>> blk 1 sinekey [key, 18, oct, 0.5]
+== radpost ==
+Ndef('block1', {arg key=0 , oct=1 , phase=0 , mul=0.4 , lag = 0.01 => [0,0.1];
+    var chord;
+    chord = Select.kr(key, [
+        ([60, 64, 67]+0).midicps*oct,
+        ([60, 64, 67]+1).midicps*oct,
+        ([60, 64, 67]+2).midicps*oct,
+        ([60, 64, 67]+3).midicps*oct,
+        ([60, 64, 67]+4).midicps*oct,
+        ([60, 64, 67]+5).midicps*oct,
+        ([60, 64, 67]+6).midicps*oct,
+        ([60, 64, 67]+7).midicps*oct,
+        ([60, 64, 67]+8).midicps*oct,
+        ([60, 64, 67]+9).midicps*oct,
+        ([60, 64, 67]+10).midicps*oct,
+        ([60, 64, 67]+11).midicps*oct,
+        ([60, 63, 67]+0).midicps*oct,
+        ([60, 63, 67]+1).midicps*oct,
+        ([60, 63, 67]+2).midicps*oct,
+        ([60, 63, 67]+3).midicps*oct,
+        ([60, 63, 67]+4).midicps*oct,
+        ([60, 63, 67]+5).midicps*oct,
+        ([60, 63, 67]+6).midicps*oct,
+        ([60, 63, 67]+7).midicps*oct,
+        ([60, 63, 67]+8).midicps*oct,
+        ([60, 63, 67]+9).midicps*oct,
+        ([60, 63, 67]+10).midicps*oct,
+        ([60, 63, 67]+11).midicps*oct,
+    ]);
+    Mix.ar(SinOsc.ar([chord[0].lag(lag), chord[1].lag(lag), chord[2].(lag)],phase,mul/3));
+    });
+Ndef('block1').xset('key', 18, 'oct', 0.5);
+== radpostcont ==
+(none)
+

@@ -1,0 +1,12 @@
+>> blkset 1 freq loud
+== radpost ==
+Ndef('mod1', {arg in=1, mul=1, add=0, lag=0;
+var sig, chain, loudness;
+sig = SoundIn.ar( (in-1).max(0) );
+chain = FFT(LocalBuf(1024), sig);
+loudness =    Loudness.kr(chain).min(64).max(0).lag(lag);
+(loudness.linlin(0,64,-1,1) * mul).exprange(20.0, 20000.0) + add;});
+Ndef('block1').xset('freq', Ndef('mod1'));
+== radpostcont ==
+(none)
+

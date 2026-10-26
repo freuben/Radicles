@@ -1,0 +1,20 @@
+>> fx 1 mmt
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg mix=0, track=1, adjVol=1;
+var input, inA, chainA, chainB, chain, frameSize=2048;
+    input = Ndef.ar('inTrack1', 1);
+    inA = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+chainA = FFT(LocalBuf(frameSize, input.numChannels), input);
+chainB = FFT(LocalBuf(frameSize, inA.numChannels), inA);
+chain = PV_MagMul(chainA, chainB);
+(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

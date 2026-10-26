@@ -1,0 +1,14 @@
+>> in 1 1
+== radpost ==
+Ndef('block1', {arg bus=1 , mul= 1 ;
+    SoundIn.ar((bus.round(1)-1).max(0), mul);});
+Ndef('block1').xset('bus', 1);
+== radpostcont ==
+(none)
+
+>> st 1
+== radpost ==
+Ndef('block1').source = nil;
+== radpostcont ==
+(none)
+

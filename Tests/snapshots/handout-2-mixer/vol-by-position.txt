@@ -1,0 +1,6 @@
+>> vol 4 -3
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('bus2').set('volume', -3);
+

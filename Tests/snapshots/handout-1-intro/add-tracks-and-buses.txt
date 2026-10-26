@@ -1,0 +1,72 @@
+>> t add
+== radpost ==
+Ndef.ar('inTrack3', 1);
+Ndef('inTrack3').fadeTime = 0.5;
+Ndef('inTrack3').set('trim', 0);
+Ndef.ar('track3', 1);
+Ndef('track3').fadeTime = 0.5;
+Ndef.ar('spaceTrack3', 2);
+Ndef('spaceTrack3').fadeTime = 0.5;
+Ndef('track3', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack3', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceTrack3', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('spaceTrack3', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track3', 1), pan) * 3.dbamp;
+});
+Ndef.ar('block3', 1);
+Ndef('block3').fadeTime = 0.5;
+Ndef('inTrack3', {arg trim=0, lagTime=0;
+                (Ndef.ar('block3', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack3').set('trim', 0);
+== radpostcont ==
+(none)
+
+>> b add
+== radpost ==
+Ndef.ar('inBus2', 1);
+Ndef('inBus2').fadeTime = 0.5;
+Ndef('inBus2').set('trim', 0);
+Ndef.ar('bus2', 1);
+Ndef('bus2').fadeTime = 0.5;
+Ndef.ar('spaceBus2', 2);
+Ndef('spaceBus2').fadeTime = 0.5;
+Ndef('bus2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inBus2', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceTrack3', 2) * 1, Ndef.ar('spaceBus1', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('spaceBus2', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('bus2', 1), pan) * 3.dbamp;
+});
+== radpostcont ==
+(none)
+
+>> t add 2
+== radpost ==
+Ndef.ar('inTrack4', 2);
+Ndef('inTrack4').fadeTime = 0.5;
+Ndef('inTrack4').set('trim', 0);
+Ndef.ar('track4', 2);
+Ndef('track4').fadeTime = 0.5;
+Ndef.ar('spaceTrack4', 2);
+Ndef('spaceTrack4').fadeTime = 0.5;
+Ndef('track4', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack4', 2) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceTrack3', 2) * 1, Ndef.ar('spaceTrack4', 2) * 1, Ndef.ar('spaceBus1', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('spaceTrack4', {arg pan = 0 ;
+    var source;
+    source = Ndef.ar('track4', 2);
+    Balance2.ar(source[0], source[1], pan) * 3.dbamp;
+});
+Ndef.ar('block4', 2);
+Ndef('block4').fadeTime = 0.5;
+Ndef('inTrack4', {arg trim=0, lagTime=0;
+                (Ndef.ar('block4', 2) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack4').set('trim', 0);
+== radpostcont ==
+(none)
+

@@ -1,0 +1,48 @@
+>> fx 1 pch
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+
+>> fxset 1 1 1 sin_(freq, 1)
+== radpost ==
+Ndef('mod1', {arg freq = 0.1, phase = 0, mul = 1, add = 0; {|val| val.round(0.4).midiratio }.({arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(-12.0, 12.0) + add}.(freq, phase, mul, add))});
+Ndef('mod1').set('freq', 1);
+Ndef('filterTrack_1_1').xset('pitchRatio', Ndef('mod1'));
+== radpostcont ==
+(none)
+
+>> fxset 1 1 2 lfn2_(freq, 1)
+== radpost ==
+Ndef('mod2', {arg freq = 0.1, mul = 1, add = 0; {|val| (val-0.01)}.({arg freq=0.1, mul=1, add=0;
+    LFNoise2.ar(freq).exprange(0.01, 2.01) + add }.(freq, add, mul))});
+Ndef('mod2').set('freq', 1);
+Ndef('filterTrack_1_1').xset('pitchDispertion', Ndef('mod2'));
+== radpostcont ==
+(none)
+
+>> unmodfx 1 1 1
+== radpost ==
+Ndef('filterTrack_1_1').xset('pitchRatio', 1.0);
+Ndef('mod1').clear(0.5);
+== radpostcont ==
+(none)
+
+>> unmodfx 1 1 2
+== radpost ==
+Ndef('filterTrack_1_1').xset('pitchDispertion', 0.0);
+Ndef('mod2').clear(0.5);
+== radpostcont ==
+(none)
+

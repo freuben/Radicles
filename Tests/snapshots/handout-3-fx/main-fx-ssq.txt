@@ -1,0 +1,20 @@
+>> fx 1 ssq
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+    var chain, magsphases, input;
+    input = Ndef.ar('inTrack1', 1);
+    chain = FFT(LocalBuf(1024, input.numChannels), input);
+    magsphases = UnpackFFT(chain, 1024);
+    magsphases = magsphases.collect(_.sqrt);
+    chain = PackFFT(chain, 1024, magsphases);
+    (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

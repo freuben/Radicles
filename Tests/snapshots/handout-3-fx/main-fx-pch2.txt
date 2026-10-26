@@ -1,0 +1,17 @@
+>> fx 1 pch2
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg centerpitch=440, pitchDispertion=0.0, timeDispersion=0.0,
+        lag=0.1, winSize=0.1;
+    var freq, hasFreq;
+        # freq, hasFreq = Pitch.kr(Ndef.ar(\bus1), ampThreshold: 0.0, median: 7);
+    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (freq[0]/centerpitch).lag(lag), pitchDispertion,
+ timeDispersion) });
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

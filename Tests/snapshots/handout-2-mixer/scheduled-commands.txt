@@ -1,0 +1,16 @@
+>> (^ lt 1)
+== radpost ==
+Ndef('recblock1', 0)
+Ndef('block1', {arg rate=1 , triggerRate=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, Impulse.kr(triggerRate),
+ startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
+Ndef('block1').xset('triggerRate', <measured>);
+== radpostcont ==
+(none)
+
+>> (4 ^ lt 1)
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

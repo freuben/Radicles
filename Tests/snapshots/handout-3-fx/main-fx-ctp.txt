@@ -1,0 +1,18 @@
+>> fx 1 ctp
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg rate=1 , pitchDispersion=0.0 , timeDispersion=0.0001 , lag=0.01 ,
+    windowSize=0.02 ;
+    var freq, hasFreq, latch1, latch2, latch3, input, maxDelay=12;
+    input = Ndef.ar('inTrack1', 1);
+    #freq, hasFreq = Pitch.kr(input);
+    latch1 = Latch.ar(freq, Impulse.kr(rate));
+    latch2 = DelayL.kr(Latch.ar(freq, Impulse.kr(rate)), maxDelay, 1/rate);
+    latch3 = (latch1.cpsmidi - (latch1.cpsmidi - latch2.cpsmidi)).midicps.min(20000).max(20);
+    PitchShift.ar(input, windowSize, (latch1/latch3)[0].lag(lag), pitchDispersion,
+ timeDispersion);
+});
+== radpostcont ==
+(none)
+

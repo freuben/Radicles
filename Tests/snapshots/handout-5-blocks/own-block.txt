@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+Ndef('block1', {arg freq = 200 ;
+            SinOsc.ar(freq);
+        });
+== radpostcont ==
+(none)
+
