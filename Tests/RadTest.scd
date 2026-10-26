@@ -19,7 +19,10 @@
 // teardown: function that removes anything the test saved (presets, files);
 //   runs before setup (in case an earlier run crashed) and after the check.
 // noWarnings: true = fail if Radicles posts a WARNING during the test.
-~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, note|
+// known: a String naming a reported problem (e.g. "issue #39"). The test still
+//   runs, but a failure is listed as KNOWN instead of FAIL, and a pass is
+//   flagged so the marker can be removed.
+~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note|
 	~radTests = ~radTests.add((
 		name: name.asString,
 		caseFile: ~radTestCurrentCase,
@@ -30,6 +33,7 @@
 		code: code,
 		teardown: teardown,
 		noWarnings: noWarnings,
+		known: known,
 		note: note
 	));
 };

@@ -82,6 +82,13 @@ fork {
 			warnings = section.split($\n).select{|l| l.beginsWith("WARNING:") };
 			if(warnings.notEmpty, { res[\status] = \fail; res[\message] = "warning posted: " ++ warnings[0] });
 		});
+		if(t[\known].notNil, {
+			case
+			{ res[\status] == \fail } {
+				res[\status] = \known; res[\message] = "known (" ++ t[\known] ++ "): " ++ res[\message] }
+			{ res[\status] == \pass or: { res[\status] == \updated } } {
+				res[\message] = res[\message] ++ " NOTE: marked known (" ++ t[\known] ++ ") but passed" };
+		});
 		results = results.add(res);
 		("RADTEST [" ++ (i + 1) ++ "/" ++ tests.size ++ "] " ++ res[\status].asString.toUpper
 			++ " " ++ t[\caseFile] ++ "/" ++ t[\name]
@@ -90,7 +97,7 @@ fork {
 
 	"".postln;
 	"RADTEST SUMMARY".postln;
-	[\pass, \updated, \fail, \skipped, \error].do{|st|
+	[\pass, \updated, \fail, \known, \skipped, \error].do{|st|
 		var n = results.count{|r| r[\status] == st };
 		if(n > 0, { ("  " ++ st ++ ": " ++ n).postln });
 	};

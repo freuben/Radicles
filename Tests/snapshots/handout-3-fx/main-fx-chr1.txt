@@ -1,0 +1,22 @@
+>> fx 1 chr1
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg mix=0 , depth=0.1 , predelay=0.08 , speed=0.05 , ph_diff=0.5 , lagTime=0.1 ;
+var input, sig, modulators, numDelays;
+numDelays = 12;
+input = Ndef.ar('inTrack1', 1) * numDelays.reciprocal;
+modulators = Array.fill(numDelays, {arg i;
+LFPar.kr(speed * rrand(0.94, 1.06), ph_diff * i, depth.lag(lagTime), predelay.lag(lagTime));}); 
+sig = DelayC.ar(input, 2.0, modulators);
+sig = sig.sum;
+sig = sig * 3;
+((sig*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)))
+});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

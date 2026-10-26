@@ -49,17 +49,40 @@ var vol = {|key| Ndef(key).get('volume') };
 
 ~radTest.("setfx-by-order",
 	setup: ["start 2", "fx 1 pch"],
-	cmds: ["setfx", "setfx 1", "setfx 1 1", "setfx 1 1 1 0.5", "setfx 1 1 pitchRatio 2"]
+	cmds: ["setfx", "setfx 1", "setfx 1 1", "setfx 1 1 1 0.5", "setfx 1 1 pitchRatio 2"],
+	noWarnings: true,
+	known: "outdated handout: setting is now setfx 1 1 0.5 / setfx 1 pitchRatio 2"
+);
+~radTest.("setfx-by-order-current",
+	setup: ["start 2", "fx 1 pch"],
+	cmds: ["setfx 1 1 0.5", "setfx 1 pitchRatio 2"],
+	noWarnings: true,
+	check: { (Ndef('filterTrack_1_1').get('pitchRatio') == 2) or: { "pitchRatio " ++ Ndef('filterTrack_1_1').get('pitchRatio') } }
 );
 
 ~radTest.("fx-lags",
 	setup: ["start 2", "fx t 1 pch", "fx 1 2 dl1"],
-	cmds: ["fxlag t 1 10", "fxlag 1 2 5", "fxlagn t 1 2 10"]
+	cmds: ["fxlag t 1 10", "fxlag 1 2 5", "fxlagn t 1 2 10"],
+	noWarnings: true,
+	known: "outdated handout: fxlag t 1 10 now needs a slot (fxlag t 1 1 10)"
+);
+~radTest.("fx-lags-current",
+	setup: ["start 2", "fx t 1 pch", "fx 1 2 dl1"],
+	cmds: ["fxlag t 1 1 10", "fxlag 1 2 5", "fxlagn t 1 2 10"],
+	noWarnings: true
 );
 
 ~radTest.("fx-clear",
 	setup: ["start 2", "fx t 1 pch", "fx 2 2 dl1", "fx 2 3 pch"],
-	cmds: ["fxclear t 1", "fxclear 2 2", "clear fx 1"]
+	cmds: ["fxclear t 1", "fxclear 2 2", "clear fx 1"],
+	noWarnings: true,
+	known: "outdated handout: clear fx 1 is now clearfx 1"
+);
+~radTest.("fx-clear-current",
+	setup: ["start 2", "fx t 1 pch", "fx 2 2 dl1", "fx 2 3 pch"],
+	cmds: ["fxclear t 1", "fxclear 2 2", "clearfx 1"],
+	noWarnings: true,
+	check: { (Radicles.aZ.filters.isNil or: { Radicles.aZ.filters.isEmpty }) or: { "filters left: " ++ Radicles.aZ.filters.cs } }
 );
 
 // Sends
@@ -73,7 +96,14 @@ var vol = {|key| Ndef(key).get('volume') };
 );
 ~radTest.("set-sends",
 	setup: ["start 2 2", "snd t 1 1", "snd t 2 2 2"],
-	cmds: ["setsnd t 1 0", "setsnd t 1 1 0", "setsnd t 1 1 0 1", "setsnd 2 2 -10", "setsnd 2 2 -10 1"]
+	cmds: ["setsnd t 1 0", "setsnd t 1 1 0", "setsnd t 1 1 0 1", "setsnd 2 2 -10", "setsnd 2 2 -10 1"],
+	noWarnings: true,
+	known: "outdated handout and help file: setsnd is now sndset"
+);
+~radTest.("set-sends-current",
+	setup: ["start 2 2", "snd t 1 1", "snd t 2 2 2"],
+	cmds: ["sndset t 1 0", "sndset t 1 1 0", "sndset t 1 1 0 1", "sndset 2 2 -10", "sndset 2 2 -10 1"],
+	noWarnings: true
 );
 
 // Buffers

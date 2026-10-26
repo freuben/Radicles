@@ -1,0 +1,89 @@
+>> fx b 1 pch
+== radpost ==
+Ndef.ar('filterBus_1_1', 1);
+Ndef('filterBus_1_1').fadeTime = 0.5;
+Ndef('filterBus_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inBus1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('bus1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterBus_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('bus1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+
+>> fx 1 pch
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+
+>> fx 1 2 dl1
+== radpost ==
+Ndef.ar('filterTrack_1_2', 1);
+Ndef('filterTrack_1_2').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('filterTrack_1_1').set('pitchRatio', 1.0, 'pitchDispertion', 0.0, 'timeDispersion', 0.0001, 'winSize', 0.02);
+Ndef('filterTrack_1_2', {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('filterTrack_1_1', 1), 12, delayTime, decayTime)});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_2', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+
+>> fx b 1 2 harm
+== radpost ==
+Ndef.ar('filterBus_1_2', 1);
+Ndef('filterBus_1_2').fadeTime = 0.5;
+Ndef('filterBus_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inBus1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('filterBus_1_1').set('pitchRatio', 1.0, 'pitchDispertion', 0.0, 'timeDispersion', 0.0001, 'winSize', 0.02);
+Ndef('filterBus_1_2', {arg pitchRatio1=1.0, pitchRatio2=1.0,
+ pitchRatio3=1.0,
+ pitchRatio4=1.0, vol1=1.0, vol2=1.0,
+    vol3=1.0, vol4=1.0, pitchDispertion1=0.0, pitchDispertion2=0.0, pitchDispertion3=0.0,
+    pitchDispertion4=0.0, timeDispersion1=0.0001, timeDispersion2=0.0001,
+    timeDispersion3=0.0001, timeDispersion4=0.0001, lag1=0.1, lag2=0.1, lag3=0.1,
+ lag4=0.1,
+    winSize1=0.02, winSize2=0.02, winSize3=0.02, winSize4=0.02;
+    var signal, pitch1, pitch2, pitch3, pitch4, input;
+    input = Ndef.ar('filterBus_1_1', 1);
+    pitch1 = PitchShift.ar(input, winSize1, (pitchRatio1).lag(lag1), pitchDispertion1,
+        timeDispersion1) * vol1.lag(lag1);
+    pitch2 = PitchShift.ar(input, winSize2, (pitchRatio2).lag(lag2), pitchDispertion2,
+        timeDispersion2) * vol2.lag(lag2);
+    pitch3 = PitchShift.ar(input, winSize3, (pitchRatio3).lag(lag3), pitchDispertion3,
+        timeDispersion3)    * vol3.lag(lag3);
+    pitch4 = PitchShift.ar(input, winSize4, (pitchRatio4).lag(lag4), pitchDispertion4,
+        timeDispersion4) * vol4.lag(lag4);
+    signal = pitch1 + pitch2 + pitch3 + pitch4;
+    signal = signal/4;
+    signal;
+});
+Ndef('bus1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterBus_1_2', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('bus1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

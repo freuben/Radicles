@@ -1,0 +1,30 @@
+>> sndry t 2 2 2
+== radpost ==
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceBus1', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef.ar('busIn2', 1);
+Ndef('busIn2').fadeTime = 0.5;
+Ndef('inBus2', {arg trim=0, lagTime=0;
+                (Ndef.ar('busIn2', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inBus2').set('trim', 0);
+Ndef('busIn2', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track2', 1)*vol1.dbamp.lag(lag1); });
+Ndef('busIn2').set('vol1', -inf);
+== radpostcont ==
+(none)
+
+>> sndry 2 2 2
+== radpost ==
+Ndef('busIn2', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track2', 1)*vol1.dbamp.lag(lag1); });
+Ndef('busIn2').set('vol1', -inf, 'lag1', 0);
+Ndef('busIn2').set('vol1', -inf);
+== radpostcont ==
+(none)
+
+>> sndry 2 2 2 -10
+== radpost ==
+Ndef('busIn2', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track2', 1)*vol1.dbamp.lag(lag1); });
+Ndef('busIn2').set('vol1', -inf, 'lag1', 0);
+Ndef('busIn2').set('vol1', -10);
+== radpostcont ==
+(none)
+

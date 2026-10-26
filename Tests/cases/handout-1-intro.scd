@@ -3,7 +3,8 @@
 
 ~radTest.("start-2", cmds: ["start 2"]);
 ~radTest.("start-2-2", cmds: ["start 2 2"]);
-~radTest.("start-2-2-2", cmds: ["start 2 2 2"]);
+~radTest.("start-2-2-2", cmds: ["start 2 2 2"],
+	known: "third argument 2 gives mono tracks a stereo-input panner (bal2)");
 
 ~radTest.("mix-nomix", setup: ["start 2"], cmds: ["mix", "nomix"], gui: true);
 
@@ -26,7 +27,7 @@
 	}
 );
 
-~radTest.("add-several-tracks",
+~radTest.("add-several-tracks", known: "addn rebuilds the mixer GUI even when it is closed",
 	setup: ["start 2"],
 	cmds: ["t addn 2", "b addn 2 2"],
 	check: {

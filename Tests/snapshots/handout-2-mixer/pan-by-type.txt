@@ -1,0 +1,6 @@
+>> pan b 2 -0.5
+== radpost ==
+Ndef('spaceBus2').set('pan', -0.5);
+== radpostcont ==
+(none)
+
