@@ -260,11 +260,11 @@ snd 2 2 2 -10
 sndry t 2 2 2 //send (no master) in track 2, slot 2, bus 2
 sndry 2 2 2
 sndry 2 2 2 -10
-setsnd t 1 0 //set track 1, val 0
-setsnd t 1 1 0 //set track 1, slot 1, val 0
-setsnd t 1 1 0 1 //set track 1, slot 1, val 0, lag 1
-setsnd 2 2 -10 //set mixtrack 2, slot 2, val
-setsnd 2 2 -10 1 //set mixtrack 2, slot 2, val, lag
+sndset t 1 0 //set track 1, val 0
+sndset t 1 1 0 //set track 1, slot 1, val 0
+sndset t 1 1 0 1 //set track 1, slot 1, val 0, lag 1
+sndset 2 2 -10 //set mixtrack 2, slot 2, val
+sndset 2 2 -10 1 //set mixtrack 2, slot 2, val, lag
 
 asm fx track 1 pch //set fx called pch in track 1, slot 1
 asm fx track 1 2 pch //set fx called pch in track 1, slot 2
@@ -359,7 +359,7 @@ lagfx 1 pitchRatio 0.5
 fxlagn t 1 2 10 //lag all parameters in filter
 fxlagn [[track,1,1,[1,2,2,1.1]], [track,1,2,[1,0.8,2,1.1]]]//array of tracks to lag
 //remove filters
-fxclear t 1
+fxclear t 1 1 //track 1, slot 1 (fxclear m 1 for the master)
 fxclear t 1 2
 fxclear 1 1 //multitrack
 clearfx 1

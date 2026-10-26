@@ -3976,7 +3976,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "setsnd: [mixTrackNum, slotNum, busNum, val]");
+		}, "sndset: [mixTrackNum, slotNum, busNum, val]");
 
 		cW.add(\sndset, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
 			if(aZ.notNil, {
@@ -3987,7 +3987,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "setsnd: [trackType, trackNum, slotNum, busNum]");
+		}, "sndset: [trackType, trackNum, slotNum, busNum]");
 
 		cW.add(\sndset, [\str, \str, \num, \num, \num, \num], {|str1, str2, num1, num2, num3, num4|
 			if(aZ.notNil, {
@@ -3998,7 +3998,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "setsnd: [trackType, trackNum, slotNum, busNum, val]");
+		}, "sndset: [trackType, trackNum, slotNum, busNum, val]");
 
 		cW.add(\sndset, [\str, \num, \num], {|str1, num1, num2|
 			var trackArr, thisArr;
@@ -4013,7 +4013,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "setsnd: [mixTrackNum, busNum]");
+		}, "sndset: [mixTrackNum, busNum]");
 
 		cW.add(\sndset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var trackArr, thisArr;
@@ -4028,7 +4028,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "setsnd: [mixTrackNum, slotNum, busNum]");
+		}, "sndset: [mixTrackNum, slotNum, busNum]");
 
 		cW.add(\sndset, [\str, \num, \num, \num, \num], {|str1, num1, num2, num3, num4|
 			var trackArr, thisArr;
@@ -4043,7 +4043,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "setsnd: [mixTrackNum, slotNum, busNum, val]");
+		}, "sndset: [mixTrackNum, slotNum, busNum, val]");
 
 		cW.add(\sndset, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			var modArgs, modifier;
