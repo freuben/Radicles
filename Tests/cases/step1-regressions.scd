@@ -64,11 +64,9 @@ var a = { Radicles.aZ };
 	noWarnings: true
 );
 
-// Bug 9 (#12): presets never restored solo. GUI only for now: loading a mixer
-// preset rebuilds the mixer GUI even when the mixer is closed (open question).
+// Bug 9 (#12): presets never restored solo.
 ~radTest.("b09-preset-restores-solo",
-	setup: ["start 2", "mix", "solo t 1"],
-	gui: true,
+	setup: ["start 2", "solo t 1"],
 	code: {
 		a.().writeTracksPreset('radtest_b9');
 		1.wait;
@@ -79,6 +77,22 @@ var a = { Radicles.aZ };
 	},
 	check: { (a.().soloStates[0] == 1) or: { "soloStates: " ++ a.().soloStates.cs } },
 	teardown: { PresetFile.remove(\tracks, 'radtest_b9', false, path: 0, post: false) }
+);
+
+// Same, with the mixer open (GUI).
+~radTest.("b09-preset-restores-solo-mixer-open",
+	setup: ["start 2", "mix", "solo t 1"],
+	gui: true,
+	code: {
+		Radicles.aZ.writeTracksPreset('radtest_b9m');
+		1.wait;
+		Radicles.cW.callFunc("unsolo t 1");
+		1.wait;
+		Radicles.aZ.loadTracksPreset('radtest_b9m');
+		5.wait;
+	},
+	check: { (Radicles.aZ.soloStates[0] == 1) or: { "soloStates: " ++ Radicles.aZ.soloStates.cs } },
+	teardown: { PresetFile.remove(\tracks, 'radtest_b9m', false, path: 0, post: false) }
 );
 
 // Bug 10 (#13): pan on a track with an effect failed while the mixer was open.

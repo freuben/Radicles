@@ -805,6 +805,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	*	unmodBlk {arg blkNum, modArg, value;
 		var ndefKey, modifier;
 		ndefKey = ("block" ++ blkNum).asSymbol;
+		modArg = this.modArgNum(ndefKey, modArg);
 		if(modArg.notNil, {
 				{
 					if((ModMap.modNodes.notNil).or(HIDMap.hidNodes.notNil), {
@@ -835,26 +836,33 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			});
 	}
 
+	//argument number (from 1) for a number or a name such as \freq
+	*modArgNum {arg ndefKey, modArg;
+		var index;
+		if(modArg.isNil or: {modArg.isInteger}, {^modArg});
+		index = Ndef(ndefKey).controlKeys.indexOf(modArg.asSymbol);
+		if(index.isNil, {
+			("argument not found: " ++ modArg).warn;
+			^nil;
+		});
+		^(index + 1);
+	}
+
 	*unmodFunc {arg ndefKey, modArg;
 		var modifier;
 		if(modArg.isInteger, {
 			modArg = Ndef(ndefKey).controlKeys[modArg-1];
 		});
-		if(ModMap.modNodes.notNil, {
-			if(ModMap.modNodes.notEmpty, {
-				if((ModMap.modNodes.flop[1].includes(Ndef(ndefKey)))
-					.and(ModMap.modNodes.flop[2].includes(modArg)), {
-						modifier = \mod;
-				});
-			});
+		//a match needs the same entry to hold both this Ndef and this argument
+		if(ModMap.modNodes.notNil and: {
+			ModMap.modNodes.any({|item| (item[1] == Ndef(ndefKey)) and: {item[2] == modArg} })
+		}, {
+			modifier = \mod;
 		});
-		if(HIDMap.hidNodes.notNil, {
-			if(HIDMap.hidNodes.notEmpty, {
-				if((HIDMap.hidNodes.flop[1].includes(Ndef(ndefKey)))
-					.and(HIDMap.hidNodes.flop[2].includes(modArg)), {
-						modifier = \hid;
-				});
-			});
+		if(HIDMap.hidNodes.notNil and: {
+			HIDMap.hidNodes.any({|item| (item[1] == Ndef(ndefKey)) and: {item[2] == modArg} })
+		}, {
+			modifier = \hid;
 		});
 		^modifier;
 	}

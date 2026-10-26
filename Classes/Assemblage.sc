@@ -4864,7 +4864,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 			}, {
 				nodeTime.yield;
-				this.refreshMixGUI;
+				this.refreshFunc; //only rebuild the mixer if it is open
 			});
 		}.fork(AppClock);
 	}
@@ -4968,7 +4968,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			}, {
 				nodeTime.yield;
 				"refresh GUI".postln;
-				this.refreshMixGUI;
+				this.refreshFunc; //only rebuild the mixer if it is open
 			});
 		}.fork(AppClock);
 	}

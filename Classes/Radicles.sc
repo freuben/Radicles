@@ -2740,7 +2740,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 							cond.test = true; cond.signal});
 						cond.wait;
 					};
-					{aZ.refreshMixGUI}.defer;
+					{aZ.refreshFunc}.defer; //only if the mixer is open
 					}.fork;
 				}
 				{str2 == 'rmvn'} {
@@ -2850,7 +2850,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 							cond.test = true; cond.signal});
 						cond.wait;
 					};
-					{aZ.refreshMixGUI}.defer;
+					{aZ.refreshFunc}.defer; //only if the mixer is open
 					}.fork;
 				};
 			}, {
@@ -6629,7 +6629,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			var array, spaceArr;
 			if(aZ.isNil, {
 				array = [1!num1, 1!num2, num3];
-				spaceArr = Array.fill(array.size, num3.spaceType);
+				//tracks and buses are mono: for a 2-channel output use the mono panner
+				//(2.spaceType is bal2, which expects a stereo input)
+				spaceArr = Array.fill(array.size, if(num3 == 2, {\pan2}, {num3.spaceType}));
 				spaceArr[spaceArr.size-1] = \dir;
 				spaceArr.postln;
 				aZ = Assemblage(num1, num2, array, spaceArr, action: {|number, channels|
