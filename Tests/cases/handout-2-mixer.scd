@@ -145,7 +145,7 @@ var vol = {|key| Ndef(key).get('volume') };
 );
 ~radTest.("scheduled-commands",
 	setup: ["start 2", "clock", "@ 2", ["tsr @1", 1]],
-	cmds: [["(^ lt 1)", 2], ["(4 ^ lt 1)", 5]]
+	cmds: [["(^ lt 1)", 2], ["(4 ^ lt 1)", 9]]
 );
 
 // Simultaneous commands
