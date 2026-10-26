@@ -1,0 +1,42 @@
+>> libs
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> imp SpectraLib
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fxs
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> imp [MarkLib, SpectraLib]
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> imp all
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> imp SpectralLib
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> imp [Main, MarkLib]
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

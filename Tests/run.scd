@@ -57,6 +57,10 @@ fork {
 		if(done.not, { ("kill -9 " ++ pid).unixCmd(postOutput: false); 1.wait });
 		// never leave a test server behind (it would block the next test's port)
 		"pkill -f 'scsynt[h] -u 57150'".unixCmd(postOutput: false); 0.5.wait;
+		// wait until it has really gone (shared memory is released on exit)
+		10.do{
+			if("pgrep -f 'scsynt[h] -u 57150'".unixCmdGetStdOut.size > 0, { 0.5.wait });
+		};
 
 		res = ~radTestReadFile.(resultFile);
 		res = if(res.notNil, { res.interpret }, {

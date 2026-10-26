@@ -1,0 +1,23 @@
+>> fx 1 eq8
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg freq1=30 , freq2=80 , freq3=200 , freq4=500 , freq5=1200 , freq6=3500 , freq7=10000 , freq8=17000 , gain1=0 , gain2=0 , gain3=0 , gain4=0 , gain5=0 , gain6=0 , gain7=0 , gain8=0 , q1=0.71 , q2=1.10 , q3=0.98 , q4=0.71 , q5=0.71 , q6=0.71 , q7=0.71 , q8=0.71 , on1=0 , on2=1 , on3=1 , on4=1 , on5=1 , on6=1 , on7=1 , on8=0 , lag=0.5, masterGain=0 , lagOn=0.1 ;
+    var signal;
+    signal = (on1.linlin(0,1,1,0).lag(lagOn)*Ndef.ar('inTrack1', 1)) + (on1.lag(lagOn)*BHiPass.ar(Ndef.ar('inTrack1', 1),freq1.lag(lag),1/q1.lag(lag), gain1.dbamp.lag(lag);));
+    signal = (on2.linlin(0,1,1,0).lag(lagOn)*signal) + (on2.lag(lagOn)*BLowShelf.ar(signal,freq2.lag(lag),1/(q2).lag(lag),gain2.dbamp.lag(lag)));
+    signal = (on3.linlin(0,1,1,0).lag(lagOn)*signal) + (on3.lag(lagOn)*BPeakEQ.ar(signal,freq3.lag(lag),1/(q3).lag(lag),gain3.dbamp.lag(lag)));
+    signal = (on4.linlin(0,1,1,0).lag(lagOn)*signal) + (on4.lag(lagOn)*BPeakEQ.ar(signal,freq4.lag(lag),1/(q4).lag(lag),gain4.dbamp.lag(lag)));
+    signal = (on5.linlin(0,1,1,0).lag(lagOn)*signal) + (on5.lag(lagOn)*BPeakEQ.ar(signal,freq5.lag(lag),1/(q5).lag(lag),gain5.dbamp.lag(lag)));
+    signal = (on6.linlin(0,1,1,0).lag(lagOn)*signal) + (on6.lag(lagOn)*BPeakEQ.ar(signal,freq6.lag(lag),1/(q6).lag(lag),gain6.dbamp.lag(lag)));
+    signal = (on7.linlin(0,1,1,0).lag(lagOn)*signal) + (on7.lag(lagOn)*BHiShelf.ar(signal,freq7.lag(lag),1/(q7).lag(lag),gain7.dbamp.lag(lag)));
+    signal = (on8.linlin(0,1,1,0).lag(lagOn)*signal) + (on8.lag(lagOn)*BLowPass.ar(signal,freq8.lag(lag),1/q8.lag(lag), gain8.dbamp.lag(lag)));
+    signal * masterGain.dbamp;
+});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

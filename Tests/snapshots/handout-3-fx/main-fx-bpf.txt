@@ -1,0 +1,15 @@
+>> fx 1 bpf
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg freq=600 , q=30 , vol=0 , mix=1 , lagTime=40 ;
+var signal;
+signal = BPF.ar(Ndef.ar('inTrack1', 1), freq, q.lag(lagTime))*q.lag(lagTime).linlin(0.01,30,10,1);
+vol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

@@ -1,0 +1,26 @@
+>> fx 1 sdf
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+    var chain, origmagsphases, magsphases, input;
+    input = Ndef.ar('inTrack1', 1);
+    chain = FFT(LocalBuf(1024, input.numChannels), input);
+    origmagsphases = UnpackFFT(chain, 1024, 0, 250).clump(2).flop;
+    magsphases = [origmagsphases[0].differentiate, origmagsphases[1].differentiate];
+    magsphases = magsphases.size.switch(
+        1, {magsphases ++ origmagsphases[1]},
+        2, {magsphases},
+        {[magsphases, origmagsphases[1]]}
+    );
+    magsphases = magsphases.flop.flatten;
+    chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
+    (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+
