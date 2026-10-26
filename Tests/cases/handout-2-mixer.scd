@@ -151,5 +151,12 @@ var vol = {|key| Ndef(key).get('volume') };
 // Simultaneous commands
 ~radTest.("simultaneous-commands",
 	setup: ["start 2"],
-	cmds: ["(lp 1 drums1 & lp 2 marilyn2 & fx 1 pch)"]
+	cmds: ["(lp 1 drums1 & lp 2 marilyn2 & fx 1 pch)"],
+	noWarnings: true,
+	known: "marilyn2 is not in RadiclesFiles.zip (Play/0 has drums1 and marilyn1)"
+);
+~radTest.("simultaneous-commands-marilyn1",
+	setup: ["start 2"],
+	cmds: ["(lp 1 drums1 & lp 2 marilyn1 & fx 1 pch)"],
+	noWarnings: true
 );

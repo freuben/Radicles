@@ -3,15 +3,12 @@
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
 ~buffer0 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/drums1.wav", bufnum: 0);
-~buffer1 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/marilyn2.wav", bufnum: 1);
 Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
  ;
         PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
  });
 Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-    PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;});
-Ndef('block2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
     PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;});
 Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)

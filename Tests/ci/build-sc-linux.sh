@@ -72,9 +72,26 @@ fi
 F="$EXT/RadiclesFiles"
 mkdir -p "$F/Settings" "$F/SoundFiles/Record"
 for i in 0 1 2 3 4 5 6 7 8 9; do mkdir -p "$F/SoundFiles/Play/$i"; done
+# Sound files and presets. The real RadiclesFiles comes from RadiclesFiles.zip
+# (see the install guide); pass a copy with RADICLESFILES_ZIP=/path/to/zip to use
+# it (the Models folder is skipped). Without it, make placeholders that match the
+# real files: drums1 and marilyn1, both stereo, in Play/0.
+if [ -n "${RADICLESFILES_ZIP:-}" ] && [ -f "$RADICLESFILES_ZIP" ]; then
+  tmp=$(mktemp -d); (cd "$tmp" && unzip -q "$RADICLESFILES_ZIP" -x '*/Models/*' '__MACOSX/*' '*.scpv')
+  cp -R "$tmp"/RadiclesFiles/. "$F"/; rm -rf "$tmp"
+elif [ ! -f "$F/SoundFiles/Play/0/drums1.wav" ]; then
+  python3 -I - "$F/SoundFiles/Play/0" <<'PY'
+import wave, struct, math, sys, os
+for name, freq in [("drums1", 110.0), ("marilyn1", 220.0)]:
+    w = wave.open(os.path.join(sys.argv[1], name + ".wav"), "wb")
+    w.setnchannels(2); w.setsampwidth(2); w.setframerate(44100)
+    w.writeframes(b"".join(struct.pack("<hh", *([int(3000*math.sin(2*math.pi*freq*i/44100))]*2)) for i in range(44100*2)))
+    w.close()
+PY
+fi
 # Empty preset files, as an existing install has them (presets silently fail without).
 mkdir -p "$F/Settings/Presets" "$F/Settings/Sessions"
-for c in Track Tracks Radicles Filter Session Bstore Map Dstore Assemblage Store; do
+for c in Assemblage Block Bstore Dstore Filter Radicles Session Store Track Tracks; do
   [ -f "$F/Settings/Presets/$c.scd" ] || echo "[]" > "$F/Settings/Presets/$c.scd"
 done
 mkdir -p /root/.config/SuperCollider
