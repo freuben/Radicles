@@ -2,5 +2,5 @@
 == radpost ==
 (none)
 == radpostcont ==
-Ndef('track1').set('volume', -6.0205999132796);
+Ndef('track1').set('volume', -6.02);
 

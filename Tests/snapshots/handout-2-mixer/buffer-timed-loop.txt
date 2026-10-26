@@ -4,7 +4,7 @@ Ndef('recblock1', 0)
 Ndef('block1', {arg rate=1 , triggerRate=1 , startPos=0 , mul=1 ;
     PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, Impulse.kr(triggerRate),
  startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
-Ndef('block1').xset('triggerRate', 0.9999725267548);
+Ndef('block1').xset('triggerRate', 1.0);
 == radpostcont ==
 (none)
 
@@ -14,7 +14,7 @@ Ndef('recblock1', 0)
 Ndef('block2', {arg rate=1 , triggerRate=1 , startPos=0 , mul=1 ;
     PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, Impulse.kr(triggerRate),
  startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
-Ndef('block2').xset('triggerRate', 0.47340464876122);
+Ndef('block2').xset('triggerRate', 0.47);
 == radpostcont ==
 (none)
 

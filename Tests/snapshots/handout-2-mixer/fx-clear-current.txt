@@ -1,6 +1,14 @@
->> fxclear t 1
+>> fxclear t 1 1
 == radpost ==
-(none)
+Ndef('filterTrack_1_1').clear(0.5);
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('spaceTrack1', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track1', 1), pan) * 3.dbamp;
+});
+Ndef('spaceTrack1').set('pan', 0);
 == radpostcont ==
 (none)
 
@@ -26,15 +34,15 @@ Ndef('spaceTrack2').set('pan', 0);
 
 >> clearfx 1
 == radpost ==
-Ndef('filterTrack_1_1').clear(0.5);
-Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('inTrack1', 1) * volume.dbamp.lag(lagTime)
+Ndef('filterTrack_2_3').clear(0.5);
+Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack2', 1) * volume.dbamp.lag(lagTime)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
-Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
-Ndef('spaceTrack1', {arg pan = 0 ;
-    Pan2.ar(Ndef.ar('track1', 1), pan) * 3.dbamp;
+Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('spaceTrack2', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track2', 1), pan) * 3.dbamp;
 });
-Ndef('spaceTrack1').set('pan', 0);
+Ndef('spaceTrack2').set('pan', 0);
 == radpostcont ==
 (none)
 

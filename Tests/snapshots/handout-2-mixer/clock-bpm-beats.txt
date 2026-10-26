@@ -6,7 +6,7 @@ Ndef('metronome').proxyspace.makeTempoClock(1.0)
 
 >> bpm 80
 == radpost ==
-Ndef('metronome').clock.tempo = 1.3333333333333
+Ndef('metronome').clock.tempo = 1.33
 == radpostcont ==
 (none)
 
