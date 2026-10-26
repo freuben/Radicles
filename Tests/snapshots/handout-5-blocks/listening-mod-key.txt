@@ -1,0 +1,12 @@
+>> blkset 1 freq key
+== radpost ==
+Ndef('mod1', {arg in=1, mul=1, add=0;
+var sig, chain, crest;
+sig = SoundIn.ar( (in-1).max(0) );
+chain = FFT(LocalBuf(4096), sig);
+crest = KeyTrack.kr(chain).poll(1);
+(crest.linlin(0,23,-1,1) * mul).exprange(20.0, 20000.0) + add;});
+Ndef('block1').xset('freq', Ndef('mod1'));
+== radpostcont ==
+(none)
+

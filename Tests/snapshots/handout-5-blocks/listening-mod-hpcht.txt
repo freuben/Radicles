@@ -1,0 +1,11 @@
+>> blkset 1 freq hpcht
+== radpost ==
+Ndef('mod1', {arg track=1, mul=1, add=0, ampThreshold=0.01, median=1, lag=0;
+    var sig, chain, freq, hasFreq;
+    sig = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+    # freq, hasFreq = Pitch.kr(sig, ampThreshold: ampThreshold, median: median).lag(lag);
+    ((hasFreq * 2 - 1) * mul).exprange(20.0, 20000.0) + add;});
+Ndef('block1').xset('freq', Ndef('mod1'));
+== radpostcont ==
+(none)
+

@@ -81,6 +81,7 @@
 ~radTest.("list-mods", setup: ["start 2"], cmds: ["mods"]);
 
 ~radTest.("modulate-block",
+	known: "unmodblk 1 freq: block unmod by name fails (_BasicAt)",
 	setup: ["start 2", "blk 1 sine"],
 	cmds: ["blkset 1", "blkset 1 1 lfn1", "blkset 1 1 sin_(freq, 2)", "modblkset 1",
 		"modblkset 1 freq [freq, 5]", "unmodblk 1 freq"],
@@ -89,6 +90,7 @@
 );
 
 ~radTest.("modulate-effect",
+	known: "unmodfx 1 1 (mixer position, argument) is commented out in Radicles.sc; current form is unmodfx 1 1 1",
 	setup: ["start 2", "lp 1 marilyn1"],
 	cmds: ["fx 1 pch", "fxset 1 1", "fxset 1 1 1 sin_(freq, 1)", "fxset 1 1 2 lfn2_(freq, 1)",
 		"modfxset 1 1", "modfxset 1 1 [freq, 5]", "unmodfx 1 1", "unmodfx 1 2"],
@@ -96,8 +98,16 @@
 		or: { "effect still modulated" } }
 );
 
+~radTest.("modulate-effect-current",
+	setup: ["start 2", "lp 1 marilyn1"],
+	cmds: ["fx 1 pch", "fxset 1 1 1 sin_(freq, 1)", "fxset 1 1 2 lfn2_(freq, 1)",
+		"unmodfx 1 1 1", "unmodfx 1 1 2"],
+	check: { ModMap.modNodes.isNil or: { ModMap.modNodes.any{|m| m[1] == Ndef('filterTrack_1_1') }.not }
+		or: { "effect still modulated" } }
+);
+
 // MIDI and HIDs (no controller needed for mapping and presets)
-~radTest.("midi-start-and-post", setup: ["start 2"], cmds: ["midi", "midicc", "midiccst"], gui: true,
+~radTest.("midi-start-and-post", setup: ["start 2"], cmds: ["midi", "midicc", "midiccst"], cloud: false,
 	note: "needs MIDI, not available in the headless build");
 
 ~radTest.("map-vol-to-midi",
@@ -105,7 +115,7 @@
 	cmds: ["vol 1 midicc_(19)", "vol 2 midicc_(23)", "vol 3 midicc_(27)", "vol 4 midicc_(31)",
 		"vol 5 midicc_(49)", "vol 6 midicc_(53)", "vol 7 midicc_(57)", "vol 8 midicc_(61)",
 		"hidsave radtest_volmidimix"],
-	teardown: { PresetFile.remove(\map, 'radtest_volmidimix', false, path: 0, post: false) }
+	teardown: { PresetFile.remove(\dstore, 'radtest_volmidimix', false, path: 0, post: false) }
 );
 
 // Machine listening: the onset and pitch examples, then every listening
@@ -123,5 +133,8 @@
 	\pcile, \pcilet, \entr, \entrt, \mel1, \mel1t, \mel13, \mel13t, \pwr, \pwrt, \flux, \fluxt,
 	\slope, \slopet, \peak, \peakt, \crest, \crestt, \key, \keyt
 ].do{|name|
-	~radTest.("listening-mod-" ++ name, setup: ["start 2", "blk 1 sinenv"], cmds: ["blkset 1 freq " ++ name]);
+	var tartini = [\pch2, \hpch2, \pch2t, \hpch2t].includes(name);
+	~radTest.("listening-mod-" ++ name, setup: ["start 2", "blk 1 sinenv"], cmds: ["blkset 1 freq " ++ name],
+		cloud: tartini.not, note: tartini.if({"uses Tartini (sc3-plugins PitchDetection), not in the cloud build"}),
+		known: (name == \mel13t).if({"mel2t-mel13t: Ndef(\\trackN).ar is a 1-element array, so MFCC.kr(chain)[n] is nil (fix: .flat[n]); mel1t returns all 13 coefficients"}));
 };
