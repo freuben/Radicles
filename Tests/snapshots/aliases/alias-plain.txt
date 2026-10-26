@@ -1,0 +1,12 @@
+>> (intro = vol t 1 -10)
+== radpost ==
+~callWindowGlobVar.add('intro', ['str'], {~callWindowGlobVar.callFunc("vol t 1 -10") });
+== radpostcont ==
+(none)
+
+>> intro
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('track1').set('volume', -10);
+

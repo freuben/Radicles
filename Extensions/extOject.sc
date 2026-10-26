@@ -133,6 +133,8 @@
 
 	radpost {arg type=\ln, oscId="/code";
 		var string, doc, postUI, radImprov;
+		//optional listener (tests, research log): gets the code as generated
+		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpost)};
 		if(Radicles.ignorePost.not, {
 			doc = Radicles.postDoc;
 			postUI = Radicles.postWindow;
@@ -181,6 +183,8 @@
 
 	radpostcont {arg type=\ln, postDoc=false, postWin=true, win=\ide;
 		var string, doc;
+		//optional listener (tests, research log): continuous control channel
+		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpostcont)};
 		if(Radicles.ignorePostcont.not, {
 			string = this.asString;
 			if(Radicles.reducePostControl, {

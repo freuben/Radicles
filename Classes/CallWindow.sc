@@ -553,8 +553,9 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		/*if((cmd.contains("[")).and(cmd.contains("]")), {"has array".postln});*/
 		assoArr = this.associationFunc(cmd);
 		firstFunc =	varString ++ ".add(" ++ assoArr[0][0].asSymbol.cs ++ ", " ++ assoArr[1].flop[0].cs
-		++ ", {arg" ++ assoArr[1].flop[1].asString.replace("[", "").replace(" ]", ";") ++ ($\n
-			++ varString ++ ".callFunc(" ++ assoArr[2].asString.replace("[", "(").replace("]", ")").replace(",", "")
+		//build the lists directly: printed arrays differ between SC versions ("[ a ]" vs "[a]")
+		++ ", {arg " ++ assoArr[1].flop[1].join(", ") ++ ";" ++ ($\n
+			++ varString ++ ".callFunc(" ++ ("(" ++ assoArr[2].join(" ") ++ ")").replace(",", "")
 			++ ", callIndex: " ++ callIndex ++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : "
 		++ assoArr[1].flop[0] ++ "\", replace: " ++ replace.cs ++ ");";
 		firstFunc.radpost.interpret;
