@@ -64,9 +64,11 @@ var a = { Radicles.aZ };
 	noWarnings: true
 );
 
-// Bug 9 (#12): presets never restored solo.
+// Bug 9 (#12): presets never restored solo. GUI only for now: loading a mixer
+// preset rebuilds the mixer GUI even when the mixer is closed (open question).
 ~radTest.("b09-preset-restores-solo",
-	setup: ["start 2", "solo t 1"],
+	setup: ["start 2", "mix", "solo t 1"],
+	gui: true,
 	code: {
 		a.().writeTracksPreset('radtest_b9');
 		1.wait;
@@ -99,9 +101,18 @@ var a = { Radicles.aZ };
 );
 
 // Bug 12 (#15): unmodulating a parameter matched a modulator on a different effect.
+// The second command unmodulates by name, which failed until 26 Oct (_BasicAt).
 ~radTest.("b12-unmod-only-matching-effect",
 	setup: ["start 2", "fx t 1 pch", "fx t 2 pch", "fxset t 1 1 pitchRatio sin", "fxset t 2 1 pitchDispertion sin"],
-	cmds: ["unmodfx t 1 1 pitchDispertion"]
+	cmds: ["unmodfx t 1 1 pitchDispertion", "unmodfx t 1 1 pitchRatio"],
+	check: { ModMap.modNodes.any{|m| m[1] == Ndef('filterTrack_1_1') }.not or: { "track 1 still modulated" } }
+);
+
+// unmodfx by argument number (the other documented form).
+~radTest.("unmod-by-number",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 1 sin"],
+	cmds: ["unmodfx t 1 1 1"],
+	check: { ModMap.modNodes.any{|m| m[1] == Ndef('filterTrack_1_1') }.not or: { "track 1 still modulated" } }
 );
 
 // Bug 13 (#16): saving a mixer preset failed after a bus had been removed.

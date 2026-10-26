@@ -41,7 +41,7 @@ ModMap : Radicles {
 		if(key.isInteger, {
 			key = ndef.controlKeys[key];
 		});
-		modNodes.do{|item, index| if( item.indexOfAll([ndef, key]).reject({|item| item == nil}).size == 2,
+		modNodes.do{|item, index| if( item.includes(ndef) and: {item.includes(key)}, //entry holds this Ndef and argument
 			{
 				value ?? {value = modNodes[index][3]};
 					(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;

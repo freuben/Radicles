@@ -4123,6 +4123,18 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
+	//argument number (from 1) for a number or a name such as \pitchRatio
+	modArgNum {arg ndefKey, modArg;
+		var index;
+		if(modArg.isNil or: {modArg.isInteger}, {^modArg});
+		index = Ndef(ndefKey).controlKeys.indexOf(modArg.asSymbol);
+		if(index.isNil, {
+			("argument not found: " ++ modArg).warn;
+			^nil;
+		});
+		^(index + 1);
+	}
+
 	unmodFunc {arg ndefKey, modArg;
 		var modifier;
 		if(modArg.isInteger, {
@@ -4193,6 +4205,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	unmodFx {arg filterNum, modArg, value;
 		var modifier;
 		this.fxWarn(filterNum, {|ndefKey|
+			modArg = this.modArgNum(ndefKey, modArg);
 			if(modArg.notNil, {
 				{
 					if((ModMap.modNodes.notNil).or(HIDMap.hidNodes.notNil), {
@@ -4227,6 +4240,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	unmodFxTrack {arg trackType, trackNum, trackSlot, modArg, value, post=true;
 		var modifier;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
+			modArg = this.modArgNum(ndefKey, modArg);
 			if(modArg.notNil, {
 				{
 					if((ModMap.modNodes.notNil).or(HIDMap.hidNodes.notNil), {

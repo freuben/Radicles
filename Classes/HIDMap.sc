@@ -30,7 +30,7 @@ HIDMap : Radicles {
 		if(key.isInteger, {
 			key = ndef.controlKeys[key];
 		});
-		hidNodes.do{|item, index| if( item.indexOfAll([ndef, key]).reject({|item| item == nil}).size == 2,
+		hidNodes.do{|item, index| if( item.includes(ndef) and: {item.includes(key)}, //entry holds this Ndef and argument
 			{
 				value ?? {value = hidNodes[index][3]};
 				(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;

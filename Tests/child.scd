@@ -22,6 +22,7 @@ finish = {|status, message|
 Server.default = Server(\radtest, NetAddr("127.0.0.1", 57150));
 s = Server.default;
 s.options.numWireBufs = 512;
+s.volume = -90; // muted from the first boot (applied by Volume when the server starts)
 
 Radicles.new;
 (Radicles.mainPath +/+ "Tests/RadTest.scd").load;
