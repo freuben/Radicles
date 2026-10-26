@@ -1,0 +1,12 @@
+>> <code>
+== radpost ==
+Ndef('block1', {arg freq = 200 ,
+            trig = 1 , attack = 0.01 ,
+            decay = 0.3 , sustain = 0.5 , release = 1 ;
+            SinOsc.ar(freq) * Env.adsr(attack, decay, sustain, release).kr(gate: trig);
+        });
+Ndef('block1').set('trig', 0);
+Ndef('block1').set('trig', 1);
+== radpostcont ==
+(none)
+

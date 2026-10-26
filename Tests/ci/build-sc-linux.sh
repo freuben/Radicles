@@ -74,7 +74,7 @@ mkdir -p "$F/Settings" "$F/SoundFiles/Record"
 for i in 0 1 2 3 4 5 6 7 8 9; do mkdir -p "$F/SoundFiles/Play/$i"; done
 # Empty preset files, as an existing install has them (presets silently fail without).
 mkdir -p "$F/Settings/Presets" "$F/Settings/Sessions"
-for c in Track Tracks Radicles Filter Session Bstore Map; do
+for c in Track Tracks Radicles Filter Session Bstore Map Dstore Assemblage Store; do
   [ -f "$F/Settings/Presets/$c.scd" ] || echo "[]" > "$F/Settings/Presets/$c.scd"
 done
 mkdir -p /root/.config/SuperCollider

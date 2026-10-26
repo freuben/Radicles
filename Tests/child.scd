@@ -31,7 +31,7 @@ test = ~radTests.detect{|t| t[\name] == testName };
 if(test.isNil, { finish.(\error, "test not found: " ++ caseName ++ "/" ++ testName) });
 
 if(test.notNil and: { test[\gui] and: headless }, {
-	finish.(\skipped, "needs a GUI");
+	finish.(\skipped, test[\note] ? "needs a GUI");
 	test = nil;
 });
 
@@ -76,6 +76,8 @@ if(test.notNil, {
 	fork {
 		var result, snapPath, expected, actual;
 		try { test[\teardown].value } {};
+		// same random choices every run ({[0, 5, 7].choose} in a command)
+		thisThread.randSeed = 1234;
 		"RADTEST:SETUP".postln;
 		test[\setup].do{|entry| runCmd.(entry) };
 		if(s.serverRunning, { s.volume = -90 });

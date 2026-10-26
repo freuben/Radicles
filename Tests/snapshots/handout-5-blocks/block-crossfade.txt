@@ -1,0 +1,12 @@
+>> blkxset 1 key 7
+== radpost ==
+Ndef('block1').xset('key', 7);
+== radpostcont ==
+(none)
+
+>> blkxsetn 1 [key, 5, oct, 2]
+== radpost ==
+Ndef('block1').xset('key', 5, 'oct', 2);
+== radpostcont ==
+(none)
+

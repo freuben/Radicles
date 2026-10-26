@@ -1,0 +1,42 @@
+>> blkset 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blkset 1 1 lfn1
+== radpost ==
+Ndef('mod1', {arg freq=0.1, mul=1, add=0;
+    LFNoise1.ar(freq).exprange(20.0, 20000.0) + add });
+Ndef('block1').xset('freq', Ndef('mod1'));
+== radpostcont ==
+(none)
+
+>> blkset 1 1 sin_(freq, 2)
+== radpost ==
+Ndef('mod2', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).exprange(20.0, 20000.0) + add});
+Ndef('mod2').set('freq', 2);
+Ndef('block1').xset('freq', Ndef('mod2'));
+Ndef('mod1').clear(0.5);
+== radpostcont ==
+(none)
+
+>> modblkset 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> modblkset 1 freq [freq, 5]
+== radpost ==
+Ndef('mod2').setn('freq', 5)
+== radpostcont ==
+(none)
+
+>> unmodblk 1 freq
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

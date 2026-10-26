@@ -70,6 +70,10 @@ fork {
 
 		// "It runs": any SuperCollider error after setup started fails the test.
 		log = ~radTestReadFile.(logFile) ? "";
+		if(log.find("could not initialize audio").notNil or: { log.find("Server 'radtest' exited with exit code 1").notNil }, {
+			res[\status] = \error;
+			res[\message] = "the test server did not boot (audio not available: on Linux, is JACK running?)";
+		});
 		if(log.find("RADTEST:SETUP").notNil, {
 			errors = log.copyToEnd(log.find("RADTEST:SETUP")).split($\n)
 				.select{|l| l.beginsWith("ERROR:") or: { l.beginsWith("FAILURE IN SERVER") } };

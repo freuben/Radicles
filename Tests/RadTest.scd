@@ -13,6 +13,8 @@
 //   "cmd" or ["cmd", seconds] to wait a fixed time instead of the quiet-wait.
 // check: function returning true, or a String explaining the failure.
 // gui: true = needs windows; skipped where there is no GUI (cloud).
+// cloud: false = needs something the cloud build lacks (MIDI, a plugin that
+//   needs FFTW such as Tartini); skipped where there is no GUI, like gui.
 // code: optional function run after cmds (for actions with no command,
 //   e.g. moving a mixer knob from code); its posts are snapshotted too.
 //   It runs inside a Routine, so it may .wait.
@@ -22,14 +24,14 @@
 // known: a String naming a reported problem (e.g. "issue #39"). The test still
 //   runs, but a failure is listed as KNOWN instead of FAIL, and a pass is
 //   flagged so the marker can be removed.
-~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note|
+~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note, cloud = true|
 	~radTests = ~radTests.add((
 		name: name.asString,
 		caseFile: ~radTestCurrentCase,
 		setup: setup ? [],
 		cmds: cmds ? [],
 		check: check,
-		gui: gui,
+		gui: gui or: { cloud.not },
 		code: code,
 		teardown: teardown,
 		noWarnings: noWarnings,

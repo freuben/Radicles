@@ -1,0 +1,12 @@
+>> blkset 1 freq hpch
+== radpost ==
+Ndef('mod1', {arg in=1, mul=1, add=0, minFreq=60, maxFreq=4000, ampThreshold=0.01, median=1, lag=0;
+    var sig, chain, freq, hasFreq;
+    sig = SoundIn.ar( (in-1).max(0) );
+     # freq, hasFreq = Pitch.kr(sig, minFreq: minFreq, maxFreq: maxFreq,
+        ampThreshold: ampThreshold, median: median).lag(lag);
+    ((hasFreq * 2 - 1) * mul).exprange(20.0, 20000.0) + add;});
+Ndef('block1').xset('freq', Ndef('mod1'));
+== radpostcont ==
+(none)
+
