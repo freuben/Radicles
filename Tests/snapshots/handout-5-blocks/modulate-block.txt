@@ -36,7 +36,8 @@ Ndef('mod2').setn('freq', 5)
 
 >> unmodblk 1 freq
 == radpost ==
-(none)
+Ndef('block1').xset('freq', Ndef('mod1'));
+Ndef('mod2').clear(0.5);
 == radpostcont ==
 (none)
 
