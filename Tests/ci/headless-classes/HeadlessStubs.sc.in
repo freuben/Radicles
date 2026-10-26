@@ -1,0 +1,16 @@
+// Headless test support only: placeholders for extensions installed on
+// performers' machines but not buildable in the cloud (nn~, RAVE, etc.).
+// They let Radicles' definition files parse; using them in a test fails loudly.
+RadTestStub {
+	*new { ^this.stubError }
+	*ar { ^this.stubError }
+	*kr { ^this.stubError }
+	*stubError { Error("% is a headless test placeholder; this extension is not installed".format(this.name)).throw }
+}
+NN : RadTestStub {}
+RAVE : RadTestStub {}
+RAVEEncoder : RadTestStub {}
+RAVEDecoder : RadTestStub {}
+RAVEPrior : RadTestStub {}
+SinedPink : RadTestStub {}
+MagMul : RadTestStub {}

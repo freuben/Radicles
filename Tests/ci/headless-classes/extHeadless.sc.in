@@ -1,0 +1,5 @@
+// Headless test support only: never installed for users.
+// Without Qt there is no screen, so answer with a fixed one.
++ Window {
+	*screenBounds { ^Rect(0, 0, 1440, 900) }
+}

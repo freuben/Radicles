@@ -1,0 +1,25 @@
+>> t add
+== radpost ==
+Ndef.ar('inTrack3', 1);
+Ndef('inTrack3').fadeTime = 0.5;
+Ndef('inTrack3').set('trim', 0);
+Ndef.ar('track3', 1);
+Ndef('track3').fadeTime = 0.5;
+Ndef.ar('spaceTrack3', 2);
+Ndef('spaceTrack3').fadeTime = 0.5;
+Ndef('track3', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack3', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceTrack3', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('spaceTrack3', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track3', 1), pan) * 3.dbamp;
+});
+Ndef.ar('block3', 1);
+Ndef('block3').fadeTime = 0.5;
+Ndef('inTrack3', {arg trim=0, lagTime=0;
+                (Ndef.ar('block3', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack3').set('trim', 0);
+== radpostcont ==
+(none)
+

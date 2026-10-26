@@ -1,0 +1,6 @@
+>> vol t 1 -10
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('track1').set('volume', -10);
+
