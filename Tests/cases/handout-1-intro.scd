@@ -3,7 +3,29 @@
 
 ~radTest.("start-2", cmds: ["start 2"]);
 ~radTest.("start-2-2", cmds: ["start 2 2"]);
-~radTest.("start-2-2-2", cmds: ["start 2 2 2"]);
+// The panner depends on a strip's channels in and the output channels:
+// mono tracks and buses into 2 channels use pan2, the stereo master bal2,
+// the same as start 2.
+~radTest.("start-2-2-2", cmds: ["start 2 2 2"],
+	check: {
+		var sp = Radicles.aZ.space.collect{|e| [e[0].asSymbol, e[1].asSymbol] };
+		var want = [['spaceMaster', 'bal2'], ['spaceTrack1', 'pan2'], ['spaceTrack2', 'pan2'],
+			['spaceBus1', 'pan2'], ['spaceBus2', 'pan2']];
+		want.every{|w| sp.includesEqual(w) } or: { "spaces: " ++ sp.cs }
+	});
+// More output channels: mono strips use that output's panner, the master plays directly.
+~radTest.("start-2-2-4", cmds: ["start 2 2 4"],
+	check: {
+		var sp = Radicles.aZ.space.collect{|e| [e[0].asSymbol, e[1].asSymbol] };
+		[['spaceMaster', 'dir'], ['spaceTrack1', 'pan4'], ['spaceBus1', 'pan4']].every{|w| sp.includesEqual(w) }
+			or: { "spaces: " ++ sp.cs }
+	});
+~radTest.("start-2-panners", cmds: ["start 2"],
+	check: {
+		var sp = Radicles.aZ.space.collect{|e| [e[0].asSymbol, e[1].asSymbol] };
+		[['spaceMaster', 'bal2'], ['spaceTrack1', 'pan2'], ['spaceBus1', 'pan2']].every{|w| sp.includesEqual(w) }
+			or: { "spaces: " ++ sp.cs }
+	});
 
 ~radTest.("mix-nomix", setup: ["start 2"], cmds: ["mix", "nomix"], gui: true);
 

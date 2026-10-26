@@ -6629,10 +6629,17 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			var array, spaceArr;
 			if(aZ.isNil, {
 				array = [1!num1, 1!num2, num3];
-				//tracks and buses are mono: for a 2-channel output use the mono panner
-				//(2.spaceType is bal2, which expects a stereo input)
-				spaceArr = Array.fill(array.size, if(num3 == 2, {\pan2}, {num3.spaceType}));
-				spaceArr[spaceArr.size-1] = \dir;
+				//The panner depends on a strip's channels in and the output channels.
+				//For a 2-channel output, let Assemblage choose per strip, as start N M does:
+				//mono tracks and buses get pan2, the (stereo) master gets bal2.
+				//For more output channels, mono strips use num3's panner (pan4, panAz8...)
+				//and the master plays directly.
+				if(num3 == 2, {
+					spaceArr = nil;
+				}, {
+					spaceArr = Array.fill(array.size, num3.spaceType);
+					spaceArr[spaceArr.size-1] = \dir;
+				});
 				spaceArr.postln;
 				aZ = Assemblage(num1, num2, array, spaceArr, action: {|number, channels|
 					Block.addAll(channels[0], {|arr|
