@@ -134,7 +134,7 @@
 	radpost {arg type=\ln, oscId="/code";
 		var string, doc, postUI, radImprov;
 		//optional listener (tests, research log): gets the code as generated
-		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpost)};
+		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpost, Radicles.source)};
 		if(Radicles.ignorePost.not, {
 			doc = Radicles.postDoc;
 			postUI = Radicles.postWindow;
@@ -184,7 +184,7 @@
 	radpostcont {arg type=\ln, postDoc=false, postWin=true, win=\ide;
 		var string, doc;
 		//optional listener (tests, research log): continuous control channel
-		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpostcont)};
+		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpostcont, Radicles.source)};
 		if(Radicles.ignorePostcont.not, {
 			string = this.asString;
 			if(Radicles.reducePostControl, {
@@ -206,6 +206,18 @@
 				});
 			});
 		});
+	}
+
+	// Step 3: post generated code on the channel its source calls for, then run
+	// it. `default` is the channel used when there is no source (code called
+	// directly from SuperCollider), so direct calls post where they always did.
+	radcode {arg default=\radpost, type=\ln;
+		if(Radicles.channelFor(Radicles.source, default) == \radpost, {
+			this.radpost(type);
+		}, {
+			this.radpostcont(type);
+		});
+		^this.interpret;
 	}
 
 	radpostwarn {arg type=\ln;

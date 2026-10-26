@@ -1716,7 +1716,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				soloButton.states = [["S", Color.white, Color.black],
 					["S", Color.white, colorWarning]];
 				soloButton.font = basicFont;
-				soloButton.action = {|butt|
+				soloButton.srcAction = {|butt|
 					soloStates[index] = butt.value;
 					soloButtonFunc.();
 					this.masterSoloFunc2;
@@ -1732,7 +1732,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			recButton.states = [["R", Color.white, Color.black],
 				["R", Color.white, colorCritical]];
 			recButton.font = basicFont;
-			recButton.action = {|butt|
+			recButton.srcAction = {|butt|
 				var thisVal;
 				thisVal = butt.value;
 				recStates[index] = thisVal;
@@ -1745,7 +1745,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			muteButton.states = [["M", Color.white, Color.black],
 				["M", Color.white, colorTrack]];
 			muteButton.font = basicFont;
-			muteButton.action = {|butt|
+			muteButton.srcAction = {|butt|
 				var thisVal;
 				thisVal = butt.value;
 				("Ndef(" ++ mixTrackNames[index].cs ++ ").set('mute', " ++ thisVal
@@ -1761,7 +1761,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			spaceButton.states = [["◯", Color.white, Color.black],
 				["◯", Color.white, Color.black]];
 			spaceButton.font = basicFont;
-			spaceButton.action = {|butt|
+			spaceButton.srcAction = {|butt|
 				"space is the place".postln;
 			};
 
@@ -1796,7 +1796,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				outputMenu.states_([["", Color.white, Color.black]])
 				.font_(basicFont);
 				outputMenu.string = "Outputs";
-				outputMenu.action = {|it|
+				outputMenu.srcAction = {|it|
 					var boundArr, scrollPoint, scrollOrg;
 					boundArr = it.bounds.asArray;
 					scrollPoint = mixerWin.visibleOrigin;
@@ -1865,7 +1865,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							["record", Color.white, Color.red],
 							["stop record", Color.red, Color.white]]);
 						recordingButton = smenu;
-						smenu.action = {|butt|
+						smenu.srcAction = {|butt|
 							var value;
 							value = butt.value;
 							case
@@ -1885,7 +1885,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						});
 					}, {
 						smenu.states_([["dir in rec", Color.white, Color.black]]);
-						smenu.action = {|it|
+						smenu.srcAction = {|it|
 							var boundArr, scrollPoint, scrollOrg;
 							boundArr = it.bounds.asArray;
 							scrollPoint = mixerWin.visibleOrigin;
@@ -1924,7 +1924,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			inKnob = Knob().minWidth_(popupmenusize).maxWidth_(popupmenusize)
 			.maxHeight_(popupmenusize).minHeight_(popupmenusize);
 			inKnob.color = knobColors;
-			inKnob.centered_(true).action = {|knob| var thisKey, thisSpec;
+			inKnob.centered_(true).srcAction = {|knob| var thisKey, thisSpec;
 				thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 				thisSpec = this.getSpec(thisKey, \trim).asSpec;
 				("Ndef(" ++ thisKey.cs ++ ").set('trim', " ++
@@ -1940,7 +1940,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			this.inputLablesFunc(index, mixTrackNames, inputMenu);
 
 			inputMenu.background_(Color.black).stringColor_(Color.white)
-			.font_(basicFont).action = { arg menu; var arr, trackInInf;
+			.font_(basicFont).srcAction = { arg menu; var arr, trackInInf;
 				trackInInf = 	mixTrackNames[index].asString.divNumStr;
 
 				this.labelsToInFunc(trackInInf, menu.item);
@@ -2081,7 +2081,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					it.value = panSpec[ind][1].asSpec.unmap(panValues);
 						panKnobTextArr[index][ind].string_(panValues);
 					});
-						it.action = {|val|
+						it.srcAction = {|val|
 							var newPanVal;
 						newPanVal = panSpec[ind][1].asSpec.map(val.value);
 						panKnobTextArr[index][ind].string_(newPanVal.round(0.1).asString);
@@ -2113,7 +2113,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			});
 			item.value_(
 				volSpec.unmap( volValue );
-			).action_({|val|
+			).srcAction_({|val|
 				sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString);
 				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
 					volSpec.map(val.value) ++ ");").radpostcont.interpret;
@@ -2221,7 +2221,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					selValue = -inf;
 				});
 				it.value = thisSpec.unmap( selValue );
-				it.action = {|val|
+				it.srcAction = {|val|
 					("Ndef(" ++ thisKey.cs ++ ").set(" ++ selArg.cs ++
 						", " ++ thisSpec.map(val.value) ++ ");").radpostcont.interpret;
 				};
@@ -2294,7 +2294,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 		sendsMenuArr.do{|item, index|
 			item.do{|it, ind|
-				it.action = {arg menu;
+				it.srcAction = {arg menu;
 					var thisBusItem, thisTrackLabel, thisBusNum, busInBool1, busInBool2;
 
 					scrollPoint = mixerWin.visibleOrigin;
@@ -2407,7 +2407,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					irItems = PathName(soundFilePath ++ dash ++ "IR" ++ dash).entries
 					.collect({|item| item.fileNameWithoutExtension });
 					thisListView.items = [""] ++ irItems;
-					thisListView.action = {|sbs|
+					thisListView.srcAction = {|sbs|
 						this.filter(trackInfoArr[0].asSymbol, trackInfoArr[1], ind+1,
 							labelKey, data: [\convrev, sbs.item.asSymbol, 2048], action: {
 								{
@@ -2420,7 +2420,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						});
 					};
 				};
-				it.mouseDownAction = { arg menu;
+				it.srcMouseDownAction = { arg menu;
 					var boundArr, thisBounds, thisArrBounds, thisitemArr,
 					thisListView, thisTagFlt, scrollOrg, fltUIArr;
 					boundArr = it.bounds.asArray;
@@ -2441,7 +2441,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						.font_(Font("Monaco", 10);)
 						.stringColor_(Color.white)
 						.hiliteColor_(colorMeter;)
-						.action_({ arg sbs;
+						.srcAction_({ arg sbs;
 							var labelKey, irItems;
 							labelKey = thisListView.items[sbs.value];
 							if(labelKey.asString.find("convrev").isNil, {
@@ -2473,7 +2473,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 		outputMenuArr.do{|it, ind|
 			if(ind != (sysChans.size-1), {
-				it.action  = {arg menu;
+				it.srcAction = {arg menu;
 					outputSettings[ind] = menu.item.asSymbol;
 					this.outputMasterFunc;
 				};
@@ -3268,7 +3268,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					fxKnob.orientation = \horizontal;
 
 					if((defaultArgArr[index].isNumber).and(hidFx.not), {
-						fxKnob.action = {
+						fxKnob.srcAction = {
 							if(thisFunc.notNil, {
 								thisResult = thisFunc.(thisSpec.map(fxKnob.value));
 							}, {
@@ -3301,7 +3301,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						if((defaultVal.cs.find("Ndef").isNil).and(hidFx.not), {
 							fxKnob.string = defaultVal.cs;
 							fxKnobText.string = defaultVal.cs.copyRange(0, 7);
-							fxKnob.action = {arg field;
+							fxKnob.srcAction = {arg field;
 								fxKnobText.string = field.value;
 								("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
 									++ field.value ++ ");").radpostcont.interpret;
@@ -3341,7 +3341,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			.states_([["", colorCritical, Color.black]])
 			.string_("R E M O V E   F I L T E R")
 			.font_(basicFont)
-			.action = { arg menu;
+			.srcAction = { arg menu;
 				var filterInfoArr, fxsNum2;
 				filterInfoArr = this.convFilterTag(filterTag);
 				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInteger, filterInfoArr[2].asInteger, {
@@ -3609,7 +3609,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		};
 		selButt = Button(mastOutWin).maxHeight_(15).font_(basicFont)
 		.states_([["S E L E C T", Color.white, Color.black]]);
-		selButt.action = {
+		selButt.srcAction = {
 			mastOutArr = butt.collect({|item|  item.collect({|it| it.value }) });
 			mastOutArr.postln;
 			this.mapOutFunc;
@@ -3680,7 +3680,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		.states_([["", Color.white, Color.black]])
 		.string_("S E L E C T")
 		.font_(basicFont)
-		.action = {
+		.srcAction = {
 			recInputArr = states.atAll(view.selection);
 			winDirRec.close;
 		};
