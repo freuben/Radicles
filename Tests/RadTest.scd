@@ -80,6 +80,16 @@
 		};
 		out ++ str.copyToEnd(pos)
 	}.(s);
+	// A timed recording's loop rate is measured from the clock, so it can differ
+	// in any decimal between runs: compare it as "measured", not by value.
+	s = {|str|
+		var out = "", pos = 0, key = "'triggerRate', ";
+		str.findRegexp("'triggerRate', -?[0-9.e-]+").do{|m|
+			out = out ++ str.copyRange(pos, m[0] - 1) ++ key ++ "<measured>";
+			pos = m[0] + m[1].size;
+		};
+		out ++ str.copyToEnd(pos)
+	}.(s);
 	// absolute paths to the Radicles folders
 	[Radicles.mainPath, Radicles.libPath, Radicles.filesPath].do{|p|
 		if(p.notNil, { s = s.replace(p.asString, "<" ++ p.asString.basename ++ ">") });
