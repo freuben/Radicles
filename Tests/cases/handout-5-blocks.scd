@@ -81,7 +81,6 @@
 ~radTest.("list-mods", setup: ["start 2"], cmds: ["mods"]);
 
 ~radTest.("modulate-block",
-	known: "unmodblk 1 freq: block unmod by name fails (_BasicAt)",
 	setup: ["start 2", "blk 1 sine"],
 	cmds: ["blkset 1", "blkset 1 1 lfn1", "blkset 1 1 sin_(freq, 2)", "modblkset 1",
 		"modblkset 1 freq [freq, 5]", "unmodblk 1 freq"],
