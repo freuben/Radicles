@@ -135,6 +135,8 @@
 		var string, doc, postUI, radImprov;
 		//optional listener (tests, research log): gets the code as generated
 		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpost, Radicles.source)};
+		//research code log (off by default)
+		if(RadCodeLog.isOn, {RadCodeLog.add(this.asString, \radpost, Radicles.source)});
 		if(Radicles.ignorePost.not, {
 			doc = Radicles.postDoc;
 			postUI = Radicles.postWindow;
@@ -185,6 +187,7 @@
 		var string, doc;
 		//optional listener (tests, research log): continuous control channel
 		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpostcont, Radicles.source)};
+		if(RadCodeLog.isOn, {RadCodeLog.add(this.asString, \radpostcont, Radicles.source)});
 		if(Radicles.ignorePostcont.not, {
 			string = this.asString;
 			if(Radicles.reducePostControl, {

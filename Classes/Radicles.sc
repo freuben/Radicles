@@ -123,6 +123,16 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		^currentEnvironment[\radSource];
 	}
 
+	// Research code log (off by default): Radicles.codeLog = true / false.
+	// See RadCodeLog for what it records and where.
+	*codeLog_ {arg bool;
+		if(bool, { RadCodeLog.on }, { RadCodeLog.off });
+	}
+
+	*codeLog {
+		^RadCodeLog.isOn
+	}
+
 	*withSource {arg source, func;
 		^RadSourceEnvir.run(source, func);
 	}
@@ -6939,6 +6949,15 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			cW.add(\ssave, [\str, \str], {|str1, str2|
 				PresetFile.write(\session, str2, Radicles.cW.text.string);
 			}, "save string in call window");
+			cW.add(\codelog, [\str], {|str|
+				("Radicles code log is " ++ RadCodeLog.isOn.if({"ON: " ++ RadCodeLog.path}, {"off"})).postln;
+			}, "codelog: is the research code log on?");
+			cW.add(\codelog, [\str, \str], {|str1, str2|
+				case
+				{str2.asSymbol == \on} { Radicles.codeLog = true }
+				{str2.asSymbol == \off} { Radicles.codeLog = false }
+				{ "codelog: use codelog on or codelog off".warn };
+			}, "codelog: on/off (research code log, saved in RadiclesFiles/Logs)");
 			cW.add(\sload, [\str], {|str|
 				PresetFile.read(\session).sort.dopostln;
 			}, "posts saved strings for call window");
