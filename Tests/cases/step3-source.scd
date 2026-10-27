@@ -11,18 +11,18 @@
 	check: { Ndef('track1').get('volume') == -4 }
 );
 
-// The source decides the channel: typed and menu on radpost (volumes -1, -2),
-// gui, hid and osc on radpostcont (-3, -4, -5).
+// The source decides the channel: typed, menu and button on radpost
+// (volumes -1, -2, -3), gui, hid and osc on radpostcont (-4, -5, -6).
 ~radTest.("radcode-sources",
 	setup: ["start 2"],
 	code: {
-		[\typed, \menu, \gui, \hid, \osc].do{|source, i|
+		[\typed, \menu, \button, \gui, \hid, \osc].do{|source, i|
 			Radicles.withSource(source, {
 				("Ndef('track1').set('volume', " ++ (i.neg - 1) ++ ");").radcode(\radpostcont);
 			});
 		};
 	},
-	check: { Ndef('track1').get('volume') == -5 }
+	check: { Ndef('track1').get('volume') == -6 }
 );
 
 // Routines started inside withSource keep the source; ~variables written
@@ -84,4 +84,11 @@
 	},
 	check: { ~radSrcLog.includes(\osc) and: { Ndef('track1').get('volume') == -30 } },
 	teardown: { OSCdef.freeAll }
+);
+
+// GUI widgets get their source from their kind (Mac only: needs Qt).
+~radTest.("gui-widget-sources",
+	code: { ~radKinds = [PopUpMenu(), ListView(), Button(), Knob(), Slider(), TextField()].collect(_.radSourceKind) },
+	check: { ~radKinds == [\menu, \menu, \button, \gui, \gui, \gui] },
+	gui: true
 );

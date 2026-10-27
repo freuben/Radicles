@@ -112,9 +112,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	}
 
 	// Source tracking (Step 3). The source says what triggered the code that is
-	// running: \typed (call window), \menu (a GUI PopUpMenu or list), \gui
-	// (sliders, knobs, buttons), \hid (MIDI and HID controllers), \osc (incoming
-	// OSC). nil means no source: code called directly from SuperCollider.
+	// running: \typed (call window), \menu (a GUI PopUpMenu or list), \button
+	// (a GUI button), \gui (sliders, knobs, text fields), \hid (MIDI and HID
+	// controllers), \osc (incoming OSC). nil means no source: code called directly from SuperCollider.
 	// Routines started inside withSource keep the source; defer and sched do not.
 
 	*source {
@@ -133,11 +133,12 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	}
 
 	// Which posting channel the code goes to (Design Principle 1): typed
-	// commands and menus post on radpost, continuous controls on radpostcont.
+	// commands, menus and buttons post on radpost, continuous controls on
+	// radpostcont.
 	// With no source the method keeps its own channel (`default`).
 	*channelFor {arg source, default=\radpost;
 		^case
-		{[\typed, \menu].includes(source)} {\radpost}
+		{[\typed, \menu, \button].includes(source)} {\radpost}
 		{[\gui, \hid, \osc].includes(source)} {\radpostcont}
 		{default};
 	}
