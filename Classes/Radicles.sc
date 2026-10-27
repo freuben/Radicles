@@ -114,7 +114,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	// Source tracking (Step 3). The source says what triggered the code that is
 	// running: \typed (call window), \menu (a GUI PopUpMenu or list), \button
 	// (a GUI button), \gui (sliders, knobs, text fields), \hid (MIDI and HID
-	// controllers), \osc (incoming OSC). nil means no source: code called directly from SuperCollider.
+	// controllers), \osc (incoming OSC), \hidcmd (a controller mapped to a
+	// command with no value in it, a trigger or on/off: posts like the command
+	// typed). nil means no source: code called directly from SuperCollider.
 	// Routines started inside withSource keep the source; defer and sched do not.
 
 	*source {
@@ -126,9 +128,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	}
 
 	// Like {...}.defer, but the deferred code keeps the current source (defer
-	// alone loses it: AppClock runs it outside the environment).
-	*defer {arg func, delta;
-		var source = this.source;
+	// alone loses it: AppClock runs it outside the environment). `source`
+	// replaces it when given.
+	*defer {arg func, delta, source;
+		source = source ?? { this.source };
 		^{ this.withSource(source, func) }.defer(delta);
 	}
 
@@ -145,7 +148,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	// With no source the method keeps its own channel (`default`).
 	*channelFor {arg source, default=\radpost;
 		^case
-		{[\typed, \menu, \button].includes(source)} {\radpost}
+		{[\typed, \menu, \button, \hidcmd].includes(source)} {\radpost}
 		{[\gui, \hid, \osc].includes(source)} {\radpostcont}
 		{default};
 	}
@@ -412,7 +415,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	}
 
 	*hidconnect {arg string;
-		var str, str2, arr, ind, arr1, arr2, arr3, spec;
+		var str, str2, arr, ind, arr1, arr2, arr3, spec, cmdSource;
+		// a command that takes the controller's value ($) is continuous control
+		// (post window); a trigger or on/off command posts like the command typed
+		cmdSource = if(string.contains("$"), {"'hid'"}, {"'hidcmd'"});
 		str = string.copyRange(1, string.size-2);
 		str = str.replace(" ,", ",").replace(", ", ",").replace("[ ", "[").replace(" ]", "]");
 		arr = str.split($ );
@@ -420,8 +426,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		arr1 = arr.copyFromStart(ind-1);
 		arr2 = arr.copyToEnd(ind+1);
 		arr2 = arr2.collect({|item, index| if((item == "$").and(index == (arr2.size-1)), {"#"}, {item});});
-		str = arr2.asString;
-		str = str.copyRange(2, str.size-3).replace(",");
+		// join the command words (printing the array and cutting "[ " and " ]"
+		// broke in SC 3.14, which prints arrays without inner spaces)
+		str = arr2.collect{|item| item.asString.replace(",") }.join(" ");
 		str = str.cs;
 		str = str.replace("$", "\" ++ val ++ \"");
 		str = str.replace("#\"", "\" ++ val");
@@ -438,13 +445,13 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		arr3.do{|item| if(item.isArray, {spec = item }, {str2 = (str2 ++ item)}); };
 		if(spec.isNil, {spec = [0,1]});
 		if(str.contains("%").not, {
-			("HIDMap.mapFunc({|val| Radicles.defer({~callWindowGlobVar.callFunc(" ++ str ++ ")}) }, " ++
+			("HIDMap.mapFunc({|val| Radicles.defer({~callWindowGlobVar.callFunc(" ++ str ++ ")}, source: " ++ cmdSource ++ ") }, " ++
 				arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 		}, {
 			str = str.split($%);
 			("HIDMap.mapFunc({|val| Radicles.defer({if(val != 0, {~callWindowGlobVar.callFunc("
 				++ str[0].nospaceFunc ++ "\") }, {~callWindowGlobVar.callFunc(\""
-				++ str[1].nospaceFunc ++ ") }); }) }, " ++ arr1[0].asSymbol.cs
+				++ str[1].nospaceFunc ++ ") }); }, source: " ++ cmdSource ++ ") }, " ++ arr1[0].asSymbol.cs
 				++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 		});
 	}
