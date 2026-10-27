@@ -31,7 +31,9 @@
 
 ~radTest.("play-loop-stop",
 	setup: ["start 2"],
-	cmds: ["pl 1 drums1", "st 1", "lp 1 drums1", "st 1"]
+	// st frees the buffer a moment after stopping: wait, so the next lp
+	// reads a new buffer instead of sometimes reusing the old one
+	cmds: ["pl 1 drums1", ["st 1", 3], "lp 1 drums1", ["st 1", 3]]
 );
 
 ~radTest.("play-folder-and-list",
