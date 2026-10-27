@@ -90,6 +90,15 @@
 		};
 		out ++ str.copyToEnd(pos)
 	}.(s);
+	// recording file names carry the date and time (27_10_2026_10_50_12)
+	s = {|str|
+		var out = "", pos = 0;
+		str.findRegexp("[0-9]{2}_[0-9]{2}_[0-9]{4}_[0-9]{2}_[0-9]{2}_[0-9]{2}").do{|m|
+			out = out ++ str.copyRange(pos, m[0] - 1) ++ "<date_time>";
+			pos = m[0] + m[1].size;
+		};
+		out ++ str.copyToEnd(pos)
+	}.(s);
 	// absolute paths to the Radicles folders
 	[Radicles.mainPath, Radicles.libPath, Radicles.filesPath].do{|p|
 		if(p.notNil, { s = s.replace(p.asString, "<" ++ p.asString.basename ++ ">") });

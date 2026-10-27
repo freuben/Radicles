@@ -111,6 +111,38 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		schedFuncAction = { func.(); func=nil};
 	}
 
+	// Source tracking (Step 3). The source says what triggered the code that is
+	// running: \typed (call window), \menu (a GUI PopUpMenu or list), \button
+	// (a GUI button), \gui (sliders, knobs, text fields), \hid (MIDI and HID
+	// controllers), \osc (incoming OSC). nil means no source: code called directly from SuperCollider.
+	// Routines started inside withSource keep the source; defer and sched do not.
+
+	*source {
+		^currentEnvironment[\radSource];
+	}
+
+	*withSource {arg source, func;
+		^RadSourceEnvir.run(source, func);
+	}
+
+	// A function that runs `func` with the given source: for GUI actions and
+	// controller responders. A source already set wins, so a typed command that
+	// moves a GUI widget (`mute t 1` presses the M button) stays typed.
+	*srcFunc {arg source, func;
+		^{|...args| RadSourceEnvir.run(this.source ? source, { func.valueArray(args) }) };
+	}
+
+	// Which posting channel the code goes to (Design Principle 1): typed
+	// commands, menus and buttons post on radpost, continuous controls on
+	// radpostcont.
+	// With no source the method keeps its own channel (`default`).
+	*channelFor {arg source, default=\radpost;
+		^case
+		{[\typed, \menu, \button].includes(source)} {\radpost}
+		{[\gui, \hid, \osc].includes(source)} {\radpostcont}
+		{default};
+	}
+
 	*schedCount {arg func, min=1, max=100, loop=false;
 		var count;
 		count = min;

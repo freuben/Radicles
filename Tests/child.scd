@@ -65,21 +65,25 @@ if(test.notNil, {
 		if(s.serverRunning, { s.sync });
 	};
 
-	runCmd = {|entry|
+	runCmd = {|entry, quiet = 1.0|
 		var cmd, wait;
 		if(entry.isString, { cmd = entry }, { #cmd, wait = entry });
 		// report errors (the driver fails the test) but keep going
 		try { Radicles.cW.callFunc(cmd) } {|e| e.reportError };
-		if(wait.notNil, { wait.wait; lastPost = Main.elapsedTime }, { quietWait.() });
+		if(wait.notNil, { wait.wait; lastPost = Main.elapsedTime }, { quietWait.(quiet) });
 	};
 
-	fork {
+	// Run on AppClock, like the call window: building the mixer asks Qt for
+	// the screen size, which Qt only allows from the GUI thread (macOS).
+	fork({
 		var result, snapPath, expected, actual;
 		try { test[\teardown].value } {};
 		// same random choices every run ({[0, 5, 7].choose} in a command)
 		thisThread.randSeed = 1234;
 		"RADTEST:SETUP".postln;
-		test[\setup].do{|entry| runCmd.(entry) };
+		// setup waits longer: building the mixer pauses for the server, and a
+		// command typed before it is ready fails (seen with start 2, Oct 2026)
+		test[\setup].do{|entry| runCmd.(entry, 3.0) };
 		if(s.serverRunning, { s.volume = -90 });
 		"RADTEST:BEGIN".postln;
 		blocks = [];
@@ -122,6 +126,6 @@ if(test.notNil, {
 			finish.(\fail, "generated code differs from snapshot");
 		}
 		{ finish.(\pass) };
-	};
+	}, AppClock);
 });
 )

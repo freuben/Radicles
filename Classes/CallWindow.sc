@@ -109,6 +109,13 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 		var arrString, arrInterpret, finalArr, callInd, thisStringArr, thisReplaceString;
 		var arr1, arr2, arr3, arr4, arr5, arrArr, arrArr2, thisInd;
 
+		// a command with no source yet was typed (or scheduled from a typed
+		// command); one triggered by a controller keeps the controller's source
+		if(Radicles.source.isNil, {
+			^Radicles.withSource(\typed, {
+				this.callFunc(string, postWin, postWhere, postType, postBool, callIndex) });
+		});
+
 		if(Radicles.myImprov.notNil, {
 			("[ " ++ string ++ " ]").radpost;
 		});

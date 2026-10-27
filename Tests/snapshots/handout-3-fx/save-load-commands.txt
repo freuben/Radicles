@@ -1,0 +1,18 @@
+>> ssave radtest_cmds
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> sload radtest_cmds
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> sconcat radtest_cmds
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

@@ -1,0 +1,33 @@
+>> prec
+== radpost ==
+//prepare recording
+~buffer0 = Buffer.alloc(s, 65536.0, 2, bufnum: 0);
+~buffer1 = Buffer.alloc(s, 65536.0, 2, bufnum: 1);
+~buffer0.write("<RadiclesFiles>/SoundFiles/Record/<date_time> 0 spaceMaster.wav", "wav", "int16", 0, 0, true);
+~buffer1.write("<RadiclesFiles>/SoundFiles/Record/<date_time> 1 Inputs 1-2.wav", "wav", "int16", 0, 0, true);
+== radpostcont ==
+(none)
+
+>> rec
+== radpost ==
+//recording: spaceMaster
+Ndef('record_0', {
+    DiskOut.ar(~buffer0, Ndef.ar('spaceMaster',  2) ) });
+//recording: Inputs 1-2
+Ndef('record_1', {
+    DiskOut.ar(~buffer1, SoundIn.ar([0, 1]) ) });
+== radpostcont ==
+(none)
+
+>> srec
+== radpost ==
+//stop recording
+Ndef('record_0').free;
+~buffer0.close;
+Ndef('record_1').free;
+~buffer0.free;
+~buffer1.close;
+~buffer1.free;
+== radpostcont ==
+(none)
+

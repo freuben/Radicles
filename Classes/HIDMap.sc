@@ -174,11 +174,23 @@ HIDMap : Radicles {
 					"," ++ extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
 				});
 			});
-			compile.radpost.interpret;
+			this.tagSource(compile.radpost.interpret, type);
 			^[hidString.replace("(", ""), compile];
 		}, {
 			"HID type not Found".warn;
 		});
+	}
+
+	// Step 3: run the responder's function with its source (\osc for OSC,
+	// \hid for MIDI and HID), so the code it triggers knows it came from a
+	// controller. The posted MIDIdef/OSCdef/HIDdef code is unchanged.
+	*tagSource {arg responder, type;
+		var source;
+		if(responder.isKindOf(AbstractResponderFunc), {
+			source = if(type == \osc, {\osc}, {\hid});
+			responder.prFunc_(Radicles.srcFunc(source, responder.func));
+		});
+		^responder;
 	}
 
 	*lag {arg ndef, key, value;

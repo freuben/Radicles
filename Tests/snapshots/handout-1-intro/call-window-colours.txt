@@ -1,0 +1,24 @@
+>> color DeepPink
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> colortext black
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> selcolor
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> selcolortext
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
