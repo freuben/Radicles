@@ -18,9 +18,9 @@
 
 >> fxset 1 1 1 0.5
 == radpost ==
-(none)
-== radpostcont ==
 Ndef('filterTrack_1_1').set('pitchRatio', 0.5);
+== radpostcont ==
+(none)
 
 >> fxset b 1 1 2
 == radpost ==
@@ -30,9 +30,9 @@ Ndef('filterTrack_1_1').set('pitchRatio', 0.5);
 
 >> fxset 1 1 pitchRatio 0.5
 == radpost ==
-(none)
-== radpostcont ==
 Ndef('filterTrack_1_1').set('pitchRatio', 0.5);
+== radpostcont ==
+(none)
 
 >> fxset b 1 pitchDispertion 2
 == radpost ==

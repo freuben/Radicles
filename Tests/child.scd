@@ -40,8 +40,10 @@ if(test.notNil, {
 	Radicles.cW = CallWindow.new(nil, Rect(0, 0, 10, 10), 1, 1);
 	Radicles.cW.rootDir = (Radicles.filesPath +/+ "Settings/CallWindow/");
 	Radicles.cW.loadStartUp;
-	// No call window here: a stand-in for its text, which `save` stores in projects.
-	Radicles.cW.instVarPut(\text, (string: ""));
+	// No call window here: its text is a hidden TextView when Qt is available
+	// (sload and sconcat select text in it), else a stand-in for the string,
+	// which `save` stores in projects.
+	Radicles.cW.instVarPut(\text, try { TextView() } { (string: "") });
 	Radicles.selLibs(["Main"]);
 	Radicles.loadAssemblageCmds; Radicles.loadMixCmds; Radicles.loadFxCmds;
 	Radicles.loadBlkCmds; Radicles.loadBaseCmds;

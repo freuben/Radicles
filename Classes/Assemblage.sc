@@ -1928,7 +1928,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 				thisSpec = this.getSpec(thisKey, \trim).asSpec;
 				("Ndef(" ++ thisKey.cs ++ ").set('trim', " ++
-					thisSpec.map(knob.value) ++ ");").radpostcont.interpret;
+					thisSpec.map(knob.value) ++ ");").radcode(\radpostcont);
 			};
 			inKnobArr = inKnobArr.add(inKnob);
 
@@ -2086,7 +2086,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						newPanVal = panSpec[ind][1].asSpec.map(val.value);
 						panKnobTextArr[index][ind].string_(newPanVal.round(0.1).asString);
 							("Ndef(" ++ panKey.cs ++ ").set(" ++ getKeyValues[ind][0].cs ++ ", "
-								++ newPanVal ++ ");").radpostcont.interpret;
+								++ newPanVal ++ ");").radcode(\radpostcont);
 						};
 					};
 			});
@@ -2116,7 +2116,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			).srcAction_({|val|
 				sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString);
 				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
-					volSpec.map(val.value) ++ ");").radpostcont.interpret;
+					volSpec.map(val.value) ++ ");").radcode(\radpostcont);
 		});  };
 
 		setVolSlider = {|index, value|
@@ -2223,7 +2223,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				it.value = thisSpec.unmap( selValue );
 				it.srcAction = {|val|
 					("Ndef(" ++ thisKey.cs ++ ").set(" ++ selArg.cs ++
-						", " ++ thisSpec.map(val.value) ++ ");").radpostcont.interpret;
+						", " ++ thisSpec.map(val.value) ++ ");").radcode(\radpostcont);
 				};
 			});
 		};
@@ -2770,10 +2770,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(trackIndex.notNil, {
 			if(lag.isNil, {
 				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
-					value ++ ");").radpostcont.interpret;
+					value ++ ");").radcode(\radpostcont);
 			}, {
 				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
-					value ++ ", 'lagTime', " ++ lag ++ ");").radpostcont.interpret;
+					value ++ ", 'lagTime', " ++ lag ++ ");").radcode(\radpostcont);
 			});
 			this.mixWinBool({
 				setVolSlider.(trackIndex, value); //slider always shows dB
@@ -2792,7 +2792,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 		ndefCS = ("Ndef(" ++  symString.asSymbol.cs ++
 			").set('lagTime', " ++ lag ++ ");");
-		ndefCS.radpostcont.interpret;
+		ndefCS.radcode(\radpostcont);
 	}
 
 	sendsFunc {|trackLb, thisKey|
@@ -2805,7 +2805,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			lagArg = ("lag" ++ getBusInNum).asSymbol;
 			thisFunc = {|vol, lag|
 				("Ndef(" ++ thisKey.cs ++ ").set(" ++ selArg.cs ++
-					", " ++ vol ++ ", " ++ lagArg.cs ++ ", " ++ lag ++ ");").radpostcont.interpret;
+					", " ++ vol ++ ", " ++ lagArg.cs ++ ", " ++ lag ++ ");").radcode(\radpostcont);
 			};
 		});
 		^thisFunc;
@@ -2929,7 +2929,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			thisKey = thisString.copyRange(thisString.find(".lag(")+5, thisString.size-2).asSymbol.cs;
 			ndefCS = ("Ndef(" ++ thisBusKey.cs ++
 				").set(" ++ thisKey ++ ", " ++ lag ++ ");");
-			ndefCS.radpostcont.interpret;
+			ndefCS.radcode(\radpostcont);
 		}, {
 			"Wrong track or bus".warn;
 		});
@@ -3276,7 +3276,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							});
 							fxKnobText.string = thisResult.asString.copyRange(0, 7);
 							("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
-								++ thisResult ++ ");").radpostcont.interpret;
+								++ thisResult ++ ");").radcode(\radpostcont);
 						};
 						thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
 						fxKnob.value = thisResult;
@@ -3304,7 +3304,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 							fxKnob.srcAction = {arg field;
 								fxKnobText.string = field.value;
 								("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
-									++ field.value ++ ");").radpostcont.interpret;
+									++ field.value ++ ");").radcode(\radpostcont);
 							};
 						}, {
 							fxKnob.background = colorCritical; //mod color
@@ -3886,15 +3886,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				thisArg = [newArr2, newArr1.flop[1]].flop.flat;
 				("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
 					thisArg.cs.replace("[", "").replace("]", "") ++
-					");").radpostcont.interpret;
+					");").radcode(\radpostcont);
 			}, {
 				("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
 					fxArg.cs.replace("[", "").replace("]", "") ++
-					");").radpostcont.interpret;
+					");").radcode(\radpostcont);
 			});
 		}, {
 			("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
-				fxArg.cs ++ ", " ++ value.cs ++ ");").radpostcont.interpret;
+				fxArg.cs ++ ", " ++ value.cs ++ ");").radcode(\radpostcont);
 		});
 	}
 
@@ -3908,14 +3908,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						thisArg = Ndef(ndefKey).controlKeys[index];
 						if(thisArg.notNil, {
 							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ thisArg.cs ++ ", " ++
-								value.cs ++ ");").radpostcont.interpret;
+								value.cs ++ ");").radcode(\radpostcont);
 						}, {
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
 						if(fxArg.isSymbol, {
 							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
-								value.cs ++ ");").radpostcont.interpret;
+								value.cs ++ ");").radcode(\radpostcont);
 						}, {
 							this.prepArrArg(fxArg, ndefKey, \set, value);
 						});
@@ -3939,14 +3939,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						thisArg = Ndef(ndefKey).controlKeys[index];
 						if(thisArg.notNil, {
 							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ thisArg.cs ++ ", " ++
-								value.cs ++ ");").radpostcont.interpret;
+								value.cs ++ ");").radcode(\radpostcont);
 						}, {
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
 						if(fxArg.isSymbol, {
 							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
-								value.cs ++ ");").radpostcont.interpret;
+								value.cs ++ ");").radcode(\radpostcont);
 						}, {
 							if(fxArg.select({|item, index| index.even.and(item == 0) }).isEmpty, {
 								this.prepArrArg(fxArg, ndefKey, \set, value);

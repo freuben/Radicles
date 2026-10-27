@@ -47,7 +47,8 @@
 	noWarnings: true
 );
 
-~radTest.("show-generated-code", setup: ["start 2"], cmds: ["doc"], gui: true);
+~radTest.("show-generated-code", setup: ["start 2"], cmds: ["doc"], gui: true,
+	known: "doc opens an IDE Document; the tests' own sclang runs without the IDE");
 
 // Making your own effect: write it to UserLib, import, use, remove.
 ~radTest.("own-effect",

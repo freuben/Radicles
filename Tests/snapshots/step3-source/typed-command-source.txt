@@ -1,7 +1,6 @@
 >> <code>
 == radpost ==
-(none)
-== radpostcont ==
 Ndef('track1').set('volume', -10);
+== radpostcont ==
 Ndef('track2').set('volume', -12);
 

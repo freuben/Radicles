@@ -1,12 +1,12 @@
 >> setfx 1 1 0.5
 == radpost ==
-(none)
-== radpostcont ==
 Ndef('filterTrack_1_1').set('pitchRatio', 0.5);
+== radpostcont ==
+(none)
 
 >> setfx 1 pitchRatio 2
 == radpost ==
-(none)
-== radpostcont ==
 Ndef('filterTrack_1_1').set('pitchRatio', 2);
+== radpostcont ==
+(none)
 
