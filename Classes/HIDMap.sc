@@ -33,9 +33,9 @@ HIDMap : Radicles {
 		hidNodes.do{|item, index| if( item.includes(ndef) and: {item.includes(key)}, //entry holds this Ndef and argument
 			{
 				value ?? {value = hidNodes[index][3]};
-				(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;
+				(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ value.cs ++ ");").radcode;
 				(this.getHIDType(hidInfoArr[index][2]).split($.)[0] ++ "(" ++ hidNodes[index][0] ++
-					").free;").radpost.interpret;
+					").free;").radcode;
 				hidNodes.removeAt(index);
 				hidInfoArr.removeAt(index);
 		});
@@ -174,7 +174,7 @@ HIDMap : Radicles {
 					"," ++ extraArgs.cs.replace("[", "").replace("]", "") ++ ");";
 				});
 			});
-			this.tagSource(compile.radpost.interpret, type);
+			this.tagSource(compile.radcode, type);
 			^[hidString.replace("(", ""), compile];
 		}, {
 			"HID type not Found".warn;
@@ -197,7 +197,7 @@ HIDMap : Radicles {
 		var string;
 		string = ndef.cs ++ ".lag(" ++ key.cs
 		++ ", " ++ value.cs ++ ");";
-		string.radpost.interpret;
+		string.radcode;
 		lagArr.do{|item| if( [item[0], item[1]] == [ndef, key], {
 			lagArr.remove(item);
 		}); };
