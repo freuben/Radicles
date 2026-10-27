@@ -125,6 +125,13 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		^RadSourceEnvir.run(source, func);
 	}
 
+	// Like {...}.defer, but the deferred code keeps the current source (defer
+	// alone loses it: AppClock runs it outside the environment).
+	*defer {arg func, delta;
+		var source = this.source;
+		^{ this.withSource(source, func) }.defer(delta);
+	}
+
 	// A function that runs `func` with the given source: for GUI actions and
 	// controller responders. A source already set wins, so a typed command that
 	// moves a GUI widget (`mute t 1` presses the M button) stays typed.
@@ -431,13 +438,13 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		arr3.do{|item| if(item.isArray, {spec = item }, {str2 = (str2 ++ item)}); };
 		if(spec.isNil, {spec = [0,1]});
 		if(str.contains("%").not, {
-			("HIDMap.mapFunc({|val| {~callWindowGlobVar.callFunc(" ++ str ++ ")}.defer }, " ++
+			("HIDMap.mapFunc({|val| Radicles.defer({~callWindowGlobVar.callFunc(" ++ str ++ ")}) }, " ++
 				arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 		}, {
 			str = str.split($%);
-			("HIDMap.mapFunc({|val| {if(val != 0, {~callWindowGlobVar.callFunc("
+			("HIDMap.mapFunc({|val| Radicles.defer({if(val != 0, {~callWindowGlobVar.callFunc("
 				++ str[0].nospaceFunc ++ "\") }, {~callWindowGlobVar.callFunc(\""
-				++ str[1].nospaceFunc ++ ") }); }.defer }, " ++ arr1[0].asSymbol.cs
+				++ str[1].nospaceFunc ++ ") }); }) }, " ++ arr1[0].asSymbol.cs
 				++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 		});
 	}
