@@ -1,0 +1,12 @@
+>> mix
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> nomix
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
