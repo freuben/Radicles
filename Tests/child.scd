@@ -73,7 +73,9 @@ if(test.notNil, {
 		if(wait.notNil, { wait.wait; lastPost = Main.elapsedTime }, { quietWait.(quiet) });
 	};
 
-	fork {
+	// Run on AppClock, like the call window: building the mixer asks Qt for
+	// the screen size, which Qt only allows from the GUI thread (macOS).
+	fork({
 		var result, snapPath, expected, actual;
 		try { test[\teardown].value } {};
 		// same random choices every run ({[0, 5, 7].choose} in a command)
@@ -124,6 +126,6 @@ if(test.notNil, {
 			finish.(\fail, "generated code differs from snapshot");
 		}
 		{ finish.(\pass) };
-	};
+	}, AppClock);
 });
 )
