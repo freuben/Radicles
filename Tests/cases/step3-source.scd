@@ -92,3 +92,26 @@
 	check: { ~radKinds == [\menu, \menu, \button, \gui, \gui, \gui] },
 	gui: true
 );
+
+// PR 2: the same mixer method posts by its source. A slider moving volume
+// stays on radpostcont (-7); a button or a typed command goes to radpost (-8, -9).
+~radTest.("mixer-method-by-source",
+	setup: ["start 2"],
+	code: {
+		Radicles.withSource(\gui, { Radicles.aZ.setVolume(\track, 1, -7) });
+		Radicles.withSource(\button, { Radicles.aZ.setVolume(\track, 1, -8) });
+		Radicles.withSource(\typed, { Radicles.aZ.setVolume(\track, 1, -9) });
+	},
+	check: { Ndef('track1').get('volume') == -9 }
+);
+
+// Radicles.defer keeps the source (plain defer loses it), so a command a
+// controller toggles still counts as the controller's.
+~radTest.("defer-keeps-source",
+	code: {
+		~radSrcDeferred = nil;
+		Radicles.withSource(\hid, { Radicles.defer({ ~radSrcDeferred = Radicles.source }) });
+		0.3.wait;
+	},
+	check: { ~radSrcDeferred == \hid }
+);
