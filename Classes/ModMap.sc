@@ -21,9 +21,9 @@ ModMap : Radicles {
 		});
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
-		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radpost.interpret;
+		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radcode;
 		modNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
-			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
+			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radcode;
 			modNodes.remove(item);
 			modInfoArr.removeAt(index);
 		}); };
@@ -44,8 +44,8 @@ ModMap : Radicles {
 		modNodes.do{|item, index| if( item.includes(ndef) and: {item.includes(key)}, //entry holds this Ndef and argument
 			{
 				value ?? {value = modNodes[index][3]};
-					(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ value.cs ++ ");").radpost.interpret;
-				(modNodes[index][0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
+					(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ value.cs ++ ");").radcode;
+				(modNodes[index][0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radcode;
 				modNodes.removeAt(index);
 				modInfoArr.removeAt(index);
 		});
