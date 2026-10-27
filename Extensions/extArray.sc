@@ -148,7 +148,7 @@
 	}
 
 	presetToNdef {var key, source, extraArgs;
-		this.presetToNdefCS(key, source, extraArgs).radpost.interpret;
+		this.presetToNdefCS(key, source, extraArgs).radcode;
 	}
 
 	collectAdjacentPairs {var arr;
