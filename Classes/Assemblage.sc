@@ -91,9 +91,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	play {
 		{
-			"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radpost.interpret;
+			"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radcode;
 			server.sync;
-			"Ndef('spaceMaster').play;".radpost.interpret;
+			"Ndef('spaceMaster').play;".radcode;
 		}.fork;
 	}
 
@@ -156,24 +156,24 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			trackInTag = ("in" ++ trackTag.asString.capitalise).asSymbol;
 			ndefCS = "Ndef.ar(" ++ trackInTag.cs ++ ", ";
 			ndefCS = (ndefCS ++ chanNum.cs ++ ");");
-			ndefCS.radpost.interpret;
+			ndefCS.radcode;
 			ndefCS = ("Ndef(" ++ trackInTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS.radpost.interpret;
+			ndefCS.radcode;
 			ndefCS = ("Ndef(" ++ trackInTag.cs ++ ").set('trim', 0);");
-			ndefCS.radpost.interpret;
+			ndefCS.radcode;
 			server.sync;
 			ndefCS1 = "Ndef.ar(" ++ trackTag.cs ++ ", ";
 			ndefCS1 = (ndefCS1 ++ chanNum.cs ++ ");");
-			ndefCS1.radpost.interpret;
+			ndefCS1.radcode;
 			ndefCS2 = ("Ndef(" ++ trackTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS2.radpost.interpret;
+			ndefCS2.radcode;
 			server.sync;
 			spaceTag = ("space" ++ trackTag.asString.capitalise).asSymbol;
 			ndefCS1 = "Ndef.ar(" ++ spaceTag.cs ++ ", ";
 			ndefCS1 = (ndefCS1 ++ this.spaceTypeToChanOut(spaceType).cs ++ ");");
-			ndefCS1.radpost.interpret;
+			ndefCS1.radcode;
 			ndefCS2 = ("Ndef(" ++ spaceTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-			ndefCS2.radpost.interpret;
+			ndefCS2.radcode;
 			server.sync;
 			thisTrackInfo = [[trackInTag, trackInSynth], [trackTag, trackSynth],
 				[spaceTag, spaceSynth] ];
@@ -233,7 +233,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				});
 				intArr = intArr.add(ndefCS);
 			};
-			intArr.reverse.do{|item| item.radpost.interpret; server.sync };
+			intArr.reverse.do{|item| item.radcode; server.sync };
 			action.();
 		}.fork;
 	}
@@ -297,9 +297,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				this.removeTrackFilters(trackType, trackNum, false, true);
 				server.sync;
 
-				("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
-				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
-				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
+				("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
+				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
+				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
 
 				this.clearModTrackNdefs(trackType, trackNum);
 
@@ -629,7 +629,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					});
 				}, {
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
-					ndefCS.radpost.interpret;
+					ndefCS.radcode;
 				});
 			}, {
 				if(respace, {
@@ -640,7 +640,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					trackArr =this.getThisTrack(type, num);
 
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
-					ndefCS.radpost.interpret;
+					ndefCS.radcode;
 				}, {
 					"Channel number input doesn't match track".warn;
 				});
@@ -755,9 +755,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(busArr[busNum-1][0].isNil, {
 				busArr[busNum-1][0] = busTag;
 				ndefCS1 =	("Ndef.ar(" ++ busTag.cs ++ ", " ++ numChan ++ ");" );
-				ndefCS1.radpost.interpret;
+				ndefCS1.radcode;
 				ndefCS1 = ("Ndef(" ++ busTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
-				ndefCS1.radpost.interpret;
+				ndefCS1.radcode;
 				server.sync;
 				this.input(Ndef(busTag), \bus, busNum);
 			});
@@ -784,14 +784,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			funcBus = busArr[busNum-1][1].busFunc;
 			ndefCS2 = this.ndefPrepare(Ndef(busTag), funcBus);
 			server.sync;
-			ndefCS2.radpost.interpret;
+			ndefCS2.radcode;
 			server.sync;
 			if(setVal, {
 				/*"setVal ".post; setVal.postln;*/
 				argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));
 				ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set('vol" ++ (argIndex+1)
 				++ "', " ++ mix ++ ");";
-				ndefCS3.radpost.interpret;
+				ndefCS3.radcode;
 			});
 			action.();
 		}.fork;
@@ -815,16 +815,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			thisBusIndLabel = inputs.flop[0].indexOf(oldLabel);
 			if(newLabelArr.isEmpty, {
 				if(clearTrack, {
-					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
+					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
 				}, {
-					("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radpost.interpret;
+					("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radcode;
 				});
 				busArr[newBusInd] = nil!2;
 				inputs.removeAt(thisBusIndLabel);
 				spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
 				if(inputs.flop[1][spaceInInd].isArray.not, {
 					if(clearTrack.not, {
-						("Ndef(" ++ spaceBusLabel.cs ++ ").source = nil;").radpost.interpret;
+						("Ndef(" ++ spaceBusLabel.cs ++ ").source = nil;").radcode;
 						inputs.removeAt(spaceInInd);
 					});
 				});
@@ -834,7 +834,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					inputs[thisBusIndLabel][1] = newLabelArr;
 				});
-				("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radpost.interpret;
+				("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radcode;
 			});
 			//look the bus input up again: entries may have been removed above
 			spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
@@ -883,9 +883,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			ndefNumChan = Ndef(ndefArr[0][0]).numChannels;
 			startNdefs = {
 				ndefCS = "Ndef.ar(" ++ filterTag.cs ++ ", " ++ ndefNumChan ++ ");";
-				ndefCS.radpost.interpret;
+				ndefCS.radcode;
 				ndefCS = "Ndef(" ++ filterTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";";
-				ndefCS.radpost.interpret;
+				ndefCS.radcode;
 				server.sync;
 			};
 			if(filters.isNil, {
@@ -974,10 +974,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				routInd = routArr1.flop[0].indexOf(filterTag);
 				("Ndef(" ++ routArr1[routInd][0].cs ++ ", " ++
 					routArr1[routInd][1].filterFunc(Ndef(routArr1[routInd-1][0])).cs
-					++ ");").radpost.interpret;
+					++ ");").radcode;
 				if(extraArgs.notNil, {
 					("Ndef(" ++ routArr1[routInd][0].cs ++ ").set" ++
-						extraArgs.cs.replace("[", "(").replace("]", ");")).radpost.interpret;
+						extraArgs.cs.replace("[", "(").replace("]", ");")).radcode;
 				}, {
 					[routArr1[routInd][1].argNames, routArr1[routInd][1].defaultArgs]
 					.flop.do{|item|
@@ -1043,7 +1043,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				{
 					this.ndefModClear(thisSlot);
 					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
-					ndefCS.radpost.interpret;
+					ndefCS.radcode;
 
 					thisTrack.removeAt(thisFilterIndex);
 					if(type == \master, {num=""});
@@ -1090,7 +1090,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					arr2.do{|item|
 						this.ndefModClear(item[0]);
 						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
-						ndefCS.radpost.interpret;
+						ndefCS.radcode;
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));
 						specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });
 						tracks[setArr[0]] = tracks[setArr[0]].reject({|it| it[0] == item[0] });
@@ -1309,7 +1309,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 		newNdefArgs = ([ndefArgs.copyRange(0,argValArr.size-1)] ++ [argValArr]).flop.flat;
 		("Ndef(" ++ filterNdefKey.cs ++ ").lag(" ++ newNdefArgs.cs.asString
-			.replace("[", "").replace("]", "") ++ ");").radpost.interpret;
+			.replace("[", "").replace("]", "") ++ ");").radcode;
 	}
 
 	modFilterTag {arg filterTag, argument, modType=\sin, spec=[-1,1], extraArgs,
@@ -1749,7 +1749,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				var thisVal;
 				thisVal = butt.value;
 				("Ndef(" ++ mixTrackNames[index].cs ++ ").set('mute', " ++ thisVal
-					++ ");").radpost.interpret;
+					++ ");").radcode;
 				muteStates[index] = thisVal;
 			};
 			muteButton.value = muteStates[index];
@@ -2704,7 +2704,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(thisOutArr.notEmpty, {
 			this.input(thisOutArr, \master);
 		}, {
-			"Ndef('inMaster').source = nil".radpost.interpret;
+			"Ndef('inMaster').source = nil".radcode;
 		});
 	}
 
@@ -2945,7 +2945,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		tag = ("space" ++ symString).asSymbol;
 		getKeys = Ndef(tag).getKeysValues;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++getKeys[panNum-1][0].cs ++ ", " ++ lag ++ ");";
-		ndefCS.radpost.interpret;
+		ndefCS.radcode;
 	}
 
 	setPan {arg trackType=\track, trackNum=1, val=0, panNum=1;
@@ -2958,7 +2958,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		tag = ("space" ++ symString).asSymbol;
 		getKeys = Ndef(tag).getKeysValues;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++getKeys[panNum-1][0].cs ++ ", " ++ val ++ ");";
-		ndefCS.radpost.interpret;
+		ndefCS.radcode;
 		this.mixWinBool({
 			if(trackType == \master, {
 				trackKey = trackType.asSymbol;
@@ -2978,7 +2978,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 		tag = ("in" ++ symString).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set('trim', " ++ val ++ ");";
-		ndefCS.radpost.interpret;
+		ndefCS.radcode;
 		this.mixWinBool({
 			if(trackType == \master, {
 				trackKey = trackType.asSymbol;
@@ -2998,7 +2998,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 		tag = ("in" ++ symString).asSymbol;
 		ndefCS = "Ndef(" ++ tag.cs ++ ").lag('trim', " ++ val ++ ");";
-		ndefCS.radpost.interpret;
+		ndefCS.radcode;
 	}
 
 	busMix {arg bus=1, slot=1, mix=0, lag;
@@ -3007,10 +3007,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		volTag = ("vol" ++ slot).asSymbol;
 		if(lag.notNil, {
 			ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++volTag.cs ++ ", " ++ lag ++ ");";
-			ndefCS.radpost.interpret;
+			ndefCS.radcode;
 		});
 		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++volTag.cs ++ ", " ++ mix ++ ");";
-		ndefCS.radpost.interpret;
+		ndefCS.radcode;
 	}
 
 	listFx {
@@ -3088,7 +3088,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				thisInfo = tracks[arr[0]][arr[1]];
 				dest = tracks[arr[0]][arr[1]-1][0];
 				("Ndef(" ++ item.cs ++ ", " ++ thisInfo[1].filterFunc(Ndef(dest ) ).cs
-					++ ");").radpost.interpret;
+					++ ");").radcode;
 				server.sync;
 			};
 			if(refresh, {
@@ -3114,7 +3114,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(trackInd.notNil, {
 			noUIFunc = {muteStates[trackInd] = value;
 				("Ndef(" ++ mixTrackNames[trackInd].cs ++ ").set('mute', "
-					++ value ++ ");").radpost.interpret;
+					++ value ++ ");").radcode;
 			};
 			if(mixerWin.notNil, {
 				if(mixerWin.visible.notNil, {
@@ -3432,7 +3432,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			", " ++ item.numChannels ++ ") * "	++ buttstates[index] };
 		newCS = newCS.cs.replace("\"", "");
 		finalCS = cs.replace(cs.copyRange(startCS+1,endCS), newCS);
-		("Ndef('inMaster').source = " ++ finalCS).radpost.interpret;
+		("Ndef('inMaster').source = " ++ finalCS).radcode;
 	}
 
 	masterSoloFunc2 {var newStates;
@@ -3450,13 +3450,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				if(Ndef('master').getKeysValues.collect{|item| item == [\off, 1] }.includes(true), {
 					{
 						Ndef(\master).fadeTime.yield;
-						"Ndef('master').set('off', 0)".radpost.interpret;
+						"Ndef('master').set('off', 0)".radcode;
 					}.fork;
 				}, {
 					Ndef('master').set('off', 0);
 				});
 			}, {
-				"Ndef('master').set('off', 1)".radpost.interpret;
+				"Ndef('master').set('off', 1)".radcode;
 			});
 		}, {
 			this.masterSoloFunc((1!newStates.size););
@@ -3504,7 +3504,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				(BStore.buffStrByID(it) ++ ".write(" ++
 					(recPath ++ timestamp ++ " " ++ in ++ " " ++ recTracks[in].asString
 						++ ".wav").cs ++ ", " ++ headerFormat.cs ++ ", " ++ sampleFormat.cs
-					++ ", 0, 0, true);").radpost.interpret;
+					++ ", 0, 0, true);").radcode;
 			};
 		});
 	}
@@ -3531,7 +3531,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			("//recording: " ++ recTracks[index]).radpost;
 			("Ndef(" ++ ("record_" ++ index).asSymbol.cs ++ ", {\n\tDiskOut.ar("
 				++ BStore.buffStrByID(recBStoreArr[index]) ++ ", " ++ recBus ++ " ) }); ")
-			.radpost.interpret;
+			.radcode;
 		};
 	}
 
@@ -3539,9 +3539,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		{
 			"//stop recording".radpost;
 			recBStoreArr.do{|item, index|
-				("Ndef(" ++ ("record_" ++ index).asSymbol.cs ++ ").free;").radpost.interpret;
+				("Ndef(" ++ ("record_" ++ index).asSymbol.cs ++ ").free;").radcode;
 				server.sync;
-				(BStore.buffStrByID(item) ++ ".close;").radpost.interpret;
+				(BStore.buffStrByID(item) ++ ".close;").radcode;
 				BStore.removeID(item);
 			};
 		}.fork;
@@ -3571,7 +3571,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			});
 			("Ndef('masterOut', {var out; \nout = Ndef.ar('spaceMaster', " ++
 				Ndef(\spaceMaster).numChannels ++ ");\n\t" ++	arr3.asString ++ ";\n\t});")
-			.radpost.interpret;
+			.radcode;
 		});
 	}
 
@@ -3631,13 +3631,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(Ndef(\masterOut).source.isNil, {
 				if(mastOutArr != mastOutArr2, {
 					funcSource = Ndef(\spaceMaster).source;
-					"Ndef('spaceMaster').clear;".radpost.interpret;
+					"Ndef('spaceMaster').clear;".radcode;
 					Ndef(\spaceMaster).fadeTime.yield;
 					server.sync;
-					("Ndef('spaceMaster', " ++ funcSource.cs ++ ");").radpost.interpret;
-					/*"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radpost.interpret;*/
-					"Ndef('masterOut').play;".radpost.interpret;
-					"Ndef('masterOut').reshaping = 'elastic';".radpost.interpret;
+					("Ndef('spaceMaster', " ++ funcSource.cs ++ ");").radcode;
+					/*"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radcode;*/
+					"Ndef('masterOut').play;".radcode;
+					"Ndef('masterOut').reshaping = 'elastic';".radcode;
 					this.mastOutSynth;
 				});
 			}, {
@@ -3976,7 +3976,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						thisArg = Ndef(ndefKey).controlKeys[index];
 						if(thisArg.notNil, {
 							("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ thisArg.cs ++ ", " ++
-								value.cs ++ ");").radpost.interpret;
+								value.cs ++ ");").radcode;
 						}, {
 							"Fx argument doesn't exist".warn;
 						});
@@ -4002,7 +4002,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 						thisArg = Ndef(ndefKey).controlKeys[index];
 						if(thisArg.notNil, {
 							("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ thisArg.cs ++ ", " ++
-								value.cs ++ ");").radpost.interpret;
+								value.cs ++ ");").radcode;
 						}, {
 							"Fx argument doesn't exist".warn;
 						});
@@ -4311,7 +4311,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		ndefString = this.findFxModNdef(trackType, trackNum, trackSlot, trackArg);
 		if(ndefString.notNil, {
 			(ndefString.cs ++ ".setn" ++ extraArgs.cs.replaceAt("(",0)
-				.replaceAt(")", extraArgs.cs.size-1)).radpost.interpret;
+				.replaceAt(")", extraArgs.cs.size-1)).radcode;
 		});
 	}
 
@@ -4369,7 +4369,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		ndefString = this.findMixModNdef(trackType, trackNum, trackArg);
 		if(ndefString.notNil, {
 			(ndefString.cs ++ ".setn" ++ extraArgs.cs.replaceAt("(",0)
-				.replaceAt(")", extraArgs.cs.size-1)).radpost.interpret;
+				.replaceAt(")", extraArgs.cs.size-1)).radcode;
 		});
 	}
 
@@ -4396,7 +4396,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		ndefString = this.findSndModNdef(trackType, trackNum, trackSlot);
 		if(ndefString.notNil, {
 			(ndefString.cs ++ ".setn" ++ extraArgs.cs.replaceAt("(",0)
-				.replaceAt(")", extraArgs.cs.size-1)).radpost.interpret;
+				.replaceAt(")", extraArgs.cs.size-1)).radcode;
 		});
 	}
 
@@ -4486,7 +4486,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		ndefArr = (this.prepModTrackNdefs(trackType, trackNum) ++
 			sendNdefs);
 		ndefArr.do{|item|
-			(item.cs ++ ".clear(" ++ fadeTime.cs ++ ");").radpost.interpret;
+			(item.cs ++ ".clear(" ++ fadeTime.cs ++ ");").radcode;
 		};
 		if(modSendArr.notNil, {
 			modSendArr.flop[3].do{|item, index|
@@ -4669,7 +4669,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				newFilterNdef ?? {newFilterNdef = filterArgs[0]};
 				if([filterArgs[2], filterArgs[3]].detect({|item| item.notNil }).isNil, {
 					("Ndef(" ++ newFilterNdef.cs ++ ").set" ++
-						filterArgs[1].cs.replace("[", "(").replace("]", ")")++ ";").radpost.interpret;
+						filterArgs[1].cs.replace("[", "(").replace("]", ")")++ ";").radcode;
 					server.sync;
 				}, {
 					tagArr = this.convFilterTag(newFilterNdef);
@@ -4819,7 +4819,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			};
 			extraArgs = this.prepMixSettings(mixSettings);
 			extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
-				item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
+				item[1].cs.replace("[", "(").replace("]", ");") ).radcode;
 			server.sync;
 			//solo is not an Ndef value (it stays 1); it is restored from soloStates below
 			if(item[1].includes(\mute), {
@@ -4910,7 +4910,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 			extraArgs = this.prepMixSettings(mixSettings);
 			extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
-				item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
+				item[1].cs.replace("[", "(").replace("]", ");") ).radcode;
 			server.sync;
 			//solo is not an Ndef value (it stays 1); it is restored from soloStates below
 			if(item[1].includes(\mute), {
@@ -5153,7 +5153,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			thisBusArr.flop[0].do{|item, index|
 				if(item.notNil, {
 					("Ndef(" ++ item.cs ++ ").set" ++
-						arr[1][index].cs.replace("[", "(").replace("]", ")") ++ ";" ).radpost.interpret;
+						arr[1][index].cs.replace("[", "(").replace("]", ")") ++ ";" ).radcode;
 				});
 			};
 			server.sync;
@@ -5217,7 +5217,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				keys = keys ++ busNdefs;
 			});
 			modNdefs = modNdefs.collect({|item| item.key });
-			keys.do({|item| ("Ndef(" ++ item.cs ++ ").clear(" ++ fadeTime ++ ");").radpost.interpret;
+			keys.do({|item| ("Ndef(" ++ item.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
 				server.sync;
 			});
 			server.sync;
