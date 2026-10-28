@@ -1546,10 +1546,13 @@
 					sourceWindows = sourceWindows.add(srcWin);
 					if(trackNum.notNil, { this.prSrcWinTracks.put(trackNum, ndefKey) });
 					srcWin.onClose = {
-						sourceWindows = sourceWindows.reject({|item| item.name == srcWin.name });
-						this.prSrcWinTracks.keys.select({|key|
-							this.prSrcWinTracks[key] == ndefKey }).do{|key|
-							this.prSrcWinTracks.removeAt(key) };
+						//by identity: a rebuilt window for the same source has the same name
+						sourceWindows = sourceWindows.reject({|item| item === srcWin });
+						if(this.prSourceWin(ndefKey).isNil, {
+							this.prSrcWinTracks.keys.select({|key|
+								this.prSrcWinTracks[key] == ndefKey }).do{|key|
+								this.prSrcWinTracks.removeAt(key) };
+						});
 					};
 				});
 			};
@@ -1562,7 +1565,8 @@
 	}
 
 	prSourceWin {arg ndefKey;
-		^(sourceWindows ? []).detect({|item| item.name.beginsWith(ndefKey.asString ++ " ") });
+		^(sourceWindows ? []).detect({|item|
+			item.isClosed.not and: { item.name.beginsWith(ndefKey.asString ++ " ") } });
 	}
 
 	//rebuild an open source window, in the same place (new block, new mapping)
@@ -1574,6 +1578,7 @@
 				bounds = win.bounds;
 				this.prSrcWinTracks.keysValuesDo{|key, value| if(value == ndefKey, {trackNum = key}) };
 				win.close;
+				sourceWindows = sourceWindows.reject({|item| item === win });
 				this.sourceGUI(ndefKey, bounds.left, bounds.top, trackNum);
 			});
 		}.defer;
@@ -1637,6 +1642,7 @@
 					if(win.notNil, {
 						bounds = win.bounds;
 						win.close;
+						sourceWindows = sourceWindows.reject({|item| item === win });
 						if(newKey.notNil, {
 							this.sourceGUI(newKey, bounds.left, bounds.top, trackNum);
 						});
