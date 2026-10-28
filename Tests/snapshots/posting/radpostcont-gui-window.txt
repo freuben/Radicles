@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('a').set('x', 4);
+

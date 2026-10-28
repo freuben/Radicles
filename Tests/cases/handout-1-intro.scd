@@ -33,9 +33,10 @@
 
 ~radTest.("play-loop-stop",
 	setup: ["start 2"],
-	// st frees the buffer a moment after stopping: wait, so the next lp
-	// reads a new buffer instead of sometimes reusing the old one
-	cmds: ["pl 1 drums1", ["st 1", 3], "lp 1 drums1", ["st 1", 3]]
+	// wait after each command: a block only counts as live once its start
+	// routine has synced with the server, and st on a block that is still
+	// starting does not free its buffer (issue #51)
+	cmds: [["pl 1 drums1", 3], ["st 1", 3], ["lp 1 drums1", 3], ["st 1", 3]]
 );
 
 ~radTest.("play-folder-and-list",
