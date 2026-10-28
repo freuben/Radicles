@@ -1504,7 +1504,7 @@
 	//from the source button under a track's input menu or with 'blkgui'
 	sourceGUI {arg source, winLeft, winDown, trackNum;
 		var ndefKey, blockIndex, liveBlock, blockName, specs, pairs, specArr,
-		winName, srcWin, openWin, lastWin;
+		winName, srcWin, openWin, lastWin, argNames;
 		ndefKey = if(source.isKindOf(NodeProxy), {source.key}, {source.asSymbol});
 		openWin = this.prSourceWin(ndefKey);
 		if(openWin.notNil, {
@@ -1525,7 +1525,11 @@
 			}
 			{
 				blockName = liveBlock[1];
-				pairs = Ndef(ndefKey).getKeysValues;
+				//only the playing block's own arguments: values set for an earlier
+				//block in this slot stay in the Ndef's node map
+				argNames = Ndef(ndefKey).objects.first !? {|obj|
+					obj.controlNames.collect(_.name) } ? [];
+				pairs = Ndef(ndefKey).getKeysValues.select({|pair| argNames.includes(pair[0]) });
 				if(pairs.isEmpty, {
 					(ndefKey.asString ++ ": " ++ blockName ++ " has no arguments").warn;
 				}, {

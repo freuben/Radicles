@@ -127,13 +127,17 @@
 	gui: true
 );
 
-// a new block in the same slot rebuilds the window for its arguments
+// a new block in the same slot rebuilds the window for its arguments only:
+// freq, set for the sine block, stays in the Ndef but is not shown
 ~radTest.("new-block-rebuilds-window",
-	setup: ["start 2", "blk 1 sine", "blkgui 1"],
+	setup: ["start 2", "blk 1 sine", "blkset 1 freq 300", "blkgui 1"],
 	cmds: [["blk 1 sinekey", 2]],
 	check: {
-		(~radSrcWin.(\block1) !? {|w| w.name }) == "block1 | sinekey"
-		or: { "window: " ++ (~radSrcWin.(\block1) !? {|w| w.name }).cs }
+		var win = ~radSrcWin.(\block1), labels;
+		labels = win !? {|w| ~radKids.(w, StaticText).collect(_.string) } ? [];
+		((win !? {|w| w.name }) == "block1 | sinekey" and: { labels.includesEqual("key") }
+			and: { labels.includesEqual("freq").not })
+		or: { "window: " ++ (win !? {|w| w.name }).cs ++ ", labels: " ++ labels.cs }
 	},
 	teardown: ~radCloseWins,
 	gui: true
