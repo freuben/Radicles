@@ -242,7 +242,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 								arr2 = arr1.copyFromStart(thisInd-1);
 								arr3 = arr1.copyRange(thisInd+3, arr1.size+1);
 								("~callWindowGlobVar.add(" ++ arr2.asSymbol.cs ++
-									", ['str'], {~callWindowGlobVar.callFunc(" ++ arr3.cs ++ ") });").radpost.interpret;
+									", ['str'], {~callWindowGlobVar.callFunc(" ++ arr3.cs ++ ") });").radcode;
 							}
 							{inputArr.contains("<>")} {
 								Radicles.hidconnect(inputArr);
@@ -565,7 +565,7 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			++ varString ++ ".callFunc(" ++ ("(" ++ assoArr[2].join(" ") ++ ")").replace(",", "")
 			++ ", callIndex: " ++ callIndex ++ ");" ++ $\n) ++ "}, \"" ++ assoArr[0][0].asSymbol ++ " : "
 		++ assoArr[1].flop[0] ++ "\", replace: " ++ replace.cs ++ ");";
-		firstFunc.radpost.interpret;
+		firstFunc.radcode;
 	}
 
 	loadStartUp {

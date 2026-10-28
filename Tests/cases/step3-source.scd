@@ -115,3 +115,27 @@
 	},
 	check: { ~radSrcDeferred == \hid }
 );
+
+// PR 3 (Federico, 27 Oct, option B): a controller mapped to a command with no
+// value in it (a trigger, like a MIDI button running fx 1 pch) posts like the
+// command typed (main document, source \hidcmd); a controller whose value goes
+// into the command ($) is continuous control (post window, \hid).
+~radTest.("controller-mapped-commands",
+	setup: ["start 2"],
+	cmds: ["(osc /radtestfx <> fx 1 pch)", "(osc /radtestvol [-60,0] <> vol t 1 $)"],
+	code: {
+		var capture = Radicles.postCapture;
+		~radSrcLog = [];
+		Radicles.postCapture = {|str, channel, source|
+			~radSrcLog = ~radSrcLog.add(source);
+			capture.value(str, channel, source);
+		};
+		NetAddr.localAddr.sendMsg('/radtestfx', 1);
+		1.5.wait;
+		NetAddr.localAddr.sendMsg('/radtestvol', 0.5);
+		1.wait;
+	},
+	check: { (~radSrcLog.asSet == Set[\hidcmd, \hid]) and: { Ndef('track1').get('volume') == -30 }
+		or: { "sources " ++ ~radSrcLog.asSet ++ ", volume " ++ Ndef('track1').get('volume') } },
+	teardown: { OSCdef.freeAll }
+);

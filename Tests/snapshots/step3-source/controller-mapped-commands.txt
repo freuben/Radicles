@@ -1,0 +1,28 @@
+>> (osc /radtestfx <> fx 1 pch)
+== radpost ==
+OSCdef('hid1', {arg ...args; {|val| Radicles.defer({~callWindowGlobVar.callFunc("fx 1 pch")}, source: 'hidcmd') }.([0, 1].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestfx');
+== radpostcont ==
+(none)
+
+>> (osc /radtestvol [-60,0] <> vol t 1 $)
+== radpost ==
+OSCdef('hid2', {arg ...args; {|val| Radicles.defer({~callWindowGlobVar.callFunc("vol t 1 " ++ val)}, source: 'hid') }.([-60, 0].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestvol');
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+Ndef('track1').set('volume', -30.0);
+

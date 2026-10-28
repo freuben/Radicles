@@ -21,11 +21,11 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 					globVarArray = globVarArray.add(globVar);
 					if(channels.isNil, {
 						(globVar ++ " = " ++ "Buffer.read(s, " ++ pathName.cs ++
-							", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+							", bufnum: " ++ bufcount ++ ");").radcode;
 					}, {
 						(globVar ++ " = " ++ "Buffer.readChannel(s, " ++ pathName.cs ++
 							", bufnum: " ++ bufcount ++ ", channels: " ++ channels ++ ");")
-						.radpost.interpret;
+						.radcode;
 					});
 					buffer = globVar.interpret;
 					bufferArray = bufferArray.add(buffer);
@@ -56,15 +56,15 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 						globVarArray = globVarArray.add(globVar);
 						if(channelsArr.isNil, {
 							(globVar ++ " = " ++ "Buffer.read(s, " ++ item.cs ++
-								", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+								", bufnum: " ++ bufcount ++ ");").radcode;
 						}, {
 							if(channelsArr[index].isNil, {
 								(globVar ++ " = " ++ "Buffer.read(s, " ++ item.cs ++
-									", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+									", bufnum: " ++ bufcount ++ ");").radcode;
 							}, {
 								(globVar ++ " = " ++ "Buffer.readChannel(s, " ++ item.cs ++
 									", bufnum: " ++ bufcount ++ ", channels: " ++
-									channelsArr[index] ++ ");").radpost.interpret;
+									channelsArr[index] ++ ");").radcode;
 							});
 						});
 						buffer = globVar.interpret;
@@ -159,7 +159,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 					globVar = "~buffer" ++ bufcount;
 					globVarArray = globVarArray.add(globVar);
 					(globVar ++ " = " ++ "Buffer.alloc(s, " ++ numFrames ++ ", " ++
-						numChannels ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						numChannels ++ ", bufnum: " ++ bufcount ++ ");").radcode;
 					buffer = globVar.interpret;
 					bufferArray = bufferArray.add(buffer);
 					this.bufferCount;
@@ -188,7 +188,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 						globVar = "~buffer" ++ bufcount;
 						globVarArray = globVarArray.add(globVar);
 						(globVar ++ " = " ++ "Buffer.alloc(s, " ++ item[0] ++ ", " ++
-							item[1] ++ ", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+							item[1] ++ ", bufnum: " ++ bufcount ++ ");").radcode;
 						buffer = globVar.interpret;
 						bufferArray = bufferArray.add(buffer);
 						this.bufferCount;
@@ -219,7 +219,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 					globVarArray = globVarArray.add(globVar);
 					(globVar ++ " = " ++ "Buffer.cueSoundFileBuf(s, " ++ pathName.cs ++
 						", " ++ startFrame ++ ", " ++ chanNum ++  ", " ++ cueSize ++
-						", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+						", bufnum: " ++ bufcount ++ ");").radcode;
 					buffer = globVar.interpret;
 					bufferArray = bufferArray.add(buffer);
 					this.bufferCount;
@@ -254,7 +254,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 						globVarArray = globVarArray.add(globVar);
 						(globVar ++ " = " ++ "Buffer.cueSoundFileBuf(s, " ++ item[0].cs ++
 							", " ++ newArr[0] ++ ", " ++ chanNum ++  ", " ++ cueSize ++
-							", bufnum: " ++ bufcount ++ ");").radpost.interpret;
+							", bufnum: " ++ bufcount ++ ");").radcode;
 						buffer = globVar.interpret;
 						bufferArray = bufferArray.add(buffer);
 						this.bufferCount;
@@ -560,7 +560,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 			if(bufferArray.isEmpty.not, {
 				if(bufferArray[index].notNil, {
 					freeFunc = 		{
-						(globVarArray[index] ++ ".free;").radpost.interpret;
+						(globVarArray[index] ++ ".free;").radcode;
 					(globVarArray[index] ++ " = nil").interpret;
 					bufferArray.removeAt(index);
 					globVarArray.removeAt(index);
@@ -600,7 +600,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 			symbols = this.tags;
 			bufIndex = symbols.indexOfEqual(tag);
 			if(bufIndex.notNil, {
-				(globVarArray[bufIndex] ++ ".free;").radpost.interpret;
+				(globVarArray[bufIndex] ++ ".free;").radcode;
 				(globVarArray[bufIndex] ++ " = nil").interpret;
 				bufferArray.removeAt(bufIndex);
 				globVarArray.removeAt(bufIndex);
@@ -618,7 +618,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 			tagArr.do{|tag| this.free(tag);};
 		}, {
 			globVarArray.do{|item|
-				(item ++ ".free;").radpost.interpret;
+				(item ++ ".free;").radcode;
 				(item ++ " = nil").interpret;
 			};
 			bufferArray = nil;

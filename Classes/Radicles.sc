@@ -114,7 +114,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	// Source tracking (Step 3). The source says what triggered the code that is
 	// running: \typed (call window), \menu (a GUI PopUpMenu or list), \button
 	// (a GUI button), \gui (sliders, knobs, text fields), \hid (MIDI and HID
-	// controllers), \osc (incoming OSC). nil means no source: code called directly from SuperCollider.
+	// controllers), \osc (incoming OSC), \hidcmd (a controller mapped to a
+	// command with no value in it, a trigger or on/off: posts like the command
+	// typed). nil means no source: code called directly from SuperCollider.
 	// Routines started inside withSource keep the source; defer and sched do not.
 
 	*source {
@@ -126,9 +128,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	}
 
 	// Like {...}.defer, but the deferred code keeps the current source (defer
-	// alone loses it: AppClock runs it outside the environment).
-	*defer {arg func, delta;
-		var source = this.source;
+	// alone loses it: AppClock runs it outside the environment). `source`
+	// replaces it when given.
+	*defer {arg func, delta, source;
+		source = source ?? { this.source };
 		^{ this.withSource(source, func) }.defer(delta);
 	}
 
@@ -145,7 +148,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	// With no source the method keeps its own channel (`default`).
 	*channelFor {arg source, default=\radpost;
 		^case
-		{[\typed, \menu, \button].includes(source)} {\radpost}
+		{[\typed, \menu, \button, \hidcmd].includes(source)} {\radpost}
 		{[\gui, \hid, \osc].includes(source)} {\radpostcont}
 		{default};
 	}
@@ -277,7 +280,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 				};
 				extraArgs = aZ.prepMixSettings(mixSettings);
 				extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
-					item[1].cs.replace("[", "(").replace("]", ");") ).radpost.interpret;
+					item[1].cs.replace("[", "(").replace("]", ");") ).radcode;
 				server.sync;
 				//solo is not an Ndef value (it stays 1); it is restored from soloStates below
 				if(item[1].includes(\mute), {
@@ -371,7 +374,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 				if(item.notNil, {
 					("Ndef(" ++ item.cs ++ ").setn" ++
 						liveBlockArr[1][index].cs.replace("[", "(").replace("]", ")"))
-					.radpost.interpret;
+					.radcode;
 				});
 			};
 			liveBlockArr[0].do{|item|
@@ -381,7 +384,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 						item[2] = item[2][2];
 					});
 					("Block.play" ++ item.cs.replaceAt("(", 0).replaceAt(")",
-						item.cs.size-1) ).radpost.interpret;
+						item.cs.size-1) ).radcode;
 				});
 			};
 		});
@@ -412,7 +415,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	}
 
 	*hidconnect {arg string;
-		var str, str2, arr, ind, arr1, arr2, arr3, spec;
+		var str, str2, arr, ind, arr1, arr2, arr3, spec, cmdSource;
+		// a command that takes the controller's value ($) is continuous control
+		// (post window); a trigger or on/off command posts like the command typed
+		cmdSource = if(string.contains("$"), {"'hid'"}, {"'hidcmd'"});
 		str = string.copyRange(1, string.size-2);
 		str = str.replace(" ,", ",").replace(", ", ",").replace("[ ", "[").replace(" ]", "]");
 		arr = str.split($ );
@@ -420,8 +426,9 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		arr1 = arr.copyFromStart(ind-1);
 		arr2 = arr.copyToEnd(ind+1);
 		arr2 = arr2.collect({|item, index| if((item == "$").and(index == (arr2.size-1)), {"#"}, {item});});
-		str = arr2.asString;
-		str = str.copyRange(2, str.size-3).replace(",");
+		// join the command words (printing the array and cutting "[ " and " ]"
+		// broke in SC 3.14, which prints arrays without inner spaces)
+		str = arr2.collect{|item| item.asString.replace(",") }.join(" ");
 		str = str.cs;
 		str = str.replace("$", "\" ++ val ++ \"");
 		str = str.replace("#\"", "\" ++ val");
@@ -438,13 +445,13 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		arr3.do{|item| if(item.isArray, {spec = item }, {str2 = (str2 ++ item)}); };
 		if(spec.isNil, {spec = [0,1]});
 		if(str.contains("%").not, {
-			("HIDMap.mapFunc({|val| Radicles.defer({~callWindowGlobVar.callFunc(" ++ str ++ ")}) }, " ++
+			("HIDMap.mapFunc({|val| Radicles.defer({~callWindowGlobVar.callFunc(" ++ str ++ ")}, source: " ++ cmdSource ++ ") }, " ++
 				arr1[0].asSymbol.cs ++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 		}, {
 			str = str.split($%);
 			("HIDMap.mapFunc({|val| Radicles.defer({if(val != 0, {~callWindowGlobVar.callFunc("
 				++ str[0].nospaceFunc ++ "\") }, {~callWindowGlobVar.callFunc(\""
-				++ str[1].nospaceFunc ++ ") }); }) }, " ++ arr1[0].asSymbol.cs
+				++ str[1].nospaceFunc ++ ") }); }, source: " ++ cmdSource ++ ") }, " ++ arr1[0].asSymbol.cs
 				++ ", " ++ spec ++ ", " ++ str2.cs ++ ");").interpret;
 		});
 	}
@@ -4759,37 +4766,37 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		cW.add(\ndefset, [\str, \str, \arr], {|str1, str2, arr1|
 			("Ndef(" ++ str2.cs ++ ").setn" ++
 				arr1.cs.replaceAt("(", 0).replaceAt(")", arr1.cs.size-1);
-			).radpost.interpret;
+			).radcode;
 		}, "ndef set");
 
 		cW.add(\ndefset, [\str, \str, \str, \num], {|str1, str2, str3, num1|
-			("Ndef(" ++ str2.cs ++ ").set(" ++ str3.cs ++ ", " ++ num1 ++ ");").radpost.interpret;
+			("Ndef(" ++ str2.cs ++ ").set(" ++ str3.cs ++ ", " ++ num1 ++ ");").radcode;
 		}, "ndef lag arg in ndef");
 
 		cW.add(\ndefset, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			("Ndef(" ++ str2.cs ++ ").set(" ++ Ndef(str2).controlKeys[num1-1].cs ++ ", " ++ num2 ++ ");").radpost.interpret;
+			("Ndef(" ++ str2.cs ++ ").set(" ++ Ndef(str2).controlKeys[num1-1].cs ++ ", " ++ num2 ++ ");").radcode;
 		}, "ndef lag arg in ndef");
 
 		cW.add(\ndefxset, [\str, \str, \str, \num], {|str1, str2, str3, num1|
-			("Ndef(" ++ str2.cs ++ ").xset(" ++ str3.cs ++ ", " ++ num1 ++ ");").radpost.interpret;
+			("Ndef(" ++ str2.cs ++ ").xset(" ++ str3.cs ++ ", " ++ num1 ++ ");").radcode;
 		}, "ndef lag arg in ndef");
 
 		cW.add(\ndefxset, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			("Ndef(" ++ str2.cs ++ ").xset(" ++ Ndef(str2).controlKeys[num1-1].cs ++ ", " ++ num2 ++ ");").radpost.interpret;
+			("Ndef(" ++ str2.cs ++ ").xset(" ++ Ndef(str2).controlKeys[num1-1].cs ++ ", " ++ num2 ++ ");").radcode;
 		}, "ndef lag arg in ndef");
 
 		cW.add(\ndeflag, [\str, \str, \num], {|str1, str2, num1|
 			Ndef(str2).controlKeys.do{|item|
-				("Ndef(" ++ str2.cs ++ ").lag(" ++ item.cs ++ ", " ++ num1 ++ ");").radpost.interpret;
+				("Ndef(" ++ str2.cs ++ ").lag(" ++ item.cs ++ ", " ++ num1 ++ ");").radcode;
 			}
 		}, "ndef lag ndef");
 
 		cW.add(\ndeflag, [\str, \str, \str, \num], {|str1, str2, str3, num1|
-			("Ndef(" ++ str2.cs ++ ").lag(" ++ str3.cs ++ ", " ++ num1 ++ ");").radpost.interpret;
+			("Ndef(" ++ str2.cs ++ ").lag(" ++ str3.cs ++ ", " ++ num1 ++ ");").radcode;
 		}, "ndef lag arg in ndef");
 
 		cW.add(\ndeflag, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			("Ndef(" ++ str2.cs ++ ").lag(" ++ Ndef(str2).controlKeys[num1-1].cs ++ ", " ++ num2 ++ ");").radpost.interpret;
+			("Ndef(" ++ str2.cs ++ ").lag(" ++ Ndef(str2).controlKeys[num1-1].cs ++ ", " ++ num2 ++ ");").radcode;
 		}, "ndef lag arg in ndef");
 
 		//modulation
@@ -6424,7 +6431,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 				\windows,   {dash = "\\"; }
 			);
 			recPath = Radicles.soundFilePath ++ dash ++  "Record" ++ dash;
-			(BStore.buffStrByID(Block.recBuf(str2.asString.divNumStr[1])) ++ ".write(\"" ++ recPath ++ timestamp ++ ".wav\", \"wav\", \"int16\")").radpost.interpret;
+			(BStore.buffStrByID(Block.recBuf(str2.asString.divNumStr[1])) ++ ".write(\"" ++ recPath ++ timestamp ++ ".wav\", \"wav\", \"int16\")").radcode;
 		}, "write rec buffer to file: rec buffer, input");
 
 		cW.add('@wr', [\str], {|str1|
@@ -6437,7 +6444,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 			recPath = Radicles.soundFilePath ++ dash ++  "Record" ++ dash;
 			Block.recbuffers.do{|item, index|
 				(BStore.buffStrByID(item) ++ ".write(\"" ++ recPath ++ timestamp ++ index.cs ++
-					".wav\", \"wav\", \"int16\")").radpost.interpret;
+					".wav\", \"wav\", \"int16\")").radcode;
 			};
 		}, "write rec buffer to file: rec buffer, input");
 
@@ -6760,7 +6767,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 
 		cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
-				num2 ++ ");").radpost.interpret;
+				num2 ++ ");").radcode;
 		}, "netaddrs: id, ip, port");
 
 		cW.add(\osc, [\str], {|str1|
