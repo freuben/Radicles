@@ -3,6 +3,16 @@
 
 + Radicles {
 	*loadFxCmds {
+		this.prFxAddCmds;
+		this.prFxSetCmds;
+		this.prFxGetCmds;
+		this.prFxModCmds;
+		this.prFxPresetCmds;
+		this.prChannelStripCmds;
+	}
+
+	// fx, fxclear, clearfx
+	*prFxAddCmds {
 		cW.add(\fx, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			if(aZ.notNil, {
 				case
@@ -200,7 +210,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "clearfx: filterNum");
+	}
 
+	// fxset, fxlag, setfx, fxsetn, fxlagn, lagfx
+	*prFxSetCmds {
 		cW.add(\fxset, [\str, \str, \num], {|str1, str2, num1|
 			if(aZ.notNil, {
 				case
@@ -759,7 +772,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "lagfx: filterNum, fxArg, val");
+	}
 
+	// fxget, fxgetlag, getfx, getlagfx, fxgetspec, getfxspec
+	*prFxGetCmds {
 		cW.add(\fxget, [\str, \str, \num], {|str1, str2, num1|
 			var filterTag;
 			if(aZ.notNil, {
@@ -1247,6 +1263,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "getfxspec: filterNum, fxArg");
+	}
+
+	// fxset/setfx with a modulator, modfxset, modsetfx, unmodfx, fxunmod
+	*prFxModCmds {
 		//fx modulation
 		cW.add(\fxset, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
 			var modArgs, modifier;
@@ -1825,7 +1845,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "setfx: filterNum, fxArg");
+	}
 
+	// fxload, loadfx, fxsave, savefx, fxlags, lagsfx
+	*prFxPresetCmds {
 		cW.add(\fxunmod, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			var filterKey;
 			if(aZ.notNil, {
@@ -2042,7 +2065,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "fxsave: mixTrackNum, slot, preset");
+	}
 
+	// csload, cssave, csfree
+	*prChannelStripCmds {
 		cW.add(\lagsfx, [\str, \num, \num], {|str1, num1, num2|
 			var filterTag, filterTagArr;
 			if(aZ.notNil, {
@@ -2197,6 +2223,5 @@
 				"could not find assemblage".warn;
 			});
 		}, "cssave: mixTrackNum, slot1, preset");
-
 	}
 }

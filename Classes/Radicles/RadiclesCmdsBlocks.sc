@@ -3,6 +3,16 @@
 
 + Radicles {
 	*loadBlkCmds {
+		this.prBlockCmds;
+		this.prPlayCmds;
+		this.prBlockInCmds;
+		this.prStopCmds;
+		this.prRecBufCmds;
+		this.prClockCmds;
+	}
+
+	// blk, blkset, blklag, blkxset, blkget, modblkset, unmodblk
+	*prBlockCmds {
 		//blocks
 		cW.add(\blk, [\str, \str], {|str1, str2|
 			case
@@ -215,7 +225,10 @@
 		cW.add(\unmodblk, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			Block.unmodBlk(num1, str2, num2);
 		}, "unmodblk: blkNum, arg");
+	}
 
+	// pl, lp and their 2/pv forms
+	*prPlayCmds {
 		//blk shortcuts
 		cW.add(\pl, [\str, \num, \str], {|str1, num1, str2|
 			var string;
@@ -347,7 +360,10 @@
 				Block.play(num1, \looppv, Block.recBuf(string.divNumStr[1]), [\rate, num2]);
 			});
 		}, "lppv: block, buffer, rate");
+	}
 
+	// in, in2, blkn
+	*prBlockInCmds {
 		cW.add(\in, [\str, \num, \str, \str, \num], {|str1, num1, str2, str3, num2|
 			if((str2 == '<>').and(str3 == 'blk'), {
 				Block.play(num2, \audioin, \nobuf, [\bus, num1]);
@@ -368,6 +384,10 @@
 		cW.add(\blkn, [\str, \num, \num], {|str1, num1, num2|
 			Block.addNum(num1, num2);
 		}, "blkn: blockNum, chans");
+	}
+
+	// st, pn, metro
+	*prStopCmds {
 		cW.add(\st, [\str, \num], {|str1, num1|
 			Block.stop(num1);
 		}, "stop: blockNum");
@@ -406,7 +426,10 @@
 		cW.add(\metro, [\str, \num], {|str, num|
 			Block.play(num, \pattern, \nobuf, [[\instrument, \metro]]);
 		});
+	}
 
+	// record buffers: @, sr, lr, or/ol, timed tsr/tlr/tor/tol, lt, wr, fr
+	*prRecBufCmds {
 		cW.add('@', [\str], {|str1|
 			Block.recBufInfo.dopostln;
 		}, "print all recbufs");
@@ -770,7 +793,10 @@
 				"Buffer doesn\'t exist".warn;
 			});
 		}, "free rec buffer to file: rec buffer, input");
+	}
 
+	// clock, bpm, beats
+	*prClockCmds {
 		cW.add('clock', [\str], {|str1|
 			Block.clock;
 		}, "starts a clock");
@@ -795,6 +821,5 @@
 				});
 			}, 1, num1, true);
 		}, "start counding beats: count");
-
 	}
 }
