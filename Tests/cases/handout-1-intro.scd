@@ -20,7 +20,9 @@
 		[['spaceMaster', 'dir'], ['spaceTrack1', 'pan4'], ['spaceBus1', 'pan4']].every{|w| sp.includesEqual(w) }
 			or: { "spaces: " ++ sp.cs }
 	});
-~radTest.("start-2-panners", cmds: ["start 2"],
+// start builds the mixer in steps that pause for the server: wait a fixed 5 s
+// before checking (a 1 s quiet gap was occasionally too short on the Mac)
+~radTest.("start-2-panners", cmds: [["start 2", 5]],
 	check: {
 		var sp = Radicles.aZ.space.collect{|e| [e[0].asSymbol, e[1].asSymbol] };
 		[['spaceMaster', 'bal2'], ['spaceTrack1', 'pan2'], ['spaceBus1', 'pan2']].every{|w| sp.includesEqual(w) }
