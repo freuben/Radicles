@@ -1,6 +1,6 @@
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
-	<pattCount=1, <timecond;
+	<pattCount=1, <timecond, startTickets;
 
 	*add {arg channels=1, action;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -123,13 +123,49 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		/*}.fork;*/
 	}
 
+	// Issue #51: a block start waits for its buffer and the server before its
+	// function goes into the Ndef (the loading window). Each start takes a
+	// ticket; st, or a newer start on the same block, takes the next one, so an
+	// older start still loading knows it has been cancelled.
+	*newStartTicket {arg key;
+		startTickets = startTickets ?? { IdentityDictionary.new };
+		startTickets[key] = (startTickets[key] ? 0) + 1;
+		^startTickets[key];
+	}
+
+	*isCurrentStart {arg key, ticket;
+		^startTickets.notNil and: { startTickets[key] == ticket };
+	}
+
 	*play {arg block=1, blockName, buffer, extraArgs, data, sync=false, xfade=true, action;
 		var blockFunc, blockIndex, ndefCS, blockFuncString,
 		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize,
-		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool, thisExcludeLibs;
+		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool, thisExcludeLibs,
+		startKey, ticket, cancelStart;
 		if(block >= 1, {
 			blockIndex = block-1;
 			if(ndefs[blockIndex].notNil, {
+				startKey = ndefs[blockIndex].key;
+				ticket = this.newStartTicket(startKey);
+				// a start cancelled while loading frees what it loaded (unless a
+				// live block uses it), leaves the Ndef alone and says so
+				cancelStart = {
+					var ids, registered, inUse;
+					("// " ++ startKey ++ ": " ++ blockName ++ " " ++ (buffer ? "")
+						++ " cancelled while loading").radcode;
+					if(bufferID.notNil, {
+						ids = if(bufferID.rank <= 1, { [bufferID] }, { bufferID });
+						// the buffer is registered a moment after the server sync:
+						// wait for it (up to 5 s), then free it unless a live block uses it
+						registered = { ids.every{|id| (BStore.bstoreIDs ? []).includesEqual(id) } };
+						50.do{ if(registered.value.not, { 0.1.wait }) };
+						inUse = liveBlocks.select(_.notNil).collect{|item| item[2] };
+						if(inUse.includesEqual(bufferID).not, {
+							ids.do{|id| BStore.removeID(id) };
+						});
+					});
+					action.();
+				};
 				{
 					this.initCond(block);
 					if((blockName == 'pattern').not, {
@@ -269,60 +305,64 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					if(sync, {
 						timecond[block-1].wait;
 					});
-					if(liveBlocks[blockIndex].notNil, {
-						if((liveBlocks[blockIndex][2] == bufferID).not, {
-							/*"free buffer from play".postln;*/
-								if(blockFunc.notNil, {
-							this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
-							});
-						});
-					});
-					if(blockFunc.notNil, {
-					ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
-						++ blockFunc.cs ++ ");");
-					ndefCS.radpost;
-					});
-					if((blockName == 'pattern').not, {
-						if(extraArgs.notNil, {
-							if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
-							}, {
-								extraArgsBool = extraArgs.select({|item, index|
-									index.even.and(item == 0) }).isEmpty;
-								if(extraArgsBool, {
-									extraArgs = extraArgs.collect({|item, index| if(index.even, {
-										item = blockFunc.argNames[item-1];
-									}, {
-										item = item;
-									});
-									});
-								}, {
-									"wrong arg number, should be numbers starting with 1".warn;
+					if(this.isCurrentStart(startKey, ticket).not, { cancelStart.value }, {
+						if(liveBlocks[blockIndex].notNil, {
+							if((liveBlocks[blockIndex][2] == bufferID).not, {
+								/*"free buffer from play".postln;*/
+									if(blockFunc.notNil, {
+								this.buffree(blockIndex, ndefs[blockIndex].fadeTime*2);
 								});
 							});
-							if(xfade, {
-								this.xset(block, extraArgs);
-							}, {
-								this.set(block, extraArgs);
+						});
+						if(blockFunc.notNil, {
+						ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
+							++ blockFunc.cs ++ ");");
+						ndefCS.radpost;
+						});
+						if((blockName == 'pattern').not, {
+							if(extraArgs.notNil, {
+								if(extraArgs.collect{|item| item.isSymbol}.includes(true), {
+								}, {
+									extraArgsBool = extraArgs.select({|item, index|
+										index.even.and(item == 0) }).isEmpty;
+									if(extraArgsBool, {
+										extraArgs = extraArgs.collect({|item, index| if(index.even, {
+											item = blockFunc.argNames[item-1];
+										}, {
+											item = item;
+										});
+										});
+									}, {
+										"wrong arg number, should be numbers starting with 1".warn;
+									});
+								});
+								if(xfade, {
+									this.xset(block, extraArgs);
+								}, {
+									this.set(block, extraArgs);
+								});
+							});
+						}, {
+							/*"no pattern before".postln;*/
+							if(liveBlocks[blockIndex].notNil, {
+								if((liveBlocks[blockIndex][1] != \pattern), {
+									//replace out with cs string using presetToNdef
+									ndefs[blockIndex].put(0, nil);
+									fadeTime.wait;
+									ndefs[blockIndex].resetNodeMap;
+								});
 							});
 						});
-					}, {
-						/*"no pattern before".postln;*/
-						if(liveBlocks[blockIndex].notNil, {
-							if((liveBlocks[blockIndex][1] != \pattern), {
-								//replace out with cs string using presetToNdef
-								ndefs[blockIndex].put(0, nil);
-								fadeTime.wait;
-								ndefs[blockIndex].resetNodeMap;
+						server.sync;
+						if(this.isCurrentStart(startKey, ticket), {
+							//replace out with cs string using presetToNdef
+							if(blockFunc.notNil, {
+								ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
+								liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
 							});
-						});
+							action.();
+						}, { cancelStart.value });
 					});
-					server.sync;
-					//replace out with cs string using presetToNdef
-					if(blockFunc.notNil, {
-					ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
-					liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
-					});
-					action.();
 				}.fork;
 			}, {
 				"This block does not exist".warn;
@@ -342,6 +382,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 				ndefCS.radcode;
 			});
 			fadeOut ?? {fadeOut = ndefs[blockIndex].fadeTime};
+			// cancel a start still loading on this block (issue #51)
+			this.newStartTicket(ndefs[blockIndex].key);
 			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
 				++ "nil;" );
 			ndefCS.radcode;
