@@ -78,7 +78,15 @@ if(test.notNil, {
 	// Run on AppClock, like the call window: building the mixer asks Qt for
 	// the screen size, which Qt only allows from the GUI thread (macOS).
 	fork({
-		var result, snapPath, expected, actual;
+		var result, snapPath, expected, actual, userLib;
+		// Keep RadiclesLibs' UserLib exactly as it was: tests that add their own
+		// block or effect remove it again, but Radicles rewrites the library
+		// file in this SuperCollider version's formatting, so it would show as
+		// changed in git. Save every UserLib file now, put back any that change.
+		userLib = Radicles.libPath !? {
+			(Radicles.libPath +/+ "UserLib/Files/*/*.scd").pathMatch.collect{|path|
+				path -> ~radTestReadFile.(path) }
+		};
 		try { test[\teardown].value } {};
 		// same random choices every run ({[0, 5, 7].choose} in a command)
 		thisThread.randSeed = 1234;
@@ -106,6 +114,11 @@ if(test.notNil, {
 		result = try { test[\check].value ? true } {|e| "check raised: " ++ e.errorString };
 		"RADTEST:CHECKED".postln;
 		try { test[\teardown].value } {};
+		userLib.do{|saved|
+			if(~radTestReadFile.(saved.key) != saved.value, {
+				~radTestWriteFile.(saved.key, saved.value);
+			});
+		};
 		actual = ~radTestFormat.(blocks);
 		snapPath = ~radTestSnapshotPath.(test);
 		expected = ~radTestReadFile.(snapPath);

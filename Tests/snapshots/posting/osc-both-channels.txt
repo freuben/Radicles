@@ -1,0 +1,7 @@
+>> <code>
+== radpost ==
+Ndef('a').set('x', 1);
+== radpostcont ==
+Ndef('a').set('x', 2);
+Ndef('a').set('x', 3);
+
