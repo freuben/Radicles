@@ -61,3 +61,41 @@
 	},
 	check: { (~radWin[\lines] == ["Ndef('a').set('x', 4);"]) or: { "lines: " ++ ~radWin[\lines].cs } }
 );
+
+// .radshow posts on the source's channel without running the code
+~radTest.("radshow-by-source",
+	code: {
+		~radShown = nil;
+		"~radShown = 1; // typed".radshow;
+		Radicles.withSource(\gui, { "~radShown = 2; // slider".radshow });
+	},
+	check: { ~radShown.isNil or: { "radshow ran the code: " ++ ~radShown } }
+);
+
+// .radlog runs the code and logs it, without displaying it
+~radTest.("radlog-runs-and-logs",
+	code: {
+		var path;
+		~radLogged = nil;
+		Radicles.codeLog = true;
+		path = RadCodeLog.path;
+		"~radLogged = 5;".radlog;
+		Radicles.codeLog = false;
+		~radLogText = File(path, "r").readAllString;
+		File.delete(path);
+	},
+	check: {
+		((~radLogged == 5) and: { ~radLogText.find(" code nopost\n~radLogged = 5;").notNil })
+		or: { "ran: " ++ ~radLogged ++ ", log: " ++ ~radLogText }
+	}
+);
+
+// a modulation set from a slider posts on radpostcont; typed, on radpost
+~radTest.("modmap-set-by-source",
+	setup: ["start 2", "fx 1 pch", "fxset 1 1 1 sin_(freq, 1)"],
+	code: {
+		ModMap.set(1, \freq, 2);
+		Radicles.withSource(\gui, { ModMap.set(1, \freq, 3) });
+	},
+	check: { Ndef('mod1').get(\freq) == 3 }
+);

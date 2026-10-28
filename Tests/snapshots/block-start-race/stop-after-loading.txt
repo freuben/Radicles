@@ -10,6 +10,7 @@ Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
 == radpost ==
 Ndef('block1').source = nil;
 ~buffer0.free;
+~buffer0 = nil;
 == radpostcont ==
 (none)
 

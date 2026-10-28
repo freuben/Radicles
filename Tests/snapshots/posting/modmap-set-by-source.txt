@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+Ndef('mod1').set('freq', 2);
+== radpostcont ==
+Ndef('mod1').set('freq', 3);
+

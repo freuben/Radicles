@@ -10,6 +10,8 @@
 //   gui, hid, osc                 posted on radpostcont (post window)
 //   code                          called directly from SuperCollider code
 //   ide                           run by hand in the IDE (plain SuperCollider)
+// The channel is radpost, radpostcont, or nopost for code that ran without
+// being displayed (a method kept it out of the document on purpose).
 // The file stays on this computer; nothing is sent anywhere. Each entry is
 // appended and the file closed straight away, so a crash loses nothing.
 // The log is a valid .scd file: entries are comment headers followed by code.
@@ -37,6 +39,7 @@ RadCodeLog {
 			"// Each entry: //@ <seconds since start> <source> <channel>, then the code.",
 			"// Sources: typed, menu, button, hidcmd (radpost); gui, hid, osc (radpostcont);",
 			"//          code (called from SuperCollider code); ide (run by hand in the IDE).",
+			"// Channel nopost: code that ran without being displayed (kept out of the document).",
 			""
 		].join("\n") ++ "\n";
 		if(this.prWrite(header, "w").not, {
