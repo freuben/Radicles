@@ -112,8 +112,7 @@
 		};
 		finalString = finalString.copyRange(0, finalString.size-3);
 		finalString = finalString ++ " ) );";
-		finalString.radpost;
-		^finalString.interpret;
+		^finalString.radcode;
 	}
 
 	patternInst {arg inst=\default, patt, repeat;

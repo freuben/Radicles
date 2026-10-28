@@ -621,11 +621,12 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(connect, {
 				if(type == \master, {
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
-					ndefCS.interpret;
 					if(soloStates.notNil, {
+						// replaced at once by the solo-adjusted version, which is posted
+						ndefCS.radlog;
 						this.masterSoloFunc2;
 					}, {
-						ndefCS.radpost;
+						ndefCS.radcode;
 					});
 				}, {
 					ndefCS = this.ndefPrepare(Ndef(trackArr[0][0]), trackArr[0][1].filterFunc(ndefsIn));
@@ -1148,12 +1149,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	setFilterTag {arg filterTag, arg1, arg2, post=\code;
 		var ndefCS;
 		ndefCS = "Ndef(" ++ filterTag.cs ++ ").set(" ++ arg1.cs ++ ", " ++ arg2.cs ++ ")";
-		ndefCS.interpret;
-		if(post.notNil, {
-			case
-			{post == \code} {ndefCS.radpost}
-			{post == \spec} {[arg1, arg2].cs.post;};
-		});
+		case
+		{post == \code} { ndefCS.radcode }
+		{post == \spec} { ndefCS.radlog; [arg1, arg2].cs.post; }
+		{ ndefCS.radlog };  // post: nil keeps it out of the document, not the log
 	}
 
 	filterInfoToTag {arg filterInfo;
@@ -3461,8 +3460,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}, {
 			this.masterSoloFunc((1!newStates.size););
 			if(Ndef('master').getKeysValues.collect{|item| item == [\off, 1] }.includes(true), {
-				"Ndef('master').set('off', 0)".radpost;
-				Ndef('master').set('off', 0);
+				"Ndef('master').set('off', 0)".radcode;
 			});
 		});
 	}

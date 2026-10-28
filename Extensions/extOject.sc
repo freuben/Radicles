@@ -237,6 +237,24 @@
 		^this.interpret;
 	}
 
+	// Log and run code without displaying it: for code a method deliberately
+	// keeps out of the document (it still reaches the research code log).
+	radlog {
+		if(RadCodeLog.isOn, {RadCodeLog.add(this.asString, \nopost, Radicles.source)});
+		^this.interpret;
+	}
+
+	// Display code on the channel its source calls for, without running it:
+	// for code whose action Radicles carries out directly (a buffer allocated
+	// through BufferSystem, a function put into an Ndef).
+	radshow {arg default=\radpost, type=\ln;
+		if(Radicles.channelFor(Radicles.source, default) == \radpost, {
+			this.radpost(type);
+		}, {
+			this.radpostcont(type);
+		});
+	}
+
 	radpostwarn {arg type=\ln;
 		var string, postUI;
 		postUI = Radicles.postWindow;
