@@ -1,6 +1,7 @@
 >> fr @1
 == radpost ==
 ~buffer0.free;
+~buffer0 = nil;
 == radpostcont ==
 (none)
 

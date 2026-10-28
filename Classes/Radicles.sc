@@ -86,8 +86,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 
 	*clock {var clock, tclock;
 		clock = "Ndef('metronome').proxyspace.makeTempoClock(1.0)";
-		clock.radpost;
-		clock.interpret;
+		clock.radcode;
 		tclock = Ndef('metronome').proxyspace.clock;
 		tclock.schedAbs(tclock.beats.ceil, { arg beat, sec;
 			schedFunc.(beat, sec);
@@ -100,8 +99,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		bpm = newBPM;
 		if(bpm.notNil, {
 			metroCS = "Ndef('metronome').clock.tempo = " ++ (bpm/60).cs;
-			metroCS.radpost;
-			metroCS.interpret;
+			metroCS.radcode;
 		}, {
 			("BPM = " ++ ((Ndef('metronome').clock.tempo*60).round(0.01)).cs).postln;
 		});

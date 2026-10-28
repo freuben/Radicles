@@ -253,7 +253,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 													/*	"this data is an array".postln;*/
 													data.do{|item, index|
 														(DataFile.read(\wavetables, item, excludeLibs).cs ++ ".(" ++
-															bufString[index].cs ++	");").radpost;
+															bufString[index].cs ++	");").radshow;
 														DataFile.read(\wavetables, item, excludeLibs).(buf[index]);
 													};
 												}, {
@@ -261,7 +261,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 													buf.do{|item, index|
 														(DataFile.read(\wavetables, data, excludeLibs).cs ++ ".(" ++
 															bufString[index] ++ "," ++ (buf.size+1) ++ ", " ++
-															index ++ ");").radpost;
+															index ++ ");").radshow;
 														DataFile.read(\wavetables, data, excludeLibs).(item, buf.size+1, index);
 													};
 												});
@@ -317,7 +317,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						if(blockFunc.notNil, {
 						ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
 							++ blockFunc.cs ++ ");");
-						ndefCS.radpost;
+						ndefCS.radshow;
 						});
 						if((blockName == 'pattern').not, {
 							if(extraArgs.notNil, {
@@ -651,7 +651,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					blockFuncString = blockFuncString.replace("\\duration", recBufInfo[blockIndex][0]);
 					blockFunc = blockFuncString.interpret;
 					(recNdefs[blockIndex].cs.replace(")")	 ++ ", " ++
-						blockFuncString ++ ");").radpost;
+						blockFuncString ++ ");").radshow;
 					//replace out with cs string using presetToNdef
 					recNdefs[blockIndex].put(0, blockFunc);
 					if(xfade, {

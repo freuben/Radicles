@@ -307,7 +307,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 							if(cueBool, {
 								if(tags.includes(arg1), {
 									("//File already allocated as: ~buffer" ++
-										this.get(arg1).bufnum ).radpost;
+										this.get(arg1).bufnum ).radshow;
 									function.(this.get(arg1));
 								}, {
 									buffunction.();
@@ -316,7 +316,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 								readChanBuf = ((arg1[0] ++ arg1[1]).asSymbol);
 								if(tags.includes(readChanBuf), {
 									("//File already allocated as: ~buffer" ++
-										this.get(readChanBuf).bufnum ).radpost;
+										this.get(readChanBuf).bufnum ).radshow;
 									function.(this.get(readChanBuf));
 								}, {
 									buffunction.();
@@ -561,7 +561,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 				if(bufferArray[index].notNil, {
 					freeFunc = 		{
 						(globVarArray[index] ++ ".free;").radcode;
-					(globVarArray[index] ++ " = nil").interpret;
+					(globVarArray[index] ++ " = nil;").radcode;
 					bufferArray.removeAt(index);
 					globVarArray.removeAt(index);
 					tags.removeAt(index);
@@ -601,7 +601,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 			bufIndex = symbols.indexOfEqual(tag);
 			if(bufIndex.notNil, {
 				(globVarArray[bufIndex] ++ ".free;").radcode;
-				(globVarArray[bufIndex] ++ " = nil").interpret;
+				(globVarArray[bufIndex] ++ " = nil;").radcode;
 				bufferArray.removeAt(bufIndex);
 				globVarArray.removeAt(bufIndex);
 				tags.removeAt(bufIndex);
@@ -619,7 +619,7 @@ BufferSystem : Radicles {classvar <bufferArray, <globVarArray,
 		}, {
 			globVarArray.do{|item|
 				(item ++ ".free;").radcode;
-				(item ++ " = nil").interpret;
+				(item ++ " = nil;").radcode;
 			};
 			bufferArray = nil;
 			globVarArray = nil;

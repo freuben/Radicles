@@ -4,6 +4,7 @@ Ndef('block1').source = nil;
 ~buffer0 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/drums1.wav", bufnum: 0);
 // block1: play drums1 cancelled while loading
 ~buffer0.free;
+~buffer0 = nil;
 == radpostcont ==
 (none)
 

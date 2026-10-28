@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+~radShown = 1; // typed
+== radpostcont ==
+~radShown = 2; // slider
+

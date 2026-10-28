@@ -80,8 +80,7 @@ ModMap : Radicles {
 				10.asAscii ++"Ndef('mod" ++ modIndex.cs ++ "').set" ++
 				extraArgs.cs.squareToRound ++ ";";
 			});
-			compile.radpost;
-			ndef = compile.interpret;
+			ndef = compile.radcode;
 			ndef.fadeTime = fadeTime;
 		}, {
 			"Control File not Found".warn;
@@ -95,8 +94,7 @@ ModMap : Radicles {
 		ndef = modNodes[modNumIndex][0];
 		string = ndef.cs ++ ".lag(" ++ key.cs
 		++ ", " ++ value.cs ++ ");";
-		string.radpost;
-		string.interpret;
+		string.radcode;
 		lagArr.do{|item| if( [item[0], item[1]] == [ndef, key], {
 			lagArr.remove(item);
 		}); };
@@ -108,8 +106,7 @@ ModMap : Radicles {
 		modNumIndex = modNum-1;
 		string = modNodes[modNumIndex][0].cs ++ ".set(" ++ key.cs
 		++ ", " ++ value.cs ++ ");";
-		string.radpost;
-		string.interpret;
+		string.radcode;
 	}
 
 	*xset {arg modNum=1, key, value;
@@ -117,8 +114,7 @@ ModMap : Radicles {
 		modNumIndex = modNum-1;
 		string = modNodes[modNumIndex][0].cs ++ ".xset(" ++ key.cs
 		++ ", " ++ value.cs ++ ");";
-		string.radpost;
-		string.interpret;
+		string.radcode;
 	}
 
 	*ndefs {

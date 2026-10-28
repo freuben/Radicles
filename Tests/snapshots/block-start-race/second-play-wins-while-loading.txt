@@ -6,6 +6,7 @@
 Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
     PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul;});
 ~buffer0.free;
+~buffer0 = nil;
 == radpostcont ==
 (none)
 

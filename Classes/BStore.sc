@@ -58,7 +58,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 			if(existFormat.notNil, {
 				typeStore = this.buffByID(bstoreIDs[existFormat]);
 				("//Buffer already been used as: ~buffer" ++
-					typeStore.bufnum).radpost;
+					typeStore.bufnum).radshow;
 			}, {
 				typeStore = this.addAlloc(path, function: {|buf|
 					if(typeStore.notNil, {
@@ -80,7 +80,7 @@ BStore : Store {classvar <playPath, <samplerPath, <>playFolder=0, <>playFormat=\
 				if(existFormat.notNil, {
 					typeStore = this.buffByID(bstoreIDs[existFormat]);
 					("//Buffer already been used as: ~buffer" ++
-						typeStore.bufnum).radpost;
+						typeStore.bufnum).radshow;
 				}, {
 					typeStore = this.addCue(settings, path, function: {|buf|
 						if(typeStore.notNil, {
