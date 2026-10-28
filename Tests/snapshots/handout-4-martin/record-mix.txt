@@ -26,8 +26,10 @@ Ndef('record_0').free;
 ~buffer0.close;
 Ndef('record_1').free;
 ~buffer0.free;
+~buffer0 = nil;
 ~buffer1.close;
 ~buffer1.free;
+~buffer1 = nil;
 == radpostcont ==
 (none)
 
