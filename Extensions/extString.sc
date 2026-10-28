@@ -67,28 +67,32 @@
 		^bol;
 	}
 
+	// Wrap posted code at a space once a line is longer than `line` characters.
+	// Spaces inside "strings" and 'symbols' are never used, so the wrapped code
+	// still means the same (a file path with a space stays on one line).
 	lineFormat {arg line = 73;
-		var newString, returns, count, countThis;
-		newString = this;
-		returns = newString.findAll(10.asAscii);
-		count = 0;
-		countThis = 1;
-		newString.do{|item, index|
-			if(returns.notNil, {
-				if(returns.includes(index), {
-					countThis = 0;
+		var out = "", count = 0, quote = nil, escaped = false, prev;
+		this.do{|char|
+			case
+			{ char == $\n } { count = 0 }
+			{ prev == $$ } { }  // a character literal such as $" or $' or $ 
+			{ quote.notNil } {
+				if(escaped, { escaped = false }, {
+					if(char == $\\, { escaped = true }, {
+						if(char == quote, { quote = nil });
+					});
 				});
-			});
-			if((countThis > line), {
-				if(item.asString == " ", {
-					countThis = 0;
-					newString = newString.insert(index+count, 10.asAscii.asString);
-					count = count + 1;
-				});
-			});
-			countThis = countThis + 1;
+			}
+			{ (char == $") or: { char == $' } } { quote = char }
+			{ (char == $ ) and: { count > line } } {
+				out = out ++ "\n";
+				count = 0;
+			};
+			out = out ++ char;
+			count = count + 1;
+			prev = if(prev == $$, { nil }, { char });  // $$ is itself a literal
 		};
-		^newString;
+		^out;
 	}
 
 	lineFormat2 {arg chars=82;

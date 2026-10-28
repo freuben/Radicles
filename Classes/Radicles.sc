@@ -3,7 +3,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	<bpm, <postDoc, <>lineSize=68, <>logCodeTime=false, <>oscCode, <>myImprov, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>postCapture, <>colorCritical, <>colorMeter, <>colorWarning,
 	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>filesPath, <>soundFilePath, <>postWindow, <>beatsFuncArr, traceFunc, <>liveBlockArr, <>modelNum=0, <>codeTime=0, <>codeDev=0;
+	<>filesPath, <>soundFilePath, <>postWindow, <>postWindowCont, <>oscCodeCont=true, <>beatsFuncArr, traceFunc, <>liveBlockArr, <>modelNum=0, <>codeTime=0, <>codeDev=0;
 	/*	<>numOutputs = 16, <>numInputs = 16, <>numBuffers = 512, <>numBuses = 1024,
 	<>numControlBuses=16384, <>memorySize=409600, <>sampleRate=41000, */
 

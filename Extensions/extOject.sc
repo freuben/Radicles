@@ -95,9 +95,9 @@
 				};
 			}
 			{where == \gui} {extraPost.doAddLine(this);}
-			{where == \gui} {
+			{where == \doc} {
 				this.do{|item|
-					item.docpostln(extraPost)
+					item.asString.docpostln(extraPost)
 				};
 			};
 		}
@@ -132,64 +132,81 @@
 	}
 
 	radpost {arg type=\ln, oscId="/code";
-		var string, doc, postUI, radImprov;
-		//optional listener (tests, research log): gets the code as generated
+		//optional listener (tests): gets the code as generated
 		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpost, Radicles.source)};
 		//research code log (off by default)
 		if(RadCodeLog.isOn, {RadCodeLog.add(this.asString, \radpost, Radicles.source)});
 		if(Radicles.ignorePost.not, {
-			doc = Radicles.postDoc;
-			postUI = Radicles.postWindow;
-			radImprov = Radicles.myImprov;
-			string = this;
-			if(postUI.notNil, {
-				string = string.replace(9.asAscii, " ");
-			});
-			string = string.asString.lineFormat(Radicles.lineSize);
-			if(string.includesString(10.asAscii), {
-				type = \br
-			});
-			if(Radicles.logCodeTime, {
-				string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
-			});
-			if(Radicles.oscCode.notNil, {
-				Radicles.oscCode.sendMsg(oscId, string);
-			});
-			if(radImprov.notNil, {
-				if(type == \post, {
-					radImprov.postCount = radImprov.postCount + 1;
-
-					if((radImprov.postCount%radImprov.postModulo) == 1, {
-						{string.postIn(radImprov.extraPost2, \post);
-							radImprov.extraPost2.clearFrom(
-								radImprov.extraPost2.calcMaxChar + radImprov.maxPostChars;
-								);
-						}.defer;
-					});
-
-					"".postln;
-				}, {
-					{string.postIn(radImprov.extraDoc, \ln);}.defer;
-				});
-			});
-			if(doc.isNil, {
-				string.postin(\ide, type);
+			if(type == \doln and: { this.isString.not } and: { this.isKindOf(Collection) }, {
+				// a list: each item on its own line (not the list as one string)
+				this.do{|item| item.asString.prRadpostShow(\ln, oscId) };
 			}, {
-				string.postallin([\ide, \doc], type, doc);
-			});
-			if(postUI.notNil, {
-				string.postin(\gui, type, postUI);
+				this.prRadpostShow(type, oscId);
 			});
 		});
 	}
 
-	radpostcont {arg type=\ln, postDoc=false, postWin=true, win=\ide;
-		var string, doc;
-		//optional listener (tests, research log): continuous control channel
+	// display part of radpost: main document, post window, GUI post window, OSC
+	prRadpostShow {arg type=\ln, oscId="/code";
+		var string, doc, postUI, radImprov;
+		doc = Radicles.postDoc;
+		postUI = Radicles.postWindow;
+		radImprov = Radicles.myImprov;
+		string = this;
+		if(postUI.notNil, {
+			string = string.replace(9.asAscii, " ");
+		});
+		string = string.asString.lineFormat(Radicles.lineSize);
+		if(string.includesString(10.asAscii), {
+			type = \br
+		});
+		if(Radicles.logCodeTime, {
+			string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
+		});
+		if(Radicles.oscCode.notNil, {
+			Radicles.oscCode.sendMsg(oscId, string);
+		});
+		if(radImprov.notNil, {
+			if(type == \post, {
+				radImprov.postCount = radImprov.postCount + 1;
+
+				if((radImprov.postCount%radImprov.postModulo) == 1, {
+					{string.postIn(radImprov.extraPost2, \post);
+						radImprov.extraPost2.clearFrom(
+							radImprov.extraPost2.calcMaxChar + radImprov.maxPostChars;
+							);
+					}.defer;
+				});
+
+				"".postln;
+			}, {
+				{string.postIn(radImprov.extraDoc, \ln);}.defer;
+			});
+		});
+		if(doc.isNil, {
+			string.postin(\ide, type);
+		}, {
+			string.postallin([\ide, \doc], type, doc);
+		});
+		if(postUI.notNil, {
+			string.postin(\gui, type, postUI);
+		});
+	}
+
+	radpostcont {arg type=\ln, postDoc=false, postWin=true, win=\ide, oscId="/codecont";
+		var string, doc, postUI;
+		//optional listener (tests): continuous control channel
 		Radicles.postCapture !? {Radicles.postCapture.value(this.asString, \radpostcont, Radicles.source)};
 		if(RadCodeLog.isOn, {RadCodeLog.add(this.asString, \radpostcont, Radicles.source)});
 		if(Radicles.ignorePostcont.not, {
 			string = this.asString;
+			//share on OSC like radpost, on its own address; Radicles.oscCodeCont = false
+			//sends only /code
+			if(Radicles.oscCode.notNil and: { Radicles.oscCodeCont }, {
+				Radicles.oscCode.sendMsg(oscId, string);
+			});
+			//optional GUI window for the continuous stream (any PostWindow)
+			postUI = Radicles.postWindowCont;
 			if(Radicles.reducePostControl, {
 				string = string.replace(",", "(").replace(").set").replace(");").split($().copyToEnd(1);
 			});
@@ -207,6 +224,9 @@
 				if(postWin, {
 					string.postin(win, type);
 				});
+			});
+			if(postUI.notNil, {
+				string.postin(\gui, type, postUI);
 			});
 		});
 	}
