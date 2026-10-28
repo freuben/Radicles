@@ -160,9 +160,6 @@
 		if(string.includesString(10.asAscii), {
 			type = \br
 		});
-		if(Radicles.logCodeTime, {
-			string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
-		});
 		if(Radicles.oscCode.notNil, {
 			Radicles.oscCode.sendMsg(oscId, string);
 		});
@@ -212,9 +209,6 @@
 			});
 			if(postDoc, {
 				doc = Radicles.postDoc;
-				if(Radicles.logCodeTime, {
-					string = ("//thisThread: " ++ thisThread.seconds ++ 10.asAscii ++ string);
-				});
 				if(doc.isNil, {
 					string.postin(\ide, type);
 				}, {
