@@ -72,7 +72,11 @@ fork {
 		log = ~radTestReadFile.(logFile) ? "";
 		if(log.find("could not initialize audio").notNil or: { log.find("Server 'radtest' exited with exit code 1").notNil }, {
 			res[\status] = \error;
-			res[\message] = "the test server did not boot (audio not available: on Linux, is JACK running?)";
+			res[\message] = "the test server did not boot: " ++ case
+			{ log.find("Input sample rate is").notNil } {
+				"the audio input and output run at different sample rates (is another app, such as Zoom, using the microphone?)" }
+			{ thisProcess.platform.name == \linux } { "audio not available (is JACK running?)" }
+			{ "audio not available (check the audio devices in Audio MIDI Setup)" };
 		});
 		if(log.find("RADTEST:SETUP").notNil, {
 			errors = log.copyToEnd(log.find("RADTEST:SETUP")).split($\n)
