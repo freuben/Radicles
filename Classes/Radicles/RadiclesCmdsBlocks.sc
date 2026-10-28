@@ -210,6 +210,14 @@
 			Block.getSpec(num1, str2).radpostwarn;
 		}, "blocksetn: blk, arg");
 
+		cW.add(\blkgui, [\str, \num], {|str1, num1|
+			if(aZ.notNil, {
+				aZ.sourceGUI(Ndef(("block" ++ num1).asSymbol));
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "blkgui: blockNum (opens the block's argument window)");
+
 		cW.add(\unmodblk, [\str, \num, \num], {|str1, num1, num2|
 			Block.unmodBlk(num1, num2);
 		}, "unmodblk: blkNum, arg");

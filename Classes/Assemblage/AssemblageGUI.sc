@@ -114,12 +114,13 @@
 
 		canvas = View();
 		canvas.background_(Color.black);
+		srcButtonArr = [];
 
 		sysChans.do{|item, index|
 			var slider, level, sliderText, levelText, hlay, thisLay, ts, finalLayout, slotsSize,
 			panKnob, panKnob1, panKnob2, panKnob3, panKnobText, panKnobText1,
 			panKnobText2, panKnobText3, outputMenu, outputLabel,
-			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel,
+			sendsMenu, sendsLabel, sendsKnobs, sendsLay, inputMenu, inputLabel, srcButton,
 			inputLabelArr, mixInputLabelArr, fxLabel, fxSlot, trackLabel, trackColor,
 			thisInputVal, butUIHeight, butUIWidth, sendsString, soloButtonFunc, panKeyValues, panKey;
 			//volume slider
@@ -459,6 +460,28 @@
 
 			inputMenuArr = inputMenuArr.add(inputMenu);
 
+			//source button (tracks only): shows the track's source and opens its window
+			if(mixTrackNames[index].asString.find("track").notNil, {
+				srcButton = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize)
+				.minWidth_(slotsSize).maxWidth_(slotsSize);
+				srcButton.canFocus = false;
+				srcButton.states_([["", Color.white, Color.black]])
+				.font_(basicFont);
+				srcButton.string = this.prSourceLabel(index);
+				srcButton.srcAction = {|butt|
+					var scrollOrg;
+					scrollOrg = mixerWin.visibleOrigin.asArray;
+					this.openTrackSource(mixTrackNames[index].asString.divNumStr[1] ? 1,
+						butt.bounds.left+mixerWin.bounds.left-scrollOrg[0],
+						(mixerWin.bounds.top-45)+butt.bounds.top+68);
+				};
+			}, {
+				srcButton = StaticText(canvas).background_(Color.black)
+				.maxHeight_(popupmenusize).minHeight_(popupmenusize)
+				.minWidth_(slotsSize).maxWidth_(slotsSize);
+			});
+			srcButtonArr = srcButtonArr.add(srcButton);
+
 			setInputMenu = {|indMenu, valMenu|
 				inputMenuArr[indMenu].value = valMenu;
 			};
@@ -483,7 +506,8 @@
 			trackLabelArr = trackLabelArr.add(trackLabel);
 
 			//input
-			[[inputLabelArr, align: \bottom], [inputMenu, align: \bottom]].do{|lay|
+			[[inputLabelArr, align: \bottom], [inputMenu, align: \bottom],
+				[srcButton, align: \bottom]].do{|lay|
 				finalLayout = finalLayout.add(lay);
 			};
 			//audio fx
@@ -679,7 +703,7 @@
 		}.maxItem + gapHeight;
 		sumHeight = 45 + 9 + sumHeight + (7 * (10+gapHeight)) + (2 * (12+gapHeight)) +
 		(180+gapHeight) + (sendsMenuArr[0].size*(14+gapHeight)) +
-		(fxSlotArr[0].size*(14+gapHeight));
+		(fxSlotArr[0].size*(14+gapHeight)) + (14+gapHeight);
 		sumHeight = sumHeight + 4;
 
 		/*slotsSizeArr.postln;*/
@@ -1167,8 +1191,7 @@
 
 	filterWinGUI {arg filterTag=\filterTrack_1_1, filterKey=\pch, filterPairs,
 		fltWinLeft=0, fltWinDown=0, mixButton;
-		var winName, filtersWin, fltCanvas, fxKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
-		stringLengh, argArr, specArr, defaultArgArr, specBool, removeButton, fltWinTop, winBool;
+		var winName, filtersWin, winBool;
 		winName = filterTag.asString;
 		winName = winName ++ " | " ++ filterKey.asString;
 		winBool = true;
@@ -1178,155 +1201,33 @@
 			});
 		});
 		if(winBool, {
-			argArr = filterPairs.flop[0];
-			defaultArgArr = filterPairs.flop[1];
-			specArr = SpecFile.read(\filter, filterKey, false);
-			stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
-			filtersWin = ScrollView()
-			.name_(winName);
-			filtersWin.hasHorizontalScroller = false;
-			fltWinWidth = (250) + stringLengh + 7;
-			fltWinTop = screenBounds.height-filtersWin.bounds.top-fltWinDown;
-			fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
-			filtersWin.fixedHeight = fltWinHeight;
-			filtersWin.fixedWidth = fltWinWidth;
+			filtersWin = this.prArgWinGUI(filterTag, winName, filterPairs,
+				SpecFile.read(\filter, filterKey, false), fltWinLeft, fltWinDown,
+				"R E M O V E   F I L T E R", {|win|
+					var filterInfoArr, fxsNum2;
+					filterInfoArr = this.convFilterTag(filterTag);
+					this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInteger, filterInfoArr[2].asInteger, {
+						win.close;
+						if(mixButton.notNil, {
+							mixButton.string = "";
+						});
+						if(filters.notNil, {
+							if(filters.notEmpty, {
+								fxsNum2 = filters.flop[0].collect({|item|
+									item.asString.split($_).last.asInteger }).maxItem.max(1) + 1;
+								{
+									if(fxsNum2 < fxsNum, {
+										server.sync; this.refreshMixGUI;
+									});
+								}.fork(AppClock);
+							});
+						});
+					});
+				});
 			filtersWindow = filtersWindow.add(filtersWin);
 			filtersWin.onClose = {
 				filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
 			};
-			/*filtersWin.alwaysOnTop = true;*/
-			fltCanvas = View();
-			fltCanvas.background_(Color.black);
-			argArr.do{|item, index|
-				var finalLayout, fxKnob, fxKnobText, specOptions,
-				fxKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc,
-				thisResult, labelTextArr, hidFx, hidNodes, hidIndex;
-				if(specArr.notNil, {
-					specBool = specArr[index].notNil;
-				}, {
-					specBool = false;
-				});
-				fxKnobText = StaticText(fltCanvas).align_(\center)
-				.background_(Color.black)
-				.stringColor_(Color.white)
-				.font_(basicFont)
-				.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
-				hidNodes = HIDMap.hidNodes;
-				if(hidNodes.notNil, {
-					if(hidNodes.notEmpty, {
-						hidIndex = hidNodes.flop[2].indexOfEqual(argArr[index]);
-						hidFx = (hidNodes.flop[1].includes(Ndef(filterTag)))
-						.and(hidIndex.notNil);
-					}, {hidFx = false});
-				}, {hidFx = false});
-				if(specBool, {
-					thisSpec = specArr[index][1].asSpec;
-					thisFunc = specArr[index][2];
-					fxKnob = Slider().minWidth_(180).maxWidth_(180)
-					.maxHeight_(15).minHeight_(15);
-					fxKnob.orientation = \horizontal;
-
-					if((defaultArgArr[index].isNumber).and(hidFx.not), {
-						fxKnob.srcAction = {
-							if(thisFunc.notNil, {
-								thisResult = thisFunc.(thisSpec.map(fxKnob.value));
-							}, {
-								thisResult = thisSpec.map(fxKnob.value);
-							});
-							fxKnobText.string = thisResult.asString.copyRange(0, 7);
-							("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
-								++ thisResult ++ ");").radcode(\radpostcont);
-						};
-						thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
-						fxKnob.value = thisResult;
-						fxKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
-					}, {
-						fxKnob.value = 0.5;
-						fxKnob.background = colorCritical; //mod color
-						fxKnob.enabled = false;
-						if(hidFx, {
-							fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
-						}, {
-							fxKnobText.string = defaultArgArr[index].key.asString.copyRange(0, 7);
-						});
-					});
-				}, {
-					fxKnob = TextField().minWidth_(180).maxWidth_(180)
-					.font_(basicFont)
-					.background_(colorTextField)
-					.maxHeight_(15).minHeight_(15);
-					defaultVal = defaultArgArr[index];
-					if(defaultVal.notNil, {
-						if((defaultVal.cs.find("Ndef").isNil).and(hidFx.not), {
-							fxKnob.string = defaultVal.cs;
-							fxKnobText.string = defaultVal.cs.copyRange(0, 7);
-							fxKnob.srcAction = {arg field;
-								fxKnobText.string = field.value;
-								("Ndef(" ++ filterTag.cs ++ ").set(" ++ item.cs ++ ", "
-									++ field.value ++ ");").radcode(\radpostcont);
-							};
-						}, {
-							fxKnob.background = colorCritical; //mod color
-							fxKnob.enabled = false;
-							fxKnob.string = defaultVal.cs;
-							if(hidFx, {
-								fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
-							}, {
-								fxKnobText.string = defaultVal.key.asString.copyRange(0, 7);
-							});
-						});
-					});
-
-				});
-				labelString = item.asString;
-				labelText = StaticText(fltCanvas).align_(\center)
-				.background_(Color.black)
-				.stringColor_(Color.white)
-				.font_(basicFont)
-				.string_(labelString)
-				.maxWidth_(stringLengh)
-				.minWidth_(stringLengh)
-				.minHeight_(10);
-				fxKnobTextArr = fxKnobTextArr.add(fxKnobText);
-				labelTextArr = labelTextArr.add(labelText);
-				fxKnobArr = fxKnobArr.add(fxKnob);
-				[[labelText, align: \center], [fxKnob, align: \center],
-					[fxKnobText, align: \center]].do{|lay|
-					finalLayout = finalLayout.add(lay);
-				};
-				fltVlay = fltVlay.add(HLayout(*finalLayout) );
-			};
-			removeButton = Button().maxHeight_(15).minHeight_(15)
-			.states_([["", colorCritical, Color.black]])
-			.string_("R E M O V E   F I L T E R")
-			.font_(basicFont)
-			.srcAction = { arg menu;
-				var filterInfoArr, fxsNum2;
-				filterInfoArr = this.convFilterTag(filterTag);
-				this.removeFilter(filterInfoArr[0], filterInfoArr[1].asInteger, filterInfoArr[2].asInteger, {
-					filtersWin.close;
-					if(mixButton.notNil, {
-						mixButton.string = "";
-					});
-					if(filters.notNil, {
-						if(filters.notEmpty, {
-							fxsNum2 = filters.flop[0].collect({|item|
-								item.asString.split($_).last.asInteger }).maxItem.max(1) + 1;
-							{
-								if(fxsNum2 < fxsNum, {
-									server.sync; this.refreshMixGUI;
-								});
-							}.fork(AppClock);
-						});
-					});
-				});
-			};
-			removeButton.canFocus = false;
-			fltVlay = [removeButton] ++ fltVlay;
-			fltCanvas.layout = VLayout(*fltVlay);
-			filtersWin.canvas = fltCanvas;
-			filtersWin.bounds = Rect(fltWinLeft, fltWinDown, fltWinWidth, fltWinHeight);
-			filtersWin.front;
 		}, {
 			filtersWin = filtersWindow.collect({|item|
 				item.name });
@@ -1334,6 +1235,141 @@
 		});
 	}
 
+	// An argument window for an Ndef, shared by the effect windows and the
+	// source windows: a slider for each argument with a spec (specArr, one entry
+	// per argument, or nil), a text field otherwise; arguments that are modulated
+	// or mapped to a controller are greyed out. The button at the top shows
+	// buttonString and calls buttonAction with the window. Returns the window.
+	prArgWinGUI {arg ndefKey, winName, pairs, specArr, winLeft=0, winDown=0,
+		buttonString, buttonAction;
+		var filtersWin, fltCanvas, fxKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
+		stringLengh, argArr, defaultArgArr, specBool, removeButton, fltWinTop;
+		argArr = pairs.flop[0];
+		defaultArgArr = pairs.flop[1];
+		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+		filtersWin = ScrollView()
+		.name_(winName);
+		filtersWin.hasHorizontalScroller = false;
+		fltWinWidth = (250) + stringLengh + 7;
+		fltWinTop = screenBounds.height-filtersWin.bounds.top-winDown;
+		fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
+		filtersWin.fixedHeight = fltWinHeight;
+		filtersWin.fixedWidth = fltWinWidth;
+		/*filtersWin.alwaysOnTop = true;*/
+		fltCanvas = View();
+		fltCanvas.background_(Color.black);
+		argArr.do{|item, index|
+			var finalLayout, fxKnob, fxKnobText, specOptions,
+			fxKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc,
+			thisResult, labelTextArr, hidFx, hidNodes, hidIndex;
+			if(specArr.notNil, {
+				specBool = specArr[index].notNil;
+			}, {
+				specBool = false;
+			});
+			fxKnobText = StaticText(fltCanvas).align_(\center)
+			.background_(Color.black)
+			.stringColor_(Color.white)
+			.font_(basicFont)
+			.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
+			hidNodes = HIDMap.hidNodes;
+			if(hidNodes.notNil, {
+				if(hidNodes.notEmpty, {
+					hidIndex = hidNodes.flop[2].indexOfEqual(argArr[index]);
+					hidFx = (hidNodes.flop[1].includes(Ndef(ndefKey)))
+					.and(hidIndex.notNil);
+				}, {hidFx = false});
+			}, {hidFx = false});
+			if(specBool, {
+				thisSpec = specArr[index][1].asSpec;
+				thisFunc = specArr[index][2];
+				fxKnob = Slider().minWidth_(180).maxWidth_(180)
+				.maxHeight_(15).minHeight_(15);
+				fxKnob.orientation = \horizontal;
+
+				if((defaultArgArr[index].isNumber).and(hidFx.not), {
+					fxKnob.srcAction = {
+						if(thisFunc.notNil, {
+							thisResult = thisFunc.(thisSpec.map(fxKnob.value));
+						}, {
+							thisResult = thisSpec.map(fxKnob.value);
+						});
+						fxKnobText.string = thisResult.asString.copyRange(0, 7);
+						("Ndef(" ++ ndefKey.cs ++ ").set(" ++ item.cs ++ ", "
+							++ thisResult ++ ");").radcode(\radpostcont);
+					};
+					thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
+					fxKnob.value = thisResult;
+					fxKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
+				}, {
+					fxKnob.value = 0.5;
+					fxKnob.background = colorCritical; //mod color
+					fxKnob.enabled = false;
+					if(hidFx, {
+						fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
+					}, {
+						fxKnobText.string = defaultArgArr[index].key.asString.copyRange(0, 7);
+					});
+				});
+			}, {
+				fxKnob = TextField().minWidth_(180).maxWidth_(180)
+				.font_(basicFont)
+				.background_(colorTextField)
+				.maxHeight_(15).minHeight_(15);
+				defaultVal = defaultArgArr[index];
+				if(defaultVal.notNil, {
+					if((defaultVal.cs.find("Ndef").isNil).and(hidFx.not), {
+						fxKnob.string = defaultVal.cs;
+						fxKnobText.string = defaultVal.cs.copyRange(0, 7);
+						fxKnob.srcAction = {arg field;
+							fxKnobText.string = field.value;
+							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ item.cs ++ ", "
+								++ field.value ++ ");").radcode(\radpostcont);
+						};
+					}, {
+						fxKnob.background = colorCritical; //mod color
+						fxKnob.enabled = false;
+						fxKnob.string = defaultVal.cs;
+						if(hidFx, {
+							fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
+						}, {
+							fxKnobText.string = defaultVal.key.asString.copyRange(0, 7);
+						});
+					});
+				});
+
+			});
+			labelString = item.asString;
+			labelText = StaticText(fltCanvas).align_(\center)
+			.background_(Color.black)
+			.stringColor_(Color.white)
+			.font_(basicFont)
+			.string_(labelString)
+			.maxWidth_(stringLengh)
+			.minWidth_(stringLengh)
+			.minHeight_(10);
+			fxKnobTextArr = fxKnobTextArr.add(fxKnobText);
+			labelTextArr = labelTextArr.add(labelText);
+			fxKnobArr = fxKnobArr.add(fxKnob);
+			[[labelText, align: \center], [fxKnob, align: \center],
+				[fxKnobText, align: \center]].do{|lay|
+				finalLayout = finalLayout.add(lay);
+			};
+			fltVlay = fltVlay.add(HLayout(*finalLayout) );
+		};
+		removeButton = Button().maxHeight_(15).minHeight_(15)
+		.states_([["", colorCritical, Color.black]])
+		.string_(buttonString)
+		.font_(basicFont)
+		.srcAction = { buttonAction.(filtersWin) };
+		removeButton.canFocus = false;
+		fltVlay = [removeButton] ++ fltVlay;
+		fltCanvas.layout = VLayout(*fltVlay);
+		filtersWin.canvas = fltCanvas;
+		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
+		filtersWin.front;
+		^filtersWin;
+	}
 	filterGUIIndex {arg index=0, topLeftArr, mixButton;
 		var filterTag, filterKey, filterPairs, filterInfo, top, left, thisFilter, defaultPos;
 		if(filters.notNil, {
@@ -1462,6 +1498,152 @@
 		};
 		winDirRec.layout = VLayout(view, butt);
 		winDirRec.front;
+	}
+
+	//source windows: an argument window for a track's source (a block), opened
+	//from the source button under a track's input menu or with 'blkgui'
+	sourceGUI {arg source, winLeft, winDown, trackNum;
+		var ndefKey, blockIndex, liveBlock, blockName, specs, pairs, specArr,
+		winName, srcWin, openWin, lastWin;
+		ndefKey = if(source.isKindOf(NodeProxy), {source.key}, {source.asSymbol});
+		openWin = this.prSourceWin(ndefKey);
+		if(openWin.notNil, {
+			if(trackNum.notNil, { this.prSrcWinTracks.put(trackNum, ndefKey) });
+			openWin.front;
+		}, {
+			blockIndex = Block.ndefs.indexOf(Ndef(ndefKey));
+			if(blockIndex.notNil, { liveBlock = Block.liveBlocks[blockIndex] });
+			case
+			{blockIndex.isNil} {
+				("no source window for " ++ ndefKey).warn;
+			}
+			{liveBlock.isNil} {
+				(ndefKey.asString ++ ": no block playing").warn;
+			}
+			{liveBlock[1] == \pattern} {
+				(ndefKey.asString ++ ": no source window for patterns").warn;
+			}
+			{
+				blockName = liveBlock[1];
+				pairs = Ndef(ndefKey).getKeysValues;
+				if(pairs.isEmpty, {
+					(ndefKey.asString ++ ": " ++ blockName ++ " has no arguments").warn;
+				}, {
+					specs = SpecFile.read(\block, blockName, false) ? [];
+					specArr = pairs.collect{|pair| specs.detect{|spec| spec[0] == pair[0] } };
+					winName = ndefKey.asString ++ " | " ++ blockName.asString;
+					if(winLeft.isNil or: { winDown.isNil }, {
+						lastWin = (filtersWindow ? []) ++ (sourceWindows ? []);
+						if(lastWin.isEmpty, {
+							winLeft = 75; winDown = 75;
+						}, {
+							winLeft = lastWin.last.bounds.left + 10;
+							winDown = lastWin.last.bounds.top + 10;
+						});
+					});
+					srcWin = this.prArgWinGUI(ndefKey, winName, pairs, specArr,
+						winLeft, winDown, "C L O S E   W I N D O W", {|win| win.close });
+					sourceWindows = sourceWindows.add(srcWin);
+					if(trackNum.notNil, { this.prSrcWinTracks.put(trackNum, ndefKey) });
+					srcWin.onClose = {
+						sourceWindows = sourceWindows.reject({|item| item.name == srcWin.name });
+						this.prSrcWinTracks.keys.select({|key|
+							this.prSrcWinTracks[key] == ndefKey }).do{|key|
+							this.prSrcWinTracks.removeAt(key) };
+					};
+				});
+			};
+		});
+	}
+
+	prSrcWinTracks {
+		srcWinTracks ?? { srcWinTracks = IdentityDictionary.new };
+		^srcWinTracks;
+	}
+
+	prSourceWin {arg ndefKey;
+		^(sourceWindows ? []).detect({|item| item.name.beginsWith(ndefKey.asString ++ " ") });
+	}
+
+	//rebuild an open source window, in the same place (new block, new mapping)
+	updateSourceWin {arg ndefKey;
+		{
+			var win, bounds, trackNum;
+			win = this.prSourceWin(ndefKey);
+			if(win.notNil, {
+				bounds = win.bounds;
+				this.prSrcWinTracks.keysValuesDo{|key, value| if(value == ndefKey, {trackNum = key}) };
+				win.close;
+				this.sourceGUI(ndefKey, bounds.left, bounds.top, trackNum);
+			});
+		}.defer;
+	}
+
+	closeSourceWin {arg ndefKey;
+		{
+			var win;
+			win = this.prSourceWin(ndefKey);
+			if(win.notNil, { win.close });
+		}.defer;
+	}
+
+	//label for a track's source button: the source shown in its input menu
+	prSourceLabel {arg mixIndex;
+		var labels;
+		labels = this.inputLablesFunc(mixIndex, mixTrackNames);
+		if(labels.notNil and: { labels[1].notNil }, {
+			^labels[0][labels[1]].asString;
+		}, {
+			^"";
+		});
+	}
+
+	prTrackSource {arg trackNum;
+		var inTag, index;
+		inTag = ("inTrack" ++ trackNum).asSymbol;
+		if(inputs.notNil, { index = inputs.flop[0].indexOf(inTag) });
+		^if(index.notNil, { inputs[index][1] }, { nil });
+	}
+
+	openTrackSource {arg trackNum=1, winLeft, winDown;
+		var source;
+		source = this.prTrackSource(trackNum);
+		case
+		{source.isNil} { ("track " ++ trackNum ++ " has no source").warn }
+		{source.isArray} { ("track " ++ trackNum ++ " has more than one source").warn }
+		{ this.sourceGUI(source, winLeft, winDown, trackNum) };
+	}
+
+	//called when a track's input changes: relabel its source button, and if
+	//its source window is open, swap it for the new source's window
+	prSourceChanged {arg trackNum, ndefsIn;
+		var mixIndex, oldKey, newKey;
+		{
+			var win, bounds;
+			if(mixTrackNames.notNil, {
+				mixIndex = mixTrackNames.indexOf((\track ++ trackNum).asSymbol);
+			});
+			if(mixIndex.notNil and: { srcButtonArr.notNil }, {
+				if(srcButtonArr[mixIndex].notNil and: { srcButtonArr[mixIndex].isClosed.not }, {
+					srcButtonArr[mixIndex].string = this.prSourceLabel(mixIndex);
+				});
+			});
+			oldKey = this.prSrcWinTracks[trackNum];
+			if(oldKey.notNil, {
+				if(ndefsIn.isKindOf(NodeProxy), { newKey = ndefsIn.key });
+				if(newKey != oldKey, {
+					win = this.prSourceWin(oldKey);
+					this.prSrcWinTracks.removeAt(trackNum);
+					if(win.notNil, {
+						bounds = win.bounds;
+						win.close;
+						if(newKey.notNil, {
+							this.sourceGUI(newKey, bounds.left, bounds.top, trackNum);
+						});
+					});
+				});
+			});
+		}.defer;
 	}
 
 	updateFxWin {arg ndefKey;

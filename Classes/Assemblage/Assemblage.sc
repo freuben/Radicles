@@ -7,7 +7,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<>recStates, recBStoreArr, <>mastOutArr, <screenBounds, <mastOutWin, <oiIns, <oiOuts,
 	<>recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
-	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10;
+	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10,
+	<sourceWindows, srcWinTracks, srcButtonArr;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);
@@ -638,6 +639,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					"Channel number input doesn't match track".warn;
 				});
 			});
+			if(type == \track, { this.prSourceChanged(num, ndefsIn) });
 		}, {
 			"Wrong track type".warn;
 		});
