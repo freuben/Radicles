@@ -1,0 +1,24 @@
+>> codelog on
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> vol t 2 -3
+== radpost ==
+Ndef('track2').set('volume', -3);
+== radpostcont ==
+(none)
+
+>> codelog off
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
