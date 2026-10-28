@@ -32,7 +32,6 @@
 				"assemblage is already running".warn;
 			});
 		}, "assemblage: trackNum, busNum, chanNumArr");
-
 		cW.add(\asm, [\str, \num, \num, \num, \str], {|str1, num1, num2, num3, str2|
 			if(aZ.isNil, {
 				aZ = Assemblage(num1, num2, num3, str2);
@@ -40,7 +39,6 @@
 				"assemblage is already running".warn;
 			});
 		}, "assemblade: trackNum, busNum, chanNum, spaceType");
-
 		cW.add(\asm, [\str, \num, \num, \arr, \str], {|str1, num1, num2, arr, str2|
 			if(aZ.isNil, {
 				aZ = Assemblage(num1, num2, arr, str2);
@@ -49,9 +47,20 @@
 			});
 		}, "assemblage: trackNum, busNum, chanNumArr, spaceType");
 	}
-
 	*loadMixCmds {
+		this.prTrackCmds;
+		this.prVolPanTrimCmds;
+		this.prMixModCmds;
+		this.prSendCmds;
+		this.prMuteSoloCmds;
+		this.prInOutCmds;
+		this.prNdefCmds;
+		this.prMixModStringCmds;
+		this.prPanCmds;
+	}
 
+	// mixnames, t, b: track names, adding and removing tracks and buses
+	*prTrackCmds {
 		cW.add(\mixnames, [\str], {|str1|
 			if(aZ.notNil, {
 				aZ.mixTrackNames.radpostwarn;
@@ -268,7 +277,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "bus: add, chanNum");
+	}
 
+	// vol, pan, trim and their lags, by track, range or list
+	*prVolPanTrimCmds {
 		cW.add(\vol, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			if(aZ.notNil, {
 				case
@@ -894,7 +906,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "trimlag: val");
+	}
 
+	// modvol, modpan, modtrim and their unmod commands
+	*prMixModCmds {
 		//mod mixer
 		cW.add(\modvol, [\str, \str, \num], {|str1, str2, num1|
 			if(aZ.notNil, {
@@ -1204,7 +1219,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "unmodtrim: mixTrackNum");
+	}
 
+	// snd, sndry, sndset, modsndset, unmodsnd
+	*prSendCmds {
 		//sends
 		cW.add(\snd, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			if(aZ.notNil, {
@@ -1668,7 +1686,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "unmodsnd: mixTrackNum, slotNum");
+	}
 
+	// mute, solo, recen, recdis and their opposites
+	*prMuteSoloCmds {
 		cW.add(\mute, [\str, \str], {|str1, str2|
 			if(aZ.notNil, {
 				case
@@ -2011,7 +2032,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "unsolo: masterTrackNums");
+	}
 
+	// inmenu, getinmenu, outmenu, getoutmenu, dirinrec, mapouts
+	*prInOutCmds {
 		cW.add(\inmenu, [\str, \num], {|str, num1|
 			var trackArr;
 			if(aZ.notNil, {
@@ -2100,7 +2124,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "mapouts: outArr");
+	}
 
+	// ndef, ndefset, ndefxset, ndeflag
+	*prNdefCmds {
 		cW.add(\ndef, [\str, \str, \str, \num], {|str1, str2, str3, num1|
 			if(str3 == '<>', {
 				if(aZ.notNil, {
@@ -2146,7 +2173,10 @@
 		cW.add(\ndeflag, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			("Ndef(" ++ str2.cs ++ ").lag(" ++ Ndef(str2).controlKeys[num1-1].cs ++ ", " ++ num2 ++ ");").radcode;
 		}, "ndef lag arg in ndef");
+	}
 
+	// vol, pan, trim set to a modulator (string form)
+	*prMixModStringCmds {
 		//modulation
 		cW.add(\vol, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			var modArgs, modifier;
@@ -2605,7 +2635,10 @@
 				"could not find assemblage".warn;
 			});
 		}, "trim: [trackType, val]");
+	}
 
+	// multichannel pan, panx and their modulation
+	*prPanCmds {
 		//space pan
 		cW.add(\pan, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
 			if(aZ.notNil, {
@@ -3037,6 +3070,5 @@
 				"could not find assemblage".warn;
 			});
 		}, "unmodpan: mixTrackNum");
-
 	}
 }

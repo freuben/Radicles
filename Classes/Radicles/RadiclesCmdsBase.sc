@@ -3,7 +3,16 @@
 
 + Radicles {
 	*loadBaseCmds {
+		this.prModCmds;
+		this.prStartCmds;
+		this.prNetCmds;
+		this.prColorCmds;
+		this.prSystemCmds;
+		this.prSharedCmds;
+	}
 
+	// modspec, mods, mod, unmod, getmods
+	*prModCmds {
 		cW.add(\modspec, [\str], {|str1, str2, str3, str4|
 			SpecFile.read('modulation').postln;
 		}, "modspec: posts modulation specfile");
@@ -145,7 +154,10 @@
 			nodes = nodes.reject({|item| item.isNil });
 			nodes.do{|item| item.do{|it| it.postln;} };
 		}, "getmods: modNodes");
+	}
 
+	// rad, start
+	*prStartCmds {
 		//radicles
 		cW.add(\rad, [\str, \str], {|str1, str2|
 			case
@@ -278,7 +290,10 @@
 			});
 		}, "assemblage: trackNum, busNum, chanNumArr, spaceTypeArr");
 		//
+	}
 
+	// net, osc, oscst
+	*prNetCmds {
 		cW.add(\net, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			("~net" ++ num1 ++ " = NetAddr(" ++ str2.asString.cs ++ ", " ++
 				num2 ++ ");").radcode;
@@ -297,7 +312,10 @@
 		cW.add(\oscst, [\str], {|str1|
 			thisProcess.removeOSCRecvFunc(traceFunc);
 		}, "stop printing osc messages");
+	}
 
+	// color, colortext, colors, selcolor, selcolortext
+	*prColorCmds {
 		cW.add(\color, [\str, \str], {|str1, str2|
 			cW.background(Color.newName(str2););
 		});
@@ -317,7 +335,10 @@
 		cW.add(\selcolortext, [\str], {|str1|
 			cW.fontColor(Color.newName(cW.randColorList););
 		});
+	}
 
+	// refresh, update, recompile, kill
+	*prSystemCmds {
 		cW.add(\refresh, [\str], {|str1|
 			{
 				Quarks.uninstall("Radicles");
@@ -340,7 +361,10 @@
 		cW.add(\kill, [\str], {|str1|
 			thisProcess.platform.recompile;
 		});
+	}
 
+	// commands added to all 10 command sets (mix, nomix and others); keep last
+	*prSharedCmds {
 		//base associations
 		(0..9).do{|dim|
 			cW.storeIndex = dim;
