@@ -8,7 +8,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<>recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10,
-	<sourceWindows, srcWinTracks, srcButtonArr;
+	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);

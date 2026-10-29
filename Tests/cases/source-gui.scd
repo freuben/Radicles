@@ -33,7 +33,7 @@
 	gui: true
 );
 
-// blkgui opens the block's window: CLOSE WINDOW and a slider per argument;
+// blkgui opens the block's window: REMOVE BLOCK and a slider per argument;
 // a slider posts on radpostcont
 ~radTest.("blkgui-opens-window",
 	setup: ["start 2", "blk 1 sine"],
@@ -48,7 +48,7 @@
 		~radSrcSliders.first !? {|sl| sl.valueAction = 0.5 };
 	},
 	check: {
-		((~radSrcName == "block1 | sine") and: { ~radSrcButton == ["C L O S E   W I N D O W"] }
+		((~radSrcName == "block1 | sine") and: { ~radSrcButton == ["R E M O V E   B L O C K"] }
 			and: { ~radSrcSliders.size == 3 })
 		or: { "window: " ++ ~radSrcName.cs ++ ", buttons: " ++ ~radSrcButton.cs
 			++ ", sliders: " ++ ~radSrcSliders.size }
@@ -57,17 +57,17 @@
 	gui: true
 );
 
-// the CLOSE WINDOW button closes the window and leaves the block playing
-~radTest.("close-window-button",
+// REMOVE BLOCK stops the block, like 'st 1', which closes the window
+~radTest.("remove-block-button",
 	setup: ["start 2", "blk 1 sine", "blkgui 1"],
 	code: {
 		0.5.wait;
 		~radSrcWin.(\block1) !? {|w| ~radKids.(w, Button).first.doAction };
-		0.5.wait;
+		1.wait;
 	},
 	check: {
-		(~radSrcWin.(\block1).isNil and: { Ndef('block1').source.notNil })
-		or: { "window still open, or block stopped" }
+		(~radSrcWin.(\block1).isNil and: { Ndef('block1').source.isNil })
+		or: { "window open: " ++ ~radSrcWin.(\block1).notNil ++ ", source: " ++ Ndef('block1').source.notNil }
 	},
 	teardown: ~radCloseWins,
 	gui: true
@@ -80,8 +80,8 @@
 	check: { ~radSrcWins.().isEmpty or: { "a window opened" } }
 );
 
-// the source button under track 1's input menu shows its source and opens its window
-~radTest.("source-button-opens-window",
+// a filled source slot shows the block's name and opens its window
+~radTest.("source-slot-opens-window",
 	setup: ["start 2", "blk 1 sine", "mix"],
 	code: {
 		~radSrcLabel = ~radAZ.().instVarAt(\srcButtonArr)[0].string;
@@ -89,15 +89,15 @@
 		0.5.wait;
 	},
 	check: {
-		((~radSrcLabel == "block1") and: { ~radSrcWin.(\block1).notNil })
+		((~radSrcLabel == "sine") and: { ~radSrcWin.(\block1).notNil })
 		or: { "label: " ++ ~radSrcLabel.cs ++ ", window: " ++ ~radSrcWin.(\block1).notNil }
 	},
 	teardown: { ~radCloseWins.(); Radicles.cW.callFunc("nomix") },
 	gui: true
 );
 
-// buses and the master have no source button
-~radTest.("no-source-button-on-buses",
+// buses and the master have no source slot
+~radTest.("no-source-slot-on-buses",
 	setup: ["start 2 1", "mix"],
 	code: { ~radSrcKinds = ~radAZ.().instVarAt(\srcButtonArr).collect{|v| v.class.name } },
 	check: {
@@ -110,7 +110,7 @@
 
 // changing track 1's source while its window is open swaps the window
 ~radTest.("source-change-swaps-window",
-	setup: ["start 2", "blk 1 sine", "blk 2 sine", "mix"],
+	setup: ["start 2", "blk 1 sine", "blk 2 sinekey", "mix"],
 	code: {
 		~radAZ.().openTrackSource(1);
 		0.5.wait;
@@ -119,7 +119,7 @@
 		~radSrcLabel = ~radAZ.().instVarAt(\srcButtonArr)[0].string;
 	},
 	check: {
-		(~radSrcWin.(\block1).isNil and: { ~radSrcWin.(\block2).notNil } and: { ~radSrcLabel == "block2" })
+		(~radSrcWin.(\block1).isNil and: { ~radSrcWin.(\block2).notNil } and: { ~radSrcLabel == "sinekey" })
 		or: { "block1 open: " ++ ~radSrcWin.(\block1).notNil ++ ", block2 open: "
 			++ ~radSrcWin.(\block2).notNil ++ ", label: " ++ ~radSrcLabel.cs }
 	},

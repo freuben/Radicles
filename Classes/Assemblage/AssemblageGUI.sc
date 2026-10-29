@@ -460,7 +460,9 @@
 
 			inputMenuArr = inputMenuArr.add(inputMenu);
 
-			//source button (tracks only): shows the track's source and opens its window
+			//source slot (tracks only), like an fx slot: shows the block playing in
+			//the track's block slot; empty, it opens the block menu; filled, the
+			//source window
 			if(mixTrackNames[index].asString.find("track").notNil, {
 				srcButton = Button().maxHeight_(popupmenusize).minHeight_(popupmenusize)
 				.minWidth_(slotsSize).maxWidth_(slotsSize);
@@ -469,9 +471,15 @@
 				.font_(basicFont);
 				srcButton.string = this.prSourceLabel(index);
 				srcButton.srcAction = {|butt|
-					var scrollOrg;
+					var scrollOrg, boundArr;
 					scrollOrg = mixerWin.visibleOrigin.asArray;
-					this.openTrackSource(mixTrackNames[index].asString.divNumStr[1] ? 1,
+					boundArr = butt.bounds.asArray;
+					this.prSourceSlotAction(mixTrackNames[index].asString.divNumStr[1] ? 1,
+						//the menu, placed like the fx menu
+						Rect(boundArr[0]+mixerWin.bounds.left - scrollOrg[0],
+							(screenBounds.height-boundArr[1]-285)-(mixerWin.bounds.top-45),
+							140, 240),
+						//the source window, placed like the fx windows
 						butt.bounds.left+mixerWin.bounds.left-scrollOrg[0],
 						(mixerWin.bounds.top-45)+butt.bounds.top+68);
 				};
@@ -1546,7 +1554,10 @@
 						});
 					});
 					srcWin = this.prArgWinGUI(ndefKey, winName, pairs, specArr,
-						winLeft, winDown, "C L O S E   W I N D O W", {|win| win.close });
+						winLeft, winDown, "R E M O V E   B L O C K", {|win|
+							//like 'st N': stopping the block closes the window
+							Radicles.cW.callFunc("st " ++ (blockIndex + 1));
+						});
 					sourceWindows = sourceWindows.add(srcWin);
 					if(trackNum.notNil, { this.prSrcWinTracks.put(trackNum, ndefKey) });
 					srcWin.onClose = {
@@ -1596,15 +1607,160 @@
 		}.defer;
 	}
 
-	//label for a track's source button: the source shown in its input menu
+	//label for a track's source slot: the block playing in the track's block
+	//slot ("" when none); for any other input, the input's name
 	prSourceLabel {arg mixIndex;
-		var labels;
+		var labels, trackNum, blockIndex;
+		trackNum = mixTrackNames[mixIndex].asString.divNumStr[1] ? 1;
+		blockIndex = this.prTrackBlockIndex(trackNum);
+		if(blockIndex.notNil, {
+			^if(this.prBlockPlaying(blockIndex), { Block.liveBlocks[blockIndex][1].asString }, { "" });
+		});
 		labels = this.inputLablesFunc(mixIndex, mixTrackNames);
 		if(labels.notNil and: { labels[1].notNil }, {
 			^labels[0][labels[1]].asString;
 		}, {
 			^"";
 		});
+	}
+
+	//index in Block.ndefs of the block feeding a track (nil if its input is
+	//not a single block)
+	prTrackBlockIndex {arg trackNum;
+		var source;
+		source = this.prTrackSource(trackNum);
+		if(source.isKindOf(NodeProxy), { ^Block.ndefs.indexOf(source) }, { ^nil });
+	}
+
+	prBlockPlaying {arg blockIndex;
+		^(Block.liveBlocks[blockIndex].notNil and: { Block.ndefs[blockIndex].source.notNil });
+	}
+
+	//relabel every source slot (after a block starts or stops)
+	refreshSourceSlots {
+		{
+			(srcButtonArr ? []).do{|butt, mixIndex|
+				if(butt.isKindOf(Button) and: { butt.isClosed.not }, {
+					butt.string = this.prSourceLabel(mixIndex);
+				});
+			};
+		}.defer;
+	}
+
+	//a click on a track's source slot
+	prSourceSlotAction {arg trackNum, menuBounds, winLeft, winDown;
+		var blockIndex;
+		blockIndex = this.prTrackBlockIndex(trackNum);
+		case
+		{blockIndex.isNil} {
+			("track " ++ trackNum ++ ": its input is not a single block").warn;
+		}
+		{this.prBlockPlaying(blockIndex)} {
+			this.sourceGUI(Block.ndefs[blockIndex], winLeft, winDown, trackNum);
+		}
+		{ this.blockMenu(blockIndex + 1, menuBounds) };
+	}
+
+	//the source menus: blocks, then for blocks with a buffer a second list
+	//(sound files, recording buffers, wavetables, loaded buffers). Each choice
+	//runs the matching typed command. vosc is left out for now (several buffers).
+	blockMenu {arg blockNum=1, menuBounds;
+		var names, run;
+		run = {|cmd|
+			this.prCloseSourceMenu;
+			Radicles.cW.callFunc(cmd);
+		};
+		names = (SynthFile.read(\block, exclude: excludeLibs) ? [])
+		.reject({|name| Block.bufferKind(name) == \vosc }).collect(_.asString).sort;
+		this.prSourceMenu(menuBounds, names, {|name|
+			var kind, items;
+			kind = Block.bufferKind(name);
+			case
+			{kind.isNil} { run.("blk " ++ blockNum ++ " " ++ name) }
+			{
+				items = this.prBufferItems(kind);
+				if(items.isEmpty, {
+					this.prCloseSourceMenu;
+					(name ++ ": no buffers to choose from").warn;
+				}, {
+					this.prSourceMenu(nil, items, {|item|
+						run.("blk " ++ blockNum ++ " " ++ name ++ " " ++ item);
+					});
+				});
+			};
+		});
+	}
+
+	//second-list items for a block's buffer kind: new first, then loaded
+	prBufferItems {arg kind;
+		var files, recBufs, loaded;
+		recBufs = {|format|
+			(Block.recBufInfo ? []).collect({|info, index|
+				if(info[2] == format, { "@" ++ (index + 1) }) }).reject(_.isNil);
+		};
+		files = {|format|
+			var path = PathName(BStore.getPlayPath(format));
+			if(File.exists(path.fullPath), {
+				path.files.collect({|file| file.fileNameWithoutExtension }).sort;
+			}, { [] });
+		};
+		loaded = (BStore.bstoreIDs ? []).collect({|id|
+			case
+			{id[0] == \play} { id[2].asString }
+			{[\alloc, \cue].includes(id[0])} { id[1].asString }
+			{ nil };
+		}).reject(_.isNil);
+		^case
+		{kind == \play} { files.(\audio) ++ recBufs.(\audio) }
+		{kind == \scpv} { files.(\scpv) ++ recBufs.(\scpv) }
+		{kind == \cue} { files.(\audio) }
+		{kind == \wavetable} { this.prWavetableItems(true) }
+		{ loaded.rejectSame };
+	}
+
+	//wavetables from the data file; with loaded, also the empty buffers
+	//already allocated (alloc tags)
+	prWavetableItems {arg loaded=true;
+		var tables, allocs;
+		tables = (DataFile.read(\wavetables, exclude: excludeLibs) ? []).collect(_.asString);
+		allocs = if(loaded, {
+			(BStore.bstoreIDs ? []).select({|id| id[0] == \alloc })
+			.collect({|id| id[1].asString }).reject({|tag|
+				//not the recording buffers
+				(Block.recbuffers ? []).any({|rec| rec[1].asString == tag }) });
+		}, { [] });
+		^tables ++ allocs;
+	}
+
+	//a borderless list like the fx menu; with bounds nil, the open menu's
+	//list is replaced (the second list, as for the convolution reverbs)
+	prSourceMenu {arg bounds, items, action;
+		var list;
+		if(bounds.notNil or: { srcMenuWindow.isNil or: { srcMenuWindow.isClosed } }, {
+			this.prCloseSourceMenu;
+			bounds = bounds ? Rect(75, 75, 140, 240);
+			srcMenuWindow = Window.new("", bounds, border: false).front;
+			srcMenuWindow.background_(Color.black);
+			list = ListView(srcMenuWindow, Rect(0, 0, bounds.width, bounds.height))
+			.background_(Color.clear)
+			.font_(Font("Monaco", 10))
+			.stringColor_(Color.white)
+			.hiliteColor_(colorMeter);
+			srcMenuWindow.view.children[0].tryPerform(\keyDownAction_, {|view, char|
+				if(char == 27.asAscii, { this.prCloseSourceMenu }) });
+		}, {
+			list = srcMenuWindow.view.children[0];
+		});
+		list.items = [""] ++ items;
+		list.value = 0;
+		list.srcAction = {|view|
+			if(view.value == 0, { this.prCloseSourceMenu }, { action.(view.items[view.value]) });
+		};
+	}
+
+	prCloseSourceMenu {
+		if(srcMenuWindow.notNil and: { srcMenuWindow.isClosed.not }, { srcMenuWindow.close });
+		srcMenuWindow = nil;
 	}
 
 	prTrackSource {arg trackNum;
