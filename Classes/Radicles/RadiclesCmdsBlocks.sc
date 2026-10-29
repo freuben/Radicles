@@ -58,11 +58,6 @@
 			Block.play(num, str2, buffer[0], data: buffer[1]);
 		}, "block: blockNum, blockName, buffer");
 
-		cW.add(\blk, [\str, \num, \str, \num, \str], {|str1, num1, str2, num2, str3|
-			//vosc: number of wavetable buffers, wavetable
-			Block.play(num1, str2, Block.wavetableSize!num2, data: str3.asSymbol);
-		}, "block: blockNum, blockName, numBuffers, wavetable");
-
 		cW.add(\blk, [\str, \num, \str, \arr], {|str1, num, str2, arr|
 			Block.play(num, str2, extraArgs: arr);
 		}, "block: blockNum, blockName, extraArgs");

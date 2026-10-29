@@ -1,8 +1,8 @@
 // Source menu (dev, Oct 2026): a track's source slot works like an fx slot.
 // Empty, it opens a block menu; blocks with a buffer get a second list (sound
-// files, recording buffers, wavetables, loaded buffers), vosc first a count
-// list. Each choice runs the matching typed command, so the menu tests post
-// the same code as the typed tests next to them. Menu tests need Qt (Mac).
+// files, recording buffers, wavetables, loaded buffers). Each choice runs the
+// matching typed command, so the menu tests post the same code as the typed
+// tests next to them. Menu tests need Qt (Mac). vosc and patterns: later.
 
 ~radAZ = { Radicles.aZ };
 ~radMenuList = { ~radAZ.().instVarAt(\srcMenuWindow) !? {|w| w.view.children[0] } };
@@ -32,19 +32,6 @@
 		(live.notNil and: { live[1] == 'osc1' } and: { BStore.bstores.last.numFrames == 2048 })
 		or: { "live: " ++ live.cs }
 	}
-);
-
-// typed: vosc with a count makes that many consecutive buffers
-~radTest.("typed-vosc",
-	setup: ["start 2"],
-	cmds: [["blk 1 vosc 4 varsquared", 3]],
-	check: {
-		var allocs = (BStore.bstoreIDs ? []).select{|id| id[0] == \alloc };
-		(Block.liveBlocks[0] !? {|l| l[1] } == 'vosc' and: { allocs.size == 4 })
-		or: { "allocs: " ++ allocs.size }
-	},
-	gui: true,
-	note: "the vosc block uses MouseX, which the cloud server has no display for"
 );
 
 // typed: a recording buffer in blk, as pl and lp take it
@@ -125,22 +112,17 @@
 	gui: true
 );
 
-// menu: vosc asks for the count, then the wavetable (same as 'blk 1 vosc 8 varsquared')
-~radTest.("menu-vosc",
+// vosc is left out of the menu for now
+~radTest.("menu-leaves-out-vosc",
 	setup: ["start 2"],
 	code: {
 		~radAZ.().blockMenu(1, Rect(100, 100, 140, 240));
 		0.3.wait;
-		~radPick.("vosc");
-		~radCounts = ~radMenuList.() !? {|l| l.items };
-		~radPick.("8");
-		~radPick.("varsquared");
-		3.wait;
+		~radItems = ~radMenuList.() !? {|l| l.items } ? [];
 	},
 	check: {
-		var allocs = (BStore.bstoreIDs ? []).select{|id| id[0] == \alloc };
-		((~radCounts == ["", "2", "4", "8", "12", "16", "24"]) and: { allocs.size == 8 })
-		or: { "counts: " ++ ~radCounts.cs ++ ", allocs: " ++ allocs.size }
+		(~radItems.includesEqual("sine") and: { ~radItems.includesEqual("vosc").not })
+		or: { "items: " ++ ~radItems.cs }
 	},
 	teardown: ~radCloseMenu,
 	gui: true

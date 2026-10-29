@@ -1662,27 +1662,21 @@
 	}
 
 	//the source menus: blocks, then for blocks with a buffer a second list
-	//(sound files, recording buffers, wavetables, loaded buffers); vosc first
-	//asks for the number of wavetables. Each choice runs the matching typed command.
+	//(sound files, recording buffers, wavetables, loaded buffers). Each choice
+	//runs the matching typed command. vosc is left out for now (several buffers).
 	blockMenu {arg blockNum=1, menuBounds;
 		var names, run;
 		run = {|cmd|
 			this.prCloseSourceMenu;
 			Radicles.cW.callFunc(cmd);
 		};
-		names = (SynthFile.read(\block, exclude: excludeLibs) ? []).collect(_.asString).sort;
+		names = (SynthFile.read(\block, exclude: excludeLibs) ? [])
+		.reject({|name| Block.bufferKind(name) == \vosc }).collect(_.asString).sort;
 		this.prSourceMenu(menuBounds, names, {|name|
 			var kind, items;
 			kind = Block.bufferKind(name);
 			case
 			{kind.isNil} { run.("blk " ++ blockNum ++ " " ++ name) }
-			{kind == \vosc} {
-				this.prSourceMenu(nil, [2, 4, 8, 12, 16, 24].collect(_.asString), {|count|
-					this.prSourceMenu(nil, this.prWavetableItems(false), {|table|
-						run.("blk " ++ blockNum ++ " " ++ name ++ " " ++ count ++ " " ++ table);
-					});
-				});
-			}
 			{
 				items = this.prBufferItems(kind);
 				if(items.isEmpty, {
