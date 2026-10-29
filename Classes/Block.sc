@@ -359,6 +359,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							if(blockFunc.notNil, {
 								ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
 								liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
+								if(aZ.notNil, { aZ.updateSourceWin(ndefs[blockIndex].key) });
 							});
 							action.();
 						}, { cancelStart.value });
@@ -387,6 +388,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
 				++ "nil;" );
 			ndefCS.radcode;
+			if(aZ.notNil, { aZ.closeSourceWin(ndefs[blockIndex].key) });
 			if(liveBlocks[blockIndex].notNil, {
 				this.buffree(blockIndex, fadeOut, {
 					liveBlocks[blockIndex] = nil;
@@ -839,6 +841,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		if(modArg.notNil, {
 			this.modFunc(ndefKey, modArg, modType, extraArgs, func,
 				mul, add, min, val, warp, lag, thisSpec, modifier);
+			if(aZ.notNil, { {server.sync; aZ.updateSourceWin(ndefKey)}.fork(AppClock) });
 		}, {
 			Ndef(ndefKey).controlKeys.postln;
 		});
@@ -870,7 +873,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
 						};
 						server.sync;
-						/*this.updateFxWin(ndefKey);*/
+						if(aZ.notNil, { aZ.updateSourceWin(ndefKey) });
 					}, {
 						"no mod in this argument".warn;
 					});
