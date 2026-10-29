@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+Ndef('block1').source = nil;
+== radpostcont ==
+(none)
+
