@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+~buffer0 = Buffer.alloc(s, 2048, 1, bufnum: 0);
+{|buf| buf.sine1(1.0/[1,2,3,4,5,6])}.(~buffer0);
+Ndef('block1', {arg freq=400 , phase=0 , mul=0.5 ; Osc.ar(~buffer0, freq, phase, mul)});
+== radpostcont ==
+(none)
+

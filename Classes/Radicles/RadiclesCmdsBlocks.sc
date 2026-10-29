@@ -52,7 +52,10 @@
 		}, "block: blockNum, blockName");
 
 		cW.add(\blk, [\str, \num, \str, \str], {|str1, num, str2, str3|
-			Block.play(num, str2, str3);
+			var buffer;
+			//a sound file, @N, a wavetable or a loaded buffer's tag (Block.bufferArg)
+			buffer = Block.bufferArg(str2, str3);
+			Block.play(num, str2, buffer[0], data: buffer[1]);
 		}, "block: blockNum, blockName, buffer");
 
 		cW.add(\blk, [\str, \num, \str, \arr], {|str1, num, str2, arr|
@@ -209,6 +212,14 @@
 		cW.add(\blkgetspec, [\str, \num, \str], {|str1, num1, str2|
 			Block.getSpec(num1, str2).radpostwarn;
 		}, "blocksetn: blk, arg");
+
+		cW.add(\blkgui, [\str, \num], {|str1, num1|
+			if(aZ.notNil, {
+				aZ.sourceGUI(Ndef(("block" ++ num1).asSymbol));
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "blkgui: blockNum (opens the block's argument window)");
 
 		cW.add(\unmodblk, [\str, \num, \num], {|str1, num1, num2|
 			Block.unmodBlk(num1, num2);

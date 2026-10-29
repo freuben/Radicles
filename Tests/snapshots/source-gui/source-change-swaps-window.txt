@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+Ndef('inTrack1', {arg trim=0, lagTime=0;
+                (Ndef.ar('block2', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack1').set('trim', 0, 'lagTime', 0);
+== radpostcont ==
+(none)
+

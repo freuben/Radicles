@@ -1,0 +1,12 @@
+>> blkgui 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('block1').set('freq', 632.46);
+
