@@ -2,7 +2,7 @@
 == radpost ==
 ~buffer0 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/drums1.wav", bufnum: 0);
 Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-    PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul;});
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 0)*mul;});
 == radpostcont ==
 (none)
 

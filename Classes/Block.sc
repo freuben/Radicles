@@ -139,7 +139,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*play {arg block=1, blockName, buffer, extraArgs, data, sync=false, xfade=true, action;
 		var blockFunc, blockIndex, ndefCS, blockFuncString,
-		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize, bufStrings,
+		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize, bufStrings, bufLoaded, bufWait,
 		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool, thisExcludeLibs,
 		startKey, ticket, cancelStart;
 		if(block >= 1, {
@@ -183,7 +183,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 									if(bufInfo.notNil.or(bufInfo == \nobuf), {
 										server.sync;
 										/*buffer*/
+										bufLoaded = false;
 										BStore.add(storeType, bufInfo, {arg buf;
+											bufLoaded = true;
 											if(buf.notNil, {
 											bufString = BufferSystem.getGlobVar(buf);
 											/*bufIndex = BufferSystem.bufferArray.indexOf(buf);
@@ -199,7 +201,12 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											});
 										});
 										server.sync;
-										/*cond.wait;*/
+										//wait for the buffer (at most 5 s), so the block's code is
+										//posted with the buffer's name instead of \buffer
+										bufWait = Main.elapsedTime;
+										while({ bufLoaded.not and: { (Main.elapsedTime - bufWait) < 5 } }, {
+											0.01.wait;
+										});
 									}, {
 										"Buffer not provided".warn;
 									});

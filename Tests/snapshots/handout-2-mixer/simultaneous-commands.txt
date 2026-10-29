@@ -8,12 +8,12 @@ Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersi
  ;
         PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
  });
-Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-    PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;});
 Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
 == radpostcont ==
 (none)
 
