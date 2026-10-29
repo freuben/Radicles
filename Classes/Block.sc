@@ -1,6 +1,6 @@
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
-	<pattCount=1, <timecond, startTickets;
+	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048;
 
 	*add {arg channels=1, action;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -139,7 +139,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*play {arg block=1, blockName, buffer, extraArgs, data, sync=false, xfade=true, action;
 		var blockFunc, blockIndex, ndefCS, blockFuncString,
-		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize,
+		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize, bufStrings,
 		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool, thisExcludeLibs,
 		startKey, ticket, cancelStart;
 		if(block >= 1, {
@@ -237,12 +237,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 										});
 										server.sync;
 										BStore.addAll(bufferID, {arg buf;
-											bufferID.do{|item|
-												bufString = BStore.buffStrByID(item);
-												/*bufIDs = BStore.buffByID(item);
-												bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
-												bufString = bufString.add(BufferSystem.globVarArray[bufIndex]);*/
-											};
+											//all the buffers, as an array (vosc reads buffer[0]
+											//and buffer.size); before Oct 2026 only the last one
+											bufStrings = bufferID.collect({|item| BStore.buffStrByID(item) });
+											bufString = "[" ++ bufStrings.join(", ") ++ "]";
 											blockFunc = blockFunc.cs.replace(("\\buffer"),
 												bufString).replace(("'buffer'"), bufString).interpret;
 											cond.test = true;
@@ -253,14 +251,14 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 													/*	"this data is an array".postln;*/
 													data.do{|item, index|
 														(DataFile.read(\wavetables, item, excludeLibs).cs ++ ".(" ++
-															bufString[index].cs ++	");").radshow;
+															bufStrings[index] ++	");").radshow;
 														DataFile.read(\wavetables, item, excludeLibs).(buf[index]);
 													};
 												}, {
 													/*"this data is a symbol".postln;*/
 													buf.do{|item, index|
 														(DataFile.read(\wavetables, data, excludeLibs).cs ++ ".(" ++
-															bufString[index] ++ "," ++ (buf.size+1) ++ ", " ++
+															bufStrings[index] ++ "," ++ (buf.size+1) ++ ", " ++
 															index ++ ");").radshow;
 														DataFile.read(\wavetables, data, excludeLibs).(item, buf.size+1, index);
 													};
@@ -359,7 +357,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							if(blockFunc.notNil, {
 								ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
 								liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
-								if(aZ.notNil, { aZ.updateSourceWin(ndefs[blockIndex].key) });
+								if(aZ.notNil, { aZ.updateSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 							});
 							action.();
 						}, { cancelStart.value });
@@ -388,7 +386,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
 				++ "nil;" );
 			ndefCS.radcode;
-			if(aZ.notNil, { aZ.closeSourceWin(ndefs[blockIndex].key) });
+			if(aZ.notNil, { aZ.closeSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 			if(liveBlocks[blockIndex].notNil, {
 				this.buffree(blockIndex, fadeOut, {
 					liveBlocks[blockIndex] = nil;
@@ -782,6 +780,43 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		});
 		result = patt ++ newData;
 		^result;
+	}
+
+	//what a block does with its buffer, read from its code: nil (no buffer),
+	//\play (PlayBuf), \scpv (PV_PlayBuf), \cue (DiskIn), \vosc (VOsc),
+	//\wavetable (Osc, COsc, Shaper) or \other
+	*bufferKind {arg blockName;
+		var func, string;
+		func = SynthFile.read(\block, blockName.asSymbol, excludeLibs);
+		if(func.isNil, {^nil});
+		string = func.cs;
+		if(string.includesString("\\buffer").not and: { string.includesString("'buffer'").not }, {^nil});
+		^case
+		{string.includesString("PV_PlayBuf")} {\scpv}
+		{string.includesString("PlayBuf.ar(")} {\play}
+		{string.includesString("DiskIn.ar(")} {\cue}
+		{string.includesString("VOsc")} {\vosc}
+		{["Osc.ar(\\buffer", "Osc.ar('buffer'", "Shaper.ar(\\buffer", "Shaper.ar('buffer'"]
+			.any{|code| string.replace(" ", "").includesString(code) }} {\wavetable}
+		{\other};
+	}
+
+	//the buffer (and wavetable data) for a block from what was typed after its
+	//name: @N (a recording buffer), a wavetable name (a new wavetableSize
+	//buffer filled with it), a loaded buffer's tag (alloc3, cue1), or a sound file
+	*bufferArg {arg blockName, tag;
+		var string, kind, id, tables;
+		string = tag.asString;
+		if(string[0] == $@, { ^[this.recBuf(string.divNumStr[1]), nil] });
+		kind = this.bufferKind(blockName);
+		if([\wavetable, \vosc].includes(kind), {
+			tables = DataFile.read(\wavetables, exclude: excludeLibs) ? [];
+			if(tables.includes(tag.asSymbol), { ^[wavetableSize, tag.asSymbol] });
+		});
+		id = (BStore.bstoreIDs ? []).detect{|item|
+			[\alloc, \cue].includes(item[0]) and: { item[1] == tag.asSymbol } };
+		if(id.notNil, { ^[id, nil] });
+		^[tag, nil];
 	}
 
 	//modulation
