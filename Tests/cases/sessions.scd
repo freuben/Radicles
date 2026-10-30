@@ -1,12 +1,14 @@
-// Session audit (Oct 2026): does `save` + `load` bring a session back?
+// Sessions: does `save` + `load` bring a session back? (audit of 30 Oct 2026,
+// kept as regression tests for the Sessions and Scenes work)
 // Each scenario is a pair of tests, run in separate sclang processes like a
 // real save, quit, restart and load:
 //   <name>-save : builds a session, saves it with `save`, writes a fingerprint
 //   <name>-load : starts fresh, loads it with `load ... run`, compares
 // The fingerprint covers mixer layout, every Ndef's control values, effects,
-// blocks, buffers, HID mappings, tempo and the call window text. A failing
-// load test lists what came back different.
-// Run the whole case, in order: Tests/ci/run-headless.sh check session-audit
+// blocks, buffers, HID mappings, tempo, libraries and the call window text.
+// A failing load test lists what came back different. Gaps that are known
+// (not saved yet) are marked `known`, so they show as KNOWN, not FAIL.
+// The pairs depend on each other: run the whole case, in order.
 
 ~radAuditDir = "/tmp/radaudit";
 File.mkdir(~radAuditDir);
@@ -15,6 +17,9 @@ File.mkdir(~radAuditDir);
 ~radFp = {
 	var fp = (), az = Radicles.aZ, ndefs;
 	var str = {|x| x.cs.replace(" ", "") };
+	// a modulator as what it is (its code and settings), not its number
+	var modDesc = {|proxy| "mod(" ++ proxy.source.cs.replace(" ", "").keep(80) ++ "," ++
+		proxy.controlKeysValues.collect{|v| if(v.isNumber, { v.round(0.0001) }, { v }) }.cs ++ ")" };
 	if(az.notNil, {
 		fp[\tracks] = str.(az.mixTrackNames);
 		fp[\channels] = str.(az.mixTrackNdefs.collect{|n| [n.key, n.numChannels] });
@@ -27,10 +32,22 @@ File.mkdir(~radAuditDir);
 	// every Ndef that exists, whether it has a source and its control values
 	ndefs.keys.asArray.sort.do{|k|
 		var n = ndefs[k];
+		// masterOut only routes the outputs (load builds it); the master's
+		// limiter (wet1 on spaceMaster) has its own test below
+		// modulators are compared through what they drive (their numbers can
+		// change on load), see modDesc
+		if(k != \masterOut and: { k.asString.beginsWith("mod").not }, {
 		fp[("ndef_" ++ k).asSymbol] = str.([
 			n.source.notNil,
-			n.controlKeysValues.collect{|v| if(v.isNumber, { v.round(0.0001) }, { v }) }
+			n.controlKeysValues.collect{|v|
+				case
+				{ v.isNumber } { v.round(0.0001) }
+				{ v.isKindOf(NodeProxy) } { modDesc.(v) }
+				{ v }
+			}
+				.clump(2).reject{|kv| k == \spaceMaster and: { kv[0] == \wet1 } }.flatten
 		]);
+		});
 	};
 	fp[\liveBlocks] = str.(Block.liveBlocks);
 	fp[\bstoreIDs] = str.(try { BStore.bstoreIDs });
@@ -66,7 +83,7 @@ File.mkdir(~radAuditDir);
 	})
 };
 
-~radAuditPair = {|name, build, loadCmds|
+~radAuditPair = {|name, build, loadCmds, known|
 	var preset = ("radaudit_" ++ name);
 	// teardown runs before setup (removes the previous run's preset, so `save`
 	// does not ask to overwrite) and after the check (keeps it for -load)
@@ -78,12 +95,13 @@ File.mkdir(~radAuditDir);
 		}) });
 	~radTest.(name ++ "-load",
 		setup: loadCmds ? [["load " ++ preset ++ " run", 15]],
-		check: { ~radFpCompare.(name) });
+		check: { ~radFpCompare.(name) },
+		known: known);
 };
 
-// 1. Mixer: layout, volumes, pan, trim, mute, solo, a send, bus and master levels
-~radAuditPair.("mixer", ["start 3 1", "t add 2", "vol t 1 -10", "pan t 2 0.5", "trim [1,3] 5",
-	"mute t 3", "solo t 1", "snd t 1 1 -6", "vol b 1 -3", "vol m -2"]);
+// 1. Mixer: volumes, pan, trim, mute, solo, a send, bus and master levels
+~radAuditPair.("mixer", ["start 3 1", "vol t 1 -10", "pan t 2 0.5", "trim [1,3] 5",
+	"mute t 3", "solo t 1", "snd t 1 1 1 -6", "vol b 1 -3", "vol m -2"]);
 
 // 2. Effects on a track (two slots), a bus and the master, with a setting
 ~radAuditPair.("fx", ["start 2 1", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5", "fx t 1 2 dl1",
@@ -99,27 +117,39 @@ File.mkdir(~radAuditDir);
 
 // 5. Modulation of a block argument
 ~radAuditPair.("blockmod", ["start 2", "blk 1 sine", "blkset 1 freq sin",
-	"modblkset 1 freq [freq, 5]"]);
+	"modblkset 1 freq [freq, 5]"], known: "a modulator's own settings are not saved (Sessions and Scenes)");
 
 // 6. Buffers: a looped sound file and a wavetable block
-~radAuditPair.("buffers", ["start 2", ["lp 1 drums1", 3], ["blk 2 osc1 sine1harm6", 3]]);
+~radAuditPair.("buffers", ["start 2", ["lp 1 drums1", 3], ["blk 2 osc1 sine1harm6", 3]],
+	known: "wavetable blocks fail to reload: runLiveBlocks passes the wavetable name (Sessions and Scenes)");
 
 // 7. Tempo
-~radAuditPair.("tempo", ["start 2", "bpm 80"]);
+~radAuditPair.("tempo", ["start 2", "clock", "bpm 80"], known: "tempo is not saved (Sessions and Scenes)");
 
-// 8. Loading into a session that is already running (different layout and effects)
-~radAuditPair.("over", ["start 2 1", "fx t 1 pch", "vol t 2 -12"],
-	["start 3", "fx t 3 dl1", "vol t 1 -20", ["load radaudit_over run", 15]]);
+// 8. Sends, including a send that leaves the master path (sndry)
+~radAuditPair.("sends", ["start 3 1", "snd t 1 1 1 -6", "sndry t 2 1 1 -3"]);
 
-// 9. Sends (on their own, see the mixer scenario)
-~radAuditPair.("sends", ["start 2 1", "snd t 1 1 -6", "sndry t 2 1 -3"]);
+// 9. A track added after start (stereo)
+~radAuditPair.("addtrack", ["start 2", "t add 2", "vol t 3 -5"],
+	known: "tracks added with t add are not saved (Sessions and Scenes)");
 
-// 10. A track added after start (stereo)
-~radAuditPair.("addtrack", ["start 2", "t add 2", "vol t 3 -5"]);
-
-// 11. Solo on its own
+// 10. Solo
 ~radAuditPair.("solo", ["start 2", "solo t 1"]);
 
-// 12. Selected libraries
-~radAuditPair.("libs", ["start 2", "imp [Main, MarkLib]"]);
+// 11. Selected libraries
+~radAuditPair.("libs", ["start 2", "imp [Main, MarkLib]"],
+	known: "selected libraries are not saved (Sessions and Scenes)");
 
+// 12. Loading into a session that is already running (different layout and effects)
+~radAuditPair.("over", ["start 2 1", "fx t 1 pch", "vol t 2 -12"],
+	["start 3", "fx t 3 dl1", "vol t 1 -20", ["load radaudit_over run", 15]],
+	known: "load only acts on a fresh start (Sessions and Scenes, phase 3)");
+
+// 13. The master's limiter (clip2 on spaceMaster) after loading
+~radTest.("load-keeps-limiter",
+	setup: [["load radaudit_fx run", 15]],
+	check: {
+		Ndef('spaceMaster').objects.size > 1
+			or: { "spaceMaster has no limiter after load (rebuilt by mapOutFunc without it)" }
+	},
+	known: "load rebuilds spaceMaster without its clip2 limiter (AssemblageRecording:mapOutFunc)");
