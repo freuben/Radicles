@@ -8,6 +8,7 @@
 		this.prNetCmds;
 		this.prColorCmds;
 		this.prSystemCmds;
+		this.prStateCmds;
 		this.prSharedCmds;
 	}
 
