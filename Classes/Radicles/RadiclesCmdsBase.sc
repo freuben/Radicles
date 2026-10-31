@@ -493,15 +493,13 @@
 				var string;
 				string = PresetFile.read(\session, str2);
 				Radicles.cW.text.string = "";
-				Radicles.cW.text.string = string;
-				Radicles.cW.text.select(string.size,string.size);
+				Radicles.setCallWindowText(string);
 			}, "load string in call window");
 			cW.add(\sconcat, [\str, \str], {|str1, str2|
 				var string;
 				string =  PresetFile.read(\session, str2);
 				string = Radicles.cW.text.string ++ 10.asAscii ++ string;
-				Radicles.cW.text.string = string;
-				Radicles.cW.text.select(string.size,string.size);
+				Radicles.setCallWindowText(string);
 			}, "concatenate string in call window");
 
 			cW.add(\midi, [\str], {|str1|

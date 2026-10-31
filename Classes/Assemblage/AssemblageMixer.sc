@@ -207,6 +207,12 @@
 				this.unmodSend(trackType, trackNum, slotNum, -inf);
 			});
 		});
+		//a send to a bus that does not exist (e.g. snd t 1 1 -6, where -6 is read
+		//as the bus number) used to throw an error and leave an Ndef 'inBus-6'
+		if(busNum != 0 and: { mixTrackNames.includes(("bus" ++ busNum).asSymbol).not }, {
+			("Bus " ++ busNum ++ " not found").warn;
+			^this;
+		});
 		trackIndex = mixTrackNames.indexOf((trackType.asString ++ trackNum).asSymbol);
 		if(trackIndex.notNil, {
 			funcThis = {arg setVal;
