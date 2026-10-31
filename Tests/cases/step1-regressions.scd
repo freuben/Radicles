@@ -175,3 +175,17 @@ var a = { Radicles.aZ };
 	check: { PresetFile.read(\track, 'radtest_i33').isNil or: { "preset still there" } },
 	teardown: { PresetFile.remove(\track, 'radtest_i33', false, path: 0, post: false) }
 );
+
+// Rebuilding the master output (mapOutFunc, used by load and output changes)
+// cleared spaceMaster and left out its clip2 limiter (found in the session
+// audit, 30 Oct 2026): it is put back when it was there.
+~radTest.("output-rebuild-keeps-limiter",
+	setup: ["start 2"],
+	code: {
+		Radicles.aZ.mastOutArr = nil; // force the rebuild
+		Radicles.aZ.mapOutFunc;
+		3.wait;
+	},
+	check: {
+		Ndef('spaceMaster').objects[1].notNil or: { "spaceMaster has no limiter after the rebuild" }
+	});
