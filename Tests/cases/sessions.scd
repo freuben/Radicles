@@ -145,11 +145,10 @@ File.mkdir(~radAuditDir);
 	["start 3", "fx t 3 dl1", "vol t 1 -20", ["load radaudit_over run", 15]],
 	known: "load only acts on a fresh start (Sessions and Scenes, phase 3)");
 
-// 13. The master's limiter (clip2 on spaceMaster) after loading
+// 13. The master's limiter (clip2 on spaceMaster) after loading (fixed in PR #65)
 ~radTest.("load-keeps-limiter",
 	setup: [["load radaudit_fx run", 15]],
 	check: {
 		Ndef('spaceMaster').objects.size > 1
 			or: { "spaceMaster has no limiter after load (rebuilt by mapOutFunc without it)" }
-	},
-	known: "load rebuilds spaceMaster without its clip2 limiter (AssemblageRecording:mapOutFunc)");
+	});
