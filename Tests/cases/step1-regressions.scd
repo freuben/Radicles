@@ -184,6 +184,8 @@ var a = { Radicles.aZ };
 	check: {
 		Ndef.dictFor(Server.default).envir.keys.includes('inBus-6').not
 			or: { "stray Ndef inBus-6 created" }
+	});
+
 // Rebuilding the master output (mapOutFunc, used by load and output changes)
 // cleared spaceMaster and left out its clip2 limiter (found in the session
 // audit, 30 Oct 2026): it is put back when it was there.
