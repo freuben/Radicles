@@ -24,6 +24,7 @@ Ndef('spaceMaster', {arg pan = 0 ;
     source = Ndef.ar('master', 2);
     Balance2.ar(source[0], source[1], pan) * 3.dbamp;
 });
+Ndef('spaceMaster')[1] = \filter -> {arg in; (in).clip2};
 Ndef('masterOut').play;
 Ndef('masterOut').reshaping = 'elastic';
 == radpostcont ==

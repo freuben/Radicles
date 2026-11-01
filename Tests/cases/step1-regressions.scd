@@ -175,3 +175,27 @@ var a = { Radicles.aZ };
 	check: { PresetFile.read(\track, 'radtest_i33').isNil or: { "preset still there" } },
 	teardown: { PresetFile.remove(\track, 'radtest_i33', false, path: 0, post: false) }
 );
+
+// A send to a bus that does not exist (here -6 is read as the bus number:
+// the level needs the slot, snd t 1 1 1 -6) warns instead of throwing an
+// error and leaving a stray Ndef 'inBus-6' (found in the session audit, 30 Oct 2026).
+~radTest.("snd-missing-bus",
+	setup: ["start 2 1", "snd t 1 1 -6"],
+	check: {
+		Ndef.dictFor(Server.default).envir.keys.includes('inBus-6').not
+			or: { "stray Ndef inBus-6 created" }
+	});
+
+// Rebuilding the master output (mapOutFunc, used by load and output changes)
+// cleared spaceMaster and left out its clip2 limiter (found in the session
+// audit, 30 Oct 2026): it is put back when it was there.
+~radTest.("output-rebuild-keeps-limiter",
+	setup: ["start 2"],
+	code: {
+		Radicles.aZ.mastOutArr = nil; // force the rebuild
+		Radicles.aZ.mapOutFunc;
+		3.wait;
+	},
+	check: {
+		Ndef('spaceMaster').objects[1].notNil or: { "spaceMaster has no limiter after the rebuild" }
+	});

@@ -110,17 +110,23 @@
 		});
 	}
 
-	mapOutFunc {var mastOutArr2, funcSource;
+	mapOutFunc {var mastOutArr2, funcSource, hadLimiter;
 		{mastOutArr2 = {0!oiOuts} ! oiIns;
 			oiIns.collect{|item| item }.do{|it, ind| mastOutArr2[ind][it] = 1 };
 			if(Ndef(\masterOut).source.isNil, {
 				if(mastOutArr != mastOutArr2, {
 					funcSource = Ndef(\spaceMaster).source;
+					//the master's clip2 limiter is slot 1 of spaceMaster (see play);
+					//clear removes it, so put it back if it was there
+					hadLimiter = Ndef(\spaceMaster).objects[1].notNil;
 					"Ndef('spaceMaster').clear;".radcode;
 					Ndef(\spaceMaster).fadeTime.yield;
 					server.sync;
 					("Ndef('spaceMaster', " ++ funcSource.cs ++ ");").radcode;
-					/*"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radcode;*/
+					if(hadLimiter, {
+						server.sync;
+						"Ndef('spaceMaster')[1] = \\filter -> {arg in; (in).clip2};".radcode;
+					});
 					"Ndef('masterOut').play;".radcode;
 					"Ndef('masterOut').reshaping = 'elastic';".radcode;
 					this.mastOutSynth;
