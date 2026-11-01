@@ -356,8 +356,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 					};
 				});
 				server.sync;
-				Radicles.cW.text.string = string;
-				Radicles.cW.text.select(string.size,string.size);
+				Radicles.setCallWindowText(string);
 
 				if(Ndef(\masterOut).source.isNil, {
 					Ndef('master').play;
@@ -374,6 +373,13 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 				});
 			});
 		}.fork(AppClock);
+	}
+
+	// Sets the call window's text and puts the cursor at the end. The text is a
+	// TextView; the headless test harness uses a stand-in without select.
+	* setCallWindowText {arg string;
+		cW.text.string = string;
+		if(cW.text.isKindOf(View), { cW.text.select(string.size, string.size) });
 	}
 
 	* runLiveBlocks {
