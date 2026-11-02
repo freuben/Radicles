@@ -1,0 +1,69 @@
+>> <code>
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+    var chain, magsphases, input;
+    input = Ndef.ar('inTrack1', 1);
+    chain = FFT(LocalBuf(1024, input.numChannels), input);
+    magsphases = UnpackFFT(chain, 1024);
+    magsphases = magsphases.collect(_.sqrt);
+    chain = PackFFT(chain, 1024, magsphases);
+    (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('filterTrack_1_1').set('adjVol', 1.48, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0, soundin=1, frameSize=1024 , adjVol=1;
+    var signal, input;
+    signal = SoundIn.ar((soundin+1).round(1));
+    input = Ndef.ar('inTrack1', 1);
+    (Convolution.ar(input,signal,frameSize,adjVol*0.15)*mix)
+    +(input*mix.linlin(0,1,1,0))});
+Ndef('filterTrack_1_1').set('soundin', 4.0, 'adjVol', 11.72, 'frameSize', 3584.0, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0, soundin=1, frameSize=1024 , adjVol=1;
+    var signal, input;
+    signal = SoundIn.ar((soundin+1).round(1));
+    input = Ndef.ar('inTrack1', 1);
+    (Convolution.ar(signal, input, frameSize,adjVol*0.15)*mix)
+    +(input*mix.linlin(0,1,1,0))});
+Ndef('filterTrack_1_1').set('soundin', 4.0, 'adjVol', 11.72, 'frameSize', 3584.0, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0, track=1, frameSize=1024 , adjVol=1;
+    var signal, input;
+    signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+    input = Ndef.ar('inTrack1', 1);
+    (Convolution.ar(input,signal, frameSize,adjVol*0.15)*mix)
+        +(input*mix.linlin(0,1,1,0))});
+Ndef('filterTrack_1_1').set('track', 4.0, 'adjVol', 1.84, 'frameSize', 3584.0, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0, track=1, frameSize=1024 , adjVol=1;
+    var signal, input;
+    signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+    input = Ndef.ar('inTrack1', 1);
+    (Convolution.ar(signal,input, frameSize,adjVol*0.15)*mix)
+        +(input*mix.linlin(0,1,1,0))});
+Ndef('filterTrack_1_1').set('track', 4.0, 'adjVol', 1.84, 'frameSize', 3584.0, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0, soundin=1, adjVol=1;
+var input, inA, chainA, chainB, chain, frameSize=2048;
+    input = Ndef.ar('inTrack1', 1);
+    inA = SoundIn.ar((soundin-1).round(1));
+chainA = FFT(LocalBuf(frameSize), input);
+chainB = FFT(LocalBuf(frameSize), inA);
+chain = PV_MagMul(chainA, chainB);
+Mix.new(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('filterTrack_1_1').set('mix', 0.37, 'adjVol', 2.11, 'soundin', 4.0);
+Ndef('filterTrack_1_1', {arg mix=0, track=1, adjVol=1;
+var input, inA, chainA, chainB, chain, frameSize=2048;
+    input = Ndef.ar('inTrack1', 1);
+    inA = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
+chainA = FFT(LocalBuf(frameSize, input.numChannels), input);
+chainB = FFT(LocalBuf(frameSize, inA.numChannels), inA);
+chain = PV_MagMul(chainA, chainB);
+(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('filterTrack_1_1').set('track', 4.0, 'adjVol', 1.84, 'mix', 0.37);
+== radpostcont ==
+(none)
+

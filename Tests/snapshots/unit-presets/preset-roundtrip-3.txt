@@ -1,0 +1,56 @@
+>> <code>
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg freq=600 , q=30 , vol=0 , mix=1 , lagTime=40 ;
+var signal;
+signal = BPF.ar(Ndef.ar('inTrack1', 1), freq, q.lag(lagTime))*q.lag(lagTime).linlin(0.01,30,10,1);
+vol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('filterTrack_1_1').set('vol', -33.39, 'freq', 257.65, 'q', 11.1063, 'lagTime', 3.7, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg freq1=30 , freq2=80 , freq3=200 , freq4=500 , freq5=1200 , freq6=3500 , freq7=10000 , freq8=17000 , gain1=0 , gain2=0 , gain3=0 , gain4=0 , gain5=0 , gain6=0 , gain7=0 , gain8=0 , q1=0.71 , q2=1.10 , q3=0.98 , q4=0.71 , q5=0.71 , q6=0.71 , q7=0.71 , q8=0.71 , on1=0 , on2=1 , on3=1 , on4=1 , on5=1 , on6=1 , on7=1 , on8=0 , lag=0.5, masterGain=0 , lagOn=0.1 ;
+    var signal;
+    signal = (on1.linlin(0,1,1,0).lag(lagOn)*Ndef.ar('inTrack1', 1)) + (on1.lag(lagOn)*BHiPass.ar(Ndef.ar('inTrack1', 1),freq1.lag(lag),1/q1.lag(lag), gain1.dbamp.lag(lag);));
+    signal = (on2.linlin(0,1,1,0).lag(lagOn)*signal) + (on2.lag(lagOn)*BLowShelf.ar(signal,freq2.lag(lag),1/(q2).lag(lag),gain2.dbamp.lag(lag)));
+    signal = (on3.linlin(0,1,1,0).lag(lagOn)*signal) + (on3.lag(lagOn)*BPeakEQ.ar(signal,freq3.lag(lag),1/(q3).lag(lag),gain3.dbamp.lag(lag)));
+    signal = (on4.linlin(0,1,1,0).lag(lagOn)*signal) + (on4.lag(lagOn)*BPeakEQ.ar(signal,freq4.lag(lag),1/(q4).lag(lag),gain4.dbamp.lag(lag)));
+    signal = (on5.linlin(0,1,1,0).lag(lagOn)*signal) + (on5.lag(lagOn)*BPeakEQ.ar(signal,freq5.lag(lag),1/(q5).lag(lag),gain5.dbamp.lag(lag)));
+    signal = (on6.linlin(0,1,1,0).lag(lagOn)*signal) + (on6.lag(lagOn)*BPeakEQ.ar(signal,freq6.lag(lag),1/(q6).lag(lag),gain6.dbamp.lag(lag)));
+    signal = (on7.linlin(0,1,1,0).lag(lagOn)*signal) + (on7.lag(lagOn)*BHiShelf.ar(signal,freq7.lag(lag),1/(q7).lag(lag),gain7.dbamp.lag(lag)));
+    signal = (on8.linlin(0,1,1,0).lag(lagOn)*signal) + (on8.lag(lagOn)*BLowPass.ar(signal,freq8.lag(lag),1/q8.lag(lag), gain8.dbamp.lag(lag)));
+    signal * masterGain.dbamp;
+});
+Ndef('filterTrack_1_1').set('freq7', 257.65, 'q5', 1.29, 'freq2', 257.65, 'gain3', -6.24, 'lagOn', 3.7, 'masterGain', -11.27, 'q2', 0.3, 'on2', 0.0, 'q3', 1.29, 'freq8', 257.65, 'freq6', 257.65, 'on4', 0.0, 'q1', 0.55, 'freq3', 257.65, 'q7', 0.3, 'gain5', -6.24, 'freq4', 257.65, 'gain7', -6.24, 'freq1', 257.65, 'on3', 0.0, 'freq5', 257.65, 'gain6', -6.24, 'on5', 0.0, 'on8', 0.0, 'on1', 0.0, 'q6', 1.29, 'q8', 0.55, 'gain1', -6.24, 'gain2', -6.24, 'lag', 3.7, 'on7', 0.0, 'gain8', -6.24, 'q4', 1.29, 'gain4', -6.24, 'on6', 0.0);
+Ndef('filterTrack_1_1', {arg freq=20000 , lag=0.1 ; HPF.ar(Ndef.ar('inTrack1', 1), freq.lag(lag));});
+Ndef('filterTrack_1_1').set('lag', 11.1, 'freq', 166.49);
+Ndef('filterTrack_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inTrack1', 1), freq.lag(lag));});
+Ndef('filterTrack_1_1').set('lag', 11.1, 'freq', 166.49);
+Ndef('filterTrack_1_1', {arg mix = 1 , thresh= -12 , ratio= 2 , attack=0.001 , release=0.048, preLevel=0 , gain=4 ;
+var sig;
+sig = Compander.ar(Ndef.ar('inTrack1', 1)*preLevel.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*gain.dbamp;
+((sig*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)))
+});
+Ndef('filterTrack_1_1').set('ratio', 3.5, 'preLevel', 8.5, 'gain', 5.9, 'release', 1.85315, 'mix', 0.37, 'attack', 0.074, 'thresh', -19.61);
+Ndef('filterTrack_1_1', {arg mix = 1 , thresh= -1 , ratio=10 , attack=0.002 , release=0.002, gain=0 , outLevel=0 ;
+    var sig;
+sig = Compander.ar(Ndef.ar('inTrack1', 1)*gain.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*outLevel.dbamp;
+    ((sig*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)))
+});
+Ndef('filterTrack_1_1').set('ratio', 23.0, 'gain', 8.5, 'release', 0.74126, 'mix', 0.37, 'attack', 0.037, 'outLevel', -5.93, 'thresh', -19.61);
+Ndef('filterTrack_1_1', {arg bus=1, adjVol=1, lag=0.1; (Ndef.ar('inTrack1', 1)*Amplitude.kr(SoundIn.ar((bus-1).round(1))).lag(lag))*adjVol
+});
+Ndef('filterTrack_1_1').set('bus', 4.0, 'lag', 3.7, 'adjVol', 11.72);
+Ndef('filterTrack_1_1', {arg gain=0;
+    (Ndef.ar('inTrack1', 1)*gain.dbamp)});
+Ndef('filterTrack_1_1').set('gain', 6.73);
+Ndef('filterTrack_1_1', {arg freq=3 , decayTime=0.025 ;
+    var trig;
+    trig = Decay.kr(Impulse.kr(freq), decayTime);
+    Gate.ar(Ndef.ar('inTrack1', 1), trig)});
+Ndef('filterTrack_1_1').set('decayTime', 0.0, 'freq', 0.3);
+== radpostcont ==
+(none)
+

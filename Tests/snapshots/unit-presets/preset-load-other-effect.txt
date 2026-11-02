@@ -1,0 +1,6 @@
+>> fxload t 2 1 radtest_warm
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

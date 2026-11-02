@@ -1,0 +1,99 @@
+>> <code>
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('filterTrack_1_1', {arg mix=0 , freq=493.8833 , sinamp=0.5 , lagTime=10 , adjVol=0;
+var signal;
+    signal = Ndef.ar('inTrack1', 1)*SinOsc.ar(freq.lag(lagTime),0,sinamp);
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('filterTrack_1_1').set('sinamp', 0.37, 'freq', 257.65, 'adjVol', -5.2, 'lagTime', 3.7, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0 , sinamp=0.5 , lagTime=0.1 , adjVol=0;
+    var signal, freq, hasFreq;
+# freq, hasFreq = Pitch.kr(Ndef.ar('inTrack1', 1), ampThreshold: 0.0, median: 7);
+signal = Ndef.ar('inTrack1', 1)*SinOsc.ar(freq.lag(lagTime),0,sinamp);
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));});
+Ndef('filterTrack_1_1').set('sinamp', 0.37, 'adjVol', -5.2, 'lagTime', 3.7, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0 , sinamp=0.5 , lagTime=0.1 , adjVol=0;
+var signal, freq, hasFreq, amp;
+# freq, hasFreq = Pitch.kr(Ndef.ar('inTrack1', 1), ampThreshold: 0.0, median: 7);
+amp = Amplitude.kr(Ndef.ar('inTrack1', 1), 0.05, 0.05);
+signal = Ndef.ar('inTrack1', 1)*SinOsc.ar(freq.lag(lagTime),0,sinamp*amp);
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));});
+Ndef('filterTrack_1_1').set('sinamp', 0.37, 'adjVol', -5.2, 'lagTime', 3.7, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg freeze=0, adjVol=1;
+var chain, input, frameSize=2048;
+    input = Ndef.ar('inTrack1', 1);
+chain = FFT(LocalBuf(frameSize, input.numChannels), input);
+chain = PV_MagFreeze(chain, freeze);
+    (adjVol * IFFT(chain));});
+Ndef('filterTrack_1_1').set('freeze', 0.0, 'adjVol', 2.11);
+Ndef('filterTrack_1_1', {arg thresh=1, adjVol=1, lagTime=0.1;
+var freeze, chain, input, frameSize=2048;
+    input = Ndef.ar('inTrack1', 1);
+    chain = FFT(LocalBuf(frameSize, input.numChannels), input);
+    freeze = Onsets.kr(chain, thresh).lag(lagTime);
+    chain = PV_MagFreeze(chain, freeze);
+    (adjVol * IFFT(chain));});
+Ndef('filterTrack_1_1').set('thresh', 0.74, 'adjVol', 2.11, 'lagTime', 0.148);
+Ndef('filterTrack_1_1', {arg thresh=0, adjVol=1;
+var chain, frameSize=2048, input;
+    input = Ndef.ar('inTrack1', 1);
+chain = FFT(LocalBuf(frameSize, input.numChannels), input);
+chain = PV_MagAbove(chain, thresh);
+(adjVol * IFFT(chain));});
+Ndef('filterTrack_1_1').set('adjVol', 1.48, 'thresh', 0.22);
+Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+    var chain, origmagsphases, magsphases, input;
+    input = Ndef.ar('inTrack1', 1);
+    chain = FFT(LocalBuf(1024, input.numChannels), input);
+    origmagsphases = UnpackFFT(chain, 1024, 0, 250).clump(2).flop;
+    magsphases = [origmagsphases[0].differentiate, origmagsphases[1].differentiate];
+    magsphases = magsphases.size.switch(
+        1, {magsphases ++ origmagsphases[1]},
+        2, {magsphases},
+        {[magsphases, origmagsphases[1]]}
+    );
+    magsphases = magsphases.flop.flatten;
+    chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
+    (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('filterTrack_1_1').set('adjVol', 1.48, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+    var chain, origmagsphases, magsphases, input;
+    input = Ndef.ar('inTrack1', 1);
+    chain = FFT(LocalBuf(1024, input.numChannels), input);
+    origmagsphases = UnpackFFT(chain, 1024, 0, 250).clump(2).flop;
+    magsphases = [origmagsphases[0][30..] ++ origmagsphases[0][..30], origmagsphases[1][30..] ++ origmagsphases[1][..30]];
+    magsphases = magsphases.size.switch(
+        1, {magsphases ++ origmagsphases[1]},
+        2, {magsphases},
+        {[magsphases, origmagsphases[1]]}
+    );
+    magsphases = magsphases.flop.flatten;
+    chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
+    (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('filterTrack_1_1').set('adjVol', 1.48, 'mix', 0.37);
+Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+    var chain, origmagsphases, magsphases, input;
+    input = Ndef.ar('inTrack1', 1);
+    chain = FFT(LocalBuf(1024, input.numChannels), input);
+    origmagsphases = UnpackFFT(chain, 1024, 0, 250).clump(2).flop;
+    magsphases = [origmagsphases[0].reverse, origmagsphases[1].reverse];
+    magsphases = magsphases.size.switch(
+        1, {magsphases ++ origmagsphases[1]},
+        2, {magsphases},
+        {[magsphases, origmagsphases[1]]}
+    );
+    magsphases = magsphases.flop.flatten;
+    chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
+    (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
+});
+Ndef('filterTrack_1_1').set('adjVol', 1.48, 'mix', 0.37);
+== radpostcont ==
+(none)
+

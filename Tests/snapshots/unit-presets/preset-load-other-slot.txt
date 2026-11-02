@@ -1,0 +1,6 @@
+>> fxload b 1 2 radtest_warm
+== radpost ==
+Ndef('filterBus_1_2').set('pitchRatio', 0.5);
+== radpostcont ==
+(none)
+

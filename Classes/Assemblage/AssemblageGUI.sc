@@ -1231,7 +1231,7 @@
 							});
 						});
 					});
-				});
+				}, [this.prFxPresetMenu(filterTag, filterKey)]);
 			filtersWindow = filtersWindow.add(filtersWin);
 			filtersWin.onClose = {
 				filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
@@ -1249,7 +1249,7 @@
 	// or mapped to a controller are greyed out. The button at the top shows
 	// buttonString and calls buttonAction with the window. Returns the window.
 	prArgWinGUI {arg ndefKey, winName, pairs, specArr, winLeft=0, winDown=0,
-		buttonString, buttonAction;
+		buttonString, buttonAction, headerViews;
 		var filtersWin, fltCanvas, fxKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
 		stringLengh, argArr, defaultArgArr, specBool, removeButton, fltWinTop;
 		argArr = pairs.flop[0];
@@ -1371,13 +1371,30 @@
 		.font_(basicFont)
 		.srcAction = { buttonAction.(filtersWin) };
 		removeButton.canFocus = false;
-		fltVlay = [removeButton] ++ fltVlay;
+		//views next to the button (an effect window's PRESET menu)
+		fltVlay = [if(headerViews.notNil, { HLayout(removeButton, *headerViews) }, { removeButton })] ++ fltVlay;
 		fltCanvas.layout = VLayout(*fltVlay);
 		filtersWin.canvas = fltCanvas;
 		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
 		filtersWin.front;
 		^filtersWin;
 	}
+	// an effect window's PRESET menu: this effect's presets (new format);
+	// choosing one loads it into the slot, like fxload
+	prFxPresetMenu {arg filterTag, filterKey;
+		var menu, names;
+		names = RadUnit.presetNames(\filter, filterKey);
+		menu = PopUpMenu().maxHeight_(15).minHeight_(15).fixedWidth_(90)
+		.font_(basicFont)
+		.background_(Color.black).stringColor_(Color.white)
+		.items_(["PRESET"] ++ names.collect(_.asString));
+		menu.canFocus = false;
+		menu.srcAction = {|view|
+			if(view.value > 0, { this.loadUnitPreset(filterTag, names[view.value - 1]) });
+		};
+		^menu
+	}
+
 	filterGUIIndex {arg index=0, topLeftArr, mixButton;
 		var filterTag, filterKey, filterPairs, filterInfo, top, left, thisFilter, defaultPos;
 		if(filters.notNil, {
@@ -1389,6 +1406,8 @@
 				filterPairs = this.getFilterPairs(filterInfo[0], filterInfo[1], filterInfo[2]);
 				if(topLeftArr.isNil, {
 					defaultPos = {top = 75; left = 75;};
+					filtersWindow = filtersWindow !? {|wins|
+						wins.reject{|item| item.isClosed or: { item.bounds.isNil } } };
 					if(filtersWindow.isNil, {
 						defaultPos.();
 					}, {
@@ -1821,6 +1840,9 @@
 				if(getWin.notNil, {
 					getWin.close;
 				});
+				//a closed window stays listed until its onClose runs, which can
+				//be later: drop it now, so reopening never reads its bounds
+				filtersWindow = filtersWindow.reject{|item| item === getWin };
 				server.sync;
 				convTag = this.convFilterTag(ndefKey);
 				this.filterGUI(convTag[0], convTag[1], convTag[2]);
