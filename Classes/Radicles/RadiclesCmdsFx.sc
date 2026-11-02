@@ -9,7 +9,85 @@
 		this.prFxModCmds;
 		this.prFxPresetCmds;
 		this.prFxBypassCmds;
+		this.prFxMorphCmds;
 		this.prChannelStripCmds;
+	}
+
+	// fxmorph and morphtime (Document Model, step 1, PR 5). fxmorph takes the
+	// forms of fxload, then an optional time and an optional shape (xfade,
+	// glide, none): fxmorph t 1 2 warm, fxmorph t 1 2 warm 10 glide.
+	// morphtime 5 sets the global morph time; morphtime t 1 2 5 a slot's own
+	// (morphtime t 1 2 default goes back to the global one).
+	*prFxMorphCmds {
+		var tagOf, tagOfMix, morph, timeOf, postTime;
+		tagOf = {|str2, num1, num2|
+			case
+			{str2 == 't'} {aZ.findFilterTag(\track, num1, num2)}
+			{str2 == 'b'} {aZ.findFilterTag(\bus, num1, num2)}
+			{str2 == 'm'} {aZ.findFilterTag(\master, 1, num2)};
+		};
+		tagOfMix = {|num1, num2|
+			var trackArr, thisArr;
+			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+			if(num1 <= (trackArr.size), {
+				thisArr = trackArr[num1-1];
+				if(thisArr[1].isNil, {thisArr[1] = 1});
+				aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
+			}, {
+				"track not found".warn; nil
+			});
+		};
+		morph = {|tagFunc, preset, time, shape|
+			var tag;
+			if(aZ.notNil, {
+				tag = tagFunc.value;
+				if(tag.notNil, { aZ.morphUnitPreset(tag, preset, time, shape) }, { "No effect in this slot".warn });
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
+		//slot 1 when no slot is given, as in fxload
+		[[], [\num], [\num, \str]].do{|extra|
+			cW.add(\fxmorph, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3, time, shape|
+				morph.({ tagOf.(str2, num1, if(str2 == 'm', num1, 1)) }, str3, time, shape);
+			}, "fxmorph: trackType, trackNum, preset" ++ ["", ", time", ", time, shape"][extra.size]);
+			cW.add(\fxmorph, [\str, \str, \num, \num, \str] ++ extra, {|str1, str2, num1, num2, str3, time, shape|
+				morph.({ tagOf.(str2, num1, num2) }, str3, time, shape);
+			}, "fxmorph: trackType, trackNum, slot, preset" ++ ["", ", time", ", time, shape"][extra.size]);
+			cW.add(\fxmorph, [\str, \num, \str] ++ extra, {|str1, num1, str2, time, shape|
+				morph.({ tagOfMix.(num1, 1) }, str2, time, shape);
+			}, "fxmorph: mixTrackNum, preset" ++ ["", ", time", ", time, shape"][extra.size]);
+			cW.add(\fxmorph, [\str, \num, \num, \str] ++ extra, {|str1, num1, num2, str2, time, shape|
+				morph.({ tagOfMix.(num1, num2) }, str2, time, shape);
+			}, "fxmorph: mixTrackNum, slot, preset" ++ ["", ", time", ", time, shape"][extra.size]);
+		};
+		//morph time
+		postTime = {|tag|
+			var own = aZ.morphTimeOf(tag);
+			(RadDoc.addressString(RadUnit.address(tag)) ++ " morph time: " ++
+				(own ?? { RadUnit.morphTime.asString ++ " (global)" })).postln;
+		};
+		cW.add(\morphtime, [\str], {|str1|
+			("morph time: " ++ RadUnit.morphTime).postln;
+		}, "morphtime: posts the global morph time");
+		cW.add(\morphtime, [\str, \num], {|str1, num1|
+			RadUnit.morphTime = num1.max(0);
+			("morph time: " ++ RadUnit.morphTime).postln;
+		}, "morphtime: sets the global morph time (seconds)");
+		cW.add(\morphtime, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			var tag;
+			if(aZ.notNil, { tag = tagOf.(str2, num1, num2); if(tag.notNil, { postTime.(tag) }) });
+		}, "morphtime: trackType, trackNum, slot (posts it)");
+		cW.add(\morphtime, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+			var tag;
+			if(aZ.notNil, { tag = tagOf.(str2, num1, num2);
+				if(tag.notNil, { aZ.setMorphTime(tag, num3.max(0)); postTime.(tag) }) });
+		}, "morphtime: trackType, trackNum, slot, time");
+		cW.add(\morphtime, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
+			var tag;
+			if(aZ.notNil, { tag = tagOf.(str2, num1, num2);
+				if(tag.notNil and: { str3 == 'default' }, { aZ.setMorphTime(tag, nil); postTime.(tag) }) });
+		}, "morphtime: trackType, trackNum, slot, default");
 	}
 
 	// fxbypass: bypass an effect (Document Model, step 1, PR 4). Without a

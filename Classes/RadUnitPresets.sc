@@ -73,8 +73,10 @@
 	// Brings the effect at tag to the state described by unit, through
 	// Assemblage's and ModMap's own methods, so bookkeeping, windows and
 	// posted code stay as they are. Changes only what differs. Call inside a
-	// Routine. Returns true when applied.
-	*apply {|tag, unit, az|
+	// Routine. Returns true when applied. setFunc, if given, sends the effect's
+	// changed plain values instead of one posted set: {|ndef, pairs| ... }
+	// (fxmorph uses it for xset, or lag then set).
+	*apply {|tag, unit, az, setFunc|
 		var current, info, cond, pairs;
 		az = az ? Radicles.aZ;
 		current = this.read(tag, az);
@@ -95,7 +97,12 @@
 			cond.wait;
 			current = this.read(tag, az);
 		});
-		this.prApplyArgsMods(Ndef(tag), current, unit);
+		this.prApplyArgsMods(Ndef(tag), current, unit, setFunc);
+		//a preset with its own morph time gives it to the slot; one without
+		//leaves the slot's as it is
+		if(unit[\morphTime].notNil and: { unit[\morphTime] != current[\morphTime] }, {
+			az.setMorphTime(tag, unit[\morphTime]);
+		});
 		^true
 	}
 
@@ -110,7 +117,7 @@
 		^if(value.isKindOf(Dictionary) and: { value[\code].isString }, { value[\code].interpret }, { value })
 	}
 
-	*prApplyArgsMods {|ndef, current, target|
+	*prApplyArgsMods {|ndef, current, target, setFunc|
 		var curMods = current[\mods] ? (), tgtMods = target[\mods] ? (), tgtArgs = target[\args] ? ();
 		var fresh, freshArgs, freshMods, pairs = [];
 		// 1. modulators the target does not have, or has made differently:
@@ -131,7 +138,9 @@
 			});
 		};
 		if(pairs.notEmpty, {
-			("Ndef(" ++ ndef.key.cs ++ ").set(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
+			if(setFunc.notNil, { setFunc.(ndef, pairs) }, {
+				("Ndef(" ++ ndef.key.cs ++ ").set(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
+			});
 		});
 		// 3. modulators: make the new ones, then set each modulator's own
 		// values and its own modulators the same way

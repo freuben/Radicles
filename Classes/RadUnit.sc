@@ -6,6 +6,9 @@
 // In step 1 the document describes the effects; it does not own them.
 
 RadUnit {
+	// the global morph time in seconds (morphtime 5), used when neither the
+	// command nor the unit gives one (Document Model, step 1, PR 5)
+	classvar <>morphTime = 2;
 
 	// a value as plain data: numbers, Symbols, Strings, Booleans, nil and
 	// Arrays of them stay as they are; a Function is kept as its code, so a
@@ -34,7 +37,12 @@ RadUnit {
 		entry = az.filters.detect{|item| item[0] == tag };
 		if(entry.isNil, { ^nil });
 		name = entry[1];
-		func = SynthFile.read(\filter, name);
+		//the effect's function as its strip holds it (no file read on every
+		//change); the library's if the strip does not have it
+		(az.tracks ? []).do{|strip| strip.do{|stage|
+			if(func.isNil and: { stage.isArray } and: { stage[0] == tag }, {
+				func = if(stage[1].isArray, { stage[1][0] }, { stage[1] }) }) } };
+		if(func.respondsTo(\argNames).not, { func = SynthFile.read(\filter, name) });
 		argNames = if(func.respondsTo(\argNames), { func.argNames.asArray }, { [] });
 		argsMods = this.readArgs(Ndef(tag), argNames);
 		unit = (kind: \filter, def: name, args: argsMods[0]);
@@ -44,6 +52,7 @@ RadUnit {
 		extra = (az.trackBufferArr ? []).detect{|item| item[0] == tag };
 		if(extra.notNil and: { extra[1].notNil }, { unit[\buffer] = this.plain(extra[1]) });
 		if(az.isBypassed(tag), { unit[\bypass] = true });
+		(az.morphTimes !? {|m| m[tag] }) !? {|time| unit[\morphTime] = time };
 		^unit
 	}
 

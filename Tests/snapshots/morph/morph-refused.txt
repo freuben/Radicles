@@ -1,0 +1,18 @@
+>> fxmorph t 1 1 radtest_nope
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fxmorph t 1 1 radtest_m 1 wobble
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fxmorph t 1 2 radtest_m
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

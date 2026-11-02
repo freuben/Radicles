@@ -188,6 +188,13 @@ fxbypass t 1 1 //toggle (fxbypass m 1 for the master)
 fxbypass t 1 1 1 //bypass
 fxbypass t 1 1 0 //back in
 fxbypass 1 1 //multitrack
+//morph an effect to one of its presets over time (crossfade by default)
+fxmorph t 1 1 warm //the slot's or the global morph time
+fxmorph t 1 1 warm 10 //10 seconds
+fxmorph t 1 1 warm 10 glide //each value glides (lag) instead of a crossfade
+morphtime 5 //global morph time (2 by default)
+morphtime t 1 1 8 //this slot's own morph time, saved with its presets
+morphtime t 1 1 default //back to the global one
 //getspec
 fxgetspec t 1 1 1
 fxgetspec t 1 1 pitchRatio
