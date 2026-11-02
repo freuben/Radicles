@@ -156,14 +156,19 @@
 	}
 
 	writeTrackPreset {arg trackType=\track, trackNum=1, presetName;
-		var dataArr, filterKeyArr;
+		var dataArr, filterKeyArr, bypassSlots;
 		filterKeyArr = (filters ? []).collect({|item| item[0] }).select{|item|
 			this.filterTagOnStrip(item, trackType, trackNum) };
 		filterKeyArr.do{|item|
 			dataArr = dataArr.add(this.prepareWriteFxPreset(item));
 		};
+		//bypassed slots (PR 4), as a third element that older code ignores;
+		//left out when none, so such presets are written as before
+		bypassSlots = filterKeyArr.select{|tag| this.isBypassed(tag) }
+		.collect{|tag| this.convFilterTag(tag)[2].asInteger };
 		if(presetName.notNil, {
-			PresetFile.write(\track, presetName, [trackType, dataArr]);
+			PresetFile.write(\track, presetName, [trackType, dataArr]
+				++ if(bypassSlots.notEmpty, { [(bypass: bypassSlots)] }, { [] }));
 		});
 	}
 
@@ -338,7 +343,13 @@
 					server.sync;
 					this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
 					cond.wait;
-				}
+				};
+				//slots saved bypassed (PR 4)
+				(dataArr[2] !? {|extra| extra[\bypass] } ? []).do{|slot|
+					cond.test = false;
+					this.bypassFx(trackType, trackNum, slot, 1, {cond.test = true; cond.signal;});
+					cond.wait;
+				};
 			});
 		}.fork
 	}
