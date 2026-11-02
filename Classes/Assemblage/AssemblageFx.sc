@@ -5,7 +5,7 @@
 	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs, buffer, data, action, insert=false;
 		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
 		setTag, filterIndex, startNdefs, filterSpecs, trackTags, convString, routArr1,
-		replaceString, cond, bufIndex, bufFunc, ndefNumChan, ndefSpace, routInd;
+		replaceString, cond, bufIndex, bufFunc, ndefNumChan, ndefSpace, routInd, wasBypassed;
 		//still some work to do with buffer alloc
 		{
 			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ num ++ "_" ++ slot).asSymbol;
@@ -27,6 +27,11 @@
 				bufFunc = {
 				};
 			});
+			//another effect replacing a bypassed one: the slot is no longer
+			//bypassed, and the stage after it reads it again (below)
+			wasBypassed = this.isBypassed(filterTag) and: {
+				(filters ? []).detect{|item| item[0] == filterTag } !? {|item| item[1] != filter } ? true };
+			if(wasBypassed, { this.prClearBypass(filterTag) });
 			ndefArr = this.getThisTrack(type, num);
 			ndefSpace = ndefArr.last;
 			ndefArr = ndefArr.copyRange(0, ndefArr.size-2);
@@ -123,7 +128,8 @@
 				/*"insert is true".postln;*/
 				routInd = routArr1.flop[0].indexOf(filterTag);
 				("Ndef(" ++ routArr1[routInd][0].cs ++ ", " ++
-					routArr1[routInd][1].filterFunc(Ndef(routArr1[routInd-1][0])).cs
+					routArr1[routInd][1].filterFunc(Ndef(routArr1.copyRange(0, routInd-1)
+						.reverse.detect{|item| this.isBypassed(item[0]).not }[0])).cs
 					++ ");").radcode;
 				if(extraArgs.notNil, {
 					("Ndef(" ++ routArr1[routInd][0].cs ++ ").set" ++
@@ -146,6 +152,11 @@
 				cond.wait;
 			});
 			server.sync;
+			if(wasBypassed, {
+				this.prNextActive(arr1, filterTag) !? {|next| this.prRouteStage(arr1, next[0]) };
+			});
+			//a bypassed slot whose effect was given new settings stays paused
+			if(this.isBypassed(filterTag), { ("Ndef(" ++ filterTag.cs ++ ").pause;").radcode });
 			bufFunc.();
 			server.sync;
 			RadUnit.sync(filterTag, this); //document (step 1)
@@ -193,6 +204,7 @@
 			if(thisFilterIndex.notNil, {
 				{
 					this.ndefModClear(thisSlot);
+					this.prClearBypass(thisSlot);
 					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 					ndefCS.radcode;
 
@@ -241,6 +253,7 @@
 				{
 					arr2.do{|item|
 						this.ndefModClear(item[0]);
+						this.prClearBypass(item[0]);
 						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
 						ndefCS.radcode;
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));

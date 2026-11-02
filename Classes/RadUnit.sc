@@ -43,6 +43,7 @@ RadUnit {
 		if(extra.notNil and: { extra[1].notNil }, { unit[\data] = this.plain(extra[1]) });
 		extra = (az.trackBufferArr ? []).detect{|item| item[0] == tag };
 		if(extra.notNil and: { extra[1].notNil }, { unit[\buffer] = this.plain(extra[1]) });
+		if(az.isBypassed(tag), { unit[\bypass] = true });
 		^unit
 	}
 

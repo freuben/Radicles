@@ -183,6 +183,11 @@ fxclear t 1 1 //track 1, slot 1 (fxclear m 1 for the master)
 fxclear t 1 2
 fxclear 1 1 //multitrack
 clearfx 1
+//bypass an effect: the chain goes around it, the effect keeps its settings
+fxbypass t 1 1 //toggle (fxbypass m 1 for the master)
+fxbypass t 1 1 1 //bypass
+fxbypass t 1 1 0 //back in
+fxbypass 1 1 //multitrack
 //getspec
 fxgetspec t 1 1 1
 fxgetspec t 1 1 pitchRatio
