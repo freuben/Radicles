@@ -25,10 +25,13 @@
 //   step 1): after every command the session's document, values refreshed,
 //   must equal one rebuilt from the running system; a difference fails the
 //   test and names the command and the address. Use only with a reason.
+// anyOrder: true = compare each command's posted code in any order (sorted
+//   before snapshotting), for commands that run at the same time, such as
+//   "(lp 1 & lp 2 & fx 1 pch)", whose posts race.
 // known: a String naming a reported problem (e.g. "issue #39"). The test still
 //   runs, but a failure is listed as KNOWN instead of FAIL, and a pass is
 //   flagged so the marker can be removed.
-~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note, cloud = true, docCheck = true|
+~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note, cloud = true, docCheck = true, anyOrder = false|
 	~radTests = ~radTests.add((
 		name: name.asString,
 		caseFile: ~radTestCurrentCase,
@@ -40,6 +43,7 @@
 		teardown: teardown,
 		noWarnings: noWarnings,
 		docCheck: docCheck,
+		anyOrder: anyOrder,
 		known: known,
 		note: note
 	));
