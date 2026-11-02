@@ -181,3 +181,32 @@
 		teardown: ~radPresetClean
 	);
 };
+
+// the effect window's PRESET menu lists this effect's presets; choosing one
+// loads it into the slot, like fxload (Mac: needs windows)
+~radTest.("preset-menu",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5", "fxsave t 1 1 radtest_menu",
+		"fxset t 1 1 pitchRatio 2"],
+	code: {
+		var win;
+		Radicles.aZ.filterGUI(\track, 1, 1);
+		0.5.wait;
+		win = Radicles.aZ.filtersWindow.last;
+		~radMenu = win.canvas.children.detect{|v| v.isKindOf(PopUpMenu) };
+		~radMenuItems = ~radMenu !? {|m| m.items };
+		~radMenu.valueAction = ~radMenuItems.indexOfEqual("radtest_menu");
+		2.wait;
+	},
+	check: {
+		case
+		{ ~radMenuItems.isNil } { "no PRESET menu" }
+		{ ~radMenuItems.first != "PRESET" or: { ~radMenuItems.includesEqual("radtest_menu").not } } { "items: " ++ ~radMenuItems.cs }
+		{ Ndef(\filterTrack_1_1).get(\pitchRatio) != 0.5 } { "not loaded: " ++ Ndef(\filterTrack_1_1).get(\pitchRatio) }
+		{ true }
+	},
+	teardown: {
+		(Radicles.aZ !? {|a| a.filtersWindow } ? []).copy.do{|w| w.close };
+		~radPresetClean.();
+	},
+	gui: true
+);
