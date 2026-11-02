@@ -1386,6 +1386,9 @@
 		filtersWin.canvas = fltCanvas;
 		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
 		filtersWin.front;
+		//again once shown: before, Qt places the window with its title bar
+		//counted differently, and a rebuilt window would come back 20 px higher
+		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
 		^filtersWin;
 	}
 	// an effect window's BYPASS button, lit while the effect is bypassed;

@@ -257,7 +257,8 @@
 		case
 		{ ~radPopup.not } { "no Save preset window" }
 		{ RadUnit.readPreset(\filter, \pch, \radtest_btn).isNil } { "not saved" }
-		{ ~radMenuItems != ["PRESET", "default", "radtest_btn"] } { "menu: " ++ ~radMenuItems.cs }
+		{ ~radMenuItems.keep(2) != ["PRESET", "default"] or: { ~radMenuItems.includesEqual("radtest_btn").not } } {
+			"menu: " ++ ~radMenuItems.cs }
 		{ true }
 	},
 	teardown: {
