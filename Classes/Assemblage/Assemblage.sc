@@ -16,6 +16,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType, memSize, action;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
+		RadUnit.syncAll(this); //document (step 1): a new mixer starts with no effects
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
@@ -1004,6 +1005,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			nodeTime.yield;
 			this.clearNdefs({
 				this.resetVars;
+				RadUnit.syncAll(this); //document (step 1): no effects left
 				nodeTime.yield;
 				action.();
 			});

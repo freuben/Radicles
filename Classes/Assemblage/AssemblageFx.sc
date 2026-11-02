@@ -148,6 +148,7 @@
 			server.sync;
 			bufFunc.();
 			server.sync;
+			RadUnit.sync(filterTag, this); //document (step 1)
 			action.();
 		}.fork;
 	}
@@ -213,6 +214,7 @@
 					});
 					cond.wait;
 					/*					server.sync;*/
+					RadUnit.sync(thisSlot, this); //document (step 1)
 					action.();
 				}.fork(AppClock);
 			}, {
@@ -260,6 +262,7 @@
 						this.removeBufFromFilter(tag, {cond.test = true; cond.signal;});
 						cond.wait;
 					};
+					RadUnit.syncAll(this); //document (step 1)
 					action.();
 					if(refresh, {
 						{this.refreshFunc;}.defer;

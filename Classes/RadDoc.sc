@@ -83,12 +83,22 @@ RadDoc {
 		this.changed(\put, path, value);
 	}
 
-	removeAt {|address|
-		var path = this.class.path(address), parent, old;
+	// prune: also remove Events above it that are left empty (not the top level)
+	removeAt {|address, prune = false|
+		var path = this.class.path(address), parent, old, up;
 		if(path.isEmpty, { ^nil });
 		parent = this.class.walk(data, path.drop(-1));
 		if(parent.isKindOf(Dictionary).not or: { parent.includesKey(path.last).not }, { ^nil });
 		old = parent.removeAt(path.last);
+		if(prune, {
+			up = path.drop(-1);
+			while({ up.size > 1 and: {
+				var obj = this.class.walk(data, up);
+				obj.isKindOf(Dictionary) and: { obj.isEmpty } } }, {
+				this.class.walk(data, up.drop(-1)).removeAt(up.last);
+				up = up.drop(-1);
+			});
+		});
 		this.prTouch(path);
 		this.changed(\removeAt, path);
 		^old

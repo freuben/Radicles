@@ -4,7 +4,7 @@
 // you have running in the IDE.
 (
 var args, caseName, testName, mode, resultFile, test, blocks, current, lastPost;
-var quietWait, runCmd, finish, headless;
+var quietWait, runCmd, finish, headless, docCheck, docProblem;
 
 args = thisProcess.argv;
 #caseName, testName, mode, resultFile = args;
@@ -67,12 +67,27 @@ if(test.notNil, {
 		if(s.serverRunning, { s.sync });
 	};
 
+	// Document Model, step 1: after each command the session's document
+	// (values refreshed) must equal one rebuilt from the running system.
+	// Keeps the first difference: the command and the addresses.
+	docCheck = {|cmd|
+		var diff;
+		if(test[\docCheck] != false and: { docProblem.isNil }, {
+			diff = try { RadUnit.check } {|e| [(address: "check raised: " ++ e.errorString, change: \error)] };
+			if(diff.notEmpty, {
+				docProblem = "document out of step after '" ++ cmd ++ "': " ++
+				diff.keep(4).collect{|d| d[\change] ++ " " ++ d[\address] }.join(", ");
+			});
+		});
+	};
+
 	runCmd = {|entry, quiet = 1.0|
 		var cmd, wait;
 		if(entry.isString, { cmd = entry }, { #cmd, wait = entry });
 		// report errors (the driver fails the test) but keep going
 		try { Radicles.cW.callFunc(cmd) } {|e| e.reportError };
 		if(wait.notNil, { wait.wait; lastPost = Main.elapsedTime }, { quietWait.(quiet) });
+		docCheck.(cmd);
 	};
 
 	// Run on AppClock, like the call window: building the mixer asks Qt for
@@ -106,12 +121,14 @@ if(test.notNil, {
 			current = (cmd: "<code>", radpost: [], radpostcont: []);
 			try { test[\code].value } {|e| e.reportError };
 			quietWait.();
+			docCheck.("<code>");
 			blocks = blocks.add(current);
 		});
 		current = nil;
 		"RADTEST:END".postln;
 
 		result = try { test[\check].value ? true } {|e| "check raised: " ++ e.errorString };
+		if(result == true and: { docProblem.notNil }, { result = docProblem });
 		"RADTEST:CHECKED".postln;
 		try { test[\teardown].value } {};
 		userLib.do{|saved|

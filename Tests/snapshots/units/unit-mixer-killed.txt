@@ -1,0 +1,20 @@
+>> <code>
+== radpost ==
+Ndef('inMaster').clear(0.5);
+Ndef('master').clear(0.5);
+Ndef('spaceMaster').clear(0.5);
+Ndef('inTrack1').clear(0.5);
+Ndef('filterTrack_1_1').clear(0.5);
+Ndef('track1').clear(0.5);
+Ndef('spaceTrack1').clear(0.5);
+Ndef('inTrack2').clear(0.5);
+Ndef('track2').clear(0.5);
+Ndef('spaceTrack2').clear(0.5);
+Ndef('inBus1').clear(0.5);
+Ndef('bus1').clear(0.5);
+Ndef('spaceBus1').clear(0.5);
+Ndef('masterOut').clear(0.5);
+Ndef('AssemblageGUI').clear(0.5);
+== radpostcont ==
+(none)
+
