@@ -1,0 +1,18 @@
+>> morphtime t 1 1 default
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> morphtime t 1 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> morphtime
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

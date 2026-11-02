@@ -6,6 +6,9 @@
 // In step 1 the document describes the effects; it does not own them.
 
 RadUnit {
+	// the global morph time in seconds (morphtime 5), used when neither the
+	// command nor the unit gives one (Document Model, step 1, PR 5)
+	classvar <>morphTime = 2;
 
 	// a value as plain data: numbers, Symbols, Strings, Booleans, nil and
 	// Arrays of them stay as they are; a Function is kept as its code, so a
@@ -44,6 +47,7 @@ RadUnit {
 		extra = (az.trackBufferArr ? []).detect{|item| item[0] == tag };
 		if(extra.notNil and: { extra[1].notNil }, { unit[\buffer] = this.plain(extra[1]) });
 		if(az.isBypassed(tag), { unit[\bypass] = true });
+		(az.morphTimes !? {|m| m[tag] }) !? {|time| unit[\morphTime] = time };
 		^unit
 	}
 

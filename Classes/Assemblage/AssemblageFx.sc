@@ -5,7 +5,7 @@
 	filter {arg type=\track, num= 1, slot=1, filter=\pch, extraArgs, buffer, data, action, insert=false;
 		var filterTag, ndefArr, ndefCS, arr1, arr2, arr3, arrSize, filterInfo, setArr,
 		setTag, filterIndex, startNdefs, filterSpecs, trackTags, convString, routArr1,
-		replaceString, cond, bufIndex, bufFunc, ndefNumChan, ndefSpace, routInd, wasBypassed;
+		replaceString, cond, bufIndex, bufFunc, ndefNumChan, ndefSpace, routInd, wasBypassed, replacing;
 		//still some work to do with buffer alloc
 		{
 			filterTag = ("filter" ++ type.asString.capitalise ++ "_" ++ num ++ "_" ++ slot).asSymbol;
@@ -29,9 +29,11 @@
 			});
 			//another effect replacing a bypassed one: the slot is no longer
 			//bypassed, and the stage after it reads it again (below)
-			wasBypassed = this.isBypassed(filterTag) and: {
-				(filters ? []).detect{|item| item[0] == filterTag } !? {|item| item[1] != filter } ? true };
+			replacing = (filters ? []).detect{|item| item[0] == filterTag } !? {|item| item[1] != filter } ? false;
+			wasBypassed = replacing and: { this.isBypassed(filterTag) };
 			if(wasBypassed, { this.prClearBypass(filterTag) });
+			//so is its morph time, which belonged to the effect it replaces
+			if(replacing, { this.prClearMorph(filterTag) });
 			ndefArr = this.getThisTrack(type, num);
 			ndefSpace = ndefArr.last;
 			ndefArr = ndefArr.copyRange(0, ndefArr.size-2);
@@ -205,6 +207,7 @@
 				{
 					this.ndefModClear(thisSlot);
 					this.prClearBypass(thisSlot);
+					this.prClearMorph(thisSlot);
 					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
 					ndefCS.radcode;
 
@@ -254,6 +257,7 @@
 					arr2.do{|item|
 						this.ndefModClear(item[0]);
 						this.prClearBypass(item[0]);
+						this.prClearMorph(item[0]);
 						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
 						ndefCS.radcode;
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));
