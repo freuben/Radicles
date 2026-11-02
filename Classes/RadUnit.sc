@@ -37,7 +37,12 @@ RadUnit {
 		entry = az.filters.detect{|item| item[0] == tag };
 		if(entry.isNil, { ^nil });
 		name = entry[1];
-		func = SynthFile.read(\filter, name);
+		//the effect's function as its strip holds it (no file read on every
+		//change); the library's if the strip does not have it
+		(az.tracks ? []).do{|strip| strip.do{|stage|
+			if(func.isNil and: { stage.isArray } and: { stage[0] == tag }, {
+				func = if(stage[1].isArray, { stage[1][0] }, { stage[1] }) }) } };
+		if(func.respondsTo(\argNames).not, { func = SynthFile.read(\filter, name) });
 		argNames = if(func.respondsTo(\argNames), { func.argNames.asArray }, { [] });
 		argsMods = this.readArgs(Ndef(tag), argNames);
 		unit = (kind: \filter, def: name, args: argsMods[0]);
