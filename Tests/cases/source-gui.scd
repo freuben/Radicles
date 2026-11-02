@@ -164,3 +164,51 @@
 	teardown: ~radCloseWins,
 	gui: true
 );
+
+// the effect window reopens after a change made with it open: one window for
+// the slot, open, with the change shown (before the fix in PR 3 the closed
+// window was still listed and reopening read its bounds: nil.top)
+~radFxWins = {|tag| (~radAZ.() !? {|a| a.filtersWindow } ? []).select{|w|
+	w.name.beginsWith(tag.asString ++ " ") } };
+
+~radTest.("fx-window-reopens-after-modulation",
+	setup: ["start 2", "fx t 1 pch"],
+	code: {
+		~radAZ.().filterGUI(\track, 1, 1); 0.5.wait;
+		Radicles.cW.callFunc("fxset t 1 1 pitchDispertion sin"); 2.wait;
+	},
+	check: {
+		var wins = ~radFxWins.(\filterTrack_1_1), sliders;
+		sliders = wins.last !? {|w| ~radKids.(w, Slider) } ? [];
+		case
+		{ wins.size != 1 } { "windows for the slot: " ++ wins.size }
+		{ wins[0].isClosed } { "the listed window is closed" }
+		{ sliders.count{|sl| sl.enabled.not } != 1 } { "disabled sliders: " ++ sliders.count{|sl| sl.enabled.not } }
+		{ true }
+	},
+	teardown: ~radCloseWins,
+	gui: true
+);
+
+~radTest.("fx-window-reopens-after-old-preset",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5"],
+	code: {
+		Radicles.aZ.prepWriteFxPreset(\filterTrack_1_1, \radtest_old);
+		Radicles.cW.callFunc("fxset t 1 1 pitchRatio 2"); 0.5.wait;
+		~radAZ.().filterGUI(\track, 1, 1); 0.5.wait;
+		Radicles.cW.callFunc("fxload t 1 1 radtest_old"); 2.wait;
+	},
+	check: {
+		var wins = ~radFxWins.(\filterTrack_1_1);
+		case
+		{ Ndef(\filterTrack_1_1).get(\pitchRatio) != 0.5 } { "not loaded: " ++ Ndef(\filterTrack_1_1).get(\pitchRatio) }
+		{ wins.size != 1 } { "windows for the slot: " ++ wins.size }
+		{ wins[0].isClosed } { "the listed window is closed" }
+		{ true }
+	},
+	teardown: {
+		~radCloseWins.();
+		PresetFile.remove(\filter, 'radtest_old', false, path: 0, post: false);
+	},
+	gui: true
+);
