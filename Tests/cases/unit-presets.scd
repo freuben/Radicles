@@ -210,3 +210,117 @@
 	},
 	gui: true
 );
+
+// default: every effect's own default values, with its modulators removed
+~radTest.("preset-default",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5", "fxset t 1 1 winSize 0.1", "fxset t 1 1 pitchDispertion sin"],
+	cmds: [["fxload t 1 1 default", 2]],
+	check: {
+		var unit = RadUnit.read(\filterTrack_1_1);
+		(unit[\args] == (pitchRatio: 1.0, pitchDispertion: 0.0, timeDispersion: 0.0001, winSize: 0.02) and: { unit[\mods].isNil })
+		or: { "unit: " ++ unit.cs }
+	}
+);
+
+// default cannot be saved over, and is not a file
+~radTest.("preset-default-reserved",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5"],
+	cmds: ["fxsave t 1 1 default"],
+	check: { File.exists(RadUnit.presetPath(\filter, \pch, \default)).not or: { "a default file was written" } }
+);
+
+// fxmorph to default
+~radTest.("preset-default-morph",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5"],
+	cmds: [["fxmorph t 1 1 default 1", 2.5]],
+	check: { (Ndef(\filterTrack_1_1).get(\pitchRatio) == 1.0 and: { Ndef(\filterTrack_1_1).fadeTime == 0.5 })
+		or: { "pitchRatio " ++ Ndef(\filterTrack_1_1).get(\pitchRatio) } }
+);
+
+// the effect window's SAVE button asks for a name, saves, and the PRESET
+// menu lists it (Mac)
+~radTest.("preset-save-button",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5"],
+	code: {
+		var win, popup;
+		Radicles.aZ.filterGUI(\track, 1, 1); 0.5.wait;
+		win = Radicles.aZ.filtersWindow.last;
+		win.canvas.children.detect{|v| v.isKindOf(Button) and: { v.states[0][0] == "SAVE" } }.valueAction = 0;
+		0.5.wait;
+		popup = Window.allWindows.detect{|w| w.name.beginsWith("Save preset") };
+		~radPopup = popup.notNil;
+		popup.view.children.detect{|v| v.isKindOf(TextField) }.string_("radtest_btn").doAction;
+		1.wait;
+		~radMenuItems = win.canvas.children.detect{|v| v.isKindOf(PopUpMenu) }.items;
+	},
+	check: {
+		case
+		{ ~radPopup.not } { "no Save preset window" }
+		{ RadUnit.readPreset(\filter, \pch, \radtest_btn).isNil } { "not saved" }
+		{ ~radMenuItems != ["PRESET", "default", "radtest_btn"] } { "menu: " ++ ~radMenuItems.cs }
+		{ true }
+	},
+	teardown: {
+		(Radicles.aZ !? {|a| a.filtersWindow } ? []).copy.do{|w| w.close };
+		Window.allWindows.select{|w| w.name.beginsWith("Save preset") }.do(_.close);
+		~radPresetClean.();
+	},
+	gui: true
+);
+
+// a window rebuilt after a change (here, modulating an argument) stays where
+// it was; another effect's window is not opened by it (Mac)
+~radTest.("fx-window-stays-in-place",
+	setup: ["start 2", "fx t 1 pch", "fx t 2 dl1"],
+	code: {
+		var win;
+		Radicles.aZ.filterGUI(\track, 1, 1); 0.5.wait;
+		win = Radicles.aZ.filtersWindow.last;
+		win.bounds = win.bounds.moveTo(400, 300); 0.5.wait;
+		~radBefore = win.bounds.origin;
+		Radicles.cW.callFunc("fxset t 1 1 pitchDispertion sin"); 2.wait;
+		Radicles.cW.callFunc("fxset t 2 1 delayTime sin"); 2.wait;
+		~radWins = Radicles.aZ.filtersWindow.select{|w| w.isClosed.not };
+		~radAfter = ~radWins.detect{|w| w.name.beginsWith("filterTrack_1_1 ") } !? {|w| w.bounds.origin };
+	},
+	check: {
+		case
+		{ ~radAfter.isNil } { "the window was not reopened" }
+		{ (~radAfter.x - ~radBefore.x).abs > 2 or: { (~radAfter.y - ~radBefore.y).abs > 2 } } {
+			"moved from " ++ ~radBefore ++ " to " ++ ~radAfter }
+		{ ~radWins.size != 1 } { "windows open: " ++ ~radWins.collect(_.name).cs }
+		{ true }
+	},
+	teardown: { (Radicles.aZ !? {|a| a.filtersWindow } ? []).copy.do{|w| w.close } },
+	gui: true
+);
+
+// every effect's window shows all of its rows: nothing is cut off on the
+// right, labels and values fit their text, and the window is tall enough (Mac)
+~radTest.("fx-window-sizes",
+	setup: ["start 2"],
+	code: {
+		var problems = [];
+		~radPresetDefs.do{|def|
+			var win, canvas, font = Font("Monaco", 8);
+			Radicles.cW.callFunc("fx t 1 1 " ++ def); 1.5.wait;
+			Radicles.aZ.filterGUI(\track, 1, 1); 0.5.wait;
+			win = Radicles.aZ.filtersWindow.last;
+			canvas = win.canvas;
+			canvas.children.do{|v|
+				if(v.bounds.right > (win.bounds.width + 1), { problems = problems.add(def ++ ": cut off on the right") });
+				if(v.bounds.bottom > (canvas.bounds.height + 1), { problems = problems.add(def ++ ": below the canvas") });
+				if(v.isKindOf(StaticText) and: { v.string.notNil } and: {
+					v.string.bounds(font).width > (v.bounds.width + 1) }, {
+					problems = problems.add(def ++ ": '" ++ v.string ++ "' does not fit") });
+			};
+			if(canvas.bounds.height > (win.bounds.height + 1) and: { win.bounds.height < 600 }, {
+				problems = problems.add(def ++ ": window shorter than its rows") });
+			win.close; 0.2.wait;
+		};
+		~radSizeProblems = problems.asSet.asArray.sort;
+	},
+	check: { ~radSizeProblems.isEmpty or: { ~radSizeProblems.keep(8).join("; ") } },
+	teardown: { (Radicles.aZ !? {|a| a.filtersWindow } ? []).copy.do{|w| w.close } },
+	gui: true
+);

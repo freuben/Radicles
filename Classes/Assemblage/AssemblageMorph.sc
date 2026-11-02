@@ -55,7 +55,7 @@
 		if(RadUnit.presetExists(\filter, def, presetName).not, {
 			("No preset " ++ presetName ++ " for " ++ def ++
 				" (fxmorph uses presets saved with fxsave)").warn; ^this });
-		unit = RadUnit.readPreset(\filter, def, presetName);
+		unit = RadUnit.presetFor(ndefKey, def, presetName, this);
 		if(unit.isNil, { ^this });
 		//already there: nothing to morph (a morph time the preset has still
 		//goes to the slot)

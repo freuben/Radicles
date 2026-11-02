@@ -1231,7 +1231,7 @@
 							});
 						});
 					});
-				}, [this.prFxBypassButton(filterTag), this.prFxPresetMenu(filterTag, filterKey)]);
+				}, [this.prFxBypassButton(filterTag), this.prFxSaveButton(filterTag), this.prFxPresetMenu(filterTag, filterKey)]);
 			filtersWindow = filtersWindow.add(filtersWin);
 			filtersWin.onClose = {
 				filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
@@ -1251,16 +1251,23 @@
 	prArgWinGUI {arg ndefKey, winName, pairs, specArr, winLeft=0, winDown=0,
 		buttonString, buttonAction, headerViews;
 		var filtersWin, fltCanvas, fxKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
-		stringLengh, argArr, defaultArgArr, specBool, removeButton, fltWinTop;
+		stringLengh, argArr, defaultArgArr, specBool, removeButton, fltWinTop,
+		textWidth, valueWidth, buttonWidth, rowWidth, headerWidth, margin = 8, spacing = 6, rowHeight = 15;
 		argArr = pairs.flop[0];
 		defaultArgArr = pairs.flop[1];
-		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+		//sizes from the text as it is drawn, so nothing is cut off
+		textWidth = {|string| (try { string.bounds(basicFont).width } { string.size * 5 }).ceil + 8 };
+		stringLengh = argArr.collect({|item| textWidth.(item.asString) }).maxItem;
+		valueWidth = textWidth.("-0.00000"); //values show 8 characters
+		buttonWidth = textWidth.(buttonString.asString) + 12;
+		rowWidth = stringLengh + 180 + valueWidth + (2 * spacing);
+		headerWidth = buttonWidth + (headerViews ? []).sum{|view| (view.minWidth ? 60) + spacing };
 		filtersWin = ScrollView()
 		.name_(winName);
 		filtersWin.hasHorizontalScroller = false;
-		fltWinWidth = (250) + stringLengh + 7;
+		fltWinWidth = rowWidth.max(headerWidth) + (2 * margin);
 		fltWinTop = screenBounds.height-filtersWin.bounds.top-winDown;
-		fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
+		fltWinHeight = ((argArr.size + 1) * rowHeight + (argArr.size * spacing) + (2 * margin)).min(fltWinTop);
 		filtersWin.fixedHeight = fltWinHeight;
 		filtersWin.fixedWidth = fltWinWidth;
 		/*filtersWin.alwaysOnTop = true;*/
@@ -1279,7 +1286,7 @@
 			.background_(Color.black)
 			.stringColor_(Color.white)
 			.font_(basicFont)
-			.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
+			.minWidth_(valueWidth).maxWidth_(valueWidth).maxHeight_(10).minHeight_(10);
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
 				if(hidNodes.notEmpty, {
@@ -1365,15 +1372,16 @@
 			};
 			fltVlay = fltVlay.add(HLayout(*finalLayout) );
 		};
-		removeButton = Button().maxHeight_(15).minHeight_(15)
+		removeButton = Button().maxHeight_(15).minHeight_(15).minWidth_(buttonWidth)
 		.states_([["", colorCritical, Color.black]])
 		.string_(buttonString)
 		.font_(basicFont)
 		.srcAction = { buttonAction.(filtersWin) };
 		removeButton.canFocus = false;
 		//views next to the button (an effect window's PRESET menu)
-		fltVlay = [if(headerViews.notNil, { HLayout(removeButton, *headerViews) }, { removeButton })] ++ fltVlay;
-		fltCanvas.layout = VLayout(*fltVlay);
+		fltVlay = [if(headerViews.notNil, { HLayout(removeButton, *headerViews).spacing_(spacing).margins_(0) },
+			{ removeButton })] ++ fltVlay.collect{|row| row.spacing_(spacing).margins_(0) };
+		fltCanvas.layout = VLayout(*fltVlay).spacing_(spacing).margins_(margin);
 		filtersWin.canvas = fltCanvas;
 		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
 		filtersWin.front;
@@ -1396,18 +1404,76 @@
 
 	// an effect window's PRESET menu: this effect's presets (new format);
 	// choosing one loads it into the slot, like fxload
+	// (default first: the effect's own default values)
 	prFxPresetMenu {arg filterTag, filterKey;
-		var menu, names;
-		names = RadUnit.presetNames(\filter, filterKey);
+		var menu;
 		menu = PopUpMenu().maxHeight_(15).minHeight_(15).fixedWidth_(90)
 		.font_(basicFont)
-		.background_(Color.black).stringColor_(Color.white)
-		.items_(["PRESET"] ++ names.collect(_.asString));
+		.background_(Color.black).stringColor_(Color.white);
+		this.prFillPresetMenu(menu, filterKey);
 		menu.canFocus = false;
 		menu.srcAction = {|view|
-			if(view.value > 0, { this.loadUnitPreset(filterTag, names[view.value - 1]) });
+			if(view.value > 0, { this.loadUnitPreset(filterTag, view.items[view.value].asSymbol) });
 		};
 		^menu
+	}
+
+	prFillPresetMenu {arg menu, filterKey;
+		menu.items = ["PRESET", "default"] ++ RadUnit.presetNames(\filter, filterKey).collect(_.asString);
+		menu.value = 0;
+	}
+
+	// an effect window's SAVE button: asks for a name in a small window, then
+	// saves like fxsave (asking first if the name exists) and adds it to the menu
+	prFxSaveButton {arg filterTag;
+		var button = Button().maxHeight_(15).minHeight_(15).fixedWidth_(50)
+		.font_(basicFont)
+		.states_([["SAVE", Color.white, Color.black]]);
+		button.canFocus = false;
+		button.srcAction = { this.prSavePresetWindow(filterTag) };
+		^button
+	}
+
+	prSavePresetWindow {arg filterTag;
+		var win, field, save, def, parent;
+		def = (filters ? []).detect{|item| item[0] == filterTag } !? {|item| item[1] };
+		if(def.isNil, { ^this });
+		parent = (filtersWindow ? []).detect{|w| w.name.beginsWith(filterTag.asString ++ " ") };
+		win = Window("Save preset · " ++ filterTag ++ " | " ++ def,
+			Rect(parent !? {|w| w.bounds.left + 20 } ? 200, parent !? {|w| w.bounds.top + 40 } ? 200, 300, 70),
+			resizable: false);
+		win.background = Color.black;
+		field = TextField().font_(basicFont).background_(colorTextField);
+		save = {
+			var name = field.string.stripWhiteSpace;
+			case
+			{ name.isEmpty } { }
+			{ RadUnit.validPresetName(name).not } {
+				("Preset names use letters, digits, - and _ only: " ++ name).warn }
+			{
+				this.writeUnitPreset(filterTag, name.asSymbol, {
+					{ (filtersWindow ? []).detect{|w| w.name.beginsWith(filterTag.asString ++ " ") }
+						!? {|w| w.canvas.children.detect{|v| v.isKindOf(PopUpMenu) }
+							!? {|menu| this.prFillPresetMenu(menu, def) } } }.defer;
+				});
+				win.close;
+			};
+		};
+		field.action = { save.() };
+		win.layout = VLayout(
+			StaticText().string_("Preset name (letters, digits, - and _):")
+			.font_(basicFont).stringColor_(Color.white),
+			field,
+			HLayout(nil,
+				Button().states_([["Cancel", Color.white, Color.black]]).font_(basicFont)
+				.action_({ win.close }),
+				Button().states_([["Save", Color.white, Color.black]]).font_(basicFont)
+				.action_({ save.() })
+			)
+		);
+		win.front;
+		field.focus(true);
+		^win
 	}
 
 	filterGUIIndex {arg index=0, topLeftArr, mixButton;
@@ -1846,22 +1912,20 @@
 		}.defer;
 	}
 
+	// rebuild the effect's window, if it is open, where it was
 	updateFxWin {arg ndefKey;
-		var convTag, getWin;
-		if(filtersWindow.notNil, {
-			if(filtersWindow.notEmpty, {
-				getWin = filtersWindow.detect({|item, index|
-					item.name.beginsWith(ndefKey.asString ++ " ") });
-				if(getWin.notNil, {
-					getWin.close;
-				});
-				//a closed window stays listed until its onClose runs, which can
-				//be later: drop it now, so reopening never reads its bounds
-				filtersWindow = filtersWindow.reject{|item| item === getWin };
-				server.sync;
-				convTag = this.convFilterTag(ndefKey);
-				this.filterGUI(convTag[0], convTag[1], convTag[2]);
-			});
+		var convTag, getWin, bounds;
+		getWin = (filtersWindow ? []).detect({|item|
+			item.name.beginsWith(ndefKey.asString ++ " ") and: { item.isClosed.not } });
+		if(getWin.notNil, {
+			bounds = getWin.bounds;
+			getWin.close;
+			//a closed window stays listed until its onClose runs, which can
+			//be later: drop it now, so reopening never reads its bounds
+			filtersWindow = filtersWindow.reject{|item| item === getWin };
+			server.sync;
+			convTag = this.convFilterTag(ndefKey);
+			this.filterGUI(convTag[0], convTag[1], convTag[2], [bounds.left, bounds.top]);
 		});
 	}
 
