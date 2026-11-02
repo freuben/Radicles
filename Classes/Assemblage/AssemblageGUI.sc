@@ -1386,9 +1386,6 @@
 		filtersWin.canvas = fltCanvas;
 		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
 		filtersWin.front;
-		//again once shown: before, Qt places the window with its title bar
-		//counted differently, and a rebuilt window would come back 20 px higher
-		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
 		^filtersWin;
 	}
 	// an effect window's BYPASS button, lit while the effect is bypassed;
@@ -1930,6 +1927,13 @@
 			server.sync;
 			convTag = this.convFilterTag(ndefKey);
 			this.filterGUI(convTag[0], convTag[1], convTag[2], [bounds.left, bounds.top]);
+			//placed again once Qt has shown it: a window placed before it is shown
+			//counts its title bar differently and would come back 20 px higher
+			{
+				(filtersWindow ? []).detect{|item|
+					item.name.beginsWith(ndefKey.asString ++ " ") and: { item.isClosed.not } }
+				!? {|win| win.bounds = win.bounds.moveTo(bounds.left, bounds.top) };
+			}.defer(0.1);
 		});
 	}
 
