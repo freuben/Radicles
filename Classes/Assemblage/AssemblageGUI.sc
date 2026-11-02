@@ -1406,6 +1406,8 @@
 				filterPairs = this.getFilterPairs(filterInfo[0], filterInfo[1], filterInfo[2]);
 				if(topLeftArr.isNil, {
 					defaultPos = {top = 75; left = 75;};
+					filtersWindow = filtersWindow !? {|wins|
+						wins.reject{|item| item.isClosed or: { item.bounds.isNil } } };
 					if(filtersWindow.isNil, {
 						defaultPos.();
 					}, {
@@ -1838,6 +1840,9 @@
 				if(getWin.notNil, {
 					getWin.close;
 				});
+				//a closed window stays listed until its onClose runs, which can
+				//be later: drop it now, so reopening never reads its bounds
+				filtersWindow = filtersWindow.reject{|item| item === getWin };
 				server.sync;
 				convTag = this.convFilterTag(ndefKey);
 				this.filterGUI(convTag[0], convTag[1], convTag[2]);
