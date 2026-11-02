@@ -21,10 +21,14 @@
 // teardown: function that removes anything the test saved (presets, files);
 //   runs before setup (in case an earlier run crashed) and after the check.
 // noWarnings: true = fail if Radicles posts a WARNING during the test.
+// docCheck: false = skip the document consistency check (Document Model,
+//   step 1): after every command the session's document, values refreshed,
+//   must equal one rebuilt from the running system; a difference fails the
+//   test and names the command and the address. Use only with a reason.
 // known: a String naming a reported problem (e.g. "issue #39"). The test still
 //   runs, but a failure is listed as KNOWN instead of FAIL, and a pass is
 //   flagged so the marker can be removed.
-~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note, cloud = true|
+~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note, cloud = true, docCheck = true|
 	~radTests = ~radTests.add((
 		name: name.asString,
 		caseFile: ~radTestCurrentCase,
@@ -35,6 +39,7 @@
 		code: code,
 		teardown: teardown,
 		noWarnings: noWarnings,
+		docCheck: docCheck,
 		known: known,
 		note: note
 	));
