@@ -1,0 +1,11 @@
+>> t rmvn 1
+== radpost ==
+Ndef('filterTrack_3_1').clear(0.5);
+Ndef('inTrack3').clear(0.5);
+Ndef('track3').clear(0.5);
+Ndef('spaceTrack3').clear(0.5);
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+== radpostcont ==
+(none)
+

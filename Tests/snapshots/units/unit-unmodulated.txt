@@ -1,0 +1,7 @@
+>> unmodfx t 1 1 pitchDispertion
+== radpost ==
+Ndef('filterTrack_1_1').xset('pitchDispertion', 0.0);
+Ndef('mod1').clear(0.5);
+== radpostcont ==
+(none)
+
