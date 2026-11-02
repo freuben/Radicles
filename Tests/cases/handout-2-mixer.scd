@@ -155,8 +155,12 @@ var vol = {|key| Ndef(key).get('volume') };
 	noWarnings: true,
 	known: "marilyn2 is not in RadiclesFiles.zip (Play/0 has drums1 and marilyn1)"
 );
+// the three commands run at the same time, so their posts race: compared in
+// any order, after a fixed wait long enough for both buffers to load (the
+// quiet-wait could end between the effect and the second block)
 ~radTest.("simultaneous-commands-marilyn1",
 	setup: ["start 2"],
-	cmds: ["(lp 1 drums1 & lp 2 marilyn1 & fx 1 pch)"],
-	noWarnings: true
+	cmds: [["(lp 1 drums1 & lp 2 marilyn1 & fx 1 pch)", 5]],
+	noWarnings: true,
+	anyOrder: true
 );

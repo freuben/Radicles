@@ -126,6 +126,10 @@ if(test.notNil, {
 		});
 		current = nil;
 		"RADTEST:END".postln;
+		// commands that run at the same time post in any order: sort
+		if(test[\anyOrder] == true, {
+			blocks.do{|b| [\radpost, \radpostcont].do{|ch| b[ch] = b[ch].copy.sort } };
+		});
 
 		result = try { test[\check].value ? true } {|e| "check raised: " ++ e.errorString };
 		if(result == true and: { docProblem.notNil }, { result = docProblem });
