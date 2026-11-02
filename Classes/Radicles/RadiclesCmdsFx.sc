@@ -8,7 +8,54 @@
 		this.prFxGetCmds;
 		this.prFxModCmds;
 		this.prFxPresetCmds;
+		this.prFxBypassCmds;
 		this.prChannelStripCmds;
+	}
+
+	// fxbypass: bypass an effect (Document Model, step 1, PR 4). Without a
+	// state it toggles; 1 bypasses, 0 un-bypasses. Same forms as fxclear.
+	*prFxBypassCmds {
+		var byType, byMix;
+		byType = {|str2, num1, num2, state|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.bypassFx(\track, num1, num2, state)}
+				{str2 == 'b'} {aZ.bypassFx(\bus, num1, num2, state)}
+				{str2 == 'm'} {aZ.bypassFx(\master, 1, num2, state)};
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
+		byMix = {|num1, num2, state|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.bypassFx(thisArr[0].asSymbol, thisArr[1], num2, state);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
+		cW.add(\fxbypass, [\str, \str, \num], {|str1, str2, num1|
+			if(str2 == 'm', { byType.(str2, 1, num1) }, { "fxbypass: m slot, or t/b num slot".warn });
+		}, "fxbypass: m, slot");
+		cW.add(\fxbypass, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			byType.(str2, num1, num2);
+		}, "fxbypass: trackType, trackNum, slot");
+		cW.add(\fxbypass, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+			byType.(str2, num1, num2, num3.asInteger.clip(0, 1));
+		}, "fxbypass: trackType, trackNum, slot, state");
+		cW.add(\fxbypass, [\str, \num, \num], {|str1, num1, num2|
+			byMix.(num1, num2);
+		}, "fxbypass: mixTrackNum, slot");
+		cW.add(\fxbypass, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+			byMix.(num1, num2, num3.asInteger.clip(0, 1));
+		}, "fxbypass: mixTrackNum, slot, state");
 	}
 
 	// fx, fxclear, clearfx

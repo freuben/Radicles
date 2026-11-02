@@ -1231,7 +1231,7 @@
 							});
 						});
 					});
-				}, [this.prFxPresetMenu(filterTag, filterKey)]);
+				}, [this.prFxBypassButton(filterTag), this.prFxPresetMenu(filterTag, filterKey)]);
 			filtersWindow = filtersWindow.add(filtersWin);
 			filtersWin.onClose = {
 				filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
@@ -1379,6 +1379,21 @@
 		filtersWin.front;
 		^filtersWin;
 	}
+	// an effect window's BYPASS button, lit while the effect is bypassed;
+	// pressing it is like fxbypass (AssemblageBypass)
+	prFxBypassButton {arg filterTag;
+		var button, info = this.convFilterTag(filterTag);
+		button = Button().maxHeight_(15).minHeight_(15).fixedWidth_(60)
+		.font_(basicFont)
+		.states_([["BYPASS", Color.white, Color.black], ["BYPASS", Color.white, colorWarning]]);
+		button.value = this.isBypassed(filterTag).binaryValue;
+		button.canFocus = false;
+		button.srcAction = {|view|
+			this.bypassFx(info[0], info[1].asInteger, info[2].asInteger, view.value);
+		};
+		^button
+	}
+
 	// an effect window's PRESET menu: this effect's presets (new format);
 	// choosing one loads it into the slot, like fxload
 	prFxPresetMenu {arg filterTag, filterKey;

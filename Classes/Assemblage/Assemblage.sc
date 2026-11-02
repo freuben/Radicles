@@ -8,7 +8,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<>recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10,
-	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow;
+	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow, <bypassed;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);
@@ -215,7 +215,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	autoRoute {arg trackInfo, action;
 		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
 		{
-			newArr = trackInfo.reverse;
+			//a bypassed effect is left out of the chain (AssemblageBypass)
+			newArr = this.activeStages(trackInfo).reverse;
 			ndefArr = newArr.flop[0];
 			synthArr = newArr.flop[1];
 			(newArr.size-1).do{|index|
@@ -954,7 +955,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		mastOutWin=nil; oiIns=nil; oiOuts=nil; recInputArr=nil; winDirRec=nil; muteButArr=nil;
 		recButArr=nil; soloButArr=nil; spaceButArr=nil; recordingButton=nil; recordingValBut=nil;
 		setOutputMenu=nil; setInputMenu=nil; modSendArr=nil; trackDataArr=nil; trackBufferArr=nil;
-		trackCount=1; busCount=1; winRefresh=false;
+		trackCount=1; busCount=1; winRefresh=false; bypassed=nil;
 	}
 
 	clearNdefs {arg action;
