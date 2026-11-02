@@ -1847,6 +1847,18 @@
 		}, "setfx: filterNum, fxArg");
 	}
 
+	// every effect preset as [effect, name], sorted: the new format (one file
+	// per preset) and presets saved in the old format, without repeats
+	*fxPresetList {
+		var list = RadUnit.allPresets(\filter);
+		(PresetFile.read(\filter) ? []).do{|item|
+			var pair = [PresetFile.read(\filter, item)[0], item];
+			if(list.any{|it| it == pair }.not, { list = list.add(pair) });
+		};
+		^list.sort({ arg a, b; var x = a[0].asString, y = b[0].asString;
+			(x < y) or: { (x == y) and: { a[1].asString <= b[1].asString } } })
+	}
+
 	// fxload, loadfx, fxsave, savefx, fxlags, lagsfx
 	*prFxPresetCmds {
 		cW.add(\fxunmod, [\str, \num, \str, \num], {|str1, num1, str2, num2|
@@ -1999,17 +2011,11 @@
 
 		//print fx presets
 		cW.add(\fxload, [\str], {|str1|
-			PresetFile.read(\filter).collect{|item|
-				[PresetFile.read(\filter, item)[0], item]; }
-			.sort({ arg a, b; a[0] <= b[0] }).dopostln;
+			this.fxPresetList.dopostln;
 		}, "fxload: prints all fx presets that can be loaded");
 
 		cW.add(\fxload, [\str, \str], {|str1, str2|
-			var resultArr;
-			resultArr = PresetFile.read(\filter).collect{|item|
-				[PresetFile.read(\filter, item)[0], item]; }
-			.sort({ arg a, b; a[0] <= b[0] });
-			resultArr.select({|item| item[0] == str2 }).dopostln;
+			this.fxPresetList.select({|item| item[0] == str2 }).dopostln;
 		}, "fxload: fxType, fx presets with for this type");
 		//fxs lags
 		cW.add(\fxlags, [\str, \str, \num, \num], {|str1, str2, num1, num2|
