@@ -1261,7 +1261,8 @@
 		valueWidth = textWidth.("-0.00000"); //values show 8 characters
 		buttonWidth = textWidth.(buttonString.asString) + 12;
 		rowWidth = stringLengh + 180 + valueWidth + (2 * spacing);
-		headerWidth = buttonWidth + (headerViews ? []).sum{|view| (view.minWidth ? 60) + spacing };
+		headerWidth = buttonWidth + (headerViews ? []).sum{|view|
+			(try { view.getProperty(\minimumWidth) } { 60 } ? 60) + spacing };
 		filtersWin = ScrollView()
 		.name_(winName);
 		filtersWin.hasHorizontalScroller = false;
