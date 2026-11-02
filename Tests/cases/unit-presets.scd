@@ -301,7 +301,10 @@
 ~radTest.("fx-window-sizes",
 	setup: ["start 2"],
 	code: {
-		var problems = [];
+		var problems = [], capture = Radicles.postCapture;
+		//the 52 inserts post code that varies between runs and is not what this
+		//test is about: not captured, so the snapshot stays empty
+		Radicles.postCapture = nil;
 		~radPresetDefs.do{|def|
 			var win, canvas, font = Font("Monaco", 8);
 			Radicles.cW.callFunc("fx t 1 1 " ++ def); 1.5.wait;
@@ -319,6 +322,7 @@
 				problems = problems.add(def ++ ": window shorter than its rows") });
 			win.close; 0.2.wait;
 		};
+		Radicles.postCapture = capture;
 		~radSizeProblems = problems.asSet.asArray.sort;
 	},
 	check: { ~radSizeProblems.isEmpty or: { ~radSizeProblems.keep(8).join("; ") } },
