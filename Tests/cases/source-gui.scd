@@ -13,7 +13,7 @@
 };
 
 // the effect window is built by the shared code and looks as before:
-// a REMOVE FILTER button and a slider per argument with a spec
+// a REMOVE FILTER button (and BYPASS, PR 4) and a slider per argument with a spec
 ~radTest.("fx-window-shared-builder",
 	setup: ["start 2", "fx t 1 pch"],
 	code: {
@@ -26,7 +26,7 @@
 		~radFxSliders[0].valueAction = 0.5;
 	},
 	check: {
-		((~radFxButton == ["R E M O V E   F I L T E R"]) and: { ~radFxSliders.size == 4 })
+		((~radFxButton.asArray.sort == ["BYPASS", "R E M O V E   F I L T E R"]) and: { ~radFxSliders.size == 4 })
 		or: { "buttons: " ++ ~radFxButton.cs ++ ", sliders: " ++ ~radFxSliders.size }
 	},
 	teardown: ~radCloseWins,
