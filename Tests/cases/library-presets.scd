@@ -4,9 +4,12 @@
 // Each test makes a small library, RadTestLib, with one effect, and removes it.
 
 ~radTestLibPath = { Radicles.libPath +/+ "RadTestLib" };
+// a copy of EmptyLib (Radicles expects every library folder to be there),
+// with one effect
 ~radMakeTestLib = {
 	var dir = ~radTestLibPath.() +/+ "Files" +/+ "SynthFiles";
-	File.mkdir(dir);
+	("rm -rf " ++ ~radTestLibPath.().shellQuote ++ "; cp -R " ++
+		(Radicles.libPath +/+ "EmptyLib").shellQuote ++ " " ++ ~radTestLibPath.().shellQuote).systemCmd;
 	File.use(dir +/+ "Filter.scd", "w", {|f|
 		f.write("[ [ 'radtestgain', {arg gain = 1; \\in * gain} ] ]") });
 };
