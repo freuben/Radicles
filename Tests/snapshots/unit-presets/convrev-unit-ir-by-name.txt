@@ -1,0 +1,25 @@
+>> <code>
+== radpost ==
+Ndef.ar('filterTrack_1_1', 1);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+~buffer0 = Buffer.readChannel(s, "<RadiclesFiles>/SoundFiles/IR/ortf_s1r1.wav", bufnum: 0, channels: [0]);
+~buffer1 = Buffer.alloc(s, 530432.0, 1, bufnum: 1);
+~buffer2 = Buffer.readChannel(s, "<RadiclesFiles>/SoundFiles/IR/ortf_s1r1.wav", bufnum: 2, channels: [1]);
+~buffer3 = Buffer.alloc(s, 530432.0, 1, bufnum: 3);
+~buffer0.free;
+~buffer0 = nil;
+~buffer2.free;
+~buffer2 = nil;
+Ndef('filterTrack_1_1', {arg mix=1.0 ;
+    var input, output;
+    input = Ndef.ar('inTrack1', 1) * Line.kr(0,1,0.1);
+    output = [PartConv.ar(input, 2048, ~buffer1),PartConv.ar(input, 2048, ~buffer3)]/2;
+    (output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
+});
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

@@ -56,6 +56,8 @@
 			filterSpecs = [filterTag, SpecFile.read(\filter, filter, false)];
 			cond = Condition(false);
 
+			//one entry per slot: replacing an effect replaces its data
+			trackDataArr !? { trackDataArr = trackDataArr.reject({|item| item[0] == filterTag }) };
 			if(data.notNil, {
 				trackDataArr = trackDataArr.add([filterTag, data]);
 				if(data[0] == \convrev, {

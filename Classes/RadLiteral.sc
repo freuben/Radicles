@@ -13,7 +13,7 @@ RadLiteral {
 	*initClass {
 		// keys written first, in this order; others follow alphabetically
 		keyOrder = [\format, \type, \spec, \kind, \def, \name, \args, \mods, \data, \buffer,
-			\morphShape, \morphTime, \bypass, \position, \unit, \strips];
+			\morphShape, \morphTime, \bypass, \position, \unit, \strips, \blocks];
 	}
 
 	// ---- writing ----
