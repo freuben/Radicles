@@ -1,0 +1,6 @@
+>> blk remove 1
+== radpost ==
+Ndef('block1').clear;
+== radpostcont ==
+(none)
+

@@ -1,6 +1,6 @@
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
-	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048;
+	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers;
 
 	*add {arg channels=1, action;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -59,6 +59,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			blocks.removeAt(blockIndex);
 			liveBlocks.removeAt(blockIndex);
 			timecond.removeAt(blockIndex);
+			RadUnit.syncBlocks; //document (step 2)
 		}, {
 			"Block Number not Found".warn;
 		});
@@ -79,6 +80,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blocks.removeAtAll(newArr);
 		liveBlocks.removeAll(newArr);
 		timecond.removeAll(newArr);
+		RadUnit.syncBlocks; //document (step 2)
 	}
 
 	*removeAll {var string;
@@ -91,6 +93,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		liveBlocks = [];
 		timecond = [];
 		blockCount = 1;
+		liveBuffers = nil;
+		RadUnit.syncBlocks; //document (step 2)
 	}
 
 	*clear {
@@ -100,6 +104,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		liveBlocks = [];
 		timecond = [];
 		blockCount = 1;
+		liveBuffers = nil;
+		RadUnit.syncBlocks; //document (step 2)
 	}
 
 	*initCond {arg block=1;
@@ -364,6 +370,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							if(blockFunc.notNil, {
 								ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
 								liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
+								//document (step 2): the buffer by what it is, then the unit
+								this.prSetBufferForm(startKey, blockName, bufferID ?? {
+									if(buffer.isArray and: { [\alloc, \play, \cue].includes(buffer[0]) }, { buffer }) });
+								RadUnit.sync(startKey);
 								if(aZ.notNil, { aZ.updateSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 							});
 							action.();
@@ -393,6 +403,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
 				++ "nil;" );
 			ndefCS.radcode;
+			RadUnit.sync(ndefs[blockIndex].key); //document (step 2)
 			if(aZ.notNil, { aZ.closeSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 			if(liveBlocks[blockIndex].notNil, {
 				this.buffree(blockIndex, fadeOut, {
@@ -824,6 +835,60 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			[\alloc, \cue].includes(item[0]) and: { item[1] == tag.asSymbol } };
 		if(id.notNil, { ^[id, nil] });
 		^[tag, nil];
+	}
+
+	// ---- the document (Document Model, step 2) ----
+
+	// a block's buffer by what it is, never by its number (numbers change from
+	// one run to the next): what Block.play needs to load it again.
+	//   [\play, \audio, \drums1]   -> (play: 'drums1', folder: 0)
+	//   [\cue, \cue1, \marilyn1]   -> (cue: 'marilyn1', folder: 0)
+	//   [\alloc, \alloc2, [2048]]  -> (alloc: 2048)  (with channels: n if more than 1)
+	//   a recording buffer         -> (rec: 1)       (@1)
+	// folder: the Play folder (BStore.playFolder) the file was read from.
+	// Several buffers (vosc) give an Array of these.
+	*bufferForm {arg id, folder;
+		var index, size;
+		folder = folder ? BStore.playFolder;
+		if(id.isArray.not or: { id.isEmpty }, { ^nil });
+		if(id[0].isArray, { ^id.collect{|item| this.bufferForm(item, folder) } });
+		^case
+		{ id[0] == \play } { (play: id[2], folder: folder) }
+		{ id[0] == \cue } { (cue: id[2], folder: folder) }
+		{ id[0] == \alloc } {
+			index = (recbuffers ? []).indexOfEqual(id);
+			if(index.notNil, { (rec: index + 1) }, {
+				size = id[2].asArray;
+				if(size.size > 1 and: { size[1] != 1 }, {
+					(alloc: size[0], channels: size[1]) }, { (alloc: size[0]) })
+			})
+		}
+		{ nil };
+	}
+
+	// remember the buffer of a block that just started, by what it is (the
+	// Play folder can change later); blocks without a buffer have none
+	*prSetBufferForm {arg key, blockName, id;
+		liveBuffers = liveBuffers ?? { IdentityDictionary.new };
+		liveBuffers[key] = if(blockName == \pattern, { nil }, { this.bufferForm(id) });
+	}
+
+	// what Block.play takes to load a buffer form again: a file's name, a
+	// size to allocate, or a recording buffer (several for an Array)
+	*bufferArgOf {arg form;
+		if(form.isNil, { ^nil });
+		if(form.isKindOf(Dictionary).not, { ^form.asArray.collect{|item| this.bufferArgOf(item) } });
+		^case
+		{ form[\play].notNil } { form[\play] }
+		{ form[\cue].notNil } { form[\cue] }
+		{ form[\rec].notNil } { this.recBuf(form[\rec]) }
+		{ form[\alloc].notNil } { form[\alloc] }
+		{ nil };
+	}
+
+	// the buffer form of a playing block (the unit's buffer), or nil
+	*bufferFormOf {arg key;
+		^liveBuffers !? {|b| b[key.asSymbol] } !? {|form| form.deepCopy }
 	}
 
 	//modulation

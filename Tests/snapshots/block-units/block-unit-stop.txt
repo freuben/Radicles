@@ -1,0 +1,12 @@
+>> st 1
+== radpost ==
+Ndef('block1').source = nil;
+== radpostcont ==
+(none)
+
+>> st 2
+== radpost ==
+Ndef('block2').source = nil;
+== radpostcont ==
+(none)
+
