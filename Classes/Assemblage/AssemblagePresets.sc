@@ -121,6 +121,8 @@
 		if(unit.isNil, { "No filter to save".warn; ^this });
 		if(RadUnit.validPresetName(presetName).not, {
 			("Preset names use letters, digits, - and _ only: " ++ presetName).warn; ^this });
+		if(presetName.asSymbol == \default, {
+			"default is the effect's own default values (fxload t 1 1 default); choose another name".warn; ^this });
 		write = {
 			path = RadUnit.writePreset(unit, presetName);
 			("Saved preset " ++ presetName ++ " for " ++ unit[\def] ++ ": " ++ path).postln;
@@ -143,7 +145,7 @@
 		var def, unit;
 		def = (filters ? []).detect{|item| item[0] == ndefKey } !? {|item| item[1] };
 		if(def.isNil or: { RadUnit.presetExists(\filter, def, presetName).not }, { ^false });
-		unit = RadUnit.readPreset(\filter, def, presetName);
+		unit = RadUnit.presetFor(ndefKey, def, presetName, this);
 		if(unit.isNil, { ^true });
 		{
 			if(RadUnit.apply(ndefKey, unit, this), {

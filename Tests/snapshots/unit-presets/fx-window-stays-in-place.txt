@@ -1,0 +1,11 @@
+>> <code>
+== radpost ==
+Ndef('mod1', {arg freq = 0.1, phase = 0, mul = 1, add = 0; {|val| (val-0.01)}.({arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).exprange(0.01, 2.01) + add}.(freq, phase, mul, add))});
+Ndef('filterTrack_1_1').xset('pitchDispertion', Ndef('mod1'));
+Ndef('mod2', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(0.0, 12.0) + add});
+Ndef('filterTrack_2_1').xset('delayTime', Ndef('mod2'));
+== radpostcont ==
+(none)
+

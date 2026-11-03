@@ -26,7 +26,7 @@
 		~radFxSliders[0].valueAction = 0.5;
 	},
 	check: {
-		((~radFxButton.asArray.sort == ["BYPASS", "R E M O V E   F I L T E R"]) and: { ~radFxSliders.size == 4 })
+		((~radFxButton.asArray.sort == ["BYPASS", "R E M O V E   F I L T E R", "SAVE"]) and: { ~radFxSliders.size == 4 })
 		or: { "buttons: " ++ ~radFxButton.cs ++ ", sliders: " ++ ~radFxSliders.size }
 	},
 	teardown: ~radCloseWins,

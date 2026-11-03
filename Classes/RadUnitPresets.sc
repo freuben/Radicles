@@ -20,8 +20,32 @@
 
 	*presetPath {|kind, def, name| ^this.presetDir(kind, def) +/+ name.asString ++ ".scd" }
 
+	// "default" is every effect's preset of its own default values (no file)
 	*presetExists {|kind, def, name|
+		if(name.asSymbol == \default, { ^true });
 		^this.validPresetName(name) and: { File.exists(this.presetPath(kind, def, name)) }
+	}
+
+	// the default preset: the definition's own default values, no modulators
+	*defaultUnit {|kind, def|
+		var func = SynthFile.read(kind, def), args = ();
+		if(func.respondsTo(\argNames), {
+			[func.argNames.asArray, func.defaultArgs.asArray].flop.do{|pair|
+				if(pair[1].notNil, { args[pair[0]] = this.plain(pair[1]) });
+			};
+		});
+		^(kind: kind, def: def, args: args)
+	}
+
+	// the unit a preset gives the effect at tag; for the default preset the
+	// effect keeps its data and buffer (a convolution reverb's impulse response)
+	*presetFor {|tag, def, name, az|
+		var unit = this.readPreset(\filter, def, name), current;
+		if(unit.notNil and: { name.asSymbol == \default }, {
+			current = this.read(tag, az) ? ();
+			[\data, \buffer].do{|key| current[key] !? {|value| unit[key] = value } };
+		});
+		^unit
 	}
 
 	// the names of the presets of one definition, sorted
@@ -57,6 +81,7 @@
 	// the unit in a preset file, or nil with a warning
 	*readPreset {|kind, def, name|
 		var path = this.presetPath(kind, def, name), data, unit;
+		if(name.asSymbol == \default and: { File.exists(path).not }, { ^this.defaultUnit(kind, def) });
 		if(this.presetExists(kind, def, name).not, {
 			("No preset '" ++ name ++ "' for " ++ def).warn; ^nil });
 		data = RadDoc.readData(File.readAllString(path), path);
