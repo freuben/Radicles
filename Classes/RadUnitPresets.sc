@@ -2,6 +2,11 @@
 // step 1, PR 3). A preset belongs to its unit's definition, like a plugin's
 // presets: one readable file per preset in
 //   <RadiclesFiles>/Settings/Presets/units/<kind>/<def>/<name>.scd
+// (the performer's own), and for a definition from a library (RAVE, ...)
+// also in that library, so presets can be shared with it:
+//   <RadiclesLibs>/<lib>/Settings/Presets/units/<kind>/<def>/<name>.scd
+// fxsave writes the performer's own; fxsave <def> <name> <lib> copies one
+// into the library. Reading looks in both; the performer's own wins.
 // Files are read with RadLiteral, so a preset is only ever data. A function
 // the performer saved (a modulator's) is kept as code and runs when the
 // preset is applied, posted like any other code.
@@ -18,12 +23,89 @@
 		^name.size > 0 and: { name.every{|c| c.isAlphaNum or: { c == $- } or: { c == $_ } } }
 	}
 
+	// where fxsave writes: the performer's own presets
 	*presetPath {|kind, def, name| ^this.presetDir(kind, def) +/+ name.asString ++ ".scd" }
+
+	// ---- libraries ----
+
+	// the library folders in RadiclesLibs
+	*libraries {
+		^(Radicles.libPath !? {|path| PathName(path).folders } ? [])
+		.reject{|folder| folder.folderName.beginsWith(".") }.collect(_.folderName)
+	}
+
+	// the library a definition comes from: "Main", a library's name, or nil
+	*libraryOf {|kind, def|
+		var file = kind.asString.firstToUpper ++ ".scd", has;
+		has = {|path| File.exists(path) and: {
+			(try { path.load } { nil }) !? {|arr| arr.any{|pair| pair.isArray and: { pair[0] == def.asSymbol } } } ? false } };
+		if(Radicles.mainPath.notNil and: { has.(Radicles.mainPath +/+ "Files" +/+ "SynthFiles" +/+ file) }, { ^"Main" });
+		^this.libraries.detect{|lib| has.(Radicles.libPath +/+ lib +/+ "Files" +/+ "SynthFiles" +/+ file) }
+	}
+
+	*libraryPresetRoot {|lib| ^Radicles.libPath +/+ lib +/+ "Settings" +/+ "Presets" +/+ "units" }
+
+	// the presets folder of a definition in its library (nil for Main)
+	*libraryPresetDir {|kind, def|
+		var lib = this.libraryOf(kind, def);
+		^if(lib.isNil or: { lib == "Main" }, { nil }, { this.libraryPresetRoot(lib) +/+ kind.asString +/+ def.asString })
+	}
+
+	// where a definition's presets are read from: the performer's own first
+	*presetDirs {|kind, def| ^[this.presetDir(kind, def), this.libraryPresetDir(kind, def)].reject(_.isNil) }
+
+	// the file of a preset (the performer's own if both have it), or nil
+	*findPresetPath {|kind, def, name|
+		if(this.validPresetName(name).not, { ^nil });
+		^this.presetDirs(kind, def).collect{|dir| dir +/+ name.asString ++ ".scd" }.detect{|path| File.exists(path) }
+	}
+
+	// \own, the library's name, or nil
+	*presetSource {|kind, def, name|
+		var path = this.findPresetPath(kind, def, name);
+		^case
+		{ path.isNil } { nil }
+		{ path == this.presetPath(kind, def, name) } { \own }
+		{ this.libraryOf(kind, def) }
+	}
+
+	// copy the performer's own preset into the effect's library, to share it
+	// with the library (fxsave <def> <name> <lib>); asks before replacing
+	*publishPreset {|kind, def, name, lib, action|
+		var from = this.presetPath(kind, def, name), owner = this.libraryOf(kind, def), to, copy;
+		lib = lib.asString;
+		case
+		{ this.libraries.includesEqual(lib).not } {
+			("No library " ++ lib ++ " (libraries: " ++ this.libraries.join(", ") ++ ")").warn }
+		{ owner.isNil } { ("No effect " ++ def).warn }
+		{ owner != lib } { (def ++ " is from " ++ owner ++ ", not " ++ lib ++
+			"; its presets can only go into " ++ owner).warn }
+		{ File.exists(from).not } { ("No preset " ++ name ++ " of your own for " ++ def ++
+			" (save it first with fxsave t 1 1 " ++ name ++ ")").warn }
+		{
+			to = this.libraryPresetRoot(lib) +/+ kind.asString +/+ def.asString +/+ name.asString ++ ".scd";
+			copy = {
+				File.mkdir(to.dirname);
+				File.use(to, "w", {|f| f.write(File.readAllString(from)) });
+				("Preset " ++ name ++ " for " ++ def ++ " is now in " ++ lib ++ ": " ++ to).postln;
+				action.(to);
+			};
+			if(File.exists(to), {
+				if(GUI.current.notNil, {
+					{ Window.warnQuestion(lib ++ " already has a preset " ++ name ++ " for " ++ def ++
+						". Replace it?", copy) }.defer;
+				}, {
+					(lib ++ " already has a preset " ++ name ++ " for " ++ def ++
+						"; not replaced (no window to ask in)").warn;
+				});
+			}, copy);
+		};
+	}
 
 	// "default" is every effect's preset of its own default values (no file)
 	*presetExists {|kind, def, name|
 		if(name.asSymbol == \default, { ^true });
-		^this.validPresetName(name) and: { File.exists(this.presetPath(kind, def, name)) }
+		^this.findPresetPath(kind, def, name).notNil
 	}
 
 	// the default preset: the definition's own default values, no modulators
@@ -48,18 +130,22 @@
 		^unit
 	}
 
-	// the names of the presets of one definition, sorted
+	// the names of the presets of one definition (own and library), sorted
 	*presetNames {|kind, def|
-		^(this.presetDir(kind, def) +/+ "*.scd").pathMatch
-		.collect{|path| PathName(path).fileNameWithoutExtension.asSymbol }.sort
+		^this.presetDirs(kind, def).collect{|dir|
+			(dir +/+ "*.scd").pathMatch.collect{|path| PathName(path).fileNameWithoutExtension.asSymbol }
+		}.flatten(1).asSet.asArray.sort
 	}
 
-	// every unit preset of a kind, as [def, name] pairs
+	// every unit preset of a kind (own and in libraries), as [def, name] pairs
 	*allPresets {|kind = \filter|
-		^(this.presetRoot +/+ kind.asString +/+ "*").pathMatch.collect{|dir|
-			var def = PathName(dir).folderName.asSymbol;
-			this.presetNames(kind, def).collect{|name| [def, name] }
-		}.flatten(1)
+		var roots = [this.presetRoot] ++ this.libraries.collect{|lib| this.libraryPresetRoot(lib) };
+		^roots.collect{|root|
+			(root +/+ kind.asString +/+ "*").pathMatch.collect{|dir|
+				var def = PathName(dir).folderName.asSymbol;
+				this.presetNames(kind, def).collect{|name| [def, name] }
+			}.flatten(1)
+		}.flatten(1).asSet.asArray.sort{|a, b| (a[0] ++ " " ++ a[1]) < (b[0] ++ " " ++ b[1]) }
 	}
 
 	// what a preset holds: the unit without the slot's own state (bypass,
@@ -80,7 +166,7 @@
 
 	// the unit in a preset file, or nil with a warning
 	*readPreset {|kind, def, name|
-		var path = this.presetPath(kind, def, name), data, unit;
+		var path = this.findPresetPath(kind, def, name) ? this.presetPath(kind, def, name), data, unit;
 		if(name.asSymbol == \default and: { File.exists(path).not }, { ^this.defaultUnit(kind, def) });
 		if(this.presetExists(kind, def, name).not, {
 			("No preset '" ++ name ++ "' for " ++ def).warn; ^nil });

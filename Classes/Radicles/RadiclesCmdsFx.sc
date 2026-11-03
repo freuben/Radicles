@@ -2066,6 +2066,12 @@
 			});
 		}, "load: filterNum, preset");
 
+		//fxsave <effect> <preset> <library>: copy one of your presets into the
+		//effect's library, to share it with the library
+		cW.add(\fxsave, [\str, \str, \str, \str], {|str1, str2, str3, str4|
+			RadUnit.publishPreset(\filter, str2, str3, str4);
+		}, "fxsave: effect, preset, library (copies your preset into the library)");
+
 		cW.add(\fxsave, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			if(aZ.notNil, {
 				case
