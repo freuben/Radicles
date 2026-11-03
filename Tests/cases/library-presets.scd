@@ -12,8 +12,10 @@
 		(Radicles.libPath +/+ "EmptyLib").shellQuote ++ " " ++ ~radTestLibPath.().shellQuote).systemCmd;
 	File.use(dir +/+ "Filter.scd", "w", {|f|
 		f.write("[ [ 'radtestgain', {arg gain = 1; \\in * gain} ] ]") });
+	Radicles.selLibs(["Main", "RadTestLib"]); //loaded, like imp RadTestLib
 };
 ~radLibClean = {
+	Radicles.selLibs(["Main"]);
 	("rm -rf " ++ ~radTestLibPath.().shellQuote).systemCmd;
 	(RadUnit.presetRoot +/+ "filter/*/radtest_*.scd").pathMatch.do{|path| File.delete(path) };
 };
