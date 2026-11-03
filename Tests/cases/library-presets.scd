@@ -12,6 +12,11 @@
 		(Radicles.libPath +/+ "EmptyLib").shellQuote ++ " " ++ ~radTestLibPath.().shellQuote).systemCmd;
 	File.use(dir +/+ "Filter.scd", "w", {|f|
 		f.write("[ [ 'radtestgain', {arg gain = 1; \\in * gain} ] ]") });
+	//the definition with its spec (what fx checks), and the spec
+	File.use(~radTestLibPath.() +/+ "Files/SynthDefFiles/Filter.scd", "w", {|f|
+		f.write("[ [ 'radtestgain', {arg gain = 1->[0, 2]; \\in * gain} ] ]") });
+	File.use(~radTestLibPath.() +/+ "Files/SpecFiles/Filter.scd", "w", {|f|
+		f.write("[ [ 'radtestgain', [ [ 'gain', [ 0, 2 ] ] ] ] ]") });
 	Radicles.selLibs(["Main", "RadTestLib"]); //loaded, like imp RadTestLib
 };
 ~radLibClean = {
