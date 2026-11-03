@@ -1414,13 +1414,17 @@
 		this.prFillPresetMenu(menu, filterKey);
 		menu.canFocus = false;
 		menu.srcAction = {|view|
-			if(view.value > 0, { this.loadUnitPreset(filterTag, view.items[view.value].asSymbol) });
+			//a library's preset reads "name · LIB": the name is the first word
+			if(view.value > 0, { this.loadUnitPreset(filterTag, view.items[view.value].split($ ).first.asSymbol) });
 		};
 		^menu
 	}
 
 	prFillPresetMenu {arg menu, filterKey;
-		menu.items = ["PRESET", "default"] ++ RadUnit.presetNames(\filter, filterKey).collect(_.asString);
+		menu.items = ["PRESET", "default"] ++ RadUnit.presetNames(\filter, filterKey).collect{|name|
+			var source = RadUnit.presetSource(\filter, filterKey, name);
+			if(source == \own or: { source.isNil }, { name.asString }, { name.asString ++ " · " ++ source })
+		};
 		menu.value = 0;
 	}
 

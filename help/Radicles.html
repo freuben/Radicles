@@ -373,6 +373,8 @@ fxmorph t 1 1 warm 10 glide //each value glides (lag) instead of a crossfade
 morphtime 5 //global morph time (2 by default)
 morphtime t 1 1 8 //this slot's own morph time, saved with its presets
 morphtime t 1 1 default //back to the global one
+//share a preset with a library: copies your preset raveSetting1 of nnt into RAVE
+fxsave nnt raveSetting1 RAVE
 
 //get filter information
 fxget m 1

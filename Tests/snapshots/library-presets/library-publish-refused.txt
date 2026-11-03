@@ -1,0 +1,14 @@
+>> <code>
+== radpost ==
+Ndef.ar('filterTrack_2_1', 1);
+Ndef('filterTrack_2_1').fadeTime = 0.5;
+Ndef('filterTrack_2_1', {arg gain = 1; Ndef.ar('inTrack2', 1) * gain});
+Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_2_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('filterTrack_2_1').set('gain', 0.5);
+Ndef('filterTrack_2_1').set('gain', 0.75);
+== radpostcont ==
+(none)
+
