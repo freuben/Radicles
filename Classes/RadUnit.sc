@@ -24,6 +24,30 @@ RadUnit {
 		{ (code: value.cs) }
 	}
 
+	// an effect's data as the unit keeps it. A convolution reverb's impulse
+	// response by its name in the IR folder (never a path or buffer number):
+	//   [\convrev, \ortf_s1r1, 2048] -> (ir: \ortf_s1r1, fftsize: 2048)
+	// other data as plain data
+	*dataForm {|data|
+		var form;
+		if(data.isArray and: { data[0] == \convrev }, {
+			form = (ir: data[1]);
+			data[2] !? {|size| form[\fftsize] = size };
+			data[3] !? {|input| form[\input] = this.plain(input) };
+			^form
+		});
+		^this.plain(data)
+	}
+
+	// what the effect takes from a unit's data (also the list presets saved
+	// before Nov 2026 hold): (ir: name, fftsize: n) -> [\convrev, name, n]
+	*dataArg {|data|
+		if(data.isKindOf(Dictionary) and: { data[\ir].notNil }, {
+			^[\convrev, data[\ir], data[\fftsize] ? 2048] ++ (data[\input] !? {|input| [input] } ? [])
+		});
+		^data
+	}
+
 	// a block's Ndef key: block1, block12 (not recblock1)
 	*isBlockTag {|tag| ^"^block[0-9]+$".matchRegexp(tag.asString) }
 
@@ -59,7 +83,7 @@ RadUnit {
 		unit = (kind: \filter, def: name, args: argsMods[0]);
 		if(argsMods[1].notEmpty, { unit[\mods] = argsMods[1] });
 		extra = (az.trackDataArr ? []).detect{|item| item[0] == tag };
-		if(extra.notNil and: { extra[1].notNil }, { unit[\data] = this.plain(extra[1]) });
+		if(extra.notNil and: { extra[1].notNil }, { unit[\data] = this.dataForm(extra[1]) });
 		extra = (az.trackBufferArr ? []).detect{|item| item[0] == tag };
 		if(extra.notNil and: { extra[1].notNil }, { unit[\buffer] = this.plain(extra[1]) });
 		if(az.isBypassed(tag), { unit[\bypass] = true });

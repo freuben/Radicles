@@ -123,6 +123,8 @@
 	// effect keeps its data and buffer (a convolution reverb's impulse response)
 	*presetFor {|tag, def, name, az|
 		var unit = this.readPreset(\filter, def, name), current;
+		//a preset saved before Nov 2026 holds a reverb's data as a list
+		if(unit.notNil and: { unit[\data].notNil }, { unit[\data] = this.dataForm(this.dataArg(unit[\data])) });
 		if(unit.notNil and: { name.asSymbol == \default }, {
 			current = this.read(tag, az) ? ();
 			[\data, \buffer].do{|key| current[key] !? {|value| unit[key] = value } };
@@ -204,7 +206,7 @@
 				if(value.isKindOf(Dictionary).not, { pairs = pairs ++ [key, value] }) };
 			cond = Condition(false);
 			az.filter(info[0], info[1].asInteger, info[2].asInteger, unit[\def], pairs,
-				unit[\buffer], unit[\data], { cond.test = true; cond.signal }, true);
+				unit[\buffer], this.dataArg(unit[\data]), { cond.test = true; cond.signal }, true);
 			cond.wait;
 			current = this.read(tag, az);
 		});

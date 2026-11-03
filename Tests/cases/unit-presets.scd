@@ -329,3 +329,65 @@
 	teardown: { (Radicles.aZ !? {|a| a.filtersWindow } ? []).copy.do{|w| w.close } },
 	gui: true
 );
+
+// ---- convolution reverb: the impulse response by its name (3 Nov 2026) ----
+// convrev1 can only be added from the mixer window, which calls filter with
+// the impulse response's name; these tests call it the same way.
+~radConvRev = {|ir, slot = 1|
+	var cond = Condition(false);
+	Radicles.aZ.filter(\track, 1, slot, \convrev1, data: [\convrev, ir, 2048],
+		action: { cond.test = true; cond.signal });
+	cond.wait;
+	2.wait;
+};
+
+// the unit names the impulse response; no path, no buffer number
+~radTest.("convrev-unit-ir-by-name",
+	setup: ["start 2"],
+	code: { ~radConvRev.(\ortf_s1r1) },
+	check: {
+		var unit = RadUnit.read(\filterTrack_1_1), text = unit.cs;
+		case
+		{ unit.isNil } { "no effect" }
+		{ unit[\data] != (ir: \ortf_s1r1, fftsize: 2048) } { "data: " ++ unit[\data].cs }
+		{ text.contains("/") or: { text.contains("buffer") } } { "path or buffer in the unit: " ++ text }
+		{ true }
+	}
+);
+
+// a preset brings its impulse response back
+~radTest.("convrev-preset-ir",
+	setup: ["start 2"],
+	code: {
+		~radConvRev.(\ortf_s1r1);
+		Radicles.cW.callFunc("fxsave t 1 1 radtest_room"); 1.wait;
+		~radConvRev.(\ortf_s2r2);
+		Radicles.cW.callFunc("fxload t 1 1 radtest_room"); 3.wait;
+	},
+	check: {
+		var file = RadUnit.readPreset(\filter, \convrev1, \radtest_room), unit = RadUnit.read(\filterTrack_1_1);
+		case
+		{ file.isNil } { "no preset" }
+		{ file[\data] != (ir: \ortf_s1r1, fftsize: 2048) } { "preset data: " ++ file[\data].cs }
+		{ unit[\data] != (ir: \ortf_s1r1, fftsize: 2048) } { "after loading: " ++ unit[\data].cs }
+		{ true }
+	},
+	teardown: ~radPresetClean
+);
+
+// a preset saved before Nov 2026 holds the list form; it still loads
+~radTest.("convrev-preset-old-list",
+	setup: ["start 2"],
+	code: {
+		~radConvRev.(\ortf_s2r2);
+		RadUnit.writePreset((kind: \filter, def: \convrev1, args: (mix: 0.5),
+			data: [\convrev, \ortf_s1r1, 2048]), \radtest_oldroom);
+		Radicles.cW.callFunc("fxload t 1 1 radtest_oldroom"); 3.wait;
+	},
+	check: {
+		var unit = RadUnit.read(\filterTrack_1_1);
+		(unit[\data] == (ir: \ortf_s1r1, fftsize: 2048) and: { unit[\args][\mix] == 0.5 })
+		or: { "unit: " ++ unit.cs }
+	},
+	teardown: ~radPresetClean
+);
