@@ -128,7 +128,9 @@
 			("Saved preset " ++ presetName ++ " for " ++ unit[\def] ++ ": " ++ path).postln;
 			action.(path);
 		};
-		if(RadUnit.presetExists(\filter, unit[\def], presetName), {
+		//only your own presets count: one of the same name in the effect's
+		//library is not replaced (yours is read first)
+		if(File.exists(RadUnit.presetPath(\filter, unit[\def], presetName)), {
 			if(GUI.current.notNil, {
 				{ Window.warnQuestion("Preset " ++ presetName ++ " for " ++ unit[\def] ++
 					" exists. Replace it?", write) }.defer;
