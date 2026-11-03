@@ -1,0 +1,6 @@
+>> blkload 1 default
+== radpost ==
+Ndef('block1').set('rate', 1);
+== radpostcont ==
+(none)
+

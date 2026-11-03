@@ -381,6 +381,15 @@ modblkset 1 rate [freq, 1]
 unmodblk 1 1
 unmodblk 1 rate
 
+//block presets: values, modulators and the sound file or wavetable (by name)
+blksave 1 warmLoop //block 1's settings, saved for its definition (loop)
+blkload 1 warmLoop //into a block playing the same definition
+blkload 1 warmLoop nobuf //the preset's settings, keeping block 1's sound file or table
+blkload 1 default //the definition's own default values
+blkload //all block presets
+blkload loop //the presets of loop
+blksave loop warmLoop MyLib //share your preset with loop's library
+
 //mixer mods
 vol t 1 sin_(freq, 10)
 pan b 1 sin
