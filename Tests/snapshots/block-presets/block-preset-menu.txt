@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+Ndef('block1').set('freq', 330);
+== radpostcont ==
+(none)
+
