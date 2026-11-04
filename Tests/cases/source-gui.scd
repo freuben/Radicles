@@ -48,7 +48,7 @@
 		~radSrcSliders.first !? {|sl| sl.valueAction = 0.5 };
 	},
 	check: {
-		((~radSrcName == "block1 | sine") and: { ~radSrcButton == ["R E M O V E   B L O C K"] }
+		((~radSrcName == "block1 | sine") and: { ~radSrcButton.asArray.sort == ["R E M O V E   B L O C K", "SAVE"] }
 			and: { ~radSrcSliders.size == 3 })
 		or: { "window: " ++ ~radSrcName.cs ++ ", buttons: " ++ ~radSrcButton.cs
 			++ ", sliders: " ++ ~radSrcSliders.size }
@@ -62,7 +62,7 @@
 	setup: ["start 2", "blk 1 sine", "blkgui 1"],
 	code: {
 		0.5.wait;
-		~radSrcWin.(\block1) !? {|w| ~radKids.(w, Button).first.doAction };
+		~radSrcWin.(\block1) !? {|w| ~radKids.(w, Button).detect{|b| b.string == "R E M O V E   B L O C K" }.doAction };
 		1.wait;
 	},
 	check: {

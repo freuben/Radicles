@@ -1420,9 +1420,10 @@
 		^menu
 	}
 
-	prFillPresetMenu {arg menu, filterKey;
-		menu.items = ["PRESET", "default"] ++ RadUnit.presetNames(\filter, filterKey).collect{|name|
-			var source = RadUnit.presetSource(\filter, filterKey, name);
+	//kind: \filter (an effect window) or \block (a source window)
+	prFillPresetMenu {arg menu, filterKey, kind = \filter;
+		menu.items = ["PRESET", "default"] ++ RadUnit.presetNames(kind, filterKey).collect{|name|
+			var source = RadUnit.presetSource(kind, filterKey, name);
 			if(source == \own or: { source.isNil }, { name.asString }, { name.asString ++ " · " ++ source })
 		};
 		menu.value = 0;
@@ -1440,11 +1441,28 @@
 	}
 
 	prSavePresetWindow {arg filterTag;
-		var win, field, save, def, parent;
+		var def, parent;
 		def = (filters ? []).detect{|item| item[0] == filterTag } !? {|item| item[1] };
 		if(def.isNil, { ^this });
 		parent = (filtersWindow ? []).detect{|w| w.name.beginsWith(filterTag.asString ++ " ") };
-		win = Window("Save preset · " ++ filterTag ++ " | " ++ def,
+		^this.prPresetNameWindow(filterTag.asString ++ " | " ++ def, parent, {|name|
+			this.writeUnitPreset(filterTag, name, {
+				{ (filtersWindow ? []).detect{|w| w.name.beginsWith(filterTag.asString ++ " ") }
+					!? {|w| this.prRefillPresetMenu(w, def, \filter) } }.defer;
+			});
+		});
+	}
+
+	//the PRESET menu of an open argument window, filled again (after a save)
+	prRefillPresetMenu {arg win, def, kind;
+		win.canvas.children.detect{|v| v.isKindOf(PopUpMenu) } !? {|menu| this.prFillPresetMenu(menu, def, kind) };
+	}
+
+	// the small window a SAVE button opens: asks for a preset name, then calls
+	// saveFunc with it (a Symbol). Shared by effect and source windows.
+	prPresetNameWindow {arg title, parent, saveFunc;
+		var win, field, save;
+		win = Window("Save preset · " ++ title,
 			Rect(parent !? {|w| w.bounds.left + 20 } ? 200, parent !? {|w| w.bounds.top + 40 } ? 200, 300, 70),
 			resizable: false);
 		win.background = Color.black;
@@ -1456,11 +1474,7 @@
 			{ RadUnit.validPresetName(name).not } {
 				("Preset names use letters, digits, - and _ only: " ++ name).warn }
 			{
-				this.writeUnitPreset(filterTag, name.asSymbol, {
-					{ (filtersWindow ? []).detect{|w| w.name.beginsWith(filterTag.asString ++ " ") }
-						!? {|w| w.canvas.children.detect{|v| v.isKindOf(PopUpMenu) }
-							!? {|menu| this.prFillPresetMenu(menu, def) } } }.defer;
-				});
+				saveFunc.(name.asSymbol);
 				win.close;
 			};
 		};
@@ -1479,6 +1493,40 @@
 		win.front;
 		field.focus(true);
 		^win
+	}
+
+	// a source window's PRESET menu: the presets of the block's definition;
+	// choosing one loads it into the block, like blkload (default first)
+	prBlkPresetMenu {arg block, blockName;
+		var menu;
+		menu = PopUpMenu().maxHeight_(15).minHeight_(15).fixedWidth_(90)
+		.font_(basicFont)
+		.background_(Color.black).stringColor_(Color.white);
+		this.prFillPresetMenu(menu, blockName, \block);
+		menu.canFocus = false;
+		menu.srcAction = {|view|
+			//a library's preset reads "name · LIB": the name is the first word
+			if(view.value > 0, { RadUnit.loadBlockPreset(block, view.items[view.value].split($ ).first.asSymbol) });
+		};
+		^menu
+	}
+
+	// a source window's SAVE button: asks for a name, then saves like blksave
+	// (asking first if the name exists) and adds it to the menu
+	prBlkSaveButton {arg block, blockName;
+		var button = Button().maxHeight_(15).minHeight_(15).fixedWidth_(50)
+		.font_(basicFont)
+		.states_([["SAVE", Color.white, Color.black]]);
+		button.canFocus = false;
+		button.srcAction = {
+			var tag = RadUnit.blockTag(block);
+			this.prPresetNameWindow(tag.asString ++ " | " ++ blockName, this.prSourceWin(tag), {|name|
+				RadUnit.saveBlockPreset(block, name, {
+					{ this.prSourceWin(tag) !? {|w| this.prRefillPresetMenu(w, blockName, \block) } }.defer;
+				});
+			});
+		};
+		^button
 	}
 
 	filterGUIIndex {arg index=0, topLeftArr, mixButton;
@@ -1662,7 +1710,11 @@
 						winLeft, winDown, "R E M O V E   B L O C K", {|win|
 							//like 'st N': stopping the block closes the window
 							Radicles.cW.callFunc("st " ++ (blockIndex + 1));
-						});
+						},
+						//presets (blksave, blkload); recording blocks have none
+						if(RadUnit.recordsDef(blockName).not, {
+							[this.prBlkSaveButton(blockIndex + 1, blockName),
+								this.prBlkPresetMenu(blockIndex + 1, blockName)] }));
 					sourceWindows = sourceWindows.add(srcWin);
 					if(trackNum.notNil, { this.prSrcWinTracks.put(trackNum, ndefKey) });
 					srcWin.onClose = {
