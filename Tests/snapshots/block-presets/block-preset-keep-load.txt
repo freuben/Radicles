@@ -2,6 +2,7 @@
 == radpost ==
 ~buffer3 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/recordings/radtest_take.wav", bufnum: 3);
 Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    RadPosition.kr(~position1, ~buffer3, rate, trigger, startPos, 1);
     PlayBuf.ar(~buffer3.numChannels, ~buffer3, rate, trigger, startPos.linlin(0,1,0, ~buffer3.numFrames), 1)*mul;});
 Ndef('block1').xset('rate', 1, 'startPos', 0, 'trigger', 1, 'mul', 1);
 ~buffer2.free;

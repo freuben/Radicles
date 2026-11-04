@@ -108,3 +108,29 @@
 		~radNear.(v, 0.499, 0.501) or: { "startPosOf: " ++ v }
 	}
 );
+
+// after the server quits or boots, the old bus numbers belong to nobody (or
+// to an Ndef): the block forgets its bus and makes a new one when it plays
+~radTest.("position-bus-after-reboot",
+	setup: ["start 2", ["lp 1 marilyn1", 3]],
+	code: {
+		var capture = Radicles.postCapture;
+		~radBefore = Block.positionBus(1);
+		ServerQuit.run(Server.default);
+		~radForgotten = Block.positionBus(1).isNil;
+		//the posted code holds buffer numbers that depend on the run: not captured
+		Radicles.postCapture = nil;
+		Radicles.cW.callFunc("lp 1 drums1"); 3.wait;
+		Radicles.postCapture = capture;
+		~radAfter = Block.positionBus(1);
+		~radP1 = ~radPos.();
+	},
+	check: {
+		case
+		{ ~radBefore.isNil } { "no bus before" }
+		{ ~radForgotten.not } { "the bus was kept after the server quit" }
+		{ ~radAfter.isNil or: { ~radAfter === ~radBefore } } { "no new bus: " ++ ~radAfter }
+		{ ~radP1.isNil } { "no position after" }
+		{ true }
+	}
+);

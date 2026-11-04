@@ -884,6 +884,19 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		^string.replace("\\position", name).replace("'position'", name);
 	}
 
+	//a server that quits or boots starts its bus numbers again: forget the
+	//position buses, so a block never writes to a bus an Ndef owns now
+	*initClass {
+		Class.initClassTree(ServerQuit);
+		Class.initClassTree(ServerBoot);
+		ServerQuit.add(this);
+		ServerBoot.add(this);
+	}
+
+	*doOnServerQuit {arg server; if(server === Server.default, { positionBuses = nil }) }
+
+	*doOnServerBoot {arg server; if(server === Server.default, { positionBuses = nil }) }
+
 	*prFreePositionBuses {
 		positionBuses !? {|buses| buses.do{|bus| try { bus.free } } };
 		positionBuses = nil;

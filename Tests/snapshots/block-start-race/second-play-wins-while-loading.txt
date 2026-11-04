@@ -1,11 +1,13 @@
 >> <code>
 == radpost ==
+~position1 = Bus.control(s, 1);
 ~buffer0 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/drums1.wav", bufnum: 0);
 ~buffer1 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/marilyn1.wav", bufnum: 1);
 // block1: play drums1 cancelled while loading
 ~buffer0.free;
 ~buffer0 = nil;
 Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    RadPosition.kr(~position1, ~buffer1, rate, trigger, startPos, 0);
     PlayBuf.ar(~buffer1.numChannels, ~buffer1, rate, trigger, startPos.linlin(0,1,0, ~buffer1.numFrames), 0)*mul;});
 == radpostcont ==
 (none)
