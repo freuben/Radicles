@@ -1,6 +1,6 @@
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
-	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers;
+	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers, positionBuses;
 
 	*add {arg channels=1, action;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -94,6 +94,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		timecond = [];
 		blockCount = 1;
 		liveBuffers = nil;
+		this.prFreePositionBuses;
 		RadUnit.syncBlocks; //document (step 2)
 	}
 
@@ -105,6 +106,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		timecond = [];
 		blockCount = 1;
 		liveBuffers = nil;
+		this.prFreePositionBuses;
 		RadUnit.syncBlocks; //document (step 2)
 	}
 
@@ -178,7 +180,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						thisExcludeLibs = excludeLibs;
 						thisExcludeLibs = thisExcludeLibs.select({|item| item != "Main"});
 						blockFunc = SynthFile.read(\block, blockName, thisExcludeLibs);
-						blockFuncString = blockFunc.cs;
+						blockFuncString = this.prPositionString(startKey, blockFunc.cs);
 						if(blockFuncString.includesString("\\buffer")
 							.or(blockFuncString.includesString("'buffer'")), {
 								if(buffer.isArray.not, {
@@ -864,6 +866,61 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			})
 		}
 		{ nil };
+	}
+
+	// ---- position (step 2, PR 3; see RadPosition) ----
+
+	// a block definition's code with \position replaced by the block's
+	// control bus (made, and posted, the first time the block needs one)
+	*prPositionString {arg key, string;
+		var name;
+		if(string.includesString("\\position").not and: { string.includesString("'position'").not }, { ^string });
+		positionBuses = positionBuses ?? { IdentityDictionary.new };
+		name = "~position" ++ key.asString.divNumStr[1];
+		if(positionBuses[key].isNil or: { positionBuses[key].index.isNil }, {
+			(name ++ " = Bus.control(s, 1);").radcode;
+			positionBuses[key] = name.interpret;
+		});
+		^string.replace("\\position", name).replace("'position'", name);
+	}
+
+	*prFreePositionBuses {
+		positionBuses !? {|buses| buses.do{|bus| try { bus.free } } };
+		positionBuses = nil;
+	}
+
+	// the control bus a block writes its position to, or nil
+	*positionBus {arg block=1;
+		^positionBuses !? {|buses| buses[("block" ++ block).asSymbol] }
+	}
+
+	// does block N play a definition that reports its position?
+	*reportsPosition {arg block=1;
+		var source = ndefs !? { ndefs[block - 1] } !? {|ndef| ndef.source };
+		^source.isKindOf(Function) and: { source.def.sourceCode.asString.contains("RadPosition") }
+		and: { this.positionBus(block).notNil }
+	}
+
+	// the buffer block N plays (the first, for several), or nil
+	*bufferOf {arg block=1;
+		var id = liveBlocks !? { liveBlocks[block - 1] } !? {|entry| entry[2] };
+		if(id.isNil, { ^nil });
+		if(id[0].isArray, { id = id[0] });
+		^BStore.buffByID(id)
+	}
+
+	// where block N plays, in seconds of its file: action is called with the
+	// position, or nil when the block reports none (asks the server)
+	*position {arg block=1, action;
+		if(this.reportsPosition(block).not, { action.(nil); ^nil });
+		this.positionBus(block).get({|value| action.(value) });
+	}
+
+	// the startPos (0-1) that starts block N's file at seconds, or nil
+	*startPosOf {arg block=1, seconds;
+		var buf = this.bufferOf(block);
+		if(buf.isNil or: { buf.duration.isNil } or: { buf.duration <= 0 }, { ^nil });
+		^(seconds / buf.duration).clip(0, 1)
 	}
 
 	// remember the buffer of a block that just started, by what it is (the

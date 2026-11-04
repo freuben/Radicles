@@ -234,6 +234,24 @@
 			Block.lag(num1, arr1);
 		}, "blocksetn: blk, val");
 
+		//blkget 1 position: where block 1 plays, in seconds of its file
+		//(sound-file blocks that report it; see RadPosition)
+		cW.add(\blkget, [\str, \num, \str], {|str1, num1, str2|
+			if(str2 == 'position', {
+				Block.position(num1.asInteger, {|seconds|
+					var dur = Block.bufferOf(num1.asInteger) !? {|b| b.duration };
+					if(seconds.isNil, {
+						("block" ++ num1 ++ " reports no position (sound-file blocks such as play and loop do)").warn;
+					}, {
+						("// block" ++ num1 ++ " position: " ++ seconds.round(0.001) ++ " s"
+							++ (dur !? {|d| " of " ++ d.round(0.001) ++ " s" } ? "")).radpost;
+					});
+				});
+			}, {
+				("blkget " ++ num1 ++ " " ++ str2 ++ ": unknown (position)").warn;
+			});
+		}, "blkget: block, position");
+
 		cW.add(\blkget, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			Block.set(num1, [str2, num2]);
 		}, "blocksetn: blk, arg");
