@@ -185,6 +185,94 @@
 	teardown: ~radBlockPresetClean
 );
 
+// ---- keeping a recording (4 Nov 2026): blksave N name keep [file] ----
+
+// remove the recordings a test kept (named radtest_*, or the rec_ file it noted)
+~radKeepClean = {
+	(RadUnit.recordingsPath +/+ "radtest_*.wav").pathMatch.do{|path| File.delete(path) };
+	~radKeptFile !? {|name| File.delete(RadUnit.recordingsPath +/+ name ++ ".wav") };
+	~radKeptFile = nil;
+	~radBlockPresetClean.();
+};
+
+// keep writes the recording to recordings/<file>.wav, the block plays the
+// file (same values), and the preset holds the file
+~radTest.("block-preset-keep",
+	setup: ["start 2", "@ 2", ["blk 1 loop @1", 2], "blkset 1 rate 0.5"],
+	cmds: [["blksave 1 radtest_k keep radtest_take", 4]],
+	check: {
+		var form = (play: \radtest_take, folder: \recordings), unit = RadUnit.readBlock(\block1),
+		file = RadUnit.readPreset(\block, \loop, \radtest_k);
+		case
+		{ File.exists(RadUnit.recordingsPath +/+ "radtest_take.wav").not } { "no file in recordings" }
+		{ file.isNil } { "no preset" }
+		{ file[\buffer] != form } { "preset: " ++ file.cs }
+		{ unit[\buffer] != form } { "block: " ++ unit.cs }
+		{ unit[\args][\rate] != 0.5 } { "rate: " ++ unit[\args].cs }
+		{ true }
+	},
+	teardown: ~radKeepClean
+);
+
+// without a file name: rec_<date>_<time>
+~radTest.("block-preset-keep-name",
+	setup: ["start 2", "@ 2", ["blk 1 loop @1", 2]],
+	//the posted code holds the date and time: not captured, so the snapshot stays the same
+	code: {
+		var capture = Radicles.postCapture;
+		Radicles.postCapture = nil;
+		Radicles.cW.callFunc("blksave 1 radtest_k keep"); 4.wait;
+		Radicles.postCapture = capture;
+	},
+	check: {
+		var file = RadUnit.readPreset(\block, \loop, \radtest_k), name = file !? { file[\buffer] } !? {|b| b[\play] };
+		~radKeptFile = name;
+		case
+		{ name.isNil } { "preset: " ++ file.cs }
+		{ name.asString.beginsWith("rec_").not } { "name: " ++ name }
+		{ File.exists(RadUnit.recordingsPath +/+ name ++ ".wav").not } { "no file " ++ name }
+		{ true }
+	},
+	teardown: ~radKeepClean
+);
+
+// the kept file comes back like any sound file
+~radTest.("block-preset-keep-load",
+	setup: ["start 2", "@ 2", ["blk 1 loop @1", 2], ["blksave 1 radtest_k keep radtest_take", 4], ["lp 1 drums1", 4]],
+	cmds: [["blkload 1 radtest_k", 4]],
+	check: {
+		var unit = RadUnit.readBlock(\block1);
+		(unit[\buffer] == (play: \radtest_take, folder: \recordings)) or: { "block: " ++ unit.cs }
+	},
+	teardown: ~radKeepClean
+);
+
+// a block playing no recording: keep has nothing to keep, the preset is saved
+~radTest.("block-preset-keep-nothing",
+	setup: ["start 2", "blk 1 sine"],
+	cmds: [["blksave 1 radtest_k keep", 1]],
+	check: { RadUnit.readPreset(\block, \sine, \radtest_k).notNil or: { "not saved" } },
+	teardown: ~radKeepClean
+);
+
+// a file that exists is not overwritten, and nothing is saved
+~radTest.("block-preset-keep-exists",
+	setup: ["start 2", "@ 2", ["blk 1 loop @1", 2]],
+	code: {
+		File.mkdir(RadUnit.recordingsPath);
+		File.use(RadUnit.recordingsPath +/+ "radtest_take.wav", "w", {|f| f.write("x") });
+		Radicles.cW.callFunc("blksave 1 radtest_k keep radtest_take"); 3.wait;
+	},
+	check: {
+		case
+		{ RadUnit.readPreset(\block, \loop, \radtest_k).notNil } { "saved anyway" }
+		{ File.fileSize(RadUnit.recordingsPath +/+ "radtest_take.wav") != 1 } { "file overwritten" }
+		{ RadUnit.readBlock(\block1)[\buffer] != (rec: 1) } { "block changed: " ++ RadUnit.readBlock(\block1).cs }
+		{ true }
+	},
+	teardown: ~radKeepClean
+);
+
 // ---- the source window's PRESET menu and SAVE button (Mac: needs windows) ----
 
 ~radBlkWin = { (Radicles.aZ.sourceWindows ? []).detect{|w| w.isClosed.not and: { w.name.beginsWith("block1 ") } } };
@@ -240,5 +328,37 @@
 		{ true }
 	},
 	teardown: { ~radBlkWinsClose.(); ~radBlockPresetClean.() },
+	gui: true
+);
+
+// a block playing a recording: the SAVE window offers to keep it as a file
+~radTest.("block-preset-save-button-keep",
+	setup: ["start 2", "@ 2", ["blk 1 loop @1", 2], "blkgui 1"],
+	code: {
+		var win, popup, box, capture = Radicles.postCapture;
+		0.5.wait;
+		win = ~radBlkWin.();
+		win.canvas.children.detect{|v| v.isKindOf(Button) and: { v.states[0][0] == "SAVE" } }.valueAction = 0;
+		0.5.wait;
+		popup = Window.allWindows.detect{|w| w.name.beginsWith("Save preset") };
+		box = popup !? {|w| w.view.children.detect{|v| v.isKindOf(CheckBox) } };
+		~radKeepBox = box.notNil;
+		box !? {|b| b.value = true };
+		//the posted code holds the file's date and time: not captured
+		Radicles.postCapture = nil;
+		popup.view.children.detect{|v| v.isKindOf(TextField) }.string_("radtest_kb").doAction;
+		4.wait;
+		Radicles.postCapture = capture;
+	},
+	check: {
+		var file = RadUnit.readPreset(\block, \loop, \radtest_kb), name = file !? { file[\buffer] } !? {|b| b[\play] };
+		~radKeptFile = name;
+		case
+		{ ~radKeepBox.not } { "no keep check box" }
+		{ name.isNil } { "preset: " ++ file.cs }
+		{ File.exists(RadUnit.recordingsPath +/+ name ++ ".wav").not } { "no file " ++ name }
+		{ true }
+	},
+	teardown: { ~radBlkWinsClose.(); ~radKeepClean.() },
 	gui: true
 );

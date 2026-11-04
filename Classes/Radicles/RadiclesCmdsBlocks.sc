@@ -18,6 +18,24 @@
 			RadUnit.saveBlockPreset(num1.asInteger, str2);
 		}, "blksave: block, preset");
 
+		//blksave 1 name keep [file]: keep the recording block 1 plays as a
+		//file in SoundFiles/Play/recordings, then save the preset with it
+		cW.add(\blksave, [\str, \num, \str, \str], {|str1, num1, str2, str3|
+			if(str3 == 'keep', {
+				RadUnit.saveBlockPreset(num1.asInteger, str2, keep: true);
+			}, {
+				("blksave " ++ num1 ++ " " ++ str2 ++ ": unknown option " ++ str3 ++ " (keep keeps the recording as a file)").warn;
+			});
+		}, "blksave: block, preset, keep (keeps the recording the block plays as a file)");
+
+		cW.add(\blksave, [\str, \num, \str, \str, \str], {|str1, num1, str2, str3, str4|
+			if(str3 == 'keep', {
+				RadUnit.saveBlockPreset(num1.asInteger, str2, keep: true, fileName: str4.asString);
+			}, {
+				("blksave " ++ num1 ++ " " ++ str2 ++ ": unknown option " ++ str3 ++ " (keep keeps the recording as a file)").warn;
+			});
+		}, "blksave: block, preset, keep, file name (keeps the recording as recordings/<file>.wav)");
+
 		//blksave <block definition> <preset> <library>: copy one of your
 		//presets into the definition's library, to share it with the library
 		cW.add(\blksave, [\str, \str, \str, \str], {|str1, str2, str3, str4|

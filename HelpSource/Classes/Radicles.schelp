@@ -389,6 +389,8 @@ blkload 1 default //the definition's own default values
 blkload //all block presets
 blkload loop //the presets of loop
 blksave loop warmLoop MyLib //share your preset with loop's library
+blksave 1 myTake keep //block 1 plays a recording (@1): keep it as a file in SoundFiles/Play/recordings (rec_<date>_<time>.wav), then save
+blksave 1 myTake keep take1 //the same, as recordings/take1.wav
 
 //mixer mods
 vol t 1 sin_(freq, 10)
