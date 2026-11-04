@@ -11,8 +11,8 @@
 // Rules (decided 3 Nov 2026): a preset loads only into a block already
 // playing its definition; recording blocks (rec, recpv, recloop, ...) have no
 // presets; a recorded buffer (rec: N) is not a file, so a preset never holds
-// one, and a block playing one keeps it. What a preset doesn't carry, the
-// block keeps.
+// one, and a block playing one keeps it unless the preset holds a file (a
+// kept recording, below). What a preset doesn't carry, the block keeps.
 // Keeping a recording (decided 4 Nov 2026): blksave 1 warmLoop keep [file]
 // writes the recording block 1 plays to SoundFiles/Play/recordings/<file>.wav
 // (file: rec_<date>_<time> unless given), plays the block from that file
@@ -168,8 +168,10 @@
 		if(unit.isNil, { ^nil });
 		current = this.readBlock(this.blockTag(block)) ? ();
 		[\buffer, \data].do{|key|
-			if(nobuf or: { name.asSymbol == \default } or: { unit[key].isNil }
-				or: { key == \buffer and: { this.prHasRecBuffer(current[key]) } }, {
+			//a preset with a file brings it back, whatever the block plays
+			//(4 Nov 2026); one without (saved from a recording without keep)
+			//leaves the block's own buffer, recording or file
+			if(nobuf or: { name.asSymbol == \default } or: { unit[key].isNil }, {
 				if(current[key].notNil, { unit[key] = current[key] }, { unit.removeAt(key) });
 			});
 		};

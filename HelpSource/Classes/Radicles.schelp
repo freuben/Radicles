@@ -384,7 +384,7 @@ unmodblk 1 rate
 //block presets: values, modulators and the sound file or wavetable (by name)
 blksave 1 warmLoop //block 1's settings, saved for its definition (loop)
 blkload 1 warmLoop //into a block playing the same definition
-blkload 1 warmLoop nobuf //the preset's settings, keeping block 1's sound file or table
+blkload 1 warmLoop nobuf //the preset's settings, keeping block 1's sound file, table or recording
 blkload 1 default //the definition's own default values
 blkload //all block presets
 blkload loop //the presets of loop

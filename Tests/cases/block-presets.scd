@@ -247,6 +247,28 @@
 	teardown: ~radKeepClean
 );
 
+// ...and from a block playing a new recording: the preset's file wins
+~radTest.("block-preset-keep-load-over-recording",
+	setup: ["start 2", "@ 2", ["blk 1 loop @1", 2], ["blksave 1 radtest_k keep radtest_take", 4], ["blk 1 loop @1", 4]],
+	cmds: [["blkload 1 radtest_k", 4]],
+	check: {
+		var unit = RadUnit.readBlock(\block1);
+		(unit[\buffer] == (play: \radtest_take, folder: \recordings)) or: { "block: " ++ unit.cs }
+	},
+	teardown: ~radKeepClean
+);
+
+// nobuf keeps the recording
+~radTest.("block-preset-keep-nobuf",
+	setup: ["start 2", "@ 2", ["blk 1 loop @1", 2], ["blksave 1 radtest_k keep radtest_take", 4], ["blk 1 loop @1", 4]],
+	cmds: [["blkload 1 radtest_k nobuf", 3]],
+	check: {
+		var unit = RadUnit.readBlock(\block1);
+		(unit[\buffer] == (rec: 1)) or: { "block: " ++ unit.cs }
+	},
+	teardown: ~radKeepClean
+);
+
 // a block playing no recording: keep has nothing to keep, the preset is saved
 ~radTest.("block-preset-keep-nothing",
 	setup: ["start 2", "blk 1 sine"],
