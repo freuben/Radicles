@@ -162,7 +162,7 @@
 );
 
 ~radTest.("block-preset-pattern-refused",
-	setup: ["start 2", "pn 1 test1"],
+	setup: ["start 2", ["pn 1 test1", 2]],
 	cmds: ["blksave 1 radtest_p"],
 	check: {
 		RadUnit.allPresets(\block).any{|pair| pair[1] == \radtest_p }.not or: { "a pattern was saved" }
