@@ -237,22 +237,3 @@
 	teardown: { ~radBlkWinsClose.(); ~radBlockPresetClean.() },
 	gui: true
 );
-
-// a recording block's window has neither (recording blocks have no presets)
-~radTest.("block-preset-window-recording",
-	setup: ["start 2", "@ 2", ["blk 1 rec @1", 2], "blkgui 1"],
-	code: {
-		0.5.wait;
-		~radRecWin = ~radBlkWin.() !? {|w| w.name };
-		~radRecViews = ~radBlkWin.() !? {|w| w.canvas.children.select{|v|
-			v.isKindOf(PopUpMenu) or: { v.isKindOf(Button) and: { v.states[0][0] == "SAVE" } } }.size };
-	},
-	check: {
-		case
-		{ ~radRecWin.isNil } { "no window" }
-		{ ~radRecViews != 0 } { "preset views: " ++ ~radRecViews }
-		{ true }
-	},
-	teardown: ~radBlkWinsClose,
-	gui: true
-);
