@@ -6,7 +6,7 @@
 // also in that library, so presets can be shared with it:
 //   <RadiclesLibs>/<lib>/Settings/Presets/units/<kind>/<def>/<name>.scd
 // fxsave writes the performer's own; fxsave <def> <name> <lib> copies one
-// into the library. Reading looks in both; the performer's own wins.
+// into the library (blksave the same for blocks, RadUnitBlockPresets.sc). Reading looks in both; the performer's own wins.
 // Files are read with RadLiteral, so a preset is only ever data. A function
 // the performer saved (a modulator's) is kept as code and runs when the
 // preset is applied, posted like any other code.
@@ -77,11 +77,11 @@
 		case
 		{ this.libraries.includesEqual(lib).not } {
 			("No library " ++ lib ++ " (libraries: " ++ this.libraries.join(", ") ++ ")").warn }
-		{ owner.isNil } { ("No effect " ++ def).warn }
+		{ owner.isNil } { ("No " ++ if(kind == \block, { "block " }, { "effect " }) ++ def).warn }
 		{ owner != lib } { (def ++ " is from " ++ owner ++ ", not " ++ lib ++
 			"; its presets can only go into " ++ owner).warn }
 		{ File.exists(from).not } { ("No preset " ++ name ++ " of your own for " ++ def ++
-			" (save it first with fxsave t 1 1 " ++ name ++ ")").warn }
+			" (save it first with " ++ if(kind == \block, { "blksave 1 " }, { "fxsave t 1 1 " }) ++ name ++ ")").warn }
 		{
 			to = this.libraryPresetRoot(lib) +/+ kind.asString +/+ def.asString +/+ name.asString ++ ".scd";
 			copy = {

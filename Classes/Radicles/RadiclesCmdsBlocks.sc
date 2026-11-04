@@ -4,11 +4,45 @@
 + Radicles {
 	*loadBlkCmds {
 		this.prBlockCmds;
+		this.prBlockPresetCmds;
 		this.prPlayCmds;
 		this.prBlockInCmds;
 		this.prStopCmds;
 		this.prRecBufCmds;
 		this.prClockCmds;
+	}
+
+	// blksave, blkload: block presets (Document Model step 2; see RadUnitBlockPresets.sc)
+	*prBlockPresetCmds {
+		cW.add(\blksave, [\str, \num, \str], {|str1, num1, str2|
+			RadUnit.saveBlockPreset(num1.asInteger, str2);
+		}, "blksave: block, preset");
+
+		//blksave <block definition> <preset> <library>: copy one of your
+		//presets into the definition's library, to share it with the library
+		cW.add(\blksave, [\str, \str, \str, \str], {|str1, str2, str3, str4|
+			RadUnit.publishPreset(\block, str2, str3, str4);
+		}, "blksave: block definition, preset, library (copies your preset into the library)");
+
+		cW.add(\blkload, [\str, \num, \str], {|str1, num1, str2|
+			RadUnit.loadBlockPreset(num1.asInteger, str2);
+		}, "blkload: block, preset");
+
+		cW.add(\blkload, [\str, \num, \str, \str], {|str1, num1, str2, str3|
+			if(str3 == 'nobuf', {
+				RadUnit.loadBlockPreset(num1.asInteger, str2, true);
+			}, {
+				("blkload " ++ num1 ++ " " ++ str2 ++ ": unknown option " ++ str3 ++ " (nobuf keeps the block's sound file or table)").warn;
+			});
+		}, "blkload: block, preset, nobuf (keep the block's sound file or table)");
+
+		cW.add(\blkload, [\str], {|str1|
+			RadUnit.allPresets(\block).dopostln;
+		}, "blkload: prints all block presets");
+
+		cW.add(\blkload, [\str, \str], {|str1, str2|
+			RadUnit.presetNames(\block, str2).dopostln;
+		}, "blkload: block definition, its presets");
 	}
 
 	// blk, blkset, blklag, blkxset, blkget, modblkset, unmodblk
