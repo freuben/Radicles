@@ -167,7 +167,12 @@
 	check: {
 		RadUnit.allPresets(\block).any{|pair| pair[1] == \radtest_p }.not or: { "a pattern was saved" }
 	},
-	teardown: ~radBlockPresetClean
+	//stop the pattern before the server quits: on the Mac, a note it sends
+	//while the server is quitting posts a FAILURE IN SERVER
+	teardown: {
+		if(Ndef(\block1).source.notNil, { Radicles.cW.callFunc("st 1"); 1.wait });
+		~radBlockPresetClean.();
+	}
 );
 
 // the list of a definition's presets
