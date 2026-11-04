@@ -1459,12 +1459,18 @@
 	}
 
 	// the small window a SAVE button opens: asks for a preset name, then calls
-	// saveFunc with it (a Symbol). Shared by effect and source windows.
-	prPresetNameWindow {arg title, parent, saveFunc;
-		var win, field, save;
+	// saveFunc with it (a Symbol) and, when keepLabel is given, whether its
+	// check box is ticked. Shared by effect and source windows.
+	prPresetNameWindow {arg title, parent, saveFunc, keepLabel;
+		var win, field, save, keepBox;
 		win = Window("Save preset · " ++ title,
-			Rect(parent !? {|w| w.bounds.left + 20 } ? 200, parent !? {|w| w.bounds.top + 40 } ? 200, 300, 70),
+			Rect(parent !? {|w| w.bounds.left + 20 } ? 200, parent !? {|w| w.bounds.top + 40 } ? 200, 300,
+				if(keepLabel.notNil, { 95 }, { 70 })),
 			resizable: false);
+		if(keepLabel.notNil, {
+			keepBox = CheckBox().string_(keepLabel).font_(basicFont).value_(false);
+			try { keepBox.palette = keepBox.palette.windowText_(Color.white) };
+		});
 		win.background = Color.black;
 		field = TextField().font_(basicFont).background_(colorTextField);
 		save = {
@@ -1474,22 +1480,24 @@
 			{ RadUnit.validPresetName(name).not } {
 				("Preset names use letters, digits, - and _ only: " ++ name).warn }
 			{
-				saveFunc.(name.asSymbol);
+				saveFunc.(name.asSymbol, keepBox !? {|box| box.value } ? false);
 				win.close;
 			};
 		};
 		field.action = { save.() };
-		win.layout = VLayout(
+		//nil in a layout is a stretch: leave the check box out when there is none
+		win.layout = VLayout(*[
 			StaticText().string_("Preset name (letters, digits, - and _):")
 			.font_(basicFont).stringColor_(Color.white),
 			field,
+			keepBox,
 			HLayout(nil,
 				Button().states_([["Cancel", Color.white, Color.black]]).font_(basicFont)
 				.action_({ win.close }),
 				Button().states_([["Save", Color.white, Color.black]]).font_(basicFont)
 				.action_({ save.() })
 			)
-		);
+		].reject(_.isNil));
 		win.front;
 		field.focus(true);
 		^win
@@ -1519,12 +1527,14 @@
 		.states_([["SAVE", Color.white, Color.black]]);
 		button.canFocus = false;
 		button.srcAction = {
-			var tag = RadUnit.blockTag(block);
-			this.prPresetNameWindow(tag.asString ++ " | " ++ blockName, this.prSourceWin(tag), {|name|
+			var tag = RadUnit.blockTag(block), unit = RadUnit.readBlock(tag);
+			this.prPresetNameWindow(tag.asString ++ " | " ++ blockName, this.prSourceWin(tag), {|name, keep|
 				RadUnit.saveBlockPreset(block, name, {
 					{ this.prSourceWin(tag) !? {|w| this.prRefillPresetMenu(w, blockName, \block) } }.defer;
-				});
-			});
+				}, keep);
+			},
+			//a block playing a recording: offer to keep it as a file (blksave N name keep)
+			if(unit.notNil and: { RadUnit.prHasRecBuffer(unit[\buffer]) }, { "keep the recording as a file" }));
 		};
 		^button
 	}

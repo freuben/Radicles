@@ -341,9 +341,17 @@
 	2.wait;
 };
 
+// these use ortf_s1r1 and ortf_s2r2, which not every RadiclesFiles has (the
+// Mac's has other impulse responses); without them filter never finishes,
+// so the tests are known there
+~radIRKnown = ["ortf_s1r1", "ortf_s2r2"].any{|ir|
+	File.exists(Platform.userExtensionDir +/+ "RadiclesFiles/SoundFiles/IR" +/+ ir ++ ".wav").not
+}.if({ "needs the impulse responses ortf_s1r1 and ortf_s2r2 in RadiclesFiles/SoundFiles/IR" });
+
 // the unit names the impulse response; no path, no buffer number
 ~radTest.("convrev-unit-ir-by-name",
 	setup: ["start 2"],
+	known: ~radIRKnown,
 	code: { ~radConvRev.(\ortf_s1r1) },
 	check: {
 		var unit = RadUnit.read(\filterTrack_1_1), text = unit.cs;
@@ -358,6 +366,7 @@
 // a preset brings its impulse response back
 ~radTest.("convrev-preset-ir",
 	setup: ["start 2"],
+	known: ~radIRKnown,
 	code: {
 		~radConvRev.(\ortf_s1r1);
 		Radicles.cW.callFunc("fxsave t 1 1 radtest_room"); 1.wait;
@@ -378,6 +387,7 @@
 // a preset saved before Nov 2026 holds the list form; it still loads
 ~radTest.("convrev-preset-old-list",
 	setup: ["start 2"],
+	known: ~radIRKnown,
 	code: {
 		~radConvRev.(\ortf_s2r2);
 		RadUnit.writePreset((kind: \filter, def: \convrev1, args: (mix: 0.5),
