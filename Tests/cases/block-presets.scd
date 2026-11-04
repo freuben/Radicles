@@ -179,3 +179,80 @@
 	},
 	teardown: ~radBlockPresetClean
 );
+
+// ---- the source window's PRESET menu and SAVE button (Mac: needs windows) ----
+
+~radBlkWin = { (Radicles.aZ.sourceWindows ? []).detect{|w| w.isClosed.not and: { w.name.beginsWith("block1 ") } } };
+~radBlkWinsClose = {
+	(Radicles.aZ !? {|a| a.sourceWindows } ? []).copy.do{|w| w.close };
+	Window.allWindows.select{|w| w.name.beginsWith("Save preset") }.do(_.close);
+};
+
+// the menu lists the definition's presets; choosing one loads it, like blkload
+~radTest.("block-preset-menu",
+	setup: ["start 2", "blk 1 sine", "blkset 1 freq 330", "blksave 1 radtest_menu", "blkset 1 freq 500", "blkgui 1"],
+	code: {
+		var menu;
+		0.5.wait;
+		menu = ~radBlkWin.() !? {|w| w.canvas.children.detect{|v| v.isKindOf(PopUpMenu) } };
+		~radMenuItems = menu !? {|m| m.items };
+		menu !? {|m| m.valueAction = ~radMenuItems.indexOfEqual("radtest_menu") };
+		2.wait;
+	},
+	check: {
+		case
+		{ ~radMenuItems.isNil } { "no PRESET menu" }
+		{ ~radMenuItems.keep(2) != ["PRESET", "default"] or: { ~radMenuItems.includesEqual("radtest_menu").not } } {
+			"items: " ++ ~radMenuItems.cs }
+		{ Ndef(\block1).get(\freq) != 330 } { "not loaded: " ++ Ndef(\block1).get(\freq) }
+		{ ~radBlkWin.().isNil } { "the window did not come back" }
+		{ true }
+	},
+	teardown: { ~radBlkWinsClose.(); ~radBlockPresetClean.() },
+	gui: true
+);
+
+// SAVE asks for a name, saves like blksave, and the menu lists it
+~radTest.("block-preset-save-button",
+	setup: ["start 2", "blk 1 sine", "blkset 1 freq 330", "blkgui 1"],
+	code: {
+		var win, popup;
+		0.5.wait;
+		win = ~radBlkWin.();
+		win.canvas.children.detect{|v| v.isKindOf(Button) and: { v.states[0][0] == "SAVE" } }.valueAction = 0;
+		0.5.wait;
+		popup = Window.allWindows.detect{|w| w.name.beginsWith("Save preset") };
+		~radPopup = popup !? {|w| w.name };
+		popup.view.children.detect{|v| v.isKindOf(TextField) }.string_("radtest_btn").doAction;
+		1.wait;
+		~radMenuItems = win.canvas.children.detect{|v| v.isKindOf(PopUpMenu) }.items;
+	},
+	check: {
+		case
+		{ ~radPopup != "Save preset · block1 | sine" } { "save window: " ++ ~radPopup.cs }
+		{ RadUnit.readPreset(\block, \sine, \radtest_btn) !? {|u| u[\args][\freq] } != 330 } { "not saved" }
+		{ ~radMenuItems.includesEqual("radtest_btn").not } { "menu: " ++ ~radMenuItems.cs }
+		{ true }
+	},
+	teardown: { ~radBlkWinsClose.(); ~radBlockPresetClean.() },
+	gui: true
+);
+
+// a recording block's window has neither (recording blocks have no presets)
+~radTest.("block-preset-window-recording",
+	setup: ["start 2", "@ 2", ["blk 1 rec @1", 2], "blkgui 1"],
+	code: {
+		0.5.wait;
+		~radRecWin = ~radBlkWin.() !? {|w| w.name };
+		~radRecViews = ~radBlkWin.() !? {|w| w.canvas.children.select{|v|
+			v.isKindOf(PopUpMenu) or: { v.isKindOf(Button) and: { v.states[0][0] == "SAVE" } } }.size };
+	},
+	check: {
+		case
+		{ ~radRecWin.isNil } { "no window" }
+		{ ~radRecViews != 0 } { "preset views: " ++ ~radRecViews }
+		{ true }
+	},
+	teardown: ~radBlkWinsClose,
+	gui: true
+);
