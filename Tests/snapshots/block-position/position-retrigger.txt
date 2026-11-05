@@ -1,0 +1,7 @@
+>> <code>
+== radpost ==
+Ndef('block1').set('trigger', 0);
+Ndef('block1').set('trigger', 1);
+== radpostcont ==
+(none)
+

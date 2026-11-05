@@ -1,8 +1,11 @@
 >> lt 1
 == radpost ==
 Ndef('recblock1', 0)
+~position1 = Bus.control(s, 1);
 Ndef('block1', {arg rate=1 , triggerRate=1 , startPos=0 , mul=1 ;
-    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, Impulse.kr(triggerRate),
+    var trigger = Impulse.kr(triggerRate);
+    RadPosition.kr(~position1, ~buffer0, rate, trigger, startPos, 1);
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger,
  startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
 Ndef('block1').xset('triggerRate', <measured>);
 == radpostcont ==
@@ -11,8 +14,11 @@ Ndef('block1').xset('triggerRate', <measured>);
 >> lt 2
 == radpost ==
 Ndef('recblock1', 0)
+~position2 = Bus.control(s, 1);
 Ndef('block2', {arg rate=1 , triggerRate=1 , startPos=0 , mul=1 ;
-    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, Impulse.kr(triggerRate),
+    var trigger = Impulse.kr(triggerRate);
+    RadPosition.kr(~position2, ~buffer0, rate, trigger, startPos, 1);
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger,
  startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
 Ndef('block2').xset('triggerRate', <measured>);
 == radpostcont ==
