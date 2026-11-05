@@ -3,8 +3,8 @@
 ~position2 = Bus.control(s, 1);
 //File already allocated as: ~buffer0
 Ndef('block2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-    RadPosition.kr(~position2, ~buffer0, rate, trigger, startPos, 1);
-    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate, trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
+    RadPosition.kr(~position2, ~buffer0, rate * BufRateScale.kr(~buffer0), trigger, startPos, 1);
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate * BufRateScale.kr(~buffer0), trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 1)*mul;});
 Ndef('block2').xset('rate', 0.5, 'startPos', 0, 'trigger', 1, 'mul', 1);
 == radpostcont ==
 (none)

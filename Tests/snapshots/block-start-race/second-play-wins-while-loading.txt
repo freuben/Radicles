@@ -7,8 +7,8 @@
 ~buffer0.free;
 ~buffer0 = nil;
 Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-    RadPosition.kr(~position1, ~buffer1, rate, trigger, startPos, 0);
-    PlayBuf.ar(~buffer1.numChannels, ~buffer1, rate, trigger, startPos.linlin(0,1,0, ~buffer1.numFrames), 0)*mul;});
+    RadPosition.kr(~position1, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos, 0);
+    PlayBuf.ar(~buffer1.numChannels, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos.linlin(0,1,0, ~buffer1.numFrames), 0)*mul;});
 == radpostcont ==
 (none)
 
