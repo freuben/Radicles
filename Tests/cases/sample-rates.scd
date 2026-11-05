@@ -10,13 +10,13 @@
 "RADTEST_SR".getenv !? {|sr| s.options.sampleRate = sr.asInteger };
 
 ~radRatesDir = { Radicles.soundFilePath +/+ "Play" +/+ "radtest_rates" };
-// a 2 s 440 Hz tone at a file sample rate
+// a 20 s 440 Hz tone at a file sample rate (long enough not to loop while measured)
 ~radRatesMake = {
 	File.mkdir(~radRatesDir.());
 	[44100, 48000].do{|sr|
 		var sf = SoundFile.new.headerFormat_("WAV").sampleFormat_("float").numChannels_(1).sampleRate_(sr);
 		sf.openWrite(~radRatesDir.() +/+ "radtest_tone" ++ (sr div: 1000) ++ ".wav");
-		sf.writeData(FloatArray.fill(sr * 2, {|i| sin(2pi * 440 * i / sr) * 0.1 }));
+		sf.writeData(FloatArray.fill(sr * 20, {|i| sin(2pi * 440 * i / sr) * 0.1 }));
 		sf.close;
 	};
 };
