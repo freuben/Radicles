@@ -42,6 +42,18 @@
 			RadUnit.publishPreset(\block, str2, str3, str4);
 		}, "blksave: block definition, preset, library (copies your preset into the library)");
 
+		//blkmorph 1 warmLoop [time [shape]]: moves block 1 to a preset over
+		//time (xfade by default, glide, none); see RadUnitBlockMorph.sc
+		cW.add(\blkmorph, [\str, \num, \str], {|str1, num1, str2|
+			RadUnit.morphBlockPreset(num1.asInteger, str2);
+		}, "blkmorph: block, preset");
+		cW.add(\blkmorph, [\str, \num, \str, \num], {|str1, num1, str2, num2|
+			RadUnit.morphBlockPreset(num1.asInteger, str2, num2);
+		}, "blkmorph: block, preset, time");
+		cW.add(\blkmorph, [\str, \num, \str, \num, \str], {|str1, num1, str2, num2, str3|
+			RadUnit.morphBlockPreset(num1.asInteger, str2, num2, str3);
+		}, "blkmorph: block, preset, time, shape (xfade, glide, none)");
+
 		cW.add(\blkload, [\str, \num, \str], {|str1, num1, str2|
 			RadUnit.loadBlockPreset(num1.asInteger, str2);
 		}, "blkload: block, preset");
