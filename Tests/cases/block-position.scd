@@ -25,6 +25,29 @@
 	}
 );
 
+// a 44.1 kHz file plays at its own speed on the 48 kHz test server (5 Nov:
+// PlayBuf's rate is scaled by BufRateScale; before, it played 8.8% fast)
+~radTest.("position-own-speed",
+	setup: ["start 2", ["lp 1 marilyn1", 3]],
+	code: {
+		//time measured by the server's own clock (the test machine's audio
+		//clock need not follow the language's), read right after each position
+		var clockBus = Bus.control(Server.default, 1), clock, read, c1, c2;
+		clock = { Out.kr(clockBus, Sweep.kr(0, 1)) }.play;
+		read = {
+			var cond = Condition(false), v;
+			clockBus.get({|x| v = x; cond.test = true; cond.signal }); cond.wait; v
+		};
+		0.2.wait;
+		~radP1 = ~radPos.(); c1 = read.();
+		2.wait;
+		~radP2 = ~radPos.(); c2 = read.();
+		clock.free; clockBus.free;
+		~radSpeed = (~radP2 - ~radP1) / (c2 - c1);
+	},
+	check: { ~radNear.(~radSpeed, 0.99, 1.01) or: { "plays at " ++ ~radSpeed.round(0.001) ++ " times its speed" } }
+);
+
 // it starts at startPos
 ~radTest.("position-startpos",
 	setup: ["start 2", ["lp 1 marilyn1 [startPos, 0.5]", 3]],
