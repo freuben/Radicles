@@ -12,6 +12,14 @@ RadUnit {
 	// command nor the unit gives one (Document Model, step 1, PR 5)
 	classvar <>morphTime = 2;
 
+	// running block morphs: tag -> (routine:, restore:) (step 2, PR 4)
+	classvar blockMorphs;
+
+	// seconds from asking where a block plays to its new copy starting
+	// (blkmorph), on top of the server's latency (Ndefs send their messages
+	// that much ahead); measured in the tests
+	classvar <>placeLead = -0.025;
+
 	// a value as plain data: numbers, Symbols, Strings, Booleans, nil and
 	// Arrays of them stay as they are; a Function is kept as its code, so a
 	// random value stays random; anything else is kept as its code too
