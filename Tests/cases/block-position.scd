@@ -134,3 +134,39 @@
 		{ true }
 	}
 );
+
+// RadPosition reports exactly where PlayBuf plays: a file whose samples are
+// their own position (a ramp), at 44.1 kHz on the server's rate, played with a
+// modulated rate; PlayBuf's output and RadPosition agree (Mac check of 5 Nov
+// found the position lagging: RadPosition scaled the rate and PlayBuf doesn't)
+~radTest.("position-matches-playbuf",
+	setup: ["start 2"],
+	code: {
+		var path = Platform.defaultTempDir +/+ "radtest_ramp.wav", sf, buf, bus, synth, cond = Condition(false);
+		sf = SoundFile.new.headerFormat_("WAV").sampleFormat_("float").numChannels_(1).sampleRate_(44100);
+		sf.openWrite(path); sf.writeData(FloatArray.fill(88200, {|i| i / 88200 })); sf.close;
+		buf = Buffer.read(Server.default, path); Server.default.sync;
+		bus = Bus.control(Server.default, 2);
+		synth = {
+			var rate = SinOsc.kr(0.7).range(0.3, 2.5);
+			RadPosition.kr(bus.index, buf, rate, 1, 0, 1);
+			Out.kr(bus.index + 1, A2K.kr(PlayBuf.ar(1, buf, rate, 1, 0, 1)) * 2);
+			Silent.ar
+		}.play;
+		~radPairs = [];
+		4.do{
+			0.6.wait;
+			cond.test = false;
+			bus.getn(2, {|v| ~radPairs = ~radPairs.add(v); cond.test = true; cond.signal });
+			cond.wait;
+		};
+		synth.free; buf.free; bus.free; File.delete(path);
+	},
+	check: {
+		var off = ~radPairs.reject{|p| (p[0] - p[1]).abs < 0.005 };
+		case
+		{ ~radPairs.size != 4 } { "read " ++ ~radPairs.size ++ " times" }
+		{ off.notEmpty } { "RadPosition vs PlayBuf: " ++ off.collect{|p| p.round(0.001) }.cs }
+		{ true }
+	}
+);

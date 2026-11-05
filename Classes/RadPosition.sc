@@ -1,7 +1,7 @@
 // Radicles: where a sound-file block plays (Document Model, step 2, PR 3;
 // position option A, decided 3 Nov 2026). A block definition that plays a
 // buffer through time adds one line before its PlayBuf, with the same
-// arguments:
+// arguments (rate exactly as PlayBuf gets it):
 //   RadPosition.kr(\position, \buffer, rate, trigger, startPos, 1);
 // Block.play replaces \position with the block's control bus (~position1 for
 // block1), as it replaces \buffer, and the line writes the play position, in
@@ -21,7 +21,11 @@ RadPosition {
 			{ Select.kr(looped, [1e9, frames]) });
 		//phase from the start position, so it stays below the file's length
 		//when looping (precision over long loops)
-		phase = Phasor.ar(trigger, rate * BufRateScale.kr(buffer), 0, end, 0);
+		//rate exactly as PlayBuf gets it: PlayBuf does not scale by the file's
+		//sample rate (a 44.1 kHz file on a 48 kHz server plays 8.8% fast),
+		//so neither does this; a definition that passes rate * BufRateScale.kr
+		//to PlayBuf passes the same here
+		phase = Phasor.ar(trigger, rate, 0, end, 0);
 		pos = phase + start;
 		pos = if(looped.isKindOf(Boolean), {
 			if(looped, { pos.wrap(0, frames) }, { pos.clip(0, frames) })
