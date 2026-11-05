@@ -1,8 +1,8 @@
 [['sine', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)}], ['play', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-	RadPosition.kr(\position, \buffer, rate, trigger, startPos, 0);
-	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul;}], ['loop', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-	RadPosition.kr(\position, \buffer, rate, trigger, startPos, 1);
-	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;}], ['cue', {arg loop=1 , mul=1 ;
+	RadPosition.kr(\position, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos, 0);
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul;}], ['loop', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+	RadPosition.kr(\position, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos, 1);
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;}], ['cue', {arg loop=1 , mul=1 ;
 	DiskIn.ar(\buffer.numChannels, \buffer, loop)*mul;}], ['playpv', {arg rate=1 , offset=0 , numFrames=0.6 , winType=0 , mul=1 ;
 	var localbuf, chain;
 	localbuf = LocalBuf.new(numFrames.linexp(0,1,32,32768), \buffer.numChannels);
@@ -14,8 +14,8 @@
 		chain = PV_PlayBuf(localbuf, \buffer.bufnum, rate, offset.linlin(0,1,0, \buffer.numFrames),
  1);
 	IFFT(chain, winType)*mul}], ['playbuf', {arg rate=1 , trigger=1 , startPos=0 , mul=1 , loop=1 ;
-	RadPosition.kr(\position, \buffer, rate, trigger, startPos, loop);
-	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), loop)*mul;}], ['rec', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
+	RadPosition.kr(\position, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos, loop);
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos.linlin(0,1,0, \buffer.numFrames), loop)*mul;}], ['rec', {arg recLevel=1 , preLevel=0 , fade=0.01 ;
 	var sig;
 	sig = \in;
 		sig = sig * Env.linen(fade,  (\duration-(fade*2)), fade, 1, 'sin').kr;
@@ -31,8 +31,8 @@
 	sig = sig * Env.asr(fade, 1, fade, 'sin').kr;
 	RecordBuf.ar(sig, \buffer.bufnum, 0, recLevel, preLevel, loop: 1); }], ['looptr', {arg rate=1 , triggerRate=1 , startPos=0 , mul=1 ;
 	var trigger = Impulse.kr(triggerRate);
-	RadPosition.kr(\position, \buffer, rate, trigger, startPos, 1);
-	PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger,
+	RadPosition.kr(\position, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos, 1);
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger,
  startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;}], ['osc1', {arg freq=400 , phase=0 , mul=0.5 ; Osc.ar(\buffer, freq, phase, mul)}], ['shaperSine', {arg freq=440 , phase=0 , mul=0.5 ;
 	Shaper.ar(\buffer, SinOsc.ar(freq, phase, mul), 0.5)}], ['vosc', {arg bufoffset=0 , freq=440 , phase=0 , mul=0.5 ;
 		var buffer, bufnum;
@@ -46,7 +46,7 @@ SinOsc.ar(freq, 0, amp);
 	var buffer, play;
 	buffer = \buffer;
 	play = buffer.collect{|item|
-		PlayBuf.ar(item.numChannels, item, rate, trigger, startPos.linlin(0,1,0, item.numFrames), 1)*mul;};
+		PlayBuf.ar(item.numChannels, item, rate * BufRateScale.kr(item), trigger, startPos.linlin(0,1,0, item.numFrames), 1)*mul;};
 	play.sum/play.size;
 }], ['audioin', {arg bus=1 , mul= 1 ;
 	SoundIn.ar((bus.round(1)-1).max(0), mul);}], ['grainbuf', {arg rate=1 , freq= 1 , dur = 0.1 , startPos=0 , interp=1 , pan= 0 ;
@@ -153,10 +153,10 @@ SinOsc.ar(freq, 0, amp);
 	;}], ['audioin2', {arg bus=1 , mul= 1 , pan=0 , lagTime=0.1 ;
 	Pan2.ar(SoundIn.ar((bus.round(1)-1).max(0)), pan.lag(lagTime))*mul;
 }], ['play2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 , pan=0 , lagTime=0.1 ;
-	RadPosition.kr(\position, \buffer, rate, trigger, startPos, 0);
-	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul, pan.lag(lagTime));}], ['loop2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 , pan=0 , lagTime=0.1 ;
-	RadPosition.kr(\position, \buffer, rate, trigger, startPos, 1);
-	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate, trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul, pan.lag(lagTime));}], ['impulse', {arg freq = 0.125 , amp = 1 , mul = 1 ;
+	RadPosition.kr(\position, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos, 0);
+	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul, pan.lag(lagTime));}], ['loop2', {arg rate=1 , trigger=1 , startPos=0 , mul=1 , pan=0 , lagTime=0.1 ;
+	RadPosition.kr(\position, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos, 1);
+	Pan2.ar(PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul, pan.lag(lagTime));}], ['impulse', {arg freq = 0.125 , amp = 1 , mul = 1 ;
 Pan2.ar(Decay.ar(Impulse.ar(freq), 0.2, WhiteNoise.ar(amp), 0), 0)*mul;
 }], ['grainfm2', {arg freq= 1 , dur = 0.1 , carfreq= 440 , modFreq=200 , index= 1 , pan = 0 ;
 	GrainFM.ar(2, Impulse.kr(freq), dur, carfreq, modFreq, index, pan);
