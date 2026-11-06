@@ -208,6 +208,8 @@
 			if(current.isNil, { ("Block " ++ block ++ " did not start again").warn; ^false });
 		});
 		this.prApplyArgsMods(Ndef(tag), current, unit, setFunc);
+		//a preset with its own morph time gives it to the block (as for effects)
+		unit[\morphTime] !? {|time| if(time != current[\morphTime], { this.setBlockMorphTime(block, time) }) };
 		^true
 	}
 

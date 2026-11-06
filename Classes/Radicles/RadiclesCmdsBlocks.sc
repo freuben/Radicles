@@ -54,6 +54,20 @@
 			RadUnit.morphBlockPreset(num1.asInteger, str2, num2, str3);
 		}, "blkmorph: block, preset, time, shape (xfade, glide, none)");
 
+		//blkmorphtime 1 5: block 1's own morph time (blkmorphtime 1 posts it,
+		//blkmorphtime 1 default goes back to the global morphtime)
+		cW.add(\blkmorphtime, [\str, \num], {|str1, num1|
+			RadUnit.postBlockMorphTime(num1.asInteger);
+		}, "blkmorphtime: block (posts it)");
+		cW.add(\blkmorphtime, [\str, \num, \num], {|str1, num1, num2|
+			if(RadUnit.setBlockMorphTime(num1.asInteger, num2), { RadUnit.postBlockMorphTime(num1.asInteger) });
+		}, "blkmorphtime: block, time");
+		cW.add(\blkmorphtime, [\str, \num, \str], {|str1, num1, str2|
+			if(str2 == 'default', {
+				if(RadUnit.setBlockMorphTime(num1.asInteger, nil), { RadUnit.postBlockMorphTime(num1.asInteger) });
+			}, { ("blkmorphtime " ++ num1 ++ ": a time in seconds or default, not " ++ str2).warn });
+		}, "blkmorphtime: block, default");
+
 		cW.add(\blkload, [\str, \num, \str], {|str1, num1, str2|
 			RadUnit.loadBlockPreset(num1.asInteger, str2);
 		}, "blkload: block, preset");

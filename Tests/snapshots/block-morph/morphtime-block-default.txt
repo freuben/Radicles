@@ -1,0 +1,18 @@
+>> blkmorphtime 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blkmorphtime 1 default
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blkmorphtime 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
