@@ -1,0 +1,16 @@
+>> vol t 1 sin
+== radpost ==
+Ndef('mod1', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(-90.0, 6.0) + add});
+Ndef('track1').xset('volume', Ndef('mod1'));
+== radpostcont ==
+(none)
+
+>> pan t 2 sin
+== radpost ==
+Ndef('mod2', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(-1.0, 1.0) + add});
+Ndef('spaceTrack2').xset('pan', Ndef('mod2'));
+== radpostcont ==
+(none)
+

@@ -1,0 +1,24 @@
+>> vol t 1 -6
+== radpost ==
+Ndef('track1').set('volume', -6);
+== radpostcont ==
+(none)
+
+>> pan t 1 -0.3
+== radpost ==
+Ndef('spaceTrack1').set('pan', -0.3);
+== radpostcont ==
+(none)
+
+>> trim t 2 3
+== radpost ==
+Ndef('inTrack2').set('trim', 3);
+== radpostcont ==
+(none)
+
+>> mute t 2
+== radpost ==
+Ndef('track2').set('mute', 1);
+== radpostcont ==
+(none)
+
