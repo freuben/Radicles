@@ -69,7 +69,7 @@
 	latch1 = Latch.ar(freq, Impulse.kr(rate));
 	latch2 = DelayL.kr(Latch.ar(freq, Impulse.kr(rate)), maxDelay, 1/rate);
 	latch3 = (latch1.cpsmidi - (latch1.cpsmidi - latch2.cpsmidi)).midicps.min(20000).max(20);
-	PitchShift.ar(input, windowSize, (latch1/latch3)[0].lag(lag), pitchDispersion,
+	PitchShift.ar(input, windowSize, (latch1/latch3).asArray[0].lag(lag), pitchDispersion,
  timeDispersion);
 } ], [ 'cbg', {arg decayTime=0.5 , freq=10 , lag=5.0 ;
 	CombL.ar(\in * (LFNoise0.ar(freq.lag(lag)) > 0), 0.2, 0.2, decayTime);} ], [ 'lpf', {arg freq=20000 , lag=0.1 ; LPF.ar(\in, freq.lag(lag));} ], [ 'convrev1', {arg mix=1.0 ;
