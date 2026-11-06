@@ -2,8 +2,8 @@
 	RadPosition.kr(\position, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos, 0);
 	PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos.linlin(0,1,0, \buffer.numFrames), 0)*mul;}], ['loop', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
 	RadPosition.kr(\position, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos, 1);
-	PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;}], ['cue', {arg loop=1 , mul=1 ;
-	DiskIn.ar(\buffer.numChannels, \buffer, loop)*mul;}], ['playpv', {arg rate=1 , offset=0 , numFrames=0.6 , winType=0 , mul=1 ;
+	PlayBuf.ar(\buffer.numChannels, \buffer, rate * BufRateScale.kr(\buffer), trigger, startPos.linlin(0,1,0, \buffer.numFrames), 1)*mul;}], ['cue', {arg loop=1 , mul=1 , rate=1 ;
+	VDiskIn.ar(\buffer.numChannels, \buffer, rate * \fileRate / SampleRate.ir, loop)*mul;}], ['playpv', {arg rate=1 , offset=0 , numFrames=0.6 , winType=0 , mul=1 ;
 	var localbuf, chain;
 	localbuf = LocalBuf.new(numFrames.linexp(0,1,32,32768), \buffer.numChannels);
 		chain = PV_PlayBuf(localbuf, \buffer.bufnum, rate, offset.linlin(0,1,0, \buffer.numFrames),
