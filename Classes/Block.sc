@@ -150,6 +150,11 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize, bufStrings, bufLoaded, bufWait,
 		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool, thisExcludeLibs,
 		startKey, ticket, cancelStart;
+		// names as symbols, as the call window passes them: a String block
+		// name found no definition (nothing played), and a String buffer was
+		// taken for an array of buffers (one per letter)
+		if(blockName.isString, { blockName = blockName.asSymbol });
+		if(buffer.isString, { buffer = buffer.asSymbol });
 		if(block >= 1, {
 			blockIndex = block-1;
 			if(ndefs[blockIndex].notNil, {
@@ -423,6 +428,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	*playAll {arg blockArr, blockName, buffer, extraArgs, data, sync=false, xfade=false, action;
 		var blockNameArr, bufferArr, extraArgsArr, dataArr, syncArr, xfadeArr, cond;
 		cond = Condition(false);
+		if(blockName.isString, { blockName = blockName.asSymbol });
+		if(buffer.isString, { buffer = buffer.asSymbol });
 		if(blockName.isArray, {blockNameArr = blockName}, {blockNameArr =
 			blockName!blockArr.size});
 		if(buffer.isArray, {bufferArr = buffer}, {bufferArr = buffer!blockArr.size});
