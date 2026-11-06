@@ -14,6 +14,7 @@ RadUnit {
 
 	// running block morphs: tag -> (routine:, restore:) (step 2, PR 4)
 	classvar blockMorphs;
+	classvar blockMorphTimes; // tag -> (def:, time:), see RadUnitBlockMorph.sc
 
 	// seconds from asking where a block plays to its new copy starting
 	// (blkmorph), on top of the server's latency (Ndefs send their messages
@@ -117,6 +118,7 @@ RadUnit {
 		if(entry[3].notNil, { unit[\data] = this.plain(entry[3]) });
 		buffer = Block.bufferFormOf(tag);
 		if(buffer.notNil, { unit[\buffer] = buffer });
+		this.blockMorphTimeOf(tag, entry[1]) !? {|time| unit[\morphTime] = time };
 		^unit
 	}
 

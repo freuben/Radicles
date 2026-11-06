@@ -1,0 +1,8 @@
+>> blk 1 noise
+== radpost ==
+Ndef('block1', {arg mul=0.5;
+    WhiteNoise.ar(mul);
+});
+== radpostcont ==
+(none)
+

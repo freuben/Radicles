@@ -95,6 +95,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockCount = 1;
 		liveBuffers = nil;
 		this.prFreePositionBuses;
+		RadUnit.clearBlockMorphTimes;
 		RadUnit.syncBlocks; //document (step 2)
 	}
 
@@ -107,6 +108,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockCount = 1;
 		liveBuffers = nil;
 		this.prFreePositionBuses;
+		RadUnit.clearBlockMorphTimes;
 		RadUnit.syncBlocks; //document (step 2)
 	}
 
@@ -204,7 +206,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											/*bufIndex = BufferSystem.bufferArray.indexOf(buf);
 											bufString = BufferSystem.globVarArray[bufIndex];*/
 											/*blockFunc.postln;*/
-											blockFunc = blockFuncString.replace("\\buffer",
+											blockFunc = this.prFileRateString(blockFuncString, buf).replace("\\buffer",
 												bufString).replace("'buffer'", bufString).interpret;
 											}, {
 												blockFunc = nil;
@@ -229,8 +231,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 										bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
 										bufString = BufferSystem.globVarArray[bufIndex];*/
 										bufString = BStore.buffStrByID(buffer);
-										blockFunc = blockFuncString.replace("\\buffer",
-											bufString).replace("'buffer'", bufString).interpret;
+										blockFunc = this.prFileRateString(blockFuncString, BStore.buffByID(buffer))
+										.replace("\\buffer", bufString).replace("'buffer'", bufString).interpret;
 										/*"this buffer is an existing buffer with ID".postln;*/
 									}, {
 										buffer.do{|item|
@@ -844,6 +846,23 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			[\alloc, \cue].includes(item[0]) and: { item[1] == tag.asSymbol } };
 		if(id.notNil, { ^[id, nil] });
 		^[tag, nil];
+	}
+
+	// a definition that streams a file from disk (cue) writes \fileRate where
+	// it needs the file's sample rate, which only the file's header knows
+	// (a cue buffer holds a few frames at the server's rate, so BufRateScale
+	// is 1): it becomes the number, so the file plays at its own speed (6 Nov
+	// 2026). Without a file it is the server's rate (speed 1).
+	*prFileRateString {arg string, buf;
+		var path, file, rate;
+		if(string.includesString("\\fileRate").not and: { string.includesString("'fileRate'").not }, { ^string });
+		path = buf !? {|b| b.path };
+		if(path.notNil and: { File.exists(path.standardizePath) }, {
+			file = SoundFile.openRead(path.standardizePath);
+			file !? { rate = file.sampleRate; file.close };
+		});
+		rate = rate !? {|r| r.asInteger.asString } ?? { "SampleRate.ir" };
+		^string.replace("\\fileRate", rate).replace("'fileRate'", rate);
 	}
 
 	// ---- the document (Document Model, step 2) ----

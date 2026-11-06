@@ -4,6 +4,10 @@
 //   blkmorph 1 warmLoop 4           over 4 seconds
 //   blkmorph 1 warmLoop 4 glide     glide the values (or none: at once)
 //   blkmorph 1 default 4            to the definition's default values
+//   blkmorphtime 1 5                block 1's own morph time (6 Nov 2026)
+// Time: the command's, else the preset's, else the block's own
+// (blkmorphtime), else the global one (morphtime), as for effects. A block
+// keeps its own time while it plays the same definition.
 // Shapes (decided 3 Nov 2026: crossfade is the default for every block):
 //   \xfade: the Ndef's fade time becomes the morph time, then one xset, a
 //     single crossfade between the block as it was and as the preset has it.
@@ -19,6 +23,37 @@
 // patterns (no presets), a block playing another definition.
 
 + RadUnit {
+
+	// block N's own morph time (blkmorphtime N 5, or from a preset it
+	// loaded), or nil for the global one. Kept only while the block plays the
+	// definition it was given for (def: the one playing, read if not given)
+	*blockMorphTimeOf {|tag, def|
+		var entry = blockMorphTimes !? {|m| m[tag.asSymbol] };
+		if(entry.isNil, { ^nil });
+		def = def ?? { (Block.liveBlocks ? []).detect{|item| item.notNil and: { item[0] == tag.asSymbol } } !? (_[1]) };
+		^if(def == entry[\def], { entry[\time] }, { nil })
+	}
+
+	// give block N its own morph time; nil goes back to the global one
+	*setBlockMorphTime {|block, time|
+		var tag = this.blockTag(block), unit = this.readBlock(tag);
+		if(unit.isNil, { ("No block " ++ block ++ " playing").warn; ^false });
+		blockMorphTimes = blockMorphTimes ?? { IdentityDictionary.new };
+		if(time.isNil, { blockMorphTimes.removeAt(tag) }, {
+			blockMorphTimes[tag] = (def: unit[\def], time: time.max(0)) });
+		this.sync(tag);
+		^true
+	}
+
+	// forget all blocks' own morph times (Block.clear, Block.removeAll)
+	*clearBlockMorphTimes { blockMorphTimes = nil }
+
+	// posts block N's morph time
+	*postBlockMorphTime {|block|
+		var tag = this.blockTag(block), own = this.blockMorphTimeOf(tag);
+		(RadDoc.addressString(this.address(tag)) ++ " morph time: " ++
+			(own ?? { morphTime.asString ++ " (global)" })).postln;
+	}
 
 	// where block N's file will be when a message sent now reaches the
 	// server, as a startPos (0-1), or nil if the block reports no position.
@@ -84,7 +119,7 @@
 		if(RadDoc.diff((args: current[\args], mods: current[\mods]), (args: unit[\args], mods: unit[\mods]), 1e-9).isEmpty, {
 			action.(); ^true
 		});
-		time = (time ?? { unit[\morphTime] } ?? { morphTime }).max(0);
+		time = (time ?? { unit[\morphTime] } ?? { this.blockMorphTimeOf(tag) } ?? { morphTime }).max(0);
 		shape = (shape ?? { unit[\morphShape] } ? \xfade).asSymbol;
 		if([\xfade, \glide, \none].includes(shape).not, {
 			("blkmorph: shape is xfade, glide or none, not " ++ shape).warn; ^false });

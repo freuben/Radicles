@@ -398,6 +398,7 @@ blkmorph 1 warmLoop //move block 1 to a preset over the morph time (morphtime 5)
 blkmorph 1 warmLoop 4 //over 4 seconds; a sound file carries on from where it is
 blkmorph 1 warmLoop 4 glide //glide the values instead (none: at once)
 blkmorph 1 default 4 //to the definition's default values
+blkmorphtime 1 5 //block 1's own morph time (blkmorphtime 1 posts it; blkmorphtime 1 default: back to morphtime)
 blksave 1 myTake keep //block 1 plays a recording (@1): keep it as a file in SoundFiles/Play/recordings (rec_<date>_<time>.wav), then save
 blksave 1 myTake keep take1 //the same, as recordings/take1.wav
 
