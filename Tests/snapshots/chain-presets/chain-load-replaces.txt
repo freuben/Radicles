@@ -1,0 +1,36 @@
+>> csload t 2 radtest_chain3
+== radpost ==
+Ndef('filterTrack_2_3').clear(0.5);
+Ndef('filterTrack_2_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inTrack2', 1), freq.lag(lag));});
+Ndef('filterTrack_2_1').set('freq', 20000, 'lag', 0.1);
+Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_2_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('spaceTrack2', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track2', 1), pan) * 3.dbamp;
+});
+Ndef('spaceTrack2').set('pan', 0);
+Ndef('filterTrack_2_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inTrack2', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('filterTrack_2_1').set('pitchRatio', 1.0, 'pitchDispertion', 0.0, 'timeDispersion', 0.0001, 'winSize', 0.02);
+Ndef.ar('filterTrack_2_2', 1);
+Ndef('filterTrack_2_2').fadeTime = 0.5;
+Ndef('filterTrack_2_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inTrack2', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('filterTrack_2_1').set('pitchRatio', 1.0, 'pitchDispertion', 0.0, 'timeDispersion', 0.0001, 'winSize', 0.02, 'lag', 0.1, 'freq', 20000);
+Ndef('filterTrack_2_2', {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('filterTrack_2_1', 1), 12, delayTime, decayTime)});
+Ndef('filterTrack_2_2').set('delayTime', 0, 'decayTime', 1);
+Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_2_2', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+

@@ -7,14 +7,25 @@ Ndef('filterTrack_2_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersi
  ;
         PitchShift.ar(Ndef.ar('inTrack2', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
  });
-Ndef('filterTrack_2_1').set('pitchRatio', 0.5, 'pitchDispertion', 0.0, 'timeDispersion', 0.0001, 'winSize', 0.02);
+Ndef('filterTrack_2_1').set('pitchDispertion', 0.0, 'pitchRatio', 0.5, 'winSize', 0.02, 'timeDispersion', 0.0001);
+Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterTrack_2_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 Ndef.ar('filterTrack_2_2', 1);
 Ndef('filterTrack_2_2').fadeTime = 0.5;
+Ndef('filterTrack_2_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inTrack2', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('filterTrack_2_1').set('pitchRatio', 0.5, 'pitchDispertion', 0.0, 'timeDispersion', 0.0001, 'winSize', 0.02);
 Ndef('filterTrack_2_2', {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('filterTrack_2_1', 1), 12, delayTime, decayTime)});
 Ndef('filterTrack_2_2').set('delayTime', 0, 'decayTime', 1);
 Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('filterTrack_2_2', 1) * volume.dbamp.lag(lagTime)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('filterTrack_2_1', 1) * volume.dbamp.lag(lagTime)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

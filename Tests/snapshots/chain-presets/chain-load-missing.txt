@@ -1,0 +1,6 @@
+>> csload t 1 radtest_nochain
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
