@@ -1,0 +1,30 @@
+>> csmorphtime t 1 4
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> csmorphtime m 6
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> csmorphtime b 1 2
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> csmorphtime b 1 default
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> csmorphtime t 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

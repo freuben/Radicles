@@ -1,0 +1,8 @@
+>> csmorph t 1 radtest_cm2 1 glide
+== radpost ==
+Ndef('filterTrack_1_1').lag('pitchRatio', 1);
+Ndef('filterTrack_1_1').set('pitchRatio', 0.5);
+Ndef('filterTrack_1_1').lag('pitchRatio', nil);
+== radpostcont ==
+(none)
+

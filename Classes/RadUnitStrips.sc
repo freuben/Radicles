@@ -16,7 +16,7 @@
 
 	// the keys of a strip unit that are values (refreshed when read), and
 	// those that are its structure (kept up to date by syncStrips)
-	*stripValueKeys { ^[\trim, \volume, \mute, \pan, \lags, \mods, \solo, \output] }
+	*stripValueKeys { ^[\trim, \volume, \mute, \pan, \lags, \mods, \solo, \output, \chainMorphTime] }
 	*stripStructureKeys { ^[\kind, \channels, \space] }
 
 	// the strips of the running mixer, by name
@@ -61,6 +61,8 @@
 		level[1][\volume] !? {|mod| mods[\volume] = mod };
 		if(pan[1].notEmpty, { mods[\pan] = pan[1] });
 		if(mods.notEmpty, { unit[\mods] = mods });
+		//the chain's own morph time (csmorphtime, step 3 PR 3)
+		if(az.respondsTo(\chainMorphTimeOf), { az.chainMorphTimeOf(name) !? {|time| unit[\chainMorphTime] = time } });
 		if(name != \master, {
 			index = (az.mixTrackNames ? []).indexOf(name);
 			unit[\solo] = index !? {|i| (az.soloStates ? [])[i] } ? 0;
