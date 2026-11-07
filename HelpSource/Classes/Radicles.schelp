@@ -197,6 +197,11 @@ morphtime t 1 1 8 //this slot's own morph time, saved with its presets
 morphtime t 1 1 default //back to the global one
 //share a preset with a library: copies your preset raveSetting1 of nnt into RAVE
 fxsave nnt raveSetting1 RAVE
+//effect-chain presets: a strip's effects (values, modulators, bypass) in one file
+cssave t 1 warmVox //track 1's chain -> Settings/Presets/units/chain/warmVox.scd
+csload t 3 warmVox //onto track 3 (any strip: csload b 1 warmVox, csload m warmVox)
+csload t 3 default //an empty chain: removes track 3's effects
+csload //lists chain presets
 //getspec
 fxgetspec t 1 1 1
 fxgetspec t 1 1 pitchRatio

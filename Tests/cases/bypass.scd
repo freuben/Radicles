@@ -226,29 +226,32 @@
 	}
 );
 
-// strip presets (cssave / csload) keep which slots are bypassed: saved as a
-// third element that older code ignores; loading bypasses those slots again
+// chain presets (cssave / csload) keep which slots are bypassed (each slot's
+// unit has bypass: true); loading bypasses those slots again
 ~radTest.("bypass-strip-preset",
 	setup: ["start 2", "fx t 1 1 pch", "fx t 1 2 dl1", "fxset t 1 1 pitchRatio 0.5", ["fxbypass t 1 2", 3],
 		"cssave t 1 radtest_bypstrip"],
 	cmds: [["csload t 2 radtest_bypstrip", 8]],
 	check: {
-		var saved = PresetFile.read(\track, 'radtest_bypstrip');
+		var saved = RadUnit.readChainPreset('radtest_bypstrip');
 		case
-		{ saved[2] != (bypass: [2]) } { "saved: " ++ saved[2].cs }
+		{ saved[\fx].collect{|unit| unit[\bypass] ? false } != (1: false, 2: true) } { "saved: " ++ saved.cs }
 		{ Radicles.aZ.isBypassed(\filterTrack_2_2).not } { "track 2 slot 2 not bypassed" }
 		{ Radicles.aZ.isBypassed(\filterTrack_2_1) } { "track 2 slot 1 bypassed" }
 		{ ~radReads.(\track2, \filterTrack_2_1).not } { "track2 does not read slot 1" }
 		{ Ndef(\filterTrack_2_1).get(\pitchRatio) != 0.5 } { "settings not loaded" }
 		{ true }
 	},
-	teardown: { PresetFile.remove(\track, 'radtest_bypstrip', false, path: 0, post: false) }
+	teardown: { File.delete(RadUnit.chainPresetPath('radtest_bypstrip')) }
 );
 
-// a strip with nothing bypassed is saved exactly as before (two elements)
+// a chain with nothing bypassed saves no bypass
 ~radTest.("bypass-strip-preset-none",
 	setup: ["start 2", "fx t 1 pch"],
 	cmds: ["cssave t 1 radtest_bypnone"],
-	check: { (PresetFile.read(\track, 'radtest_bypnone').size == 2) or: { "saved: " ++ PresetFile.read(\track, 'radtest_bypnone').cs } },
-	teardown: { PresetFile.remove(\track, 'radtest_bypnone', false, path: 0, post: false) }
+	check: {
+		var saved = RadUnit.readChainPreset('radtest_bypnone');
+		(saved[\fx].every{|unit| unit[\bypass].isNil }) or: { "saved: " ++ saved.cs }
+	},
+	teardown: { File.delete(RadUnit.chainPresetPath('radtest_bypnone')) }
 );

@@ -41,10 +41,10 @@ var a = { Radicles.aZ };
 	setup: ["start 11 1", "fx t 1 pch", "fx t 10 pch"],
 	cmds: ["cssave t 1 radtest_b5"],
 	check: {
-		var p = PresetFile.read(\track, 'radtest_b5').cs;
-		(p.contains("filterTrack_1_1") and: { p.contains("filterTrack_10").not }) or: { "preset: " ++ p.keep(200) }
+		var fx = RadUnit.readChainPreset('radtest_b5')[\fx];
+		(fx.keys == Set[1] and: { fx[1][\def] == \pch }) or: { "preset: " ++ fx.cs }
 	},
-	teardown: { PresetFile.remove(\track, 'radtest_b5', false, path: 0, post: false) }
+	teardown: { File.delete(RadUnit.chainPresetPath('radtest_b5')) }
 );
 
 // Bug 6 (#9): effect slots sorted as text, so slot 10 came before slot 2.
@@ -111,7 +111,7 @@ var a = { Radicles.aZ };
 		var tags = a.().filters.flop[0];
 		(tags.select{|t| t.asString.beginsWith("filterTrack_3_") }.size == 1) or: { "filters: " ++ a.().filters.cs }
 	},
-	teardown: { PresetFile.remove(\track, 'radtest_b11', false, path: 0, post: false) }
+	teardown: { File.delete(RadUnit.chainPresetPath('radtest_b11')) }
 );
 
 // Bug 12 (#15): unmodulating a parameter matched a modulator on a different effect.

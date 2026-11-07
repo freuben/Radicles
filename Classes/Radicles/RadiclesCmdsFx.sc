@@ -2206,6 +2206,7 @@
 
 	// csload, cssave, csfree
 	*prChannelStripCmds {
+		var stripOf, mixOf, save, load;
 		cW.add(\lagsfx, [\str, \num, \num], {|str1, num1, num2|
 			var filterTag, filterTagArr;
 			if(aZ.notNil, {
@@ -2220,106 +2221,57 @@
 			});
 		}, "save: filterNum, preset");
 
-		//assmeblage track presets
+		//effect-chain presets (Document Model, step 3, PR 2: RadUnitChains.sc).
+		//csload / csload t lists them; cssave t 1 name; csload t 1 name|default;
+		//t 1 can be b 1, m, or a mixer position (csload 3 name)
+		stripOf = {|str2, num1|
+			case
+			{str2 == 't'} {[\track, num1]}
+			{str2 == 'b'} {[\bus, num1]}
+			{str2 == 'm'} {[\master, 1]}
+			{ ("csload/cssave: t, b or m, not " ++ str2).warn; nil };
+		};
+		mixOf = {|num1|
+			var trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr}, thisArr;
+			if(num1 <= trackArr.size and: { num1 >= 1 }, {
+				thisArr = trackArr[num1-1];
+				[thisArr[0].asSymbol, thisArr[1] ? 1]
+			}, { "track not found".warn; nil });
+		};
+		save = {|strip, name| strip !? { RadUnit.saveChainPreset(strip[0], strip[1], name, az: aZ) } };
+		load = {|strip, name| strip !? { RadUnit.loadChainPreset(strip[0], strip[1], name, az: aZ) } };
+
 		cW.add(\csload, [\str], {|str1|
-			if(aZ.notNil, {
-				aZ.listTrackPresets(nil).dopostln;
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "csload: [trackType, presetName]");
+			RadUnit.postChainPresets;
+		}, "csload: lists chain presets");
 
 		cW.add(\csload, [\str, \str], {|str1, str2|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.listTrackPresets(\track);}
-				{str2 == 'b'} {aZ.listTrackPresets(\bus);}
-				{str2 == 'm'} {aZ.listTrackPresets(\master);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "csload: [trackType, presetName]");
+			RadUnit.postChainPresets;
+		}, "csload: [trackType] lists chain presets");
 
 		cW.add(\csload, [\str, \str, \str], {|str1, str2, str3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.loadTrackPreset(\track, 1, str3);}
-				{str2 == 'b'} {aZ.loadTrackPreset(\bus, 1, str3);}
-				{str2 == 'm'} {aZ.loadTrackPreset(\master, 1, str3);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
+			if(aZ.notNil, { load.(stripOf.(str2, 1), str3) }, { "could not find assemblage".warn });
 		}, "csload: [trackType, presetName]");
 
 		cW.add(\csload, [\str, \str, \num, \str], {|str1, str2, num1, str3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.loadTrackPreset(\track, num1, str3);}
-				{str2 == 'b'} {aZ.loadTrackPreset(\bus, num1, str3);}
-				{str2 == 'm'} {aZ.loadTrackPreset(\master, num1, str3);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
+			if(aZ.notNil, { load.(stripOf.(str2, num1), str3) }, { "could not find assemblage".warn });
 		}, "csload: [trackType, trackNum, presetName]");
 
 		cW.add(\csload, [\str, \num, \str], {|str1, num1, str2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.loadTrackPreset(thisArr[0].asSymbol, thisArr[1], str2);
-				}, {
-					"track not found".warn;
-				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "csload: mixTrackNum, slot1, preset");
+			if(aZ.notNil, { load.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
+		}, "csload: mixTrackNum, preset");
 
 		cW.add(\cssave, [\str, \str, \str], {|str1, str2, str3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.writeTrackPreset(\track, 1, str3);}
-				{str2 == 'b'} {aZ.writeTrackPreset(\bus, 1, str3);}
-				{str2 == 'm'} {aZ.writeTrackPreset(\master, 1, str3);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
+			if(aZ.notNil, { save.(stripOf.(str2, 1), str3) }, { "could not find assemblage".warn });
 		}, "cssave: [trackType, presetName]");
 
 		cW.add(\cssave, [\str, \str, \num, \str], {|str1, str2, num1, str3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.writeTrackPreset(\track, num1, str3);}
-				{str2 == 'b'} {aZ.writeTrackPreset(\bus, num1, str3);}
-				{str2 == 'm'} {aZ.writeTrackPreset(\master, num1, str3);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
+			if(aZ.notNil, { save.(stripOf.(str2, num1), str3) }, { "could not find assemblage".warn });
 		}, "cssave: [trackType, trackNum, presetName]");
 
 		cW.add(\cssave, [\str, \num, \str], {|str1, num1, str2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.writeTrackPreset(thisArr[0].asSymbol, thisArr[1], str2);
-				}, {
-					"track not found".warn;
-				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "cssave: mixTrackNum, slot1, preset");
+			if(aZ.notNil, { save.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
+		}, "cssave: mixTrackNum, preset");
 
 		cW.add(\csfree, [\str, \str], {|str1, str2|
 			if(aZ.notNil, {
