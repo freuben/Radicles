@@ -1,0 +1,14 @@
+>> solo t 2
+== radpost ==
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 0, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceTrack3', 2) * 0, Ndef.ar('spaceBus1', 2) * 0].sum * trim.dbamp.lag(lagTime) )}
+== radpostcont ==
+(none)
+
+>> outmenu t 3 0
+== radpost ==
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 0, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 0].sum * trim.dbamp.lag(lagTime) )}
+== radpostcont ==
+(none)
+

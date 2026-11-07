@@ -82,15 +82,16 @@
 	}
 );
 
-// removing effects removes their units, and strips left with none
+// removing effects removes their units, and the fx of strips left with none
+// (the strips themselves stay: step 3)
 ~radTest.("unit-removed",
 	setup: ["start 2 1", "fx t 1 pch", "fx t 1 2 dl1", "fx t 2 lpf"],
 	cmds: ["fxclear t 1 1", "csfree t 2"],
 	check: {
-		var strips = RadDoc.current.at(\strips);
-		(strips == (track1: (fx: (2: RadDoc.current.at("track1.fx.2"))))
+		var fx = RadDoc.current.at(\strips).collect(_[\fx]).reject(_.isNil);
+		(fx == (track1: (2: RadDoc.current.at("track1.fx.2")))
 			and: { RadDoc.current.at("track1.fx.2.def") == \dl1 })
-		or: { "strips: " ++ strips.cs }
+		or: { "effects: " ++ fx.cs }
 	}
 );
 

@@ -170,6 +170,10 @@ RadUnit {
 	*fromSystem {|az|
 		var doc = RadDoc.new;
 		az = az ? Radicles.aZ;
+		//strips first (step 3), then their effects
+		this.stripNames(az).do{|name|
+			this.readStrip(name, az) !? {|unit| doc.put([\strips, name], unit) };
+		};
 		if(az.notNil, {
 			(az.filters ? []).do{|item|
 				var unit = this.read(item[0], az);
@@ -195,6 +199,10 @@ RadUnit {
 				this.prRefreshValues(unit, fresh) });
 		};
 		if(az.isNil, { ^doc });
+		(doc.at(\strips) ? ()).keysValuesDo{|name, unit|
+			var fresh = this.readStrip(name, az);
+			if(fresh.notNil and: { unit.isKindOf(Dictionary) }, { this.prRefreshStrip(unit, fresh) });
+		};
 		(az.filters ? []).do{|item|
 			var address = this.address(item[0]), unit = doc.at(address), fresh;
 			if(unit.notNil and: { unit[\def] == item[1] }, {
@@ -249,7 +257,7 @@ RadUnit {
 		tags.do{|tag| this.sync(tag) };
 	}
 
-	// every effect: add, change or remove units so the document matches
+	// every effect and strip: add, change or remove units so the document matches
 	*syncAll {|az|
 		var doc = RadDoc.current, tags;
 		az = az ? Radicles.aZ;
@@ -261,6 +269,7 @@ RadUnit {
 			};
 		};
 		tags.do{|tag| this.sync(tag, az) };
+		this.syncStrips(az); //step 3: the strips themselves
 	}
 
 	// after a modulator was added or removed on an Ndef: if the chain it

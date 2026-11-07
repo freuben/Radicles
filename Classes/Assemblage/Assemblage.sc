@@ -63,6 +63,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				server.sync;
 				this.play;
 				this.updateMixInfo;
+				RadUnit.syncStrips(this); //document (step 3): the strips
 				oiIns = Ndef(\spaceMaster).numChannels;
 				/*oiOuts = Ndef(\spaceMaster).numChannels;*/
 				oiOuts = server.options.numOutputBusChannels;
@@ -259,11 +260,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			});
 			chanNum ?? {chanNum = systemChanNum};
 			trackInfo = this.addTrack(type, chanNum, spaceType, trackSynth, trackSpecs);
+			//mixTrackNames as the window would make it, so lists kept by position
+			//(soloStates, outputSettings) match it with no window open too
+			this.updateMixInfo;
 			server.sync;
 			this.autoRoute(trackInfo);
 			server.sync;
-			this.inputMaster;
+			//to the master by each strip's output (inputMaster would connect every
+			//strip, also one set to no output, and solo then failed on the extra input)
+			this.outputMasterFunc;
 			server.sync;
+			RadUnit.syncStrips(this); //document (step 3): the new strip
 			{this.refreshFunc}.defer;
 			server.sync;
 			action.(trackInfo);
@@ -349,6 +356,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					busCount = this.updateTrackCount(trackType);
 				});
+				RadUnit.syncStrips(this); //document (step 3): the strip is gone
 				//refresh win if open
 				this.mixWinBool({
 					nodeTime.yield;
