@@ -56,7 +56,8 @@
 		{ ~radSame.not } { "the window was closed and opened again" }
 		{ ~radShown.includesEqual("0.5").not } { "the window shows " ++ ~radShown.cs ++ ", not pitchRatio 0.5" }
 		{ ~radWpMoved.(~radBefore, ~radAfter) ?? {
-			~radWpMoved.(~radBefore, ~radEarly) !? {|m| "jumped: " ++ m } ? true } }
+			//a new window (none is expected now) must not open elsewhere either
+			~radEarly !? {|early| ~radWpMoved.(~radBefore, early) !? {|m| "jumped: " ++ m } } ? true } }
 	},
 	teardown: {
 		~radWpClose.();
