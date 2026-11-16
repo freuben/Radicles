@@ -92,7 +92,7 @@
 	// the chain in a preset file (default: an empty chain), or nil with the
 	// reason posted
 	*readChainPreset {|name|
-		var path, data, chain, bad;
+		var path, data, chain;
 		if(name.asSymbol == \default and: { this.findChainPresetPath(name).isNil }, { ^(fx: ()) });
 		path = this.findChainPresetPath(name);
 		if(path.isNil, { ("No chain preset " ++ name).warn; ^nil });
@@ -101,14 +101,21 @@
 		chain = data[\chain];
 		if(data[\type] != \chain or: { chain.isKindOf(Dictionary).not }, {
 			("RadUnit: " ++ path ++ " is not a chain preset").warn; ^nil });
+		^this.prValidChain(chain, "Chain preset " ++ name)
+	}
+
+	// a chain read from a file, without the slots that hold no effect this
+	// Radicles has (named); also for the chain in a track preset (step 4)
+	*prValidChain {|chain, label|
+		var bad = [];
+		if(chain.isKindOf(Dictionary).not, { ^(fx: ()) });
 		chain[\fx] = chain[\fx] ? ();
-		bad = [];
 		chain[\fx].keysValuesDo{|slot, unit|
 			if(slot.isInteger.not or: { unit.isKindOf(Dictionary).not } or: { unit[\kind] != \filter } or: {
 				(try { SynthFile.read(\filter, unit[\def]) } { nil }).isNil }, { bad = bad.add(slot) });
 		};
 		if(bad.notEmpty, {
-			("Chain preset " ++ name ++ ": left out slot(s) " ++ bad.collect(_.asString).sort.join(", ") ++
+			(label ++ ": left out slot(s) " ++ bad.collect(_.asString).sort.join(", ") ++
 				" (not an effect this Radicles has)").warn;
 			bad.do{|slot| chain[\fx].removeAt(slot) };
 		});

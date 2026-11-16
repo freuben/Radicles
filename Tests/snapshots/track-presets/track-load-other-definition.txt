@@ -1,0 +1,7 @@
+>> tload t 2 radtest_track3
+== radpost ==
+Ndef('block2', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+Ndef('block2').xset('freq', 330, 'phase', 0, 'mul', 0.4);
+== radpostcont ==
+(none)
+

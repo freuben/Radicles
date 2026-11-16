@@ -57,6 +57,68 @@
 		this.prNdefCmds;
 		this.prMixModStringCmds;
 		this.prPanCmds;
+		this.prTrackPresetCmds;
+	}
+
+	// tsave, tload: track presets (Document Model, step 4: RadUnitTracks.sc).
+	// tload / tload t list them; tsave t 1 name; tload t 1 name|default
+	// [nosrc] [nofx]; t 1 can be b 1, m, or a mixer position (tload 3 name)
+	*prTrackPresetCmds {
+		var stripOf, mixOf, save, load, optsOf;
+		stripOf = {|str2, num1|
+			case
+			{str2 == 't'} {[\track, num1]}
+			{str2 == 'b'} {[\bus, num1]}
+			{str2 == 'm'} {[\master, 1]}
+			{ ("tload/tsave: t, b or m, not " ++ str2).warn; nil };
+		};
+		mixOf = {|num1|
+			var trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr}, thisArr;
+			if(num1 <= trackArr.size and: { num1 >= 1 }, {
+				thisArr = trackArr[num1-1];
+				[thisArr[0].asSymbol, thisArr[1] ? 1]
+			}, { "track not found".warn; nil });
+		};
+		//nosrc and nofx, in any order; nil (and a warning) for anything else
+		optsOf = {|opts|
+			var bad = opts.reject{|opt| [\nosrc, \nofx].includes(opt.asSymbol) };
+			if(bad.notEmpty, { ("tload: options are nosrc and nofx, not " ++ bad.join(", ")).warn; nil }, {
+				[opts.includes(\nosrc), opts.includes(\nofx)] });
+		};
+		save = {|strip, name|
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				strip !? { RadUnit.saveTrackPreset(strip[0], strip[1], name, az: aZ) } });
+		};
+		load = {|strip, name, opts|
+			var flags = optsOf.(opts.collect(_.asSymbol));
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				if(strip.notNil and: { flags.notNil }, {
+					RadUnit.loadTrackPreset(strip[0], strip[1], name, flags[0], flags[1], az: aZ) });
+			});
+		};
+		cW.add(\tload, [\str], {|str1| RadUnit.postTrackPresets }, "tload: lists track presets");
+		cW.add(\tload, [\str, \str], {|str1, str2| RadUnit.postTrackPresets }, "tload: [trackType] lists track presets");
+		[[], [\str], [\str, \str]].do{|extra|
+			var post = ["", ", option", ", option, option"][extra.size];
+			cW.add(\tload, [\str, \str, \str] ++ extra, {|str1, str2, str3 ... opts|
+				load.(stripOf.(str2, 1), str3, opts);
+			}, "tload: trackType, preset" ++ post);
+			cW.add(\tload, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3 ... opts|
+				load.(stripOf.(str2, num1), str3, opts);
+			}, "tload: trackType, trackNum, preset" ++ post);
+			cW.add(\tload, [\str, \num, \str] ++ extra, {|str1, num1, str2 ... opts|
+				if(aZ.notNil, { load.(mixOf.(num1), str2, opts) }, { "could not find assemblage".warn });
+			}, "tload: mixTrackNum, preset" ++ post);
+		};
+		cW.add(\tsave, [\str, \str, \str], {|str1, str2, str3|
+			save.(stripOf.(str2, 1), str3);
+		}, "tsave: trackType, preset");
+		cW.add(\tsave, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+			save.(stripOf.(str2, num1), str3);
+		}, "tsave: trackType, trackNum, preset");
+		cW.add(\tsave, [\str, \num, \str], {|str1, num1, str2|
+			if(aZ.notNil, { save.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
+		}, "tsave: mixTrackNum, preset");
 	}
 
 	// mixnames, t, b: track names, adding and removing tracks and buses

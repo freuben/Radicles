@@ -1,0 +1,41 @@
+>> tload b 1 radtest_track8
+== radpost ==
+Ndef.ar('filterBus_1_1', 1);
+Ndef('filterBus_1_1').fadeTime = 0.5;
+Ndef('filterBus_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inBus1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('filterBus_1_1').set('pitchDispertion', 0.0, 'pitchRatio', 1.0, 'winSize', 0.02, 'timeDispersion', 0.0001);
+Ndef('bus1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterBus_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('bus1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('bus1').set('volume', -6);
+Ndef('busIn2', {arg vol1 = -inf, lag1 = 0, vol2 = -inf, lag2 = 0; [Ndef.ar('track1', 1)*vol1.dbamp.lag(lag1), Ndef.ar('bus1', 1)*vol2.dbamp.lag(lag2); ].sum});
+Ndef('busIn2').set('vol1', -9, 'lag1', 0);
+Ndef('busIn2').set('vol2', -9);
+== radpostcont ==
+(none)
+
+>> tload m radtest_track8
+== radpost ==
+Ndef.ar('filterMaster_1_1', 2);
+Ndef('filterMaster_1_1').fadeTime = 0.5;
+Ndef('filterMaster_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+ , winSize=0.02
+ ;
+        PitchShift.ar(Ndef.ar('inMaster', 2), winSize, pitchRatio, pitchDispertion, timeDispersion);
+ });
+Ndef('filterMaster_1_1').set('pitchDispertion', 0.0, 'pitchRatio', 1.0, 'winSize', 0.02, 'timeDispersion', 0.0001);
+Ndef('master', {arg volume=0, lagTime=0, mute=0, off=0;
+                    (Ndef.ar('filterMaster_1_1', 2) * volume.dbamp.lag(lagTime)
+                        *mute.linlin(0,1,1,0).lag(0.1)
+                        *off.linlin(0,1,1,0)
+                )});
+Ndef('master').set('volume', 0, 'lagTime', 0, 'mute', 0, 'off', 0);
+Ndef('master').set('volume', -6);
+== radpostcont ==
+(none)
+
