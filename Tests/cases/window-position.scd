@@ -20,6 +20,8 @@
 	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5", "fxsave t 1 1 radtest_wp"],
 	code: {
 		var win;
+		//what these tests check is where the windows are, not the code posted
+		Radicles.postCapture = nil;
 		Radicles.aZ.filterGUI(\track, 1, 1); 0.5.wait;
 		win = ~radWpOpen.().last;
 		win.bounds = win.bounds.moveTo(400, 300); 0.5.wait;
@@ -55,6 +57,8 @@
 	setup: ["start 2", "blk 1 sine", "blksave 1 radtest_wpb"],
 	code: {
 		var win;
+		//what these tests check is where the windows are, not the code posted
+		Radicles.postCapture = nil;
 		Radicles.cW.callFunc("blkgui 1"); 1.wait;
 		win = ~radWpSrc.().last;
 		win.bounds = win.bounds.moveTo(400, 300); 0.5.wait;
@@ -76,6 +80,8 @@
 	setup: ["start 2", "blk 1 sine"],
 	code: {
 		var win;
+		//what these tests check is where the windows are, not the code posted
+		Radicles.postCapture = nil;
 		Radicles.cW.callFunc("blkgui 1"); 1.wait;
 		win = ~radWpSrc.().last;
 		win.bounds = win.bounds.moveTo(400, 300); 0.5.wait;
