@@ -78,7 +78,7 @@
 				};
 			});
 		};
-		^(fx: fx)
+		^(fx: fx) ++ (az.chainMorphTimeOf(this.stripName(type, num)) !? {|time| (morphTime: time) } ? ())
 	}
 
 	// write a chain as a preset file; returns the path
@@ -207,6 +207,25 @@
 			Server.default.sync;
 			{ az.updateFxWin(tag) }.defer;
 		};
+		//a preset with its own morph time gives it to the strip (as fxload does)
+		chain[\morphTime] !? {|time| az.setChainMorphTime(this.stripName(type, num), time) };
 		{ az.refreshFunc }.defer;
+	}
+
+	// csmorph: morph the strip's chain to a preset (Assemblage:morphChain).
+	// Returns false when there is no such preset.
+	*morphChainPreset {|type, num, name, time, shape, action, az|
+		var chain;
+		az = az ? Radicles.aZ;
+		if(az.isNil, { "could not find assemblage".warn; ^false });
+		if(az.getThisTrack(type, num).isNil, { ("No " ++ this.stripName(type, num)).warn; ^false });
+		if(this.chainPresetExists(name).not, {
+			("No chain preset " ++ name ++ (this.isOldChainPreset(name).if(
+				{ " in the new format (csmorph uses presets saved with cssave since Nov 2026)" }, { "" }))).warn;
+			^false });
+		chain = this.readChainPreset(name);
+		if(chain.isNil, { ^false });
+		az.morphChain(type, num, chain, time, shape, action);
+		^true
 	}
 }

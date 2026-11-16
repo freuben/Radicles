@@ -2206,7 +2206,7 @@
 
 	// csload, cssave, csfree
 	*prChannelStripCmds {
-		var stripOf, mixOf, save, load;
+		var stripOf, mixOf, save, load, morph, postChainTime, chainTime;
 		cW.add(\lagsfx, [\str, \num, \num], {|str1, num1, num2|
 			var filterTag, filterTagArr;
 			if(aZ.notNil, {
@@ -2272,6 +2272,55 @@
 		cW.add(\cssave, [\str, \num, \str], {|str1, num1, str2|
 			if(aZ.notNil, { save.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
 		}, "cssave: mixTrackNum, preset");
+
+		//csmorph t 1 warmVox [time] [xfade|glide|none]: the chain morphs to the
+		//preset (step 3, PR 3); csmorph m warmVox ..., csmorph 3 warmVox ...
+		morph = {|strip, name, time, shape|
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				strip !? { RadUnit.morphChainPreset(strip[0], strip[1], name, time, shape, az: aZ) } });
+		};
+		[[], [\num], [\num, \str]].do{|extra|
+			var post = ["", ", time", ", time, shape"][extra.size];
+			cW.add(\csmorph, [\str, \str, \str] ++ extra, {|str1, str2, str3, time, shape|
+				morph.(stripOf.(str2, 1), str3, time, shape);
+			}, "csmorph: trackType, preset" ++ post);
+			cW.add(\csmorph, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3, time, shape|
+				morph.(stripOf.(str2, num1), str3, time, shape);
+			}, "csmorph: trackType, trackNum, preset" ++ post);
+			cW.add(\csmorph, [\str, \num, \str] ++ extra, {|str1, num1, str2, time, shape|
+				if(aZ.notNil, { morph.(mixOf.(num1), str2, time, shape) }, { "could not find assemblage".warn });
+			}, "csmorph: mixTrackNum, preset" ++ post);
+		};
+		//csmorphtime t 1 5: the strip's chain morph time; csmorphtime t 1 posts
+		//it; csmorphtime t 1 default goes back to the global morphtime
+		postChainTime = {|strip|
+			var name = RadUnit.stripName(strip[0], strip[1]), own = aZ.chainMorphTimeOf(name);
+			(name ++ " chain morph time: " ++ (own ?? { RadUnit.morphTime.asString ++ " (global)" })).postln;
+		};
+		chainTime = {|strip, time|
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				strip !? {
+					if(time.notNil, {
+						aZ.setChainMorphTime(RadUnit.stripName(strip[0], strip[1]), if(time == \default, nil, { time.max(0) }));
+					});
+					postChainTime.(strip);
+				};
+			});
+		};
+		cW.add(\csmorphtime, [\str, \str], {|str1, str2| chainTime.(stripOf.(str2, 1)) },
+			"csmorphtime: m (posts it)");
+		cW.add(\csmorphtime, [\str, \str, \num], {|str1, str2, num1|
+			if(str2 == 'm', { chainTime.(stripOf.(str2, 1), num1) }, { chainTime.(stripOf.(str2, num1)) });
+		}, "csmorphtime: trackType, trackNum (posts it), or m, time");
+		cW.add(\csmorphtime, [\str, \str, \str], {|str1, str2, str3|
+			if(str3 == 'default', { chainTime.(stripOf.(str2, 1), \default) }, { "csmorphtime: a time or default".warn });
+		}, "csmorphtime: m, default");
+		cW.add(\csmorphtime, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			chainTime.(stripOf.(str2, num1), num2);
+		}, "csmorphtime: trackType, trackNum, time");
+		cW.add(\csmorphtime, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+			if(str3 == 'default', { chainTime.(stripOf.(str2, num1), \default) }, { "csmorphtime: a time or default".warn });
+		}, "csmorphtime: trackType, trackNum, default");
 
 		cW.add(\csfree, [\str, \str], {|str1, str2|
 			if(aZ.notNil, {

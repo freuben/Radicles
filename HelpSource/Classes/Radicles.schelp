@@ -202,6 +202,9 @@ cssave t 1 warmVox //track 1's chain -> Settings/Presets/units/chain/warmVox.scd
 csload t 3 warmVox //onto track 3 (any strip: csload b 1 warmVox, csload m warmVox)
 csload t 3 default //an empty chain: removes track 3's effects
 csload //lists chain presets
+csmorph t 3 warmVox //track 3's chain morphs to the preset (the strip's or the global morph time)
+csmorph t 3 warmVox 10 glide //10 seconds; values glide in slots that keep their effect (xfade, glide, none)
+csmorphtime t 3 5 //track 3's own chain morph time, saved with chain presets (csmorphtime t 3 posts it; default: back to morphtime)
 //getspec
 fxgetspec t 1 1 1
 fxgetspec t 1 1 pitchRatio
