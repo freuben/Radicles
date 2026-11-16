@@ -107,7 +107,7 @@
 			//source when loaded (16 Nov 2026)
 			track[\source] = source;
 		});
-		az.respondsTo(\trackMorphTimeOf).if({ az.trackMorphTimeOf(name) !? {|time| track[\morphTime] = time } });
+		az.trackMorphTimeOf(name) !? {|time| track[\morphTime] = time };
 		^track
 	}
 
@@ -221,7 +221,7 @@
 		if(kind != \master, { left = left ++ this.prApplySends(type, num, track[\sends] ? (), az) });
 		// 7. a preset that unmutes unmutes last
 		if(track[\mute] != 1 and: { this.readStrip(name, az) !? { |s| s[\mute] == 1 } ? false }, { az.setMute(type, num, 0) });
-		track[\morphTime] !? {|time| if(az.respondsTo(\setTrackMorphTime), { az.setTrackMorphTime(name, time) }) };
+		track[\morphTime] !? {|time| az.setTrackMorphTime(name, time) };
 		Server.default.sync;
 		{ az.mixWinBool({ az.refreshMixGUI }); az.refreshFunc }.defer;
 		if(left.notEmpty, { ("tload " ++ name ++ ": left out " ++ left.join("; ")).warn });
@@ -232,6 +232,7 @@
 	// of the blocks feeding it
 	*prStopStripMorphs {|type, num, az|
 		var name = this.stripName(type, num);
+		this.prStopTrackMorph(name);
 		az.prStopMorph(name);
 		(az.filters ? []).do{|item| if(az.filterTagOnStrip(item[0], type, num), { az.prStopMorph(item[0]) }) };
 		(this.readInput(name, az) ? []).do{|key| if(this.isBlockTag(key), { this.prStopBlockMorph(key) }) };

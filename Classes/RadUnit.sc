@@ -14,6 +14,7 @@ RadUnit {
 
 	// running block morphs: tag -> (routine:, restore:) (step 2, PR 4)
 	classvar blockMorphs;
+	classvar trackMorphs; // strip name -> a running tmorph, see RadUnitTrackMorph.sc
 	classvar blockMorphTimes; // tag -> (def:, time:), see RadUnitBlockMorph.sc
 
 	// seconds from asking where a block plays to its new copy starting

@@ -103,7 +103,7 @@
 
 	// blkmorph N name [time [shape]]: returns true when the morph starts
 	*morphBlockPreset {|block, name, time, shape, action|
-		var tag = this.blockTag(block), current, unit, keepPlace, startPos;
+		var tag = this.blockTag(block), current, unit;
 		current = this.prPresetBlock(block, "morph");
 		if(current.isNil, { ^false });
 		unit = this.blockPresetFor(block, current[\def], name);
@@ -123,6 +123,14 @@
 		shape = (shape ?? { unit[\morphShape] } ? \xfade).asSymbol;
 		if([\xfade, \glide, \none].includes(shape).not, {
 			("blkmorph: shape is xfade, glide or none, not " ++ shape).warn; ^false });
+		^this.morphBlockUnit(block, unit, time, shape, action)
+	}
+
+	// morph block N to unit (same definition, file and table) over time with
+	// shape: blkmorph, and tmorph for a track's source (step 4)
+	*morphBlockUnit {|block, unit, time, shape, action|
+		var tag = this.blockTag(block), current = this.readBlock(tag), keepPlace, startPos;
+		if(current.isNil, { ("No block " ++ block ++ " playing").warn; ^false });
 		//a sound file keeps its place: startPos is the place while the morph
 		//makes new copies, and the preset's afterwards
 		keepPlace = shape != \none and: { Block.reportsPosition(block) }

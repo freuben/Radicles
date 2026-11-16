@@ -64,7 +64,7 @@
 	// tload / tload t list them; tsave t 1 name; tload t 1 name|default
 	// [nosrc] [nofx]; t 1 can be b 1, m, or a mixer position (tload 3 name)
 	*prTrackPresetCmds {
-		var stripOf, mixOf, save, load, optsOf;
+		var stripOf, mixOf, save, load, optsOf, morph, trackTime;
 		stripOf = {|str2, num1|
 			case
 			{str2 == 't'} {[\track, num1]}
@@ -110,6 +110,62 @@
 				if(aZ.notNil, { load.(mixOf.(num1), str2, opts) }, { "could not find assemblage".warn });
 			}, "tload: mixTrackNum, preset" ++ post);
 		};
+		//tmorph t 3 vox [time] [xfade|glide|none] [nosrc] [nofx] (step 4, PR 3):
+		//after the preset's name, a number is the time; xfade, glide or none
+		//the shape; nosrc and nofx as for tload
+		morph = {|strip, name, rest|
+			var time, shape, opts = [], bad = [];
+			rest.do{|item|
+				case
+				{ item.isNumber } { time = item }
+				{ [\xfade, \glide, \none].includes(item.asSymbol) } { shape = item.asSymbol }
+				{ [\nosrc, \nofx].includes(item.asSymbol) } { opts = opts.add(item.asSymbol) }
+				{ bad = bad.add(item) };
+			};
+			case
+			{ aZ.isNil } { "could not find assemblage".warn }
+			{ bad.notEmpty } { ("tmorph: after the preset, a time, xfade|glide|none, nosrc, nofx; not " ++ bad.join(", ")).warn }
+			{ strip.notNil } {
+				RadUnit.morphTrackPreset(strip[0], strip[1], name, time, shape, opts.includes(\nosrc), opts.includes(\nofx), az: aZ) };
+		};
+		[[], [\num], [\str], [\num, \str], [\str, \str], [\num, \str, \str], [\str, \str, \str], [\num, \str, \str, \str]].do{|extra|
+			cW.add(\tmorph, [\str, \str, \str] ++ extra, {|str1, str2, str3 ... rest|
+				morph.(stripOf.(str2, 1), str3, rest);
+			}, "tmorph: m, preset [time] [shape] [nosrc] [nofx]");
+			cW.add(\tmorph, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3 ... rest|
+				morph.(stripOf.(str2, num1), str3, rest);
+			}, "tmorph: trackType, trackNum, preset [time] [shape] [nosrc] [nofx]");
+			cW.add(\tmorph, [\str, \num, \str] ++ extra, {|str1, num1, str2 ... rest|
+				if(aZ.notNil, { morph.(mixOf.(num1), str2, rest) }, { "could not find assemblage".warn });
+			}, "tmorph: mixTrackNum, preset [time] [shape] [nosrc] [nofx]");
+		};
+		//tmorphtime t 1 5: the strip's own track morph time; tmorphtime t 1
+		//posts it; tmorphtime t 1 default goes back to the global morphtime
+		trackTime = {|strip, time|
+			var name;
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				strip !? {
+					name = RadUnit.stripName(strip[0], strip[1]);
+					if(time.notNil, { aZ.setTrackMorphTime(name, if(time == \default, nil, { time.max(0) })) });
+					(name ++ " track morph time: " ++ (aZ.trackMorphTimeOf(name) ?? { RadUnit.morphTime.asString ++ " (global)" })).postln;
+				};
+			});
+		};
+		cW.add(\tmorphtime, [\str, \str], {|str1, str2| trackTime.(stripOf.(str2, 1)) },
+			"tmorphtime: m (posts it)");
+		cW.add(\tmorphtime, [\str, \str, \num], {|str1, str2, num1|
+			if(str2 == 'm', { trackTime.(stripOf.(str2, 1), num1) }, { trackTime.(stripOf.(str2, num1)) });
+		}, "tmorphtime: trackType, trackNum (posts it), or m, time");
+		cW.add(\tmorphtime, [\str, \str, \str], {|str1, str2, str3|
+			if(str3 == 'default', { trackTime.(stripOf.(str2, 1), \default) }, { "tmorphtime: a time or default".warn });
+		}, "tmorphtime: m, default");
+		cW.add(\tmorphtime, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			trackTime.(stripOf.(str2, num1), num2);
+		}, "tmorphtime: trackType, trackNum, time");
+		cW.add(\tmorphtime, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+			if(str3 == 'default', { trackTime.(stripOf.(str2, num1), \default) }, { "tmorphtime: a time or default".warn });
+		}, "tmorphtime: trackType, trackNum, default");
+
 		cW.add(\tsave, [\str, \str, \str], {|str1, str2, str3|
 			save.(stripOf.(str2, 1), str3);
 		}, "tsave: trackType, preset");

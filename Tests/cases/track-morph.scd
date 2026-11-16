@@ -1,0 +1,169 @@
+// Track morph (Document Model, step 4, PR 3): tmorph moves a whole strip to a
+// track preset over one morph time: the chain as csmorph, the source as
+// blkmorph (or a crossfade to another block), trim, volume, pan and sends
+// glide, mute switches off at the start or on at the end. tmorphtime gives a
+// strip its own time.
+
+~radTrackClean = {|names|
+	names.do{|name| File.delete(RadUnit.trackPresetPath(name)) };
+};
+~radStripNow = {|name| RadUnit.refresh(RadDoc.current.copy).at(name) ? () };
+~radCmd = {|cmd, wait = 0.5| Radicles.cW.callFunc(cmd); wait.wait };
+
+// values glide over the morph time, then the strip's own lags come back
+~radTest.("tmorph-values-glide",
+	setup: ["start 2 1", "vol t 2 -6", "pan t 2 0.5", "trim t 2 3", "snd t 2 1 1 -9",
+		"tsave t 2 radtest_tm1", "vol t 1 -20"],
+	code: {
+		~radCmd.("tmorph t 1 radtest_tm1 3", 1);
+		~radMid = [Ndef(\track1).get(\lagTime), Ndef(\inTrack1).get(\lagTime), ~radStripNow.(\track1)[\sends]];
+		4.wait;
+		~radEnd = ~radStripNow.(\track1);
+	},
+	check: {
+		case
+		{ ~radMid[0] != 3 or: { ~radMid[1] != 3 } } { "lags during the morph: " ++ ~radMid.cs }
+		{ ~radMid[2].isNil or: { ~radMid[2][\bus1][\lag] != 3 } } { "send during the morph: " ++ ~radMid[2].cs }
+		{ [~radEnd[\volume], ~radEnd[\pan], ~radEnd[\trim]] != [-6, (pan: 0.5), 3] } { "values: " ++ ~radEnd.cs }
+		{ ~radEnd[\lags].notNil } { "lags after: " ++ ~radEnd[\lags].cs }
+		{ ~radEnd[\sends] != (bus1: (level: -9)) } { "sends after: " ++ ~radEnd[\sends].cs }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm1']) }
+);
+
+// the source: the same block morphs as blkmorph; another block crossfades in
+~radTest.("tmorph-source",
+	setup: ["start 3", "blk 1 sine", "blkset 1 freq 330", "tsave t 1 radtest_tm2", "blk 2 sine", "blk 3 noise"],
+	code: {
+		~radCmd.("tmorph t 2 radtest_tm2 2", 0.2);
+		~radCmd.("tmorph t 3 radtest_tm2 2", 1);
+		~radMidFade = Ndef(\block3).fadeTime;
+		3.wait;
+	},
+	check: {
+		var two = RadUnit.readBlock(\block2) ? (), three = RadUnit.readBlock(\block3) ? ();
+		case
+		{ two[\def] != \sine or: { two[\args][\freq] != 330 } } { "block 2: " ++ two.cs }
+		{ three[\def] != \sine or: { three[\args][\freq] != 330 } } { "block 3: " ++ three.cs }
+		{ ~radMidFade != 2 } { "block 3 fade time during the morph: " ++ ~radMidFade }
+		{ Ndef(\block3).fadeTime != 0.5 } { "block 3 fade time after: " ++ Ndef(\block3).fadeTime }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm2']) }
+);
+
+// the chain morphs as csmorph
+~radTest.("tmorph-chain",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5", "tsave t 1 radtest_tm3", "fx t 2 pch", "fx t 2 2 dl1"],
+	code: { ~radCmd.("tmorph t 2 radtest_tm3 1", 3) },
+	check: {
+		var fx = ~radStripNow.(\track2)[\fx] ? ();
+		(fx.collect(_[\def]) == (1: \pch) and: { fx[1][\args][\pitchRatio] == 0.5 }) or: { "track2 fx: " ++ fx.cs }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm3']) }
+);
+
+// a send the preset doesn't have glides out, then goes; the output stays
+~radTest.("tmorph-send-removed",
+	setup: ["start 2 1", "tsave t 2 radtest_tm4", "snd t 1 1 1 -6"],
+	code: {
+		~radCmd.("tmorph t 1 radtest_tm4 2", 1);
+		~radMidSends = ~radStripNow.(\track1)[\sends];
+		2.wait;
+	},
+	check: {
+		var one = ~radStripNow.(\track1);
+		case
+		{ ~radMidSends.isNil } { "the send went at once" }
+		{ one[\sends].notNil } { "sends after: " ++ one[\sends].cs }
+		{ one[\output] != \master } { "output: " ++ one[\output] }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm4']) }
+);
+
+// mute: on at the end; off at the start
+~radTest.("tmorph-mute",
+	setup: ["start 2", "mute t 2", "tsave t 2 radtest_tm5", "unmute t 2", "tsave t 2 radtest_tm6", "mute t 2"],
+	code: {
+		~radCmd.("tmorph t 1 radtest_tm5 2", 0.5);
+		~radCmd.("tmorph t 2 radtest_tm6 2", 0.5);
+		~radMidMutes = [~radStripNow.(\track1)[\mute], ~radStripNow.(\track2)[\mute]];
+		2.5.wait;
+	},
+	check: {
+		var ends = [~radStripNow.(\track1)[\mute], ~radStripNow.(\track2)[\mute]];
+		case
+		{ ~radMidMutes != [0, 0] } { "during: " ++ ~radMidMutes.cs }
+		{ ends != [1, 0] } { "after: " ++ ends.cs }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm5', 'radtest_tm6']) }
+);
+
+// none: at once, as tload
+~radTest.("tmorph-none",
+	setup: ["start 2", "vol t 2 -6", "tsave t 2 radtest_tm7"],
+	code: { ~radCmd.("tmorph t 1 radtest_tm7 5 none", 1) },
+	check: {
+		var one = ~radStripNow.(\track1);
+		(one[\volume] == -6 and: { one[\lags].isNil }) or: { "track1: " ++ one.cs }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm7']) }
+);
+
+// a tload during a morph stops it where it is and puts the lags back
+~radTest.("tmorph-interrupted",
+	setup: ["start 2 1", "vol t 2 -6", "snd t 2 1 1 -9", "tsave t 2 radtest_tm8"],
+	code: {
+		~radCmd.("tmorph t 1 radtest_tm8 6", 1);
+		~radCmd.("tload t 1 default", 3);
+	},
+	check: {
+		var one = ~radStripNow.(\track1);
+		case
+		{ one[\volume] != 0 or: { one[\sends].notNil } } { "track1: " ++ one.cs }
+		{ one[\lags].notNil or: { Ndef(\track1).get(\lagTime) != 0 } } { "lags: " ++ one[\lags].cs }
+		{ RadUnit.prTrackMorphs[\track1].notNil } { "the morph is still running" }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm8']) }
+);
+
+// tmorphtime: a strip's own time, in the document, saved in its presets,
+// used by tmorph when the command gives none
+~radTest.("tmorphtime",
+	setup: ["start 2", "vol t 2 -6", "tmorphtime t 2 3", "tsave t 2 radtest_tm9", "tmorphtime t 2 default"],
+	cmds: ["tmorphtime t 1 4", "tmorphtime t 1", "tmorphtime t 1 default"],
+	code: {
+		~radDocTime = [~radStripNow.(\track2)[\trackMorphTime], RadUnit.readTrackPreset('radtest_tm9')[\morphTime]];
+		~radCmd.("tmorph t 1 radtest_tm9", 1);
+		~radMidLag = Ndef(\track1).get(\lagTime);
+		3.wait;
+	},
+	check: {
+		case
+		{ ~radDocTime != [nil, 3] } { "document, preset: " ++ ~radDocTime.cs }
+		{ ~radMidLag != 3 } { "volume lag during the morph: " ++ ~radMidLag }
+		{ Radicles.aZ.trackMorphTimeOf(\track1) != 3 } { "track1's own time after: " ++ Radicles.aZ.trackMorphTimeOf(\track1) }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm9']) }
+);
+
+// nosrc and nofx work with tmorph too; an unknown word is refused
+~radTest.("tmorph-options",
+	setup: ["start 2", "blk 1 sine", "fx t 1 pch", "vol t 1 -6", "tsave t 1 radtest_tm10", "blk 2 noise", "fx t 2 dl1"],
+	cmds: ["tmorph t 2 radtest_tm10 1 nosrc nofx", "tmorph t 2 radtest_tm10 1 sideways"],
+	code: { 2.wait },
+	check: {
+		var two = ~radStripNow.(\track2);
+		case
+		{ (RadUnit.readBlock(\block2) ? ())[\def] != \noise } { "block 2: " ++ RadUnit.readBlock(\block2).cs }
+		{ (two[\fx] ? ()).collect(_[\def]) != (1: \dl1) } { "fx: " ++ two[\fx].cs }
+		{ two[\volume] != -6 } { "volume: " ++ two[\volume] }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tm10']) }
+);

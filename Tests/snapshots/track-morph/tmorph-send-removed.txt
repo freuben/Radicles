@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+Ndef('busIn1').set('vol1', -inf, 'lag1', 2);
+Ndef('busIn1').source = nil;
+Ndef('inBus1').source = nil;
+== radpostcont ==
+(none)
+
