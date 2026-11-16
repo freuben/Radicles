@@ -1385,18 +1385,24 @@
 		fltCanvas.layout = VLayout(*fltVlay).spacing_(spacing).margins_(margin);
 		filtersWin.canvas = fltCanvas;
 		//a window placed before Qt shows it counts its title bar differently
-		//(macOS: it would come back 20 px higher): placed with the difference,
-		//measured on the first window, so it opens where asked and never jumps
+		//(macOS: it would come back about 20 px higher). It is placed with the
+		//difference learnt from earlier windows, so it opens where asked; once
+		//shown it is checked, and put back if it is not there (the first
+		//window, or one macOS kept below the menu bar).
 		filtersWin.bounds = Rect(winLeft, winDown + (winTitleOffset ? 0), fltWinWidth, fltWinHeight);
 		filtersWin.front;
-		if(winTitleOffset.isNil, {
-			{
-				if(filtersWin.isClosed.not, {
-					winTitleOffset = winDown - filtersWin.bounds.top;
-					if(winTitleOffset != 0, { filtersWin.bounds = filtersWin.bounds.moveTo(winLeft, winDown) });
+		{
+			var off, learnt;
+			if(filtersWin.isClosed.not, {
+				off = winDown - filtersWin.bounds.top;
+				if(off.abs > 1, {
+					filtersWin.bounds = filtersWin.bounds.moveTo(winLeft, winDown);
+					//only a difference that looks like a title bar is learnt
+					learnt = (winTitleOffset ? 0) + off;
+					if(learnt > 0 and: { learnt <= 60 }, { winTitleOffset = learnt });
 				});
-			}.defer(0.1);
-		});
+			});
+		}.defer(0.1);
 		^filtersWin;
 	}
 	// an effect window's BYPASS button, lit while the effect is bypassed;

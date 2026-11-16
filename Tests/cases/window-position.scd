@@ -25,9 +25,16 @@
 		win.bounds = win.bounds.moveTo(400, 300); 0.5.wait;
 		~radBefore = win.bounds.origin;
 		Radicles.cW.callFunc("fxset t 1 1 pitchRatio 2"); 1.wait;
-		Radicles.cW.callFunc("fxload t 1 1 radtest_wp"); 0.2.wait;
-		~radEarly = ~radWpOpen.().last !? {|w| w.bounds.origin };
-		2.wait;
+		Radicles.cW.callFunc("fxload t 1 1 radtest_wp");
+		//as soon as the new window is there: does it open in place?
+		~radEarly = nil;
+		60.do{
+			if(~radEarly.isNil, {
+				~radWpOpen.().last !? {|w| if(w !== win, { 0.05.wait; ~radEarly = w.bounds.origin }) };
+				0.05.wait;
+			});
+		};
+		1.wait;
 		~radAfter = ~radWpOpen.().last !? {|w| w.bounds.origin };
 	},
 	check: {
