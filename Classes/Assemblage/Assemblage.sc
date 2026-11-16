@@ -9,6 +9,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10,
 	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow, <bypassed, <morphTimes, morphs;
+	//the title bar difference of windows placed before Qt shows them (AssemblageGUI)
+	classvar <>winTitleOffset;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);

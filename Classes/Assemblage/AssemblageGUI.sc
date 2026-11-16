@@ -1384,8 +1384,19 @@
 			{ removeButton })] ++ fltVlay.collect{|row| row.spacing_(spacing).margins_(0) };
 		fltCanvas.layout = VLayout(*fltVlay).spacing_(spacing).margins_(margin);
 		filtersWin.canvas = fltCanvas;
-		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
+		//a window placed before Qt shows it counts its title bar differently
+		//(macOS: it would come back 20 px higher): placed with the difference,
+		//measured on the first window, so it opens where asked and never jumps
+		filtersWin.bounds = Rect(winLeft, winDown + (winTitleOffset ? 0), fltWinWidth, fltWinHeight);
 		filtersWin.front;
+		if(winTitleOffset.isNil, {
+			{
+				if(filtersWin.isClosed.not, {
+					winTitleOffset = winDown - filtersWin.bounds.top;
+					if(winTitleOffset != 0, { filtersWin.bounds = filtersWin.bounds.moveTo(winLeft, winDown) });
+				});
+			}.defer(0.1);
+		});
 		^filtersWin;
 	}
 	// an effect window's BYPASS button, lit while the effect is bypassed;
@@ -1992,14 +2003,8 @@
 			filtersWindow = filtersWindow.reject{|item| item === getWin };
 			server.sync;
 			convTag = this.convFilterTag(ndefKey);
+			//opens where it was (prArgWinGUI allows for the title bar)
 			this.filterGUI(convTag[0], convTag[1], convTag[2], [bounds.left, bounds.top]);
-			//placed again once Qt has shown it: a window placed before it is shown
-			//counts its title bar differently and would come back 20 px higher
-			{
-				(filtersWindow ? []).detect{|item|
-					item.name.beginsWith(ndefKey.asString ++ " ") and: { item.isClosed.not } }
-				!? {|win| win.bounds = win.bounds.moveTo(bounds.left, bounds.top) };
-			}.defer(0.1);
 		});
 	}
 
