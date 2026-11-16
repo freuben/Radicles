@@ -16,7 +16,7 @@
 		var one = ~radStripValues.(\track1), two = ~radStripValues.(\track2);
 		case
 		{ one != (kind: \strip, channels: 1, space: \pan2, trim: 0, volume: -6, mute: 0,
-			pan: (pan: -0.3), solo: 0, output: \master) } { "track1: " ++ one.cs }
+			pan: (pan: -0.3), solo: 0, output: \master, input: [\block1]) } { "track1: " ++ one.cs }
 		{ [two[\trim], two[\mute], two[\volume]] != [3, 1, 0] } { "track2: " ++ two.cs }
 		{ true }
 	}
@@ -142,7 +142,8 @@
 
 // a document with strips writes as code and reads back the same
 ~radTest.("strip-document-file",
-	setup: ["start 2 1", "vol t 1 -6", "pan t 2 0.4", "vol t 2 sin", "solo t 1", "fx t 1 pch"],
+	setup: ["start 2 1", "vol t 1 -6", "pan t 2 0.4", "vol t 2 sin", "solo t 1", "fx t 1 pch",
+		"snd t 1 1 1 -6", "sndset t 2 1 sin"],
 	check: {
 		var doc = RadUnit.refresh(RadDoc.current.copy), path = "/tmp/radtest_doc/strips.scd", back;
 		doc.write(path);
@@ -151,5 +152,73 @@
 		if(back.isNil, { "not read" }, {
 			RadDoc.diff(doc, back).isEmpty or: { "differences: " ++ RadDoc.diff(doc, back).collect(_[\address]).cs }
 		})
+	}
+);
+
+// ---- step 4, PR 1: what feeds a track, and where each strip sends ----
+
+// a track's input by Ndef key (t add connects a new block, as start does);
+// buses and the master have none of their own
+~radTest.("strip-input",
+	setup: ["start 2 1"],
+	cmds: [["t add 1", 4]],
+	check: {
+		var got = [\track1, \track2, \track3, \bus1, \master].collect{|name| ~radStripValues.(name)[\input] };
+		(got == [[\block1], [\block2], [\block3], nil, nil]) or: { "inputs: " ++ got.cs }
+	}
+);
+
+// two blocks into one track: both, in input order
+~radTest.("strip-input-two-blocks",
+	setup: ["start 2"],
+	cmds: ["blk 1-2 <> 2"],
+	check: {
+		var got = [\track1, \track2].collect{|name| ~radStripValues.(name)[\input] };
+		(got == [[\block1], [\block1, \block2]]) or: { "inputs: " ++ got.cs }
+	}
+);
+
+// sends by bus, not by send slot: track 1 slot 2 and bus 1 slot 1 both go to bus 2
+~radTest.("strip-sends",
+	setup: ["start 2 2"],
+	cmds: ["snd t 1 1 1 -6", "snd t 1 2 2 -9", "snd t 2 1 1 -12", "snd b 1 1 2 -3"],
+	check: {
+		var got = [\track1, \track2, \bus1, \bus2, \master].collect{|name| ~radStripValues.(name)[\sends] };
+		(got == [(bus1: (level: -6), bus2: (level: -9)), (bus1: (level: -12)), (bus2: (level: -3)), nil, nil])
+		or: { "sends: " ++ got.cs }
+	}
+);
+
+// a send's lag and its modulator, by what it is
+~radTest.("strip-send-lag-and-mod",
+	setup: ["start 2 1", "snd t 1 1 1 -6", "snd t 2 1 1 -6"],
+	cmds: ["sndset t 1 1 -10 2", "sndset t 2 1 sin"],
+	check: {
+		var one = ~radStripValues.(\track1)[\sends], two = ~radStripValues.(\track2)[\sends];
+		case
+		{ one != (bus1: (level: -10, lag: 2)) } { "track1: " ++ one.cs }
+		{ two[\bus1][\mod].isNil or: { two[\bus1][\mod][\type] != \sin } } { "track2: " ++ two.cs }
+		{ true }
+	}
+);
+
+// a send removed leaves the document; a bus removed takes its sends with it
+~radTest.("strip-send-removed",
+	setup: ["start 2 2", "snd t 1 1 1 -6", "snd t 1 2 2 -9"],
+	cmds: ["snd t 1 1 0"],
+	check: {
+		var got = ~radStripValues.(\track1)[\sends];
+		(got == (bus2: (level: -9))) or: { "track1 sends: " ++ got.cs }
+	}
+);
+
+// sndry with a value turns the track's output to the master off, as the
+// other sndry forms do (it set the send but left the output on before)
+~radTest.("sndry-with-value",
+	setup: ["start 2 1"],
+	cmds: ["sndry t 2 1 1 -12"],
+	check: {
+		var two = ~radStripValues.(\track2);
+		(two[\output] == \none and: { two[\sends] == (bus1: (level: -12)) }) or: { "track2: " ++ two.cs }
 	}
 );
