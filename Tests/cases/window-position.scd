@@ -30,7 +30,10 @@
 		~radEarly = nil;
 		60.do{
 			if(~radEarly.isNil, {
-				~radWpOpen.().last !? {|w| if(w !== win, { 0.05.wait; ~radEarly = w.bounds.origin }) };
+				~radWpOpen.().last !? {|w| if(w !== win, {
+					0.05.wait;
+					if(w.isClosed.not, { ~radEarly = w.bounds.origin });
+				}) };
 				0.05.wait;
 			});
 		};
