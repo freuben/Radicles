@@ -11,6 +11,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow, <bypassed, <morphTimes, morphs;
 	//the title bar difference of windows placed before Qt shows them (AssemblageGUI)
 	classvar <>winTitleOffset;
+	//each open argument window's rows, to update it in place (AssemblageGUI)
+	var argWins;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);

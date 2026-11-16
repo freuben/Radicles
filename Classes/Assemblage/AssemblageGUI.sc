@@ -1243,6 +1243,18 @@
 		});
 	}
 
+	// update an open argument window in place: each row shows its value in
+	// pairs (from getKeysValues). Only when the window has the same arguments
+	// (the same effect or block); returns false otherwise, so the caller
+	// rebuilds it. Call on the GUI thread.
+	refreshArgWin {arg win, pairs;
+		var entry = argWins !? {|a| a[win] };
+		if(entry.isNil or: { win.isClosed } or: { pairs.isNil }, { ^false });
+		if(pairs.collect(_[0]) != entry[\names], { ^false });
+		pairs.do{|pair| entry[\show][pair[0]].(pair[1]) };
+		^true
+	}
+
 	// An argument window for an Ndef, shared by the effect windows and the
 	// source windows: a slider for each argument with a spec (specArr, one entry
 	// per argument, or nil), a text field otherwise; arguments that are modulated
@@ -1252,7 +1264,8 @@
 		buttonString, buttonAction, headerViews;
 		var filtersWin, fltCanvas, fxKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
 		stringLengh, argArr, defaultArgArr, specBool, removeButton, fltWinTop,
-		textWidth, valueWidth, buttonWidth, rowWidth, headerWidth, margin = 8, spacing = 6, rowHeight = 15;
+		textWidth, valueWidth, buttonWidth, rowWidth, headerWidth, margin = 8, spacing = 6, rowHeight = 15,
+		rowShows = ();
 		argArr = pairs.flop[0];
 		defaultArgArr = pairs.flop[1];
 		//sizes from the text as it is drawn, so nothing is cut off
@@ -1277,7 +1290,7 @@
 		argArr.do{|item, index|
 			var finalLayout, fxKnob, fxKnobText, specOptions,
 			fxKnobArr, labelText, labelString, defaultVal, thisSpec, thisFunc,
-			thisResult, labelTextArr, hidFx, hidNodes, hidIndex;
+			thisResult, labelTextArr, knobColor, show;
 			if(specArr.notNil, {
 				specBool = specArr[index].notNil;
 			}, {
@@ -1288,73 +1301,79 @@
 			.stringColor_(Color.white)
 			.font_(basicFont)
 			.minWidth_(valueWidth).maxWidth_(valueWidth).maxHeight_(10).minHeight_(10);
-			hidNodes = HIDMap.hidNodes;
-			if(hidNodes.notNil, {
-				if(hidNodes.notEmpty, {
-					hidIndex = hidNodes.flop[2].indexOfEqual(argArr[index]);
-					hidFx = (hidNodes.flop[1].includes(Ndef(ndefKey)))
-					.and(hidIndex.notNil);
-				}, {hidFx = false});
-			}, {hidFx = false});
 			if(specBool, {
 				thisSpec = specArr[index][1].asSpec;
 				thisFunc = specArr[index][2];
 				fxKnob = Slider().minWidth_(180).maxWidth_(180)
 				.maxHeight_(15).minHeight_(15);
 				fxKnob.orientation = \horizontal;
-
-				if((defaultArgArr[index].isNumber).and(hidFx.not), {
-					fxKnob.srcAction = {
-						if(thisFunc.notNil, {
-							thisResult = thisFunc.(thisSpec.map(fxKnob.value));
-						}, {
-							thisResult = thisSpec.map(fxKnob.value);
-						});
-						fxKnobText.string = thisResult.asString.copyRange(0, 7);
-						("Ndef(" ++ ndefKey.cs ++ ").set(" ++ item.cs ++ ", "
-							++ thisResult ++ ");").radcode(\radpostcont);
-					};
-					thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
-					fxKnob.value = thisResult;
-					fxKnobText.string = defaultArgArr[index].asString.copyRange(0, 7);
-				}, {
-					fxKnob.value = 0.5;
-					fxKnob.background = colorCritical; //mod color
-					fxKnob.enabled = false;
-					if(hidFx, {
-						fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
+				knobColor = fxKnob.background;
+				fxKnob.srcAction = {
+					if(thisFunc.notNil, {
+						thisResult = thisFunc.(thisSpec.map(fxKnob.value));
 					}, {
-						fxKnobText.string = defaultArgArr[index].key.asString.copyRange(0, 7);
+						thisResult = thisSpec.map(fxKnob.value);
 					});
-				});
+					fxKnobText.string = thisResult.asString.copyRange(0, 7);
+					("Ndef(" ++ ndefKey.cs ++ ").set(" ++ item.cs ++ ", "
+						++ thisResult ++ ");").radcode(\radpostcont);
+				};
 			}, {
 				fxKnob = TextField().minWidth_(180).maxWidth_(180)
 				.font_(basicFont)
 				.background_(colorTextField)
 				.maxHeight_(15).minHeight_(15);
-				defaultVal = defaultArgArr[index];
-				if(defaultVal.notNil, {
-					if((defaultVal.cs.find("Ndef").isNil).and(hidFx.not), {
-						fxKnob.string = defaultVal.cs;
-						fxKnobText.string = defaultVal.cs.copyRange(0, 7);
-						fxKnob.srcAction = {arg field;
-							fxKnobText.string = field.value;
-							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ item.cs ++ ", "
-								++ field.value ++ ");").radcode(\radpostcont);
-						};
+				knobColor = colorTextField;
+				fxKnob.srcAction = {arg field;
+					fxKnobText.string = field.value;
+					("Ndef(" ++ ndefKey.cs ++ ").set(" ++ item.cs ++ ", "
+						++ field.value ++ ");").radcode(\radpostcont);
+				};
+			});
+			//shows a value in the row: a plain one can be changed here; a
+			//modulated one, or one mapped to a controller, is greyed out with the
+			//modulator's (or controller's) name. Also used to update an open
+			//window in place (refreshArgWin), so it never has to be rebuilt
+			//for new values
+			show = {|value|
+				var hidNodes = HIDMap.hidNodes, hidIndex, hidFx = false, modName;
+				if(hidNodes.notNil and: { hidNodes.notEmpty }, {
+					hidIndex = hidNodes.flop[2].indexOfEqual(item);
+					hidFx = (hidNodes.flop[1].includes(Ndef(ndefKey))).and(hidIndex.notNil);
+				});
+				modName = {
+					if(hidFx, { hidNodes.flop[0][hidIndex].asString }, {
+						if(value.respondsTo(\key), { value.key.asString }, { value.asString }) }).copyRange(0, 7)
+				};
+				if(specBool, {
+					if(value.isNumber and: { hidFx.not }, {
+						fxKnob.enabled = true;
+						fxKnob.background = knobColor;
+						fxKnob.value = Radicles.specUnmap(value, thisSpec, thisFunc);
+						fxKnobText.string = value.asString.copyRange(0, 7);
 					}, {
+						fxKnob.value = 0.5;
 						fxKnob.background = colorCritical; //mod color
 						fxKnob.enabled = false;
-						fxKnob.string = defaultVal.cs;
-						if(hidFx, {
-							fxKnobText.string = hidNodes.flop[0][hidIndex].asString.copyRange(0, 7);
+						fxKnobText.string = modName.();
+					});
+				}, {
+					if(value.notNil, {
+						fxKnob.string = value.cs;
+						if((value.cs.find("Ndef").isNil).and(hidFx.not), {
+							fxKnob.enabled = true;
+							fxKnob.background = knobColor;
+							fxKnobText.string = value.cs.copyRange(0, 7);
 						}, {
-							fxKnobText.string = defaultVal.key.asString.copyRange(0, 7);
+							fxKnob.background = colorCritical; //mod color
+							fxKnob.enabled = false;
+							fxKnobText.string = modName.();
 						});
 					});
 				});
-
-			});
+			};
+			show.(defaultArgArr[index]);
+			rowShows[item] = show;
 			labelString = item.asString;
 			labelText = StaticText(fltCanvas).align_(\center)
 			.background_(Color.black)
@@ -1391,6 +1410,9 @@
 		//window, or one macOS kept below the menu bar).
 		filtersWin.bounds = Rect(winLeft, winDown + (winTitleOffset ? 0), fltWinWidth, fltWinHeight);
 		filtersWin.front;
+		//each row's show function, to update the window in place (refreshArgWin)
+		argWins = (argWins ?? { IdentityDictionary.new }).reject{|entry, win| win.isClosed };
+		argWins[filtersWin] = (names: argArr, show: rowShows);
 		{
 			var off, learnt;
 			if(filtersWin.isClosed.not, {
@@ -1771,8 +1793,20 @@
 	//rebuild an open source window, in the same place (new block, new mapping)
 	updateSourceWin {arg ndefKey;
 		{
-			var win, bounds, trackNum;
+			var win, bounds, trackNum, blockIndex, liveBlock, argNames, pairs;
 			win = this.prSourceWin(ndefKey);
+			//the same block: the window stays open and shows the new values
+			if(win.notNil, {
+				blockIndex = Block.ndefs.indexOf(Ndef(ndefKey));
+				liveBlock = blockIndex !? {|i| Block.liveBlocks[i] };
+				if(liveBlock.notNil and: { liveBlock[1] != \pattern } and: {
+					win.name == (ndefKey.asString ++ " | " ++ liveBlock[1].asString) }, {
+					argNames = Ndef(ndefKey).objects.first !? {|obj| obj.controlNames.collect(_.name) } ? [];
+					pairs = Ndef(ndefKey).getKeysValues.select({|pair| argNames.includes(pair[0]) });
+					if(this.refreshArgWin(win, pairs), { win = nil });
+				});
+			});
+			//another block: a new window where the old one was
 			if(win.notNil, {
 				bounds = win.bounds;
 				this.prSrcWinTracks.keysValuesDo{|key, value| if(value == ndefKey, {trackNum = key}) };
@@ -1998,21 +2032,28 @@
 
 	// rebuild the effect's window, if it is open, where it was
 	updateFxWin {arg ndefKey;
-		var convTag, getWin, bounds;
-		getWin = (filtersWindow ? []).detect({|item|
-			item.name.beginsWith(ndefKey.asString ++ " ") and: { item.isClosed.not } });
-		if(getWin.notNil, {
-			bounds = getWin.bounds;
-			getWin.close;
-			//a closed window stays listed until its onClose runs, which can
-			//be later: drop it now, so reopening never reads its bounds
-			filtersWindow = filtersWindow.reject{|item| item === getWin };
-			server.sync;
-			convTag = this.convFilterTag(ndefKey);
-			//opens where it was (prArgWinGUI allows for the title bar)
-			this.filterGUI(convTag[0], convTag[1], convTag[2], [bounds.left, bounds.top]);
-		});
+		{
+			var convTag, getWin, bounds;
+			getWin = (filtersWindow ? []).detect({|item|
+				item.name.beginsWith(ndefKey.asString ++ " ") and: { item.isClosed.not } });
+			if(getWin.notNil, {
+				convTag = this.convFilterTag(ndefKey);
+				//the same effect: the window stays open and shows the new values
+				if(this.refreshArgWin(getWin, this.getFilterPairs(convTag[0], convTag[1].asInteger, convTag[2].asInteger)).not
+					or: { getWin.name.endsWith(" | " ++ ((filters ? []).detect{|f| f[0] == ndefKey } !? {|f| f[1] }).asString).not }, {
+					//another effect in the slot: a new window where the old one was
+					bounds = getWin.bounds;
+					getWin.close;
+					//a closed window stays listed until its onClose runs, which can
+					//be later: drop it now, so reopening never reads its bounds
+					filtersWindow = filtersWindow.reject{|item| item === getWin };
+					server.sync;
+					this.filterGUI(convTag[0], convTag[1], convTag[2], [bounds.left, bounds.top]);
+				});
+			});
+		}.fork(AppClock);
 	}
+
 
 	nomixer {
 		if(mixerWin.notNil, {

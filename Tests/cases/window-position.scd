@@ -1,7 +1,7 @@
-// Effect and block windows stay where they are when they are rebuilt: after
-// loading a preset, a modulator added, or a block played again (16 Nov
-// 2026: a block window moved 20 px on every rebuild, an effect window
-// jumped and came back). Mac only (GUI).
+// Effect and block windows stay where they are: after loading a preset, a
+// modulator added, or a block played again, the same window stays open and
+// its rows show the new values (16 Nov 2026: a block window moved 20 px on
+// every rebuild, an effect window jumped and came back). Mac only (GUI).
 
 ~radWpOpen = { (Radicles.aZ.filtersWindow ? []).select{|w| w.isClosed.not } };
 ~radWpSrc = { (Radicles.aZ.sourceWindows ? []).select{|w| w.isClosed.not } };
@@ -10,6 +10,13 @@
 	{ after.isNil } { "the window was not reopened" }
 	{ (after.x - before.x).abs > 2 or: { (after.y - before.y).abs > 2 } } { "moved from " ++ before ++ " to " ++ after }
 	{ nil }
+};
+// the value texts shown in a window's rows
+~radWpTexts = {|win|
+	var texts = [], walk = {|view| view.children.do{|child|
+		if(child.isKindOf(StaticText), { texts = texts.add(child.string) }); walk.(child) } };
+	walk.(win.canvas ? win);
+	texts
 };
 ~radWpClose = {
 	(Radicles.aZ !? {|a| a.filtersWindow } ? []).copy.do{|w| w.close };
@@ -41,10 +48,15 @@
 		};
 		1.wait;
 		~radAfter = ~radWpOpen.().last !? {|w| w.bounds.origin };
+		~radSame = (~radWpOpen.().last === win) and: { win.isClosed.not };
+		~radShown = ~radWpTexts.(win);
 	},
 	check: {
-		~radWpMoved.(~radBefore, ~radAfter) ?? {
-			~radWpMoved.(~radBefore, ~radEarly) !? {|m| "jumped: " ++ m } ? true }
+		case
+		{ ~radSame.not } { "the window was closed and opened again" }
+		{ ~radShown.includesEqual("0.5").not } { "the window shows " ++ ~radShown.cs ++ ", not pitchRatio 0.5" }
+		{ ~radWpMoved.(~radBefore, ~radAfter) ?? {
+			~radWpMoved.(~radBefore, ~radEarly) !? {|m| "jumped: " ++ m } ? true } }
 	},
 	teardown: {
 		~radWpClose.();
@@ -63,11 +75,20 @@
 		win = ~radWpSrc.().last;
 		win.bounds = win.bounds.moveTo(400, 300); 0.5.wait;
 		~radBefore = win.bounds.origin;
+		~radFreq = Ndef(\block1).get(\freq);
 		Radicles.cW.callFunc("blkset 1 freq 300"); 1.wait;
 		Radicles.cW.callFunc("blkload 1 radtest_wpb"); 3.wait;
 		~radAfter = ~radWpSrc.().last !? {|w| w.bounds.origin };
+		~radSame = (~radWpSrc.().last === win) and: { win.isClosed.not };
+		~radShown = ~radWpTexts.(win);
 	},
-	check: { ~radWpMoved.(~radBefore, ~radAfter) ? true },
+	check: {
+		case
+		{ ~radSame.not } { "the window was closed and opened again" }
+		{ ~radShown.includesEqual(~radFreq.asString.copyRange(0, 7)).not } {
+			"the window shows " ++ ~radShown.cs ++ ", not freq " ++ ~radFreq }
+		{ ~radWpMoved.(~radBefore, ~radAfter) ? true }
+	},
 	teardown: {
 		~radWpClose.();
 		File.delete(RadUnit.presetPath(\block, \sine, 'radtest_wpb'));
@@ -88,8 +109,9 @@
 		~radBefore = win.bounds.origin;
 		3.do{ Radicles.aZ.updateSourceWin(\block1); 1.wait };
 		~radAfter = ~radWpSrc.().last !? {|w| w.bounds.origin };
+		~radSame = (~radWpSrc.().last === win) and: { win.isClosed.not };
 	},
-	check: { ~radWpMoved.(~radBefore, ~radAfter) ? true },
+	check: { if(~radSame.not, { "the window was closed and opened again" }, { ~radWpMoved.(~radBefore, ~radAfter) ? true }) },
 	teardown: { ~radWpClose.() },
 	gui: true
 );
