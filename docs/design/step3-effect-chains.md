@@ -44,7 +44,32 @@ Its values are spread over Ndef arguments and lists in Assemblage that are kept 
 
 Each strip's address (`track1`, `bus2`, `master`) gains its own values beside the effects it already holds. In step 3 only the effect chain gets presets; the rest is in the document so step 4 can save it.
 
-> *Diagram: one mixer strip, top down · the unit and what stays outside it. It is drawn in the claude.ai version of this note and is not included here yet.*
+```mermaid
+---
+title: A track preset wraps the effect chain with the strip, its source and its sends
+---
+flowchart TB
+    subgraph TP["Track preset (step 4: tsave, tload, tmorph)"]
+        direction TB
+        SRC["<b>Source</b><br/>block or input, with its settings"]
+        TRIM["<b>Trim</b><br/>inTrack1: trim and its lag"]
+        subgraph CH["Effect chain (step 3: cssave, csload, csmorph)"]
+            FX["<b>Effects</b><br/>slots 1 to N, bypass, modulators"]
+        end
+        VOL["<b>Volume and mute</b><br/>track1: solo is read, never saved"]
+        PAN["<b>Panner</b><br/>spaceTrack1: its own arguments"]
+        SENDS["<b>Sends</b><br/>to buses that exist"]
+        SRC --> TRIM --> FX --> VOL --> PAN
+        PAN --> SENDS
+    end
+    OUT["<b>To the master</b><br/>routing, step 6"]
+    PAN --> OUT
+
+    style CH stroke-width:2px
+    style OUT stroke-dasharray: 5 5
+```
+
+*Redrawn in Mermaid from the claude.ai version; the boxes and words are the same.* *The dashed box stays outside the preset.*
 
 The effect chain is the step 3 preset; the track preset in step 4 wraps the chain with the strip's values, its source and its sends. The output to the master stays a session setting (step 6).
 

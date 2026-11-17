@@ -34,7 +34,8 @@ newer drafts.** When the two disagree, ask before building on either.
 
 - Links inside the notes point to the claude.ai versions (`claude.ai/artifact/...`);
   the table above says which file each one is.
-- Three diagrams (two in the principles, one in step 3) don't export from
-  claude.ai; each is marked where it belongs.
+- Diagrams don't export from claude.ai, so they are redrawn here in Mermaid
+  (GitHub draws them): two in the principles, one in step 3. When a diagram
+  changes in claude.ai, its Mermaid copy is updated with the note.
 - The first line under each title (date and `@Federico`) is the note's date
   and owner.
