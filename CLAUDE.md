@@ -75,11 +75,16 @@ Snapshot tests of the code each command posts, plus checks; see
 Tests/ci/run-headless.sh [check|update] [case] [test]
 ```
 
-- Run from the checkout SuperCollider compiles (`Quark("Radicles").localPath`).
-  To test another worktree, point `RADTEST_CONF` at an sclang config that
-  includes it.
-- **Never run two at once** (the results folder is shared and deleted at start;
-  the test server port is shared).
+- Tests use the classes, cases and snapshots of the folder sclang compiles
+  (`Radicles.mainPath`, the folder `Radicles.sc` was compiled from). By default
+  that is the checkout in `downloaded-quarks/Radicles`.
+- To test a branch without switching that checkout: make a worktree outside
+  the Radicles folder, copy `sclang_conf.yaml` with the Radicles include path
+  replaced by the worktree's, and run the worktree's own
+  `Tests/ci/run-headless.sh` with `RADTEST_CONF` pointing at the copy. Its
+  results go to the worktree's `Tests/results/`.
+- **Never run two at once** (all runs share the test server port; each folder's
+  results are deleted at the start of a run).
 - New test: `update` to write its snapshot, read the snapshot, then `check`.
 - A changed snapshot is a change in what performers see: intended, or a bug.
 - A snapshot must not depend on timing (asynchronous posts land in another
