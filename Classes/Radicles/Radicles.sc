@@ -17,7 +17,10 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		Platform.case(
 			\windows,   {dash = "\\"; }
 		);
-		mainPath = Quark("Radicles").localPath;
+		// the folder this class was compiled from (Classes/Radicles/Radicles.sc
+		// is two levels down), not Quark("Radicles"), which always answers
+		// downloaded-quarks/Radicles: a checkout elsewhere uses its own files
+		mainPath = Radicles.filenameSymbol.asString.dirname.dirname.dirname;
 		libPath = Quark("RadiclesLibs").localPath;
 		/*		mainPath = (Platform.userExtensionDir ++ dash ++ "Radicles");
 		libPath = (Platform.userExtensionDir ++ dash ++ "RadiclesLibs");*/
