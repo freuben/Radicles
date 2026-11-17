@@ -23,9 +23,10 @@ rm -rf "$TESTS/results"
 cd /tmp
 "$SCLANG" ${RADTEST_CONF:+-l "$RADTEST_CONF"} "$TESTS/run.scd" "${1:-check}" ${2:-} ${3:-} 2>&1 | grep --line-buffered -E "^RADTEST|^  "
 status=${PIPESTATUS[0]}
-for actual in $(find "$TESTS/results" -name '*.actual.txt' 2>/dev/null); do
+# NUL-separated, so paths with spaces ("Application Support" on a Mac) stay whole.
+while IFS= read -r -d '' actual; do
   rel=${actual#$TESTS/results/}; snap="$TESTS/snapshots/${rel%.actual.txt}.txt"
   echo; echo "--- diff for ${rel%.actual.txt} (snapshot vs this run)"
   diff -u "$snap" "$actual" 2>/dev/null || [ -f "$snap" ] || echo "(no approved snapshot yet)"
-done
+done < <(find "$TESTS/results" -name '*.actual.txt' -print0 2>/dev/null)
 exit $status
