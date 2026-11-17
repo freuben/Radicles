@@ -1,0 +1,12 @@
+>> <code>
+== radpost ==
+Ndef('block2').fadeTime = 2;
+Ndef('block2').xset('freq', 330);
+Ndef('block3').fadeTime = 2;
+Ndef('block3', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+Ndef('block3').xset('freq', 330, 'phase', 0, 'mul', 0.4);
+Ndef('block2').fadeTime = 0.5;
+Ndef('block3').fadeTime = 0.5;
+== radpostcont ==
+(none)
+

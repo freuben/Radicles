@@ -1,0 +1,13 @@
+>> tmorph t 2 radtest_tm10 1 nosrc nofx
+== radpost ==
+Ndef('track2').set('volume', -6, 'lagTime', 1);
+Ndef('track2').set('lagTime', 0);
+== radpostcont ==
+(none)
+
+>> tmorph t 2 radtest_tm10 1 sideways
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

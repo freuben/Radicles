@@ -134,6 +134,14 @@
 	// a strip's own chain morph time (csmorphtime t 1 5), or nil
 	chainMorphTimeOf {arg strip; ^chainMorphTimes !? {|m| m[strip.asSymbol] } }
 
+	// a strip's own track morph time (tmorphtime t 1 5, step 4), or nil
+	trackMorphTimeOf {arg strip; ^trackMorphTimes !? {|m| m[strip.asSymbol] } }
+
+	setTrackMorphTime {arg strip, time;
+		trackMorphTimes = trackMorphTimes ?? { IdentityDictionary.new };
+		if(time.isNil, { trackMorphTimes.removeAt(strip.asSymbol) }, { trackMorphTimes[strip.asSymbol] = time });
+	}
+
 	setChainMorphTime {arg strip, time;
 		chainMorphTimes = chainMorphTimes ?? { IdentityDictionary.new };
 		if(time.isNil, { chainMorphTimes.removeAt(strip.asSymbol) }, { chainMorphTimes[strip.asSymbol] = time });

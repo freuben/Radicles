@@ -19,7 +19,7 @@
 
 	// the keys of a strip unit that are values (refreshed when read), and
 	// those that are its structure (kept up to date by syncStrips)
-	*stripValueKeys { ^[\trim, \volume, \mute, \pan, \lags, \mods, \solo, \output, \chainMorphTime, \input, \sends] }
+	*stripValueKeys { ^[\trim, \volume, \mute, \pan, \lags, \mods, \solo, \output, \chainMorphTime, \input, \sends, \trackMorphTime] }
 	*stripStructureKeys { ^[\kind, \channels, \space] }
 
 	// the strips of the running mixer, by name
@@ -66,6 +66,8 @@
 		if(mods.notEmpty, { unit[\mods] = mods });
 		//the chain's own morph time (csmorphtime, step 3 PR 3)
 		if(az.respondsTo(\chainMorphTimeOf), { az.chainMorphTimeOf(name) !? {|time| unit[\chainMorphTime] = time } });
+		//the strip's own track morph time (tmorphtime, step 4 PR 3)
+		if(az.respondsTo(\trackMorphTimeOf), { az.trackMorphTimeOf(name) !? {|time| unit[\trackMorphTime] = time } });
 		//what feeds a track, and where every strip but the master sends (step 4)
 		this.readInput(name, az) !? {|input| unit[\input] = input };
 		this.readSends(name, az) !? {|sends| unit[\sends] = sends };

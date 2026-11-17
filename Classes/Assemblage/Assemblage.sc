@@ -9,6 +9,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10,
 	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow, <bypassed, <morphTimes, morphs, <chainMorphTimes;
+	//each strip's own track morph time (tmorphtime, step 4)
+	var <trackMorphTimes;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);
@@ -963,7 +965,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		mastOutWin=nil; oiIns=nil; oiOuts=nil; recInputArr=nil; winDirRec=nil; muteButArr=nil;
 		recButArr=nil; soloButArr=nil; spaceButArr=nil; recordingButton=nil; recordingValBut=nil;
 		setOutputMenu=nil; setInputMenu=nil; modSendArr=nil; trackDataArr=nil; trackBufferArr=nil;
-		trackCount=1; busCount=1; winRefresh=false; bypassed=nil; morphTimes=nil; morphs=nil; chainMorphTimes=nil;
+		trackCount=1; busCount=1; winRefresh=false; bypassed=nil; morphTimes=nil; morphs=nil; chainMorphTimes=nil; trackMorphTimes=nil;
 	}
 
 	clearNdefs {arg action;
