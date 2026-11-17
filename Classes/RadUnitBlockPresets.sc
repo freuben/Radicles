@@ -181,15 +181,18 @@
 	// bring block N to unit (same definition), like apply for effects: a
 	// different sound file or table plays the block again (Block.play, a
 	// crossfade) with the unit's values; then values and modulators are set
-	// where they differ. Call inside a Routine. Returns true when applied.
-	*applyBlock {|block, unit, setFunc|
+	// where they differ. With anyDef (track presets, step 4), a block that is
+	// stopped or plays another definition plays the unit's (a crossfade).
+	// Call inside a Routine. Returns true when applied.
+	*applyBlock {|block, unit, setFunc, anyDef = false|
 		var tag = this.blockTag(block), current, pairs, cond, folder, before;
 		current = this.readBlock(tag);
-		if(current.isNil, { ("No block " ++ block ++ " playing").warn; ^false });
-		if(current[\def] != unit[\def], {
+		if(current.isNil and: { anyDef.not }, { ("No block " ++ block ++ " playing").warn; ^false });
+		if(current.notNil and: { current[\def] != unit[\def] } and: { anyDef.not }, {
 			("block " ++ block ++ " plays " ++ current[\def] ++ "; the preset is for " ++ unit[\def]).warn; ^false });
-		if(RadDoc.diff((data: current[\data], buffer: current[\buffer]),
-			(data: unit[\data], buffer: unit[\buffer])).notEmpty, {
+		if(current.isNil or: { current[\def] != unit[\def] } or: {
+			RadDoc.diff((data: current[\data], buffer: current[\buffer]),
+			(data: unit[\data], buffer: unit[\buffer])).notEmpty }, {
 			pairs = [];
 			(unit[\args] ? ()).keysValuesDo{|key, value|
 				if(value.isKindOf(Dictionary).not, { pairs = pairs ++ [key, value] }) };

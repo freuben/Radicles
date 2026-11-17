@@ -1,0 +1,7 @@
+>> tload t 1 radtest_track5
+== radpost ==
+Ndef('block1').source = nil;
+Ndef('track1').set('volume', -3);
+== radpostcont ==
+(none)
+

@@ -1,0 +1,12 @@
+>> tload
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> tload t 1 radtest_nothing
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

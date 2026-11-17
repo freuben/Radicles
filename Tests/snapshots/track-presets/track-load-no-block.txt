@@ -1,0 +1,15 @@
+>> <code>
+== radpost ==
+Ndef('inTrack2', {arg trim=0, lagTime=0;
+                (Ndef.ar('radtestOwn', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack2').set('trim', 0, 'lagTime', 0);
+Ndef.ar('block4', 1);
+Ndef('block4').fadeTime = 0.5;
+Ndef('inTrack3', {arg trim=0, lagTime=0;
+                (Ndef.ar('block4', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack3').set('trim', 0, 'lagTime', 0);
+Ndef('block4', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+Ndef('block4').xset('freq', 440, 'phase', 0, 'mul', 0.4);
+== radpostcont ==
+(none)
+
