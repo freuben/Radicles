@@ -2,8 +2,9 @@
 // holds a whole channel strip: its effect chain (as cssave writes it), trim,
 // volume, mute, pan, lags, mixer modulators, its sends (by bus) and its
 // source (the blocks feeding it, as blksave writes them; a list, so points
-// can join later). Never solo, record arm or the output to the master: those
-// change other strips or the session's routing. One folder for every strip:
+// can join later), and its output to the master (on or off, as when saved;
+// 17 Nov 2026). Never solo or record arm: those change other strips or the
+// session. One folder for every strip:
 //   <RadiclesFiles>/Settings/Presets/units/track/<name>.scd   (your own)
 //   <RadiclesLibs>/<lib>/Settings/Presets/units/track/<name>.scd (read too)
 //   tsave t 1 vox           track 1 -> your track presets (b 1, m, or a mixer position)
@@ -27,7 +28,11 @@
 //   doesn't have is left out and named
 // - a live input (audioin block) comes back with its hardware input
 // - default: trim 0, volume 0 dB, pan centre, unmuted, no lags, no
-//   modulators, an empty chain, no sends; the source is left alone
+//   modulators, an empty chain, no sends, output to the master; the source
+//   is left alone
+// - the output to the master comes back as it was saved (17 Nov 2026): a
+//   preset that doesn't go to the master turns it off first, one that does
+//   turns it on last; a preset saved before then leaves it as it is
 // Parts the target strip can't have (a source on a bus or the master, sends
 // on the master) are left out silently.
 
@@ -73,7 +78,8 @@
 	}
 
 	// the keys of a strip unit a track preset holds (beside chain and source)
-	*trackValueKeys { ^[\trim, \volume, \mute, \pan, \lags, \mods, \sends] }
+	// (output: \master or \none; the master strip has none)
+	*trackValueKeys { ^[\trim, \volume, \mute, \pan, \lags, \mods, \sends, \output] }
 
 	// ---- a strip as a track preset ----
 
@@ -122,7 +128,7 @@
 
 	// the clean strip of tload default
 	*defaultTrack {
-		^(default: true, trim: 0, volume: 0, mute: 0, chain: (fx: ()), sends: ())
+		^(default: true, trim: 0, volume: 0, mute: 0, chain: (fx: ()), sends: (), output: \master)
 	}
 
 	// the track in a preset file (default: a clean strip), or nil with the
@@ -139,6 +145,12 @@
 		if(data[\type] != \track or: { track.isKindOf(Dictionary).not }, {
 			("RadUnit: " ++ path ++ " is not a track preset").warn; ^nil });
 		track[\chain] = this.prValidChain(track[\chain] ? (fx: ()), "Track preset " ++ name);
+		track[\output] !? {|out|
+			if([\master, \none].includes(out).not, {
+				("Track preset " ++ name ++ ": output " ++ out.cs ++ " is not master or none; left out").warn;
+				track.removeAt(\output);
+			});
+		};
 		track[\source] !? {|source|
 			bad = source.select{|unit|
 				unit.isKindOf(Dictionary).not or: { unit[\kind] != \block } or: {
@@ -211,6 +223,8 @@
 		this.prStopStripMorphs(type, num, az);
 		// 2. a preset that mutes mutes first
 		if(track[\mute] == 1 and: { current[\mute] != 1 }, { az.setMute(type, num, 1) });
+		// a preset that doesn't go to the master turns the output off first
+		if(track[\output] == \none, { this.prSetOutput(type, num, \none, az) });
 		// 3. the source
 		if(nosrc.not and: { kind == \track } and: { track[\source].notNil }, {
 			left = left ++ this.prApplySource(num, track[\source], az);
@@ -223,11 +237,26 @@
 		if(kind != \master, { left = left ++ this.prApplySends(type, num, track[\sends] ? (), az) });
 		// 7. a preset that unmutes unmutes last
 		if(track[\mute] != 1 and: { this.readStrip(name, az) !? { |s| s[\mute] == 1 } ? false }, { az.setMute(type, num, 0) });
+		// a preset that goes to the master turns the output on last
+		if(track[\output] == \master, { this.prSetOutput(type, num, \master, az) });
 		track[\morphTime] !? {|time| az.setTrackMorphTime(name, time) };
 		Server.default.sync;
 		{ az.mixWinBool({ az.refreshMixGUI }); az.refreshFunc }.defer;
 		if(left.notEmpty, { ("tload " ++ name ++ ": left out " ++ left.join("; ")).warn });
 		^left
+	}
+
+	// the strip's output to the master on (\master) or off (\none), through
+	// the mixer's own setter (as outmenu), only when it differs. The master
+	// strip has no output to the master.
+	*prSetOutput {|type, num, output, az|
+		var name = this.stripName(type, num), current;
+		if(this.stripKind(name) == \master, { ^this });
+		current = this.readStrip(name, az) !? {|strip| strip[\output] };
+		if(current != output, {
+			az.setTrackOut(type, num, if(output == \master, { 1 }, { 0 }));
+			Server.default.sync;
+		});
 	}
 
 	// stop the morphs running on a strip: its chain's, its slots', and those

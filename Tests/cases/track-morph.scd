@@ -1,8 +1,9 @@
 // Track morph (Document Model, step 4, PR 3): tmorph moves a whole strip to a
 // track preset over one morph time: the chain as csmorph, the source as
 // blkmorph (or a crossfade to another block), trim, volume, pan and sends
-// glide, mute switches off at the start or on at the end. tmorphtime gives a
-// strip its own time.
+// glide, mute switches off at the start or on at the end, the output to the
+// master on at the start or off at the end. tmorphtime gives a strip its own
+// time.
 
 ~radTrackClean = {|names|
 	names.do{|name| File.delete(RadUnit.trackPresetPath(name)) };
@@ -166,4 +167,40 @@
 		{ true }
 	},
 	teardown: { ~radTrackClean.(['radtest_tm10']) }
+);
+
+// the output to the master, as saved (17 Nov 2026): off only at the end
+~radTest.("tmorph-output-off-at-end",
+	setup: ["start 2 1", "sndry t 2 1 1 -6", "tsave t 2 radtest_tmdry"],
+	code: {
+		~radCmd.("tmorph t 1 radtest_tmdry 2", 1);
+		~radMidOut = ~radStripNow.(\track1)[\output];
+		3.wait;
+	},
+	check: {
+		var out = ~radStripNow.(\track1)[\output];
+		case
+		{ ~radMidOut != \master } { "output during the morph: " ++ ~radMidOut.cs }
+		{ out != \none } { "output after: " ++ out.cs }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tmdry']) }
+);
+
+// ... and on at the start
+~radTest.("tmorph-output-on-at-start",
+	setup: ["start 2 1", "tsave t 2 radtest_tmwet", "outmenu t 1 0"],
+	code: {
+		~radCmd.("tmorph t 1 radtest_tmwet 2", 1);
+		~radMidOut = ~radStripNow.(\track1)[\output];
+		3.wait;
+	},
+	check: {
+		var out = ~radStripNow.(\track1)[\output];
+		case
+		{ ~radMidOut != \master } { "output during the morph: " ++ ~radMidOut.cs }
+		{ out != \master } { "output after: " ++ out.cs }
+		{ true }
+	},
+	teardown: { ~radTrackClean.(['radtest_tmwet']) }
 );

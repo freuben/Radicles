@@ -1,0 +1,9 @@
+>> tload t 1 default
+== radpost ==
+Ndef('busIn1').source = nil;
+Ndef('inBus1').source = nil;
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+== radpostcont ==
+(none)
+
