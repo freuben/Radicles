@@ -1,6 +1,6 @@
 # Where the work stands
 
-17 Nov 2026. The longer working log is the claude.ai Project doc
+17 Nov 2026 (after #95). The longer working log is the claude.ai Project doc
 `claude/start-here.md`; this page is the short version.
 
 ## How we work
@@ -41,8 +41,10 @@ contains.
 
 ## Open
 
-- Workflow points still to discuss: memory, working on two Macs, parallel
-  sessions.
+- Workflow points still to discuss: working on two Macs, parallel sessions.
+  (Memory, settled 17 Nov: claude.ai memory is a bonus for Project chats and
+  is never relied on; anything that must be remembered goes in `CLAUDE.md`,
+  `docs/` or the Project's start-here doc.)
 - Step 5 design note.
 - Issues #42 (points and planes), #43 (installation guide link), #44
   (channel modes), #45 (sharing and replaying code logs).
