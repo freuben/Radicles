@@ -29,6 +29,32 @@ there; if `docs/` and a draft disagree, ask before building.
   notice, naming, anything hard to undo); otherwise take the sensible default
   and say so in the PR.
 
+## Two Macs
+
+- **Dev Mac** (research-group laptop): all Radicles development and testing
+  happen here. Federico doesn't use it for anything else while Claude Code
+  runs.
+- **Performance Mac** (Federico's own laptop, for rehearsals and gigs): runs
+  `master`, plus a gig tag before gigs. New features reach it through a
+  `dev` → `master` PR, then a pull and a class-library recompile there. Don't
+  change it close to a gig.
+- **RadiclesFiles is not synced** between the Macs. It lives in
+  `~/Library/Application Support/SuperCollider/Extensions/RadiclesFiles`; if a
+  test fails because a file is missing, name the file.
+- **Ask before a full test run**, and never start one while the Mac is busy with
+  other heavy work.
+
+Dev Mac setup checklist:
+
+1. Xcode command-line tools.
+2. SuperCollider 3.14.1 and sc3-plugins.
+3. The Radicles Quark as a git checkout on `dev`.
+4. RadiclesLibs.
+5. RadiclesFiles.
+6. Homebrew, then `gh auth login`.
+7. Claude Code, opened on the Quark folder.
+8. The smoke test: `Tests/ci/run-headless.sh check smoke`.
+
 ## Federico's Mac
 
 - Don't recompile the class library, run tests, or switch branches while he has
