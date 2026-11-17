@@ -341,23 +341,24 @@
 	2.wait;
 };
 
-// these use ortf_s1r1 and ortf_s2r2, which not every RadiclesFiles has (the
-// Mac's has other impulse responses); without them filter never finishes,
-// so the tests are known there
-~radIRKnown = ["ortf_s1r1", "ortf_s2r2"].any{|ir|
+// these use two stereo impulse responses from the dev Mac's RadiclesFiles
+// (17 Nov 2026; before, ortf_s1r1 and ortf_s2r2 from RadiclesFiles.zip, which
+// the Mac doesn't have). Without them filter never finishes, so the tests are
+// known on a machine that lacks them (the cloud's copy of the zip).
+~radIRKnown = ["hall_usina_stereo_s1_p1", "minster1_stereo_48k"].any{|ir|
 	File.exists(Platform.userExtensionDir +/+ "RadiclesFiles/SoundFiles/IR" +/+ ir ++ ".wav").not
-}.if({ "needs the impulse responses ortf_s1r1 and ortf_s2r2 in RadiclesFiles/SoundFiles/IR" });
+}.if({ "needs the impulse responses hall_usina_stereo_s1_p1 and minster1_stereo_48k in RadiclesFiles/SoundFiles/IR" });
 
 // the unit names the impulse response; no path, no buffer number
 ~radTest.("convrev-unit-ir-by-name",
 	setup: ["start 2"],
 	known: ~radIRKnown,
-	code: { ~radConvRev.(\ortf_s1r1) },
+	code: { ~radConvRev.(\hall_usina_stereo_s1_p1) },
 	check: {
 		var unit = RadUnit.read(\filterTrack_1_1), text = unit.cs;
 		case
 		{ unit.isNil } { "no effect" }
-		{ unit[\data] != (ir: \ortf_s1r1, fftsize: 2048) } { "data: " ++ unit[\data].cs }
+		{ unit[\data] != (ir: \hall_usina_stereo_s1_p1, fftsize: 2048) } { "data: " ++ unit[\data].cs }
 		{ text.contains("/") or: { text.contains("buffer") } } { "path or buffer in the unit: " ++ text }
 		{ true }
 	}
@@ -368,17 +369,17 @@
 	setup: ["start 2"],
 	known: ~radIRKnown,
 	code: {
-		~radConvRev.(\ortf_s1r1);
+		~radConvRev.(\hall_usina_stereo_s1_p1);
 		Radicles.cW.callFunc("fxsave t 1 1 radtest_room"); 1.wait;
-		~radConvRev.(\ortf_s2r2);
+		~radConvRev.(\minster1_stereo_48k);
 		Radicles.cW.callFunc("fxload t 1 1 radtest_room"); 3.wait;
 	},
 	check: {
 		var file = RadUnit.readPreset(\filter, \convrev1, \radtest_room), unit = RadUnit.read(\filterTrack_1_1);
 		case
 		{ file.isNil } { "no preset" }
-		{ file[\data] != (ir: \ortf_s1r1, fftsize: 2048) } { "preset data: " ++ file[\data].cs }
-		{ unit[\data] != (ir: \ortf_s1r1, fftsize: 2048) } { "after loading: " ++ unit[\data].cs }
+		{ file[\data] != (ir: \hall_usina_stereo_s1_p1, fftsize: 2048) } { "preset data: " ++ file[\data].cs }
+		{ unit[\data] != (ir: \hall_usina_stereo_s1_p1, fftsize: 2048) } { "after loading: " ++ unit[\data].cs }
 		{ true }
 	},
 	teardown: ~radPresetClean
@@ -389,14 +390,14 @@
 	setup: ["start 2"],
 	known: ~radIRKnown,
 	code: {
-		~radConvRev.(\ortf_s2r2);
+		~radConvRev.(\minster1_stereo_48k);
 		RadUnit.writePreset((kind: \filter, def: \convrev1, args: (mix: 0.5),
-			data: [\convrev, \ortf_s1r1, 2048]), \radtest_oldroom);
+			data: [\convrev, \hall_usina_stereo_s1_p1, 2048]), \radtest_oldroom);
 		Radicles.cW.callFunc("fxload t 1 1 radtest_oldroom"); 3.wait;
 	},
 	check: {
 		var unit = RadUnit.read(\filterTrack_1_1);
-		(unit[\data] == (ir: \ortf_s1r1, fftsize: 2048) and: { unit[\args][\mix] == 0.5 })
+		(unit[\data] == (ir: \hall_usina_stereo_s1_p1, fftsize: 2048) and: { unit[\args][\mix] == 0.5 })
 		or: { "unit: " ++ unit.cs }
 	},
 	teardown: ~radPresetClean

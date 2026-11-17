@@ -148,13 +148,8 @@ var vol = {|key| Ndef(key).get('volume') };
 	cmds: [["(^ lt 1)", 2], ["(4 ^ lt 1)", 9]]
 );
 
-// Simultaneous commands
-~radTest.("simultaneous-commands",
-	setup: ["start 2"],
-	cmds: ["(lp 1 drums1 & lp 2 marilyn2 & fx 1 pch)"],
-	noWarnings: true,
-	known: "marilyn2 is not in RadiclesFiles.zip (Play/0 has drums1 and marilyn1)"
-);
+// Simultaneous commands. The handout loads marilyn2, which RadiclesFiles
+// doesn't have; the test uses marilyn1 instead (17 Nov 2026).
 // the three commands run at the same time, so their posts race: compared in
 // any order, after a fixed wait long enough for both buffers to load (the
 // quiet-wait could end between the effect and the second block)
