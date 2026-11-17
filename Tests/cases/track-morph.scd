@@ -155,8 +155,8 @@
 // nosrc and nofx work with tmorph too; an unknown word is refused
 ~radTest.("tmorph-options",
 	setup: ["start 2", "blk 1 sine", "fx t 1 pch", "vol t 1 -6", "tsave t 1 radtest_tm10", "blk 2 noise", "fx t 2 dl1"],
-	cmds: ["tmorph t 2 radtest_tm10 1 nosrc nofx", "tmorph t 2 radtest_tm10 1 sideways"],
-	code: { 2.wait },
+	//the first waits out its morph, so the lag going back is in its own snapshot
+	cmds: [["tmorph t 2 radtest_tm10 1 nosrc nofx", 2.5], "tmorph t 2 radtest_tm10 1 sideways"],
 	check: {
 		var two = ~radStripNow.(\track2);
 		case
