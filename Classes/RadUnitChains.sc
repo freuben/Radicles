@@ -166,6 +166,8 @@
 		});
 		chain = this.readChainPreset(name);
 		if(chain.isNil, { ^false });
+		//the libraries its effects come from (step 4)
+		this.useLibraries(this.chainLibraries(chain), "csload");
 		{
 			this.applyChain(type, num, chain, az);
 			action.();
@@ -232,6 +234,7 @@
 			^false });
 		chain = this.readChainPreset(name);
 		if(chain.isNil, { ^false });
+		this.useLibraries(this.chainLibraries(chain), "csmorph");
 		az.morphChain(type, num, chain, time, shape, action);
 		^true
 	}
