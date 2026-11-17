@@ -11,12 +11,15 @@
 // space are fixed when a strip is made (until #44). The master has no solo
 // and no output. Lists Assemblage keeps by position (soloStates,
 // outputSettings) are read through the strip's name.
+// Step 4 (PR 1) adds what a track preset needs beside these: input (what
+// feeds a track, by Ndef key: [\block1]) and sends (by bus, never by send
+// slot: (bus1: (level: -12, lag: 0.5, mod: (...)))), read the same way.
 
 + RadUnit {
 
 	// the keys of a strip unit that are values (refreshed when read), and
 	// those that are its structure (kept up to date by syncStrips)
-	*stripValueKeys { ^[\trim, \volume, \mute, \pan, \lags, \mods, \solo, \output, \chainMorphTime] }
+	*stripValueKeys { ^[\trim, \volume, \mute, \pan, \lags, \mods, \solo, \output, \chainMorphTime, \input, \sends] }
 	*stripStructureKeys { ^[\kind, \channels, \space] }
 
 	// the strips of the running mixer, by name
@@ -63,6 +66,9 @@
 		if(mods.notEmpty, { unit[\mods] = mods });
 		//the chain's own morph time (csmorphtime, step 3 PR 3)
 		if(az.respondsTo(\chainMorphTimeOf), { az.chainMorphTimeOf(name) !? {|time| unit[\chainMorphTime] = time } });
+		//what feeds a track, and where every strip but the master sends (step 4)
+		this.readInput(name, az) !? {|input| unit[\input] = input };
+		this.readSends(name, az) !? {|sends| unit[\sends] = sends };
 		if(name != \master, {
 			index = (az.mixTrackNames ? []).indexOf(name);
 			unit[\solo] = index !? {|i| (az.soloStates ? [])[i] } ? 0;
@@ -70,6 +76,47 @@
 			unit[\output] = if(out == \master, { \master }, { \none });
 		});
 		^unit
+	}
+
+	// what feeds a track: the Ndef keys of its input ([\block1], or several
+	// in input order), or nil when nothing does. Buses (fed by sends) and the
+	// master have no input of their own here.
+	*readInput {|name, az|
+		var tag, entry, keys;
+		az = az ? Radicles.aZ;
+		if(name.asString.beginsWith("track").not, { ^nil });
+		tag = this.stripKeys(name)[0];
+		entry = (az.inputs ? []).detect{|item| item[0] == tag };
+		if(entry.isNil or: { entry[1].isNil }, { ^nil });
+		keys = entry[1].asArray.select{|item| item.isKindOf(NodeProxy) }.collect(_.key);
+		^if(keys.isEmpty, { nil }, { keys })
+	}
+
+	// where a strip sends: (busN: (level: dB, lag: s, mod: (...))), keyed by
+	// bus, since send slots follow bus order and differ between strips; nil
+	// when it sends nowhere. Read from the bus Ndefs (volK, lagK), so send
+	// knobs, MIDI and IDE lines need no hook.
+	*readSends {|name, az|
+		var sends = (), ndef;
+		az = az ? Radicles.aZ;
+		if(name.asSymbol == \master, { ^nil });
+		ndef = Ndef(name.asSymbol);
+		(az.busArr ? []).do{|item|
+			var busTag = item[0], members = item[1], index, volKey, lagKey, read, send;
+			if(busTag.notNil and: { members.notNil }, {
+				index = members.indexOf(ndef);
+				if(index.notNil, {
+					volKey = ("vol" ++ (index + 1)).asSymbol;
+					lagKey = ("lag" ++ (index + 1)).asSymbol;
+					read = this.readArgs(Ndef(busTag), [volKey, lagKey]);
+					send = (level: read[0][volKey] ? -inf);
+					if((read[0][lagKey] ? 0) != 0, { send[\lag] = read[0][lagKey] });
+					read[1][volKey] !? {|mod| send[\mod] = mod };
+					sends[("bus" ++ busTag.asString.divNumStr[1]).asSymbol] = send;
+				});
+			});
+		};
+		^if(sends.isEmpty, { nil }, { sends })
 	}
 
 	// the lag set on an Ndef's argument with NodeProxy:lag, or nil when none

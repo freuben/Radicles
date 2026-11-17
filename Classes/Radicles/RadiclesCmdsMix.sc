@@ -1326,8 +1326,9 @@
 		cW.add(\sndry, [\str, \str, \num, \num, \num, \num], {|str1, str2, num1, num2, num3, num4|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.setSend(\track, num1, num2, num3, num4);}
-				{str2 == 'b'} {aZ.setSend(\bus, num1, num2, num3, num4);}
+				//dry: the track's output to the master goes off, as in the other forms
+				{str2 == 't'} {aZ.setSend(\track, num1, num2, num3, num4, false);}
+				{str2 == 'b'} {aZ.setSend(\bus, num1, num2, num3, num4, false);}
 				;
 			}, {
 				"could not find assemblage".warn;
