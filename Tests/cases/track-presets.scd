@@ -201,7 +201,9 @@
 		{ ~radLeft3.notEmpty } { "track 3 left: " ++ ~radLeft3.cs }
 		{ true }
 	},
-	teardown: { ~radTrackClean.(['radtest_track9']); Ndef(\radtestOwn).clear },
+	//no Ndef(\radtestOwn).clear here: its node may be gone already (a server
+	//error on the Mac), and each test runs in its own sclang
+	teardown: { ~radTrackClean.(['radtest_track9']) },
 	docCheck: false
 );
 
