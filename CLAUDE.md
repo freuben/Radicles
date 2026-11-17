@@ -2,16 +2,22 @@
 
 Radicles is a live-coding and performance environment for SuperCollider 3.14.1
 (a Quark). Federico Reuben is its author, artistic lead and lead user; Claude is
-senior engineer and project manager. Design notes, decisions and the
-step-by-step plan live in the claude.ai Project "Radicles development" (docs
-`claude/start-here.md`, `claude/radicles-codebase-overview.md`, and the design
-notes linked from them). This file holds what every coding session needs.
+senior engineer and project manager. This file holds what every coding
+session needs.
+
+**Design notes:** the decided ones are in `docs/` (start with
+`docs/status.md` and `docs/design-principles.md`; the plan is
+`docs/implementation-plan.md`, each step's note is in `docs/design/`). New
+notes are drafted and discussed in the claude.ai Project "Radicles
+development" and copied to `docs/` once decided, so a newer draft may exist
+there; if `docs/` and a draft disagree, ask before building.
 
 ## How we work
 
 - **Design before building.** Each step gets a short design note in the
   claude.ai Project with questions for Federico; build only once he has
-  answered. Small fixes he asks for directly don't need one.
+  answered, then copy the decided note into `docs/design/` (with the code's
+  PR or its own). Small fixes he asks for directly don't need one.
 - **Branches and PRs.** Branch from `dev`; open PRs into `dev`; one PR per
   coherent change, each with its tests. Never push to or merge into `master`
   (the stable version for performances). Federico merges.
