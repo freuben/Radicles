@@ -191,6 +191,8 @@
 		if(this.trackPresetExists(name).not, { ("No track preset " ++ name).warn; ^false });
 		track = this.readTrackPreset(name);
 		if(track.isNil, { ^false });
+		//the libraries its effects, blocks and wavetables come from
+		this.useLibraries(this.trackLibraries(track, nosrc, nofx), "tload");
 		{
 			this.applyTrack(type, num, track, nosrc, nofx, az);
 			action.();

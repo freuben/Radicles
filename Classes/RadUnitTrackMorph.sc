@@ -44,6 +44,7 @@
 		if(this.trackPresetExists(name).not, { ("No track preset " ++ name).warn; ^false });
 		track = this.readTrackPreset(name);
 		if(track.isNil, { ^false });
+		this.useLibraries(this.trackLibraries(track, nosrc, nofx), "tmorph");
 		^this.morphTrack(type, num, track, time, shape, nosrc, nofx, action, az)
 	}
 
