@@ -20,6 +20,16 @@ In the SuperCollider IDE:
 
 Each test runs in its own fresh `sclang` with a muted server on port 57150, so your own session and server are not touched. Some tests briefly open a mixer window. A summary is posted at the end, and logs are in `Tests/results/`.
 
+## Run the tests from a Mac terminal (Claude Code)
+
+```
+Tests/ci/run-headless.sh                         # check everything (about 2 hours)
+Tests/ci/run-headless.sh check track-presets     # one case
+Tests/ci/run-headless.sh update track-presets track-save-file   # rewrite one snapshot
+```
+
+Run it from the Radicles folder that SuperCollider compiles (`Quark("Radicles").localPath`, usually `~/Library/Application Support/SuperCollider/downloaded-quarks/Radicles`): the tests use the classes SuperCollider's configuration points at, not the folder the script is in. GUI tests run here and briefly open windows. Don't run two at once.
+
 ## Run the tests in the cloud workspace (Linux, no sound card)
 
 ```
