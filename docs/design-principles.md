@@ -42,7 +42,41 @@ Fourteen commitments define Radicles; any new feature or refactor must keep all 
 
 Radicles has one path from performer to sound: a command becomes SuperCollider code, which is posted and interpreted, and that code builds or changes Ndefs and patterns.
 
-> *Diagram: Radicles architecture · commands, generated code, JITLib layers. It is drawn in the claude.ai version of this note and is not included here yet.*
+```mermaid
+---
+title: Every command becomes JITLib code that drives the sound layers
+---
+flowchart TB
+    CW["<b>Call Window</b><br/>commands, HIDs, schedules"]
+    CODE["<b>Generated SC code</b><br/>posted, then interpreted"]
+    GUI["<b>Generated GUIs</b><br/>built from args and specs"]
+    CW --> CODE --> GUI
+
+    subgraph JIT["JITLib layer: Ndefs and patterns"]
+        direction TB
+        STORES["<b>Stores</b><br/>BStore: files, buffers<br/>DStore: data, wavetables"]
+        BLOCKS["<b>Blocks</b><br/>synths, players, patterns<br/>gated on and off"]
+        subgraph ASM["Assemblage (mixer)"]
+            direction TB
+            IN["Input: audio in or block"] --> FX["Filter slots: fx chain"] --> SPACE["Space: panning"] --> OUT["Buses, master, audio out"]
+        end
+        MOD["<b>ModMap</b><br/>LFOs, chaos and<br/>machine listening"]
+        HID["<b>HIDMap</b><br/>MIDI and OSC<br/>controllers"]
+        PLANES["<b>Planes (planned)</b><br/>analysis, data and generative layers<br/>that will feed mods and commands"]
+        STORES -->|buffers and data| BLOCKS --> IN
+        MOD -->|"drive any mixer, fx<br/>or block parameter"| ASM
+        HID --> ASM
+    end
+
+    CODE -->|runs| JIT
+    JIT -->|reflects state| GUI
+
+    classDef accent stroke-width:2px
+    class CODE accent
+    style PLANES stroke-dasharray: 5 5
+```
+
+*Redrawn in Mermaid from the claude.ai version; the boxes and words are the same.*
 
 Sources feed tracks in the Assemblage, where each strip runs input, effect slots and spatialisation into buses and the master. A track's source can be changed: a block is a gated synth with an on/off envelope that holds until stopped, and a point (planned) is an Ndef played with .spawn, each event a new synth with a predefined envelope and no gate or hold; ModMap and HIDMap can reach any parameter along the way. In the code, the main class `Radicles` registers the commands, `CallWindow` parses them, and `Assemblage`, `Block`, `BStore`/`Store`, `ModMap`, `HIDMap`, `Space` and the `Plane` classes implement each layer.
 
@@ -182,7 +216,27 @@ Ask these questions of every new feature, refactor or bug fix before it is merge
 
 Federico's thinking, still developing. **Planes** produce streams of symbolic tokens; **sieves** (working name) filter them; **Points** turn tokens into sound. Together they would be Radicles' event layer, next to blocks, which are continuous sources. Issue #42.
 
-> *Diagram: planes, sieves and points · draft. It is drawn in the claude.ai version of this note and is not included here yet.*
+```mermaid
+---
+title: Tokens flow from planes through sieves to points, which sound on a track
+---
+flowchart LR
+    A["<b>APlane</b><br/>live analysis"]
+    G["<b>GPlane</b><br/>generation, patterns"]
+    D["<b>DPlane</b><br/>fixed data, MIDI files"]
+    S["<b>Sieves</b><br/>transpose, shotgun"]
+    P["<b>Point</b><br/>Ndef.spawn per token"]
+    T["<b>Mixer track</b><br/>like a block"]
+    A --> S
+    G -->|tokens| S
+    D --> S
+    S --> P --> T
+
+    classDef accent stroke-width:2px
+    class P accent
+```
+
+*Redrawn in Mermaid from the claude.ai version; the boxes and words are the same.*
 
 **Developed further** in the [Planes, Sparks and Points – Design Draft](https://claude.ai/artifact/XP71vZMe6NtrBA2fhYJMqS): planes say *what* and **sparks** say *when*, as separate streams that can come from the same source (a MIDI file); a point can mix several planes; sieves are shared and reusable; no prediction for analysis timing. The notes below are the original version.
 
