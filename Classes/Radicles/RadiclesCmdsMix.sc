@@ -206,6 +206,7 @@
 					}.last).asString.divNumStr;
 					aZ.removeTrack(\track, getTrack[1]);
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -225,6 +226,7 @@
 					}.last).asString.divNumStr;
 					aZ.removeTrack(\bus, getTrack[1]);
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -274,6 +276,7 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -309,6 +312,7 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -328,6 +332,7 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -347,6 +352,7 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -366,6 +372,7 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -385,6 +392,7 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -412,7 +420,9 @@
 					};
 					{aZ.refreshFunc}.defer; //only if the mixer is open
 					}.fork;
-				};
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -429,7 +439,9 @@
 						aZ.autoAddTrack(\bus, num2, action: {cond.test = true; cond.signal});
 						cond.wait;
 					};}.fork;
-				};
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
 			}, {
 				"could not find assemblage".warn;
 			});
