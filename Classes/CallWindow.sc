@@ -158,7 +158,13 @@ CallWindow : Radicles {var <text, <>storeArr, <>storeIndex=0, <>lang, <>post=tru
 			});
 			if(inputArr.isString.not, {
 				inputArr.do({|item|
-					if((item.isStringNumber).or(item.contains("-")).or(
+					// a dash makes a range only between two whole numbers (1-4);
+					// at the start it is a negative number (-10, -inf). Any other
+					// word with a dash is a name (a preset or file such as
+					// warm-shift, kick-01); it used to be taken for a range, and the
+					// command failed (18 Nov 2026)
+					var isRange = "^[0-9]+-[0-9]+$".matchRegexp(item);
+					if((item.isStringNumber).or(isRange).or(item.beginsWith("-")).or(
 						item.contains("[").and(item.contains("]"))), {
 						case
 						{item.isStringNumber} {

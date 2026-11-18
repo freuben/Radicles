@@ -1,0 +1,22 @@
+>> vol 1-3 -6
+== radpost ==
+Ndef('track1').set('volume', -6);
+Ndef('track2').set('volume', -6);
+Ndef('track3').set('volume', -6);
+== radpostcont ==
+(none)
+
+>> vol b 1-2 -inf
+== radpost ==
+Ndef('bus1').set('volume', -inf);
+Ndef('bus2').set('volume', -inf);
+== radpostcont ==
+(none)
+
+>> trim t 2-3 4
+== radpost ==
+Ndef('inTrack2').set('trim', 4);
+Ndef('inTrack3').set('trim', 4);
+== radpostcont ==
+(none)
+
