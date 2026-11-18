@@ -1,0 +1,15 @@
+>> b rm [1,3]
+== radpost ==
+Ndef('inBus1').clear(0.5);
+Ndef('bus1').clear(0.5);
+Ndef('spaceBus1').clear(0.5);
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus2', 2) * 1, Ndef.ar('spaceBus3', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('inBus3').clear(0.5);
+Ndef('bus3').clear(0.5);
+Ndef('spaceBus3').clear(0.5);
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+== radpostcont ==
+(none)
+
