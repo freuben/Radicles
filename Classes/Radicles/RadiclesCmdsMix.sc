@@ -2440,10 +2440,10 @@
 			var trackArr, modArgs, modifier;
 			if(aZ.notNil, {
 				dash.do{|item|
-					trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-					modArgs = str2.asString.radStringMod;
-					if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
-					{aZ.modMix(trackArr[0], trackArr[1], \vol, modArgs[0], modArgs[1], modifier: modifier)}.defer;
+					{trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
+						modArgs = str2.asString.radStringMod;
+						if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
+						aZ.modMix(trackArr[0], trackArr[1], \vol, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
 				"assemblage is already running".warn;
@@ -2454,10 +2454,10 @@
 			var trackArr, modArgs, modifier;
 			if(aZ.notNil, {
 				dash.do{|item|
-					trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-					modArgs = str2.asString.radStringMod;
-					if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
-					{aZ.modMix(trackArr[0], trackArr[1], \pan, modArgs[0], modArgs[1], modifier: modifier)}.defer;
+					{trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
+						modArgs = str2.asString.radStringMod;
+						if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
+						aZ.modMix(trackArr[0], trackArr[1], \pan, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
 				"assemblage is already running".warn;
@@ -2468,10 +2468,10 @@
 			var trackArr, modArgs, modifier;
 			if(aZ.notNil, {
 				dash.do{|item|
-					trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-					modArgs = str2.asString.radStringMod;
-					if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
-					{aZ.modMix(trackArr[0], trackArr[1], \trim, modArgs[0], modArgs[1], modifier: modifier)}.defer;
+					{trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
+						modArgs = str2.asString.radStringMod;
+						if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
+						aZ.modMix(trackArr[0], trackArr[1], \trim, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
 				"assemblage is already running".warn;
