@@ -268,59 +268,62 @@
 			});
 		}, "fx: mixTrackNum, slotNum, filter, extraArgs");
 		//
-		cW.add(\fxclear, [\str, \str, \num], {|str1, str2, num1|
-			if(aZ.notNil, {
-				case
-				{str2 == 'm'} {
-					aZ.setFx(\master, 1, num1, remove: true);
-				};
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxclear: trackType, slot");
-
-		cW.add(\fxclear, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.setFx(\track, num1, num2, remove: true);}
-				{str2 == 'b'} {aZ.setFx(\bus, num1, num2, remove: true);}
-				{str2 == 'm'} {aZ.setFx(\master, 1, num2, remove: true);};
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxclear: trackType, trackNum, slot");
-
-		cW.add(\fxclear, [\str, \num], {|str1, num1|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.setFx(thisArr[0].asSymbol, thisArr[1], 1, remove: true);
+		//fxrm (the rm spelling) and fxclear: the same four forms
+		[\fxclear, \fxrm].do{|name|
+			cW.add(name, [\str, \str, \num], {|str1, str2, num1|
+				if(aZ.notNil, {
+					case
+					{str2 == 'm'} {
+						aZ.setFx(\master, 1, num1, remove: true);
+					};
 				}, {
-					"track not found".warn;
+					"could not find assemblage".warn;
 				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxclear: mixTrackNum, filter");
+			}, name ++ ": trackType, slot");
 
-		cW.add(\fxclear, [\str, \num, \num], {|str1, num1, num2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.setFx(thisArr[0].asSymbol, thisArr[1], num2, remove: true);
+			cW.add(name, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+				if(aZ.notNil, {
+					case
+					{str2 == 't'} {aZ.setFx(\track, num1, num2, remove: true);}
+					{str2 == 'b'} {aZ.setFx(\bus, num1, num2, remove: true);}
+					{str2 == 'm'} {aZ.setFx(\master, 1, num2, remove: true);};
 				}, {
-					"track not found".warn;
+					"could not find assemblage".warn;
 				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxclear: mixTrackNum, filter");
+			}, name ++ ": trackType, trackNum, slot");
+
+			cW.add(name, [\str, \num], {|str1, num1|
+				var trackArr, thisArr;
+				if(aZ.notNil, {
+					trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+					if(num1 <= (trackArr.size), {
+						thisArr = trackArr[num1-1];
+						if(thisArr[1].isNil, {thisArr[1] = 1});
+						aZ.setFx(thisArr[0].asSymbol, thisArr[1], 1, remove: true);
+					}, {
+						"track not found".warn;
+					});
+				}, {
+					"could not find assemblage".warn;
+				});
+			}, name ++ ": mixTrackNum, filter");
+
+			cW.add(name, [\str, \num, \num], {|str1, num1, num2|
+				var trackArr, thisArr;
+				if(aZ.notNil, {
+					trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+					if(num1 <= (trackArr.size), {
+						thisArr = trackArr[num1-1];
+						if(thisArr[1].isNil, {thisArr[1] = 1});
+						aZ.setFx(thisArr[0].asSymbol, thisArr[1], num2, remove: true);
+					}, {
+						"track not found".warn;
+					});
+				}, {
+					"could not find assemblage".warn;
+				});
+			}, name ++ ": mixTrackNum, filter");
+		};
 
 		cW.add(\clearfx, [\str, \num], {|str1, num1|
 			var filterTag, filterTagArr;

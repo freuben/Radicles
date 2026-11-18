@@ -200,7 +200,7 @@
 						});
 					});
 				}
-				{str2 == 'rmv'} {
+				{str2 == 'rmv' or: { str2 == 'rm' }} {
 					getTrack = (aZ.mixTrackNames.select{|item|
 						item.asString.contains("track")
 					}.last).asString.divNumStr;
@@ -210,7 +210,7 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: ['names', 'add', 'rmv']");
+		}, "track: ['names', 'add', 'rm'] (rmv also works)");
 
 		cW.add(\b, [\str, \str], {|str1, str2|
 			var getTrack;
@@ -219,7 +219,7 @@
 				{str2 == 'add'} {
 					aZ.autoAddTrack(\bus, 1);
 				}
-				{str2 == 'rmv'} {
+				{str2 == 'rmv' or: { str2 == 'rm' }} {
 					getTrack = (aZ.mixTrackNames.select{|item|
 						item.asString.contains("bus");
 					}.last).asString.divNumStr;
@@ -229,7 +229,7 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "bus: ['add', 'rmv']");
+		}, "bus: ['add', 'rm'] (rmv also works)");
 
 		cW.add(\t, [\str, \str, \num], {|str1, str2, num1|
 			var cond, getTrack;
@@ -260,7 +260,7 @@
 					{aZ.refreshFunc}.defer; //only if the mixer is open
 					}.fork;
 				}
-				{str2 == 'rmvn'} {
+				{str2 == 'rmvn' or: { str2 == 'rmn' }} {
 					{num1.do{
 						cond.test = false;
 						getTrack = (aZ.mixTrackNames.select{|item|
@@ -292,7 +292,7 @@
 						cond.wait;
 					};}.fork;
 				}
-				{str2 == 'rmvn'} {
+				{str2 == 'rmvn' or: { str2 == 'rmn' }} {
 					{num1.do{
 						cond.test = false;
 						getTrack = (aZ.mixTrackNames.select{|item|
@@ -314,7 +314,7 @@
 			cond = Condition.new(false);
 			if(aZ.notNil, {
 				case
-				{str2 == 'rmvn'} {
+				{str2 == 'rmvn' or: { str2 == 'rmn' }} {
 					{arr1.do{|item|
 						cond.test = false;
 						aZ.removeTrack(\track, item,
@@ -326,14 +326,14 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: rmvn,");
+		}, "track: rmn, (rmvn also works)");
 
 		cW.add(\b, [\str, \str, \arr], {|str1, str2, arr1|
 			var cond;
 			cond = Condition.new(false);
 			if(aZ.notNil, {
 				case
-				{str2 == 'rmvn'} {
+				{str2 == 'rmvn' or: { str2 == 'rmn' }} {
 					{arr1.do{|item|
 						cond.test = false;
 						aZ.removeTrack(\bus, item,
@@ -345,7 +345,7 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: rmvn,");
+		}, "track: rmn, (rmvn also works)");
 
 		cW.add(\t, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			var cond;
