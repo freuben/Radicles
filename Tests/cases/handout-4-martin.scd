@@ -6,7 +6,7 @@
 
 ~radTest.("remove-tracks",
 	setup: ["start 4 1"],
-	cmds: ["t rmvn [2,3]"]
+	cmds: ["t rm [2,3]"]
 );
 
 ~radTest.("stop-with-fade",

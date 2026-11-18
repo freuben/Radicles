@@ -86,7 +86,7 @@
 // (the strips themselves stay: step 3)
 ~radTest.("unit-removed",
 	setup: ["start 2 1", "fx t 1 pch", "fx t 1 2 dl1", "fx t 2 lpf"],
-	cmds: ["fxclear t 1 1", "csfree t 2"],
+	cmds: ["fx rm t 1 1", "csfree t 2"],
 	check: {
 		var fx = RadDoc.current.at(\strips).collect(_[\fx]).reject(_.isNil);
 		(fx == (track1: (2: RadDoc.current.at("track1.fx.2")))
@@ -98,7 +98,7 @@
 // a removed track takes its effects with it
 ~radTest.("unit-track-removed",
 	setup: ["start 3", "fx t 3 pch"],
-	cmds: ["t rmvn 1"],
+	cmds: ["t rmn 1"],
 	check: { RadDoc.current.at(\track3).isNil or: { "track3: " ++ RadDoc.current.at(\track3).cs } }
 );
 
@@ -119,7 +119,7 @@
 		RadDoc.current.addDependant(~radListener);
 		Radicles.cW.callFunc("fx t 1 pch"); 2.wait;
 		Radicles.cW.callFunc("fxset t 1 1 pitchRatio 0.5"); 1.wait;
-		Radicles.cW.callFunc("fxclear t 1 1"); 2.wait;
+		Radicles.cW.callFunc("fx rm t 1 1"); 2.wait;
 		RadDoc.current.removeDependant(~radListener);
 	},
 	check: {

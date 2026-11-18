@@ -111,7 +111,7 @@
 // removing a middle track: its strip goes, its neighbours keep their own values
 ~radTest.("strip-removed-middle",
 	setup: ["start 3", "solo t 3", "mute t 3", "vol t 3 -9"],
-	cmds: [["t rmvn [2]", 4]],
+	cmds: [["t rm [2]", 4]],
 	check: {
 		var three = ~radStripValues.(\track3);
 		case
@@ -132,7 +132,7 @@
 		Radicles.cW.callFunc("vol t 1 -6"); 1.wait;
 		Radicles.cW.callFunc("pan t 1 0.5"); 1.wait;
 		Radicles.cW.callFunc("t add 1"); 4.wait;
-		Radicles.cW.callFunc("t rmvn 1"); 4.wait;
+		Radicles.cW.callFunc("t rmn 1"); 4.wait;
 		RadDoc.current.removeDependant(~radListener);
 	},
 	check: {
