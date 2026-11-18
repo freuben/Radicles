@@ -1,7 +1,7 @@
 >> t rmn 1
 == radpost ==
 Ndef('filterTrack_3_1').clear(0.5);
-Ndef('block3').clear;
+Ndef('block3').clear(0.5);
 Ndef('inTrack3').clear(0.5);
 Ndef('track3').clear(0.5);
 Ndef('spaceTrack3').clear(0.5);

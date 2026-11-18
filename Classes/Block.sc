@@ -135,7 +135,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 				aZ.closeSourceWin(ndefs[blockIndex].key);
 			});
 			this.newStartTicket(ndefs[blockIndex].key); //cancel a start still loading
-			string = (ndefs[blockIndex].cs ++ ".clear;");
+			//it fades out over its own fade time (a plain clear cut it: a click)
+			string = (ndefs[blockIndex].cs ++ ".clear(" ++ (ndefs[blockIndex].fadeTime ? 0) ++ ");");
 			string.radcode;
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
