@@ -195,8 +195,7 @@
 					aZ.autoAddTrack(\track, 1, action: {|item|
 						var ndefKey;
 						ndefKey = item[0][0];
-						Block.add(Ndef(item[0][0]).numChannels, {|item|
-							aZ.input(item, \track, ndefKey.asString.divNumStr[1]);
+						Block.forTrack(ndefKey.asString.divNumStr[1], {
 							{aZ.refreshFunc}.defer;
 						});
 					});
@@ -241,9 +240,7 @@
 					aZ.autoAddTrack(\track, num1, action: {|item|
 						var ndefKey;
 						ndefKey = item[0][0];
-						Block.add(Ndef(item[0][0]).numChannels, {|item|
-							aZ.input(item, \track, ndefKey.asString.divNumStr[1]);
-						});
+						Block.forTrack(ndefKey.asString.divNumStr[1]);
 					});
 				}
 				{str2 == 'addn'} {
@@ -252,8 +249,7 @@
 						aZ.autoAddTrack(\track, action: {|item|
 							var ndefKey;
 							ndefKey = item[0][0];
-							Block.add(Ndef(item[0][0]).numChannels, {|it|
-								aZ.input(it, \track, ndefKey.asString.divNumStr[1]);
+							Block.forTrack(ndefKey.asString.divNumStr[1], {
 								server.sync;
 								cond.test = true; cond.signal;
 							});
@@ -362,8 +358,7 @@
 						aZ.autoAddTrack(\track, num2, action: {|item|
 							var ndefKey;
 							ndefKey = item[0][0];
-							Block.add(Ndef(item[0][0]).numChannels, {|it|
-								aZ.input(it, \track, ndefKey.asString.divNumStr[1]);
+							Block.forTrack(ndefKey.asString.divNumStr[1], {
 								server.sync;
 								cond.test = true; cond.signal;
 							});
