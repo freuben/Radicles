@@ -5,6 +5,7 @@ Ndef('bus1').clear(0.5);
 Ndef('spaceBus1').clear(0.5);
 Ndef('inMaster').source = {arg trim=0, lagTime=0;
                 ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('busIn1').nodeMap.set('vol1', -12, 'lag1', nil, 'vol2', nil);
 Ndef('busIn1', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track2', 1)*vol1.dbamp.lag(lag1); });
 Ndef('busIn1').clear(0.5);
 == radpostcont ==
