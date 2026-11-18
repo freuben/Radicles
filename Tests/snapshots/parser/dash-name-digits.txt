@@ -1,0 +1,12 @@
+>> fxsave t 1 1 radtest_kick-01
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fxsave t 1 1 radtest_2-b
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
