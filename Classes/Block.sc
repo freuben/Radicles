@@ -579,7 +579,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		thisBlock = liveBlocks;
 		thisBuffer = thisBlock[blockIndex][2];
 		{
-			fadeOut.wait;
+			//the fade starts one server latency after it is asked for, so it
+			//ends that much later: freeing the buffer at fadeOut cut its tail
+			((fadeOut ? 0) + (server.latency ? 0.2) + 0.1).wait;
 			if(thisBuffer.notNil, {
 				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
 					/*"remove buffer".postln;*/
