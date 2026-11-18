@@ -136,14 +136,27 @@
 		}, "fxbypass: mixTrackNum, slot, state");
 	}
 
+	// the active effects in the order fxl numbers them: tracks, buses, master,
+	// each by number, then slot. Each item is [tag, [type, number, slot], name].
+	*fxOrdered {
+		var rank = (track: 0, bus: 1, master: 2);
+		if(aZ.isNil, { ^[] });
+		^(aZ.filters ? []).collect{|item| [item[0], aZ.convFilterTag(item[0]), item[1]] }
+		.sort{|a, b|
+			var key = {|x| [rank[x[1][0].asSymbol] ? 3, x[1][1].asInteger, x[1][2].asInteger] };
+			var ka = key.(a), kb = key.(b);
+			var diff = (ka - kb).detect{|x| x != 0 } ? 0;
+			diff <= 0
+		};
+	}
+
 	// the lines fxl posts: the active effects, numbered, each with where it is
 	// ("2  track1 slot 2  dl1"); fx rml N removes number N
 	*fxList {
-		if(aZ.isNil, { ^[] });
-		^(aZ.filters ? []).collect{|item, index|
-			var tagArr = aZ.convFilterTag(item[0]);
-			var where = if(tagArr[0] == \master, { "master" }, { tagArr[0].asString ++ tagArr[1] });
-			(index+1).asString ++ "  " ++ where ++ " slot " ++ tagArr[2] ++ "  " ++ item[1];
+		^this.fxOrdered.collect{|item, index|
+			var tagArr = item[1];
+			var where = if(tagArr[0].asSymbol == \master, { "master" }, { tagArr[0].asString ++ tagArr[1] });
+			(index+1).asString ++ "  " ++ where ++ " slot " ++ tagArr[2] ++ "  " ++ item[2];
 		};
 	}
 
@@ -341,9 +354,9 @@
 			{str2 == 'rm'} {rmByMix.(num1, 1);}
 			{str2 == 'rml'} {
 				if(aZ.notNil, {
-					filters = aZ.filters ? [];
+					filters = this.fxOrdered;
 					if((num1 >= 1) and: { num1 <= filters.size }, {
-						filterTagArr = aZ.convFilterTag(filters[num1-1][0]);
+						filterTagArr = filters[num1-1][1];
 						aZ.setFx(filterTagArr[0].asSymbol, filterTagArr[1],
 							filterTagArr[2], remove: true);
 					}, {

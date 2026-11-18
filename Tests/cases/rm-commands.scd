@@ -101,11 +101,16 @@
 );
 
 // effects: fx rml N removes number N of the list fxl posts (the list is
-// sorted by strip type, then number and slot: buses, master, tracks)
+// tracks, then buses, then master, each by number and slot)
 ~radTest.("fx-rml",
 	setup: ["start 2", "fx t 1 pch", "fx t 1 2 dl1", "fx t 1 3 pch"],
 	cmds: ["fx rml 2"],
 	check: { (~radFxTags.() == [\filterTrack_1_1, \filterTrack_1_3]) or: { "filters: " ++ ~radFxTags.().cs } }
+);
+~radTest.("fx-rml-order",
+	setup: ["start 2 1", "fx b 1 pch", "fx m pch", "fx t 2 pch", "fx t 1 dl1"],
+	cmds: ["fx rml 3"],
+	check: { (Radicles.fxList == ["1  track1 slot 1  dl1", "2  track2 slot 1  pch", "3  master slot 1  pch"]) or: { "fxl: " ++ Radicles.fxList.cs } }
 );
 ~radTest.("fx-rml-out-of-range",
 	setup: ["start 2", "fx t 1 pch"],
@@ -116,7 +121,7 @@
 	setup: ["start 2 1", "fx t 1 pch", "fx t 1 2 dl1", "fx b 1 pch", "fx m pch"],
 	cmds: ["fxl"],
 	check: {
-		var want = ["1  bus1 slot 1  pch", "2  master slot 1  pch", "3  track1 slot 1  pch", "4  track1 slot 2  dl1"];
+		var want = ["1  track1 slot 1  pch", "2  track1 slot 2  dl1", "3  bus1 slot 1  pch", "4  master slot 1  pch"];
 		(Radicles.fxList == want) or: { "fxl: " ++ Radicles.fxList.cs }
 	}
 );
