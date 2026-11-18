@@ -22,6 +22,7 @@ newer drafts.** When the two disagree, ask before building on either.
 | File | What it is |
 | --- | --- |
 | [status.md](status.md) | Where the work stands: steps done, what is next, open points |
+| [decisions.md](decisions.md) | One line per decision, newest first, with where it is written up |
 | [design-principles.md](design-principles.md) | The 14 principles every change must keep, the command conventions, and the development checklist |
 | [terms-of-reference.md](terms-of-reference.md) | Who decides what, and how Federico and Claude work together |
 | [implementation-plan.md](implementation-plan.md) | The Document Model plan, steps 1–8, with risks and "done when" for each |
