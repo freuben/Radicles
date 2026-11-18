@@ -11,7 +11,7 @@ index, so a decision can be found without reading a conversation.
 | 18 Nov 2026 | A command during a load or a morph: structural commands wait their turn; a value command wins for its own parameter; a new load or morph on the same strip stops the old one. | same; built in 5a |
 | 18 Nov 2026 | After a server crash the session should be rebuilt (autosave and recovery move into the sessions step). | same |
 | 18 Nov 2026 | `dev` is released to `master` after every step; Claude raises it. | `CLAUDE.md`, "Releases" |
-| 18 Nov 2026 | Every piece of work names its model: Fable for design, the engine, sessions, the parser and reviews; Opus for work that is easy to check. | `CLAUDE.md`, "Which model does what" |
+| 18 Nov 2026 | Every piece of work names its model: Fable for design, the engine, sessions, the parser and reviews; Opus for work that is easy to check. The session stays on Fable; Claude hands Opus work to Opus subagents itself. | `CLAUDE.md`, "Which model does what" |
 | 18 Nov 2026 | Claude may merge into `dev` itself when no snapshot changes and the tests pass. | `CLAUDE.md`, "How we work" |
 | 18 Nov 2026 | Tests run automatically on GitHub (Actions). | plan, row D |
 | 18 Nov 2026 | Performances and test runs are at 48 kHz. | `CLAUDE.md`, "Tests" |

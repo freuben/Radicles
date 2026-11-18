@@ -56,18 +56,23 @@ that only gets `master`. Raising this is Claude's job, not his (agreed 18 Nov
 
 ## Which model does what
 
-Federico switches the model with `/model`. Every planned piece of work names
-the model it should go to (in `docs/implementation-plan.md`, and in the PR
-description: "Model: Fable" or "Model: Opus"). When work starts on a model
-other than the one named, say so before starting.
+Federico leaves the session on Fable and does not switch models by hand
+(agreed 18 Nov 2026). Claude decides: it does the Fable work itself and hands
+Opus work to an Opus subagent (the Agent tool's `model: "opus"`), then checks
+the result before it goes into a PR. Every planned piece of work names its
+model (in `docs/implementation-plan.md`, and in the PR description: "Model:
+Fable", "Model: Opus", or both with who did what). If a session is found
+running on another model than Fable, say so before starting.
 
 - **Fable** (the stronger model): design notes and anything that changes
   the plan; the engine (Assemblage, Block, buffers, anything asynchronous);
   the document model and sessions; the command parser; anything hard to undo;
   reviews.
-- **Opus:** work whose result is easy to check: a bug fix with a failing test
-  written first, test tooling, refactors whose snapshots don't change, dead
-  code, docs and help files.
+- **Opus** (as a subagent): work whose result is easy to check: a bug fix
+  with a failing test written first, test tooling, refactors whose snapshots
+  don't change, dead code, docs and help files. The brief names the files and
+  what done looks like; the subagent never runs the tests itself (only one
+  test run at a time: the main session runs them).
 - **A second look.** A PR that touches the engine, or is larger than a few
   hundred lines, gets an independent review by a fresh Fable session before
   it is merged, whoever wrote it. A fresh reader finds what the author's own
