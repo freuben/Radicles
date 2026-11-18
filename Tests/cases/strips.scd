@@ -212,6 +212,28 @@
 	}
 );
 
+// two tracks send to one bus at different levels; removing the first one's
+// send leaves the other's level as it was (it took the removed send's level:
+// the bus input's controls are named by position, vol1, vol2; review, 18 Nov 2026)
+~radTest.("strip-send-removed-keeps-other-level",
+	setup: ["start 3 1", "snd t 1 1 1 -6", "snd t 2 1 1 -12", "snd t 3 1 1 -20", "sndset t 3 1 -20 2"],
+	cmds: [["snd t 1 1 0", 3]],
+	check: {
+		var got = [\track1, \track2, \track3].collect{|name| ~radStripValues.(name)[\sends] };
+		(got == [nil, (bus1: (level: -12)), (bus1: (level: -20, lag: 2))]) or: { "sends: " ++ got.cs }
+	}
+);
+
+// ... and removing the last one's send too
+~radTest.("strip-send-removed-last",
+	setup: ["start 2 1", "snd t 1 1 1 -6", "snd t 2 1 1 -12"],
+	cmds: [["snd t 2 1 0", 3]],
+	check: {
+		var got = [\track1, \track2].collect{|name| ~radStripValues.(name)[\sends] };
+		(got == [(bus1: (level: -6)), nil]) or: { "sends: " ++ got.cs }
+	}
+);
+
 // sndry with a value turns the track's output to the master off, as the
 // other sndry forms do (it set the send but left the output on before)
 ~radTest.("sndry-with-value",

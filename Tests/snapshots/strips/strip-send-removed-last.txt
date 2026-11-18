@@ -1,0 +1,7 @@
+>> snd t 2 1 0
+== radpost ==
+Ndef('busIn1').nodeMap.set('vol2', nil);
+Ndef('busIn1', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track1', 1)*vol1.dbamp.lag(lag1); });
+== radpostcont ==
+(none)
+
