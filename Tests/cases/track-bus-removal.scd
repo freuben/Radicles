@@ -1,7 +1,7 @@
 // Adding and removing tracks and buses (review of 18 Nov 2026, and
 // Federico's decisions that day): a removed track takes its source with it,
 // a new track's block takes the track's number, and removing something that
-// isn't there warns and does nothing.
+// isn't there warns and does nothing. (start N makes N tracks and one bus.)
 
 ~radStripNow = {|name| RadUnit.refresh(RadDoc.current.copy).at(name) ? () };
 ~radStrips = { Radicles.aZ.mixTrackNames.copy };
@@ -13,7 +13,7 @@
 	cmds: [["t rm [2]", 6]],
 	check: {
 		case
-		{ ~radStrips.() != [\track1, \track3, \master] } { "strips: " ++ ~radStrips.().cs }
+		{ ~radStrips.() != [\track1, \track3, \bus1, \master] } { "strips: " ++ ~radStrips.().cs }
 		{ ~radBlocks.() != [\block1, \block3] } { "blocks: " ++ ~radBlocks.().cs }
 		{ (Radicles.aZ.inputs ? []).any{|item| item[0] == \inTrack2 } } { "track 2's input is still listed" }
 		{ RadUnit.readInput(\track1) != [\block1] } { "track 1 input: " ++ RadUnit.readInput(\track1).cs }
@@ -42,7 +42,7 @@
 	cmds: [["t rm [1]", 6]],
 	check: {
 		case
-		{ ~radStrips.() != [\track2, \master] } { "strips: " ++ ~radStrips.().cs }
+		{ ~radStrips.() != [\track2, \bus1, \master] } { "strips: " ++ ~radStrips.().cs }
 		{ ~radBlocks.().includes(\block1).not } { "block 1 was removed: " ++ ~radBlocks.().cs }
 		{ RadUnit.readInput(\track2) != [\block1] } { "track 2 input: " ++ RadUnit.readInput(\track2).cs }
 		{ (RadUnit.readBlock(\block1) ? ())[\def] != \sine } { "block 1 no longer plays" }
@@ -56,7 +56,7 @@
 	cmds: [["t add", 6]],
 	check: {
 		case
-		{ ~radStrips.() != [\track1, \track3, \track4, \master] } { "strips: " ++ ~radStrips.().cs }
+		{ ~radStrips.() != [\track1, \track3, \track4, \bus1, \master] } { "strips: " ++ ~radStrips.().cs }
 		{ ~radBlocks.() != [\block1, \block3, \block4] } { "blocks: " ++ ~radBlocks.().cs }
 		{ RadUnit.readInput(\track4) != [\block4] } { "track 4 input: " ++ RadUnit.readInput(\track4).cs }
 		{ true }
@@ -69,7 +69,7 @@
 	cmds: [["t add", 6]],
 	check: {
 		case
-		{ ~radStrips.() != [\track1, \track2, \track3, \master] } { "strips: " ++ ~radStrips.().cs }
+		{ ~radStrips.() != [\track1, \track2, \track3, \bus1, \master] } { "strips: " ++ ~radStrips.().cs }
 		{ RadUnit.readInput(\track3) != [\block3] } { "track 3 input: " ++ RadUnit.readInput(\track3).cs }
 		{ true }
 	}
