@@ -92,7 +92,7 @@
 	teardown: { ~radTrackClean.(['radtest_track4']) }
 );
 
-// default: a clean strip; the source keeps playing
+// default: a clean strip; its source stops (18 Nov 2026; it kept playing before)
 ~radTest.("track-load-default",
 	setup: ["start 2 1", "blk 1 sine", "fx t 1 pch", "vol t 1 -6", "pan t 1 0.5", "trim t 1 2",
 		"vollag t 1 3", "snd t 1 1 1 -9", "mute t 1"],
@@ -103,6 +103,18 @@
 		{ [one[\trim], one[\volume], one[\mute], one[\pan]] != [0, 0, 0, (pan: 0)] } { "values: " ++ one.cs }
 		{ one[\lags].notNil or: { one[\sends].notNil } or: { one[\mods].notNil } } { "left: " ++ one.cs }
 		{ (one[\fx] ? ()).notEmpty } { "fx: " ++ one[\fx].cs }
+		{ RadUnit.readBlock(\block1).notNil } { "block 1 still plays: " ++ RadUnit.readBlock(\block1).cs }
+		{ true }
+	}
+);
+
+// tload default nosrc: a clean strip, the source keeps playing
+~radTest.("track-load-default-nosrc",
+	setup: ["start 2", "blk 1 sine", "vol t 1 -6"],
+	cmds: [["tload t 1 default nosrc", 8]],
+	check: {
+		case
+		{ ~radStripNow.(\track1)[\volume] != 0 } { "track1: " ++ ~radStripNow.(\track1).cs }
 		{ ~radBlockArgs.(1)[\def] != \sine } { "block 1: " ++ ~radBlockArgs.(1).cs }
 		{ true }
 	}

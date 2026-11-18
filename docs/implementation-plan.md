@@ -134,7 +134,7 @@ The detailed plan for the [Document Model proposal](https://claude.ai/artifact/K
 
 ## Step 4: track presets
 
-**Goal:** `tsave` / `tload` / `tmorph` (and tmorphtime) save, load and morph a whole channel: the effect chain (step 3), trim, volume, pan, mute, the mixer modulators, the sends (to buses that exist) and the source with its settings (a block now, points later). Never in a preset: solo, record arm. The output to the master is kept as saved (changed 17 Nov).
+**Goal:** `tsave` / `tload` / `tmorph` (and tmorphtime) save, load and morph a whole channel: the effect chain (step 3), trim, volume, pan, mute, the mixer modulators, the sends (to buses that exist) and the source with its settings (a block now, points later). Never in a preset: solo, record arm. The output to the master is kept as saved (changed 17 Nov); `tload default` goes to the master with no source (changed 18 Nov).
 
 Design note: [Step 4 Design Note – Track Presets](https://claude.ai/artifact/JJHSG5A3Cy8mKT88tePYKm) (16 Nov, for review).
 
