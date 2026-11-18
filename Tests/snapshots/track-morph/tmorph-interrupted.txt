@@ -8,6 +8,7 @@ Ndef('busIn1').set('vol2', -9, 'lag2', 6);
 Ndef('track1').set('lagTime', 0);
 Ndef('busIn1').set('vol2', -9, 'lag2', 0);
 Ndef('track1').set('volume', 0);
+Ndef('busIn1').nodeMap.set('vol2', nil, 'lag2', nil);
 Ndef('busIn1', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track2', 1)*vol1.dbamp.lag(lag1); });
 == radpostcont ==
 (none)

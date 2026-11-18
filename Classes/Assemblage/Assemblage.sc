@@ -870,7 +870,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	removeBus {arg trackNum= 1, busNum=1, trackType=\track, clearTrack=false;
 		var oldLabel, newBusInd, newLabelArr, spaceBusNum, spaceBusLabel,
-		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel, trackKey;
+		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel, trackKey, oldLabelArr;
 		oldLabel = ("busIn" ++ busNum).asSymbol;
 		spaceBusLabel = ("inBus" ++ busNum).asSymbol;
 		spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
@@ -879,6 +879,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(spaceInInd.notNil, {
 			newBusInd = busArr.flop[0].indexOf(oldLabel);
 			newLabelArr = busArr.flop[1][newBusInd];
+			oldLabelArr = newLabelArr;
 			newLabelArr = newLabelArr.select({|item|
 				item.key != trackKey;
 			});
@@ -905,6 +906,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					inputs[thisBusIndLabel][1] = newLabelArr;
 				});
+				//the senders after the one leaving move up a place: so do their values
+				this.prRenumberSends(Ndef(oldLabel), oldLabelArr, newLabelArr);
 				("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radcode;
 			});
 			//look the bus input up again: entries may have been removed above
@@ -921,6 +924,41 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}, {
 			"Bus not found".warn;
 		});
+	}
+
+	// A bus input's controls are named by the sender's place: vol1, lag1,
+	// vol2, lag2, ... When a sender leaves, the senders after it move up a
+	// place, so their levels, lags and modulators have to move with them before
+	// the input is rebuilt. They did not: track 2's send took the level track
+	// 1's send had (18 Nov 2026). The values are moved in the Ndef's node map
+	// (not sent to the synth that is fading out), and the places left over at
+	// the end are cleared (set to nil), so a sender added later starts from
+	// the defaults.
+	prRenumberSends {arg ndef, oldArr, newArr;
+		var map = ndef.nodeMap, sets = [], moved = IdentityDictionary.new;
+		var keysAt = {|index| [("vol" ++ (index + 1)).asSymbol, ("lag" ++ (index + 1)).asSymbol] };
+		newArr.do{|sender, newIndex|
+			var oldIndex = oldArr.indexOf(sender);
+			if(oldIndex.notNil and: { oldIndex != newIndex }, {
+				[keysAt.(oldIndex), keysAt.(newIndex)].flop.do{|pair|
+					moved[pair[0]] = pair[1];
+					//nil clears a value the new place held and the old one did not
+					if(map[pair[0]].notNil or: { map[pair[1]].notNil }, {
+						sets = sets ++ [pair[1], map[pair[0]]] });
+				};
+			});
+		};
+		(oldArr.size - newArr.size).do{|count|
+			keysAt.(newArr.size + count).do{|key|
+				if(map[key].notNil, { sets = sets ++ [key, nil] }) };
+		};
+		if(sets.notEmpty, {
+			(ndef.cs ++ ".nodeMap.set(" ++ sets.collect(_.cs).join(", ") ++ ");").radcode;
+		});
+		//modulators on the moved places follow them
+		(ModMap.modNodes ? []).do{|item|
+			if(item[1] == ndef and: { moved[item[2]].notNil }, { item[2] = moved[item[2]] });
+		};
 	}
 
 	sortTrackNames {arg trackNameArr;
