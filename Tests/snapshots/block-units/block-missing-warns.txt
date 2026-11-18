@@ -1,10 +1,10 @@
->> blk 1 noise
+>> st 1
 == radpost ==
 (none)
 == radpostcont ==
 (none)
 
->> st 1
+>> blkset 1 mul 0.1
 == radpost ==
 (none)
 == radpostcont ==

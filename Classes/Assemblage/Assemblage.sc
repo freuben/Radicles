@@ -657,6 +657,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
+	// Unplug an Ndef (a block that is being removed) from every track it
+	// feeds: a track fed only by it is left with no input, and its input menu
+	// and source slot show empty; a track fed by several keeps the others.
+	removeInput {arg ndef;
+		(inputs ? []).copy.do{|item|
+			var tag = item[0], fed = item[1], num, rest;
+			if(tag.asString.beginsWith("inTrack") and: { fed.asArray.includes(ndef) }, {
+				num = tag.asString.divNumStr[1].asInteger;
+				rest = fed.asArray.reject{|other| other == ndef };
+				if(rest.isEmpty, {
+					inputs.remove(item);
+					("Ndef(" ++ tag.cs ++ ").source = nil;").radcode;
+					this.prSourceChanged(num, nil);
+				}, {
+					this.input(if(rest.size == 1, { rest[0] }, { rest }), \track, num);
+				});
+			});
+		};
+	}
+
 	getTrackInput {arg type=\master, num=1;
 		var inTag, index, trackTag;
 		//inputs are stored under 'in' keys, e.g. inTrack1, inMaster

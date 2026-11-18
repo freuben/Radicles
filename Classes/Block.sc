@@ -1,6 +1,6 @@
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
-	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers, positionBuses;
+	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers, positionBuses, making;
 
 	*add {arg channels=1, action;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -70,10 +70,54 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		^ndefs[index] !? {|ndef| ndef.key.asString.divNumStr[1].asInteger };
 	}
 
+	// Make the block with this number (blockN) when it isn't there: after it
+	// was removed, or a number that never existed. It goes into the lists in
+	// number order. It is connected to the track with its number when that
+	// track exists and nothing feeds it (as start sets blocks up); otherwise
+	// it is left unconnected, and a note says so. Call inside a Routine.
+	*make {arg block;
+		var tag, ndef, channels = 1, index, trackKey, connected = false;
+		block = block.asInteger;
+		tag = ("block" ++ block).asSymbol;
+		trackKey = ("track" ++ block).asSymbol;
+		if(aZ.notNil and: { (aZ.trackNames ? []).includes(trackKey) }, {
+			channels = Ndef(("inTrack" ++ block).asSymbol).numChannels ? 1;
+		});
+		("Ndef.ar(" ++ tag.cs ++ ", " ++ channels.cs ++ ");").radcode;
+		server.sync;
+		("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";").radcode;
+		server.sync;
+		ndef = Ndef(tag);
+		index = (ndefs ? []).count{|item| item.key.asString.divNumStr[1].asInteger < block };
+		ndefs = (ndefs ? []).insert(index, ndef);
+		blocks = (blocks ? []).insert(index, [tag, channels]);
+		liveBlocks = (liveBlocks ? []).insert(index, nil);
+		timecond = (timecond ? []).insert(index, Condition(false));
+		blockCount = max(blockCount, block + 1);
+		if(aZ.notNil and: { (aZ.trackNames ? []).includes(trackKey) }
+			and: { RadUnit.readInput(trackKey, aZ).isNil }, {
+			aZ.input(ndef, \track, block);
+			server.sync;
+			connected = true;
+			{ aZ.refreshFunc }.defer;
+		});
+		if(connected.not, {
+			("// " ++ tag ++ " is not connected to a track (blk " ++ block ++ " <> 1 connects it to track 1)").radcode;
+		});
+		^ndef
+	}
+
 	*remove {arg block=1;
 		var blockIndex, string;
 		blockIndex = this.indexOfBlock(block);
 		if(blockIndex.notNil, {
+			//unplug it from the tracks it feeds first, so no track is left
+			//pointing at a block that is gone
+			if(aZ.notNil, {
+				aZ.removeInput(ndefs[blockIndex]);
+				aZ.closeSourceWin(ndefs[blockIndex].key);
+			});
+			this.newStartTicket(ndefs[blockIndex].key); //cancel a start still loading
 			string = (ndefs[blockIndex].cs ++ ".clear;");
 			string.radcode;
 			ndefs.removeAt(blockIndex);
@@ -81,6 +125,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			liveBlocks.removeAt(blockIndex);
 			timecond.removeAt(blockIndex);
 			RadUnit.syncBlocks; //document (step 2)
+			if(aZ.notNil, { aZ.refreshSourceSlots; { aZ.refreshFunc }.defer });
 		}, {
 			"Block Number not Found".warn;
 		});
@@ -416,7 +461,21 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 				}.fork;
 			}, {
-				"This block does not exist".warn;
+				//a block that isn't there (removed, or never made) is made, then
+				//played; a newer start for the same number while it is being
+				//made replaces this one
+				making = making ?? { IdentityDictionary.new };
+				if(making[block].isNil, {
+					making[block] = [blockName, buffer, extraArgs, data, sync, xfade, action];
+					{
+						var args;
+						this.make(block);
+						args = making.removeAt(block);
+						this.play(block, *args);
+					}.fork(AppClock);
+				}, {
+					making[block] = [blockName, buffer, extraArgs, data, sync, xfade, action];
+				});
 			});
 		}, {
 			"Block not found".warn;
