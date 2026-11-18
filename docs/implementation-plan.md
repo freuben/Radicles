@@ -9,11 +9,41 @@ The detailed plan for the [Document Model proposal](https://claude.ai/artifact/K
 1. **A short design note before code.** Each step starts with one page (the data it adds to the document, the interface, the commands) that Federico reviews. Code follows only after agreement.
 2. **Commands do not change.** Command names and arguments stay as they are; only what happens inside them changes. Performers' habits, handouts and saved command files keep working.
 3. **Posted code does not change** unless a step says so. The 265 tests already snapshot the code every command posts; a refactor that changes a snapshot is a bug until explained.
-4. **Shadow first, then switch.** Each part of the document is first kept alongside the existing lists and checked against them after every command (in the tests). Only when they always agree does the document become the owner and the old list go.
+4. **Shadow first, then switch.** Each part of the document is first kept alongside the existing lists and checked against them after every command (in the tests). Only when they always agree does the document become the owner and the old list go. *(Changed 18 Nov: the document does not become the owner of values; see "Order of work after the 18 Nov review".)*
 5. **Round trips at every level.** Unit presets, strip presets and sessions are each saved, loaded in a fresh SuperCollider and compared with the fingerprint from the session tests. A step is done when its round trips come back identical.
 6. **Small PRs into `dev`, one concern each,** with the full cloud suite and, where windows are touched, a Mac run before merging. `master` only moves when Federico merges `dev`, never in gig weeks, and every merge is tagged so it can be rolled back.
 7. **No slower commands.** Typical commands are timed before and after each step; a step must not add noticeable latency to typing, faders or MIDI.
 8. **Findings are written down,** in the project notes and issues, including what was tried and did not work.
+
+## Order of work after the 18 Nov review
+
+A read-only review of the code, the plans and the workflow was done on 18 Nov 2026 (Fable 5.2; the report is `docs/reviews/2026-11-review.md` once Federico has added it). Federico's decisions from the discussion that followed change the order below. **This section replaces the order of steps 5–8; the step sections further down keep their content, and each says where it now sits.**
+
+**Decided (18 Nov)**
+
+- **What the document is for.** The Ndefs own the values, and the windows are generated from them. The document tracks the structure and everything a session needs, so whole sessions can be saved and loaded. Nothing is routed through the document: the "ownership switch" of step 5 (task 2) and the gate in rule 4 ("only when they always agree does the document become the owner") are dropped. The consistency check stays as a test that the hooks were called; the round trips are the evidence that counts.
+- **Sessions before the GUI.** Session recall comes next. The GUI rebuild comes later, still aimed at the client architecture (the GUI on another computer, perhaps in a browser).
+- **Points after sessions.**
+- **A command during a load or a morph:** structural commands wait their turn; a value command (`vol`, `fxset`) wins for its own parameter while the rest continues; a new load or morph on the same strip stops the old one.
+- **After a server crash** the session should be rebuilt: autosave and recovery move from step 7 into the sessions step.
+- **A release after every step** (see `CLAUDE.md`, "Releases"): no step starts before the last one has been offered for `master`.
+- **Every piece of work names its model** (see `CLAUDE.md`, "Which model does what").
+
+**The order**
+
+| # | What | From the review | Model | State |
+| --- | --- | --- | --- | --- |
+| A | **Plans and rules:** this section, the release and model rules in `CLAUDE.md`, the decision log, the older step issues (#25–#31) closed or retitled | P4, P7, W1, W3 | Fable | this PR |
+| B | **Confirmed bugs,** each with a test that fails first: names with a dash (`fxsave t 1 1 warm-shift`); `vol 1-3 <modulator>`; block numbers after `blk remove`; send levels after a send is removed; `sc`, `memory`, `outputs`, `blk ndef`; the "already running" message | C4, C7, C11 | Fable for the parser and block numbering (each changes a rule); Opus for the rest | next |
+| C | **Release 1:** `dev` → `master` after B, a rehearsal on the performance Mac, tag | W1 | Opus prepares, Federico merges | after B |
+| D | **Test runner:** automatic runs on GitHub; parallel workers (a port and results folder per run); stale test processes killed at the start; small test sound files in the repo; a `doctor` command (versions, sample rate, missing files) | T1, W4, W5 | Opus, Fable review | can run beside B |
+| E | **5a. One structural command at a time:** a lock around structural work, a timeout on every wait, every failure path calls back, errors reach the performer; a stress case and "is there sound" checks in the suite | C2, C3, C6, T2 | Fable | design note first |
+| F | **5b. Structure by name,** as far as sessions need it: one record per strip (mute, solo, rec, output, sends), blocks by tag; the engine stops calling the mixer's widgets | C4, C5; old issue #28 | Fable designs and reviews, Opus for conversions whose snapshots don't change | after E |
+| G | **Step 6. Sessions,** with autosave and rebuild after a crash (from step 7), and buffers that survive a server restart | C8, P3 | Fable | design note after E |
+| H | **Release** after E–F, and again after G | W1 | | |
+| later | **Step 8** (points), **step 7** (scenes, session morph, undo), **5c** (windows as observers on this computer), **5d** (the protocol, the network, the browser UI). Points come after sessions; the order of the rest is decided when sessions are done | | Fable for each design note | |
+
+Refactors to fold in where they fall: commands registered from a table (before 5c: autocomplete and generated help need it), load and morph as one path (with step 7). Dead code (the `Plane` stubs, `Space`, `Store`'s presets, unused routing methods) goes in one PR once Federico has said whether the `Plane` classes stay.
 
 ## Before step 1
 
@@ -160,6 +190,8 @@ Design note: [Step 4 Design Note – Track Presets](https://claude.ai/artifact/J
 
 ## Step 5: the GUI as a client
 
+*Changed 18 Nov: this step is split and moved. Task 2 (the ownership switch) is dropped. What remains is 5c (tasks 3–4, the windows on this computer) and 5d (tasks 1 and 5, the protocol and the network), both after sessions. Two new parts come first: 5a (one structural command at a time) and 5b (structure by name). See "Order of work after the 18 Nov review".*
+
 **Goal:** Assemblage is split into engine (Ndefs), model (the document) and GUI; the GUI generates itself from the document and talks to the core only through the Radicles protocol, first on the same computer, then over the network. See "Architecture: core and clients" in the proposal.
 
 **Tasks**
@@ -190,6 +222,8 @@ Design note: [Step 4 Design Note – Track Presets](https://claude.ai/artifact/J
 | Window behaviour performers rely on changes subtly | the new windows are compared side by side with the old ones on the Mac before the old ones are removed |
 
 ## Step 6: sessions
+
+*Changed 18 Nov: this is the next feature step, after 5a and 5b, and takes autosave and crash recovery from step 7 (task 5).*
 
 **Goal:** a whole session is saved as a folder and recalled with every setting, checked after loading.
 
@@ -253,6 +287,8 @@ Design note: [Step 4 Design Note – Track Presets](https://claude.ai/artifact/J
 
 ## Step 8: the event layer
 
+*Changed 18 Nov: after sessions (Federico).*
+
 **Goal:** points, planes, sparks and sieves (#42) are built directly on the model.
 
 **Tasks**
@@ -270,11 +306,11 @@ Design note: [Step 4 Design Note – Track Presets](https://claude.ai/artifact/J
 
 ## Questions for Federico
 
-- [ ] **Solo in strip presets:** should a strip preset carry solo (which silences other strips when loaded), or only mute?
-- [ ] **Morph by kind of unit:** reverbs and delays glide by default (a crossfade starts from an empty copy); sound-file and gated blocks never crossfade. Agreed, or listen first?
-- [ ] **A command during a morph:** the command wins for its address and the morph continues for the rest. Agreed?
-- [ ] **Names of new commands:** `fxmorph`, `blksave`, `blkload`, `blkmorph`, `csmorph`, and `cssave t 1 name src` for strip presets with source.
+- [x] **Solo in strip presets:** never solo or record arm (step 4, 16 Nov).
+- [x] **Morph by kind of unit:** the shape is chosen in the command (`xfade` by default, or `glide`); units that cannot crossfade cleanly are fixed to glide (2 Nov).
+- [x] **A command during a morph or a load:** structural commands wait their turn; a value command wins for its own parameter and the rest continues; a new load or morph on the same strip stops the old one (18 Nov). Built in 5a.
+- [x] **Names of new commands:** `fxmorph`, `blksave`, `blkload`, `blkmorph`, `csmorph`; track presets became `tsave` / `tload` / `tmorph` (steps 1–4).
 - [ ] **Loading someone else's session:** ask before running its `code.scd`?
-- [ ] **Pace:** one step at a time with a pause for trying it in rehearsal before the next, or several steps before a merge to master?
+- [x] **Pace:** a release to `master` after every step, raised by Claude (18 Nov; `CLAUDE.md`, "Releases").
 
 Related: [Document Model – Proposal](https://claude.ai/artifact/KMM18iQEfQFWmQfFjsETPF), [Sessions and Scenes proposal](https://claude.ai/artifact/5ZskpNcddw9XD19akqH4Qa) (audit), PR #64, issues #42, #44, #45, #63.

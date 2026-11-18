@@ -21,6 +21,10 @@ there; if `docs/` and a draft disagree, ask before building.
 - **Branches and PRs.** Branch from `dev`; open PRs into `dev`; one PR per
   coherent change, each with its tests. Never push to or merge into `master`
   (the stable version for performances). Federico merges.
+- **Claude may merge into `dev` itself** only when the PR changes no snapshot
+  and the tests pass: test tooling, refactors, dead code, docs fixes. Anything
+  a performer would hear or see, any name or message, and any change to what
+  a preset or session keeps waits for Federico (agreed 18 Nov 2026).
 - **PR descriptions** in plain language: what changes for the performer, the
   decisions it follows, tests, cloud and Mac results.
 - **Commands people already type don't change** unless agreed. New behaviour
@@ -28,6 +32,46 @@ there; if `docs/` and a draft disagree, ask before building.
 - **Stop and ask** when a decision is Federico's (behaviour performers will
   notice, naming, anything hard to undo); otherwise take the sensible default
   and say so in the PR.
+- **PR descriptions end with "Try this":** a few lines to type and what
+  Federico should hear or see. He tries the behaviour; he isn't expected to
+  read the diff.
+
+## Releases: `dev` to `master`
+
+`master` must not fall behind: Federico tests on the performance Mac, and
+that only gets `master`. Raising this is Claude's job, not his (agreed 18 Nov
+2026, after `master` had fallen 112 commits behind).
+
+- **At the start of every session,** check
+  `git rev-list --count origin/master..origin/dev`. If a step or a batch of
+  fixes has landed since the last release, or it is more than about a week of
+  work, say so first and offer to prepare the release.
+- **At the end of every step or batch of fixes,** open a `dev` → `master` PR
+  with a "try this on the performance Mac" list, and ask Federico when he can
+  rehearse with it. He merges; the merge is tagged (`v0.x.y`, the same tag on
+  RadiclesLibs).
+- **No new step starts** until that question has been asked and answered. "Not
+  this week, carry on" is an answer.
+- Not in the days before a gig (see Two Macs).
+
+## Which model does what
+
+Federico switches the model with `/model`. Every planned piece of work names
+the model it should go to (in `docs/implementation-plan.md`, and in the PR
+description: "Model: Fable" or "Model: Opus"). When work starts on a model
+other than the one named, say so before starting.
+
+- **Fable** (the stronger model): design notes and anything that changes
+  the plan; the engine (Assemblage, Block, buffers, anything asynchronous);
+  the document model and sessions; the command parser; anything hard to undo;
+  reviews.
+- **Opus:** work whose result is easy to check: a bug fix with a failing test
+  written first, test tooling, refactors whose snapshots don't change, dead
+  code, docs and help files.
+- **A second look.** A PR that touches the engine, or is larger than a few
+  hundred lines, gets an independent review by a fresh Fable session before
+  it is merged, whoever wrote it. A fresh reader finds what the author's own
+  tests don't look for.
 
 ## Two Macs
 
@@ -93,6 +137,8 @@ Tests/ci/run-headless.sh [check|update] [case] [test]
 - `known: "reason"` marks a reported problem; `gui: true` tests need windows
   (skipped in the cloud, run on the Mac); `docCheck` compares the document with
   the running system after every command.
+- Federico performs at 48 kHz (the RAVE models' rate): set the Mac's audio
+  device to 48 kHz for test runs. Two tests fail at 44.1 kHz.
 - Full suite: about 500 tests, 2+ hours. Run the cases a change touches first;
   the full suite before opening a PR (a cloud session can run it).
 
@@ -107,10 +153,15 @@ Tests/ci/run-headless.sh [check|update] [case] [test]
   (`Radicles.excludeLibs`). The performer's data (presets, sound files,
   settings) is in RadiclesFiles, outside this repo (`Radicles.filesPath`).
 - **Commands generate code.** Everything a command does is posted and run
-  through `.radcode` (or `radpost` / `radpostcont`), so the post window is a
-  replayable record. Don't call Ndefs silently.
-- **Document model:** values are read from the running system when the
-  document is read; hooks keep only structure in step; strips are keyed by
+  through `.radcode` (or `radpost` / `radpostcont`), so the post window shows
+  what ran. Don't call Ndefs silently. (It is a transparent record, not a
+  replayable one: Radicles' own lists are not in the posted code. Getting a
+  state back is what sessions are for.)
+- **Document model:** the Ndefs own the values; the document tracks the
+  structure and everything a session needs, so sessions can be saved and
+  loaded. Values are read from the running system when the document is read;
+  hooks keep only structure in step; nothing is routed through the document
+  (the "ownership switch" was dropped on 18 Nov 2026). Strips are keyed by
   name, never by position in Assemblage's lists.
 
 ## SuperCollider gotchas met so far
@@ -123,4 +174,16 @@ Tests/ci/run-headless.sh [check|update] [case] [test]
 - `NodeProxy:lag` rebuilds the proxy (a crossfade): wait its fade time before
   setting values meant to glide.
 - Qt windows placed before they are shown count the title bar differently
-  (about 20 px); window position work is deferred to the GUI rebuild (step 5).
+  (about 20 px); window position work is deferred to the GUI rebuild.
+- A closure made in a loop and deferred sees the loop variable's last value
+  if the variable is declared outside the loop: declare it inside.
+- `.interpret` returns nil on a compile error and the code after it carries
+  on.
+- `Condition.wait` has no timeout: a completion function that is skipped on a
+  failure path hangs the routine without a trace. Every failure path calls
+  back.
+- `NodeProxy:set` does not notify dependants; a window can't listen to an
+  Ndef's values, it must compare or be told.
+- Removing from a collection inside its own `do` skips items.
+- Controls named by position (`vol1`, `vol2`) keep their old values in the
+  node map when the function is rebuilt with fewer of them: set them again.
