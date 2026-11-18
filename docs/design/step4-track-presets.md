@@ -53,7 +53,7 @@ A track preset holds everything that shapes the strip's sound and nothing that c
 | Track morph time | yes | when set with `tmorphtime` |
 | Solo | **never** | it silences other strips |
 | Record arm | **never** | a session setting |
-| Output (master or none) | **never** | routing, a session setting (step 6) |
+| Output (master or none) | yes (changed 17 Nov, see below) | `output: \master` or `\none`, as when saved |
 | Channels, panner type | for information | fixed when the strip is made (until #44) |
 
 By strip:
@@ -152,7 +152,7 @@ track1: (
 	input: [\block1],                         // new: what feeds the strip, by Ndef key
 	sends: (bus1: (level: -12, lag: 0.5)),     // new: by bus
 	trackMorphTime: 5,                         // new: tmorphtime, when set
-	solo: 0, output: \master                   // in the document, never in a preset
+	solo: 0, output: \master                   // solo never in a preset; output in it since 17 Nov
 )
 ```
 
@@ -221,3 +221,14 @@ How the build differs from this note:
 - **`input` and `sends` are read when the document is read,** like the other strip values, so there are no hooks for them.
 - **Modulators during `tmorph`** (mixer and send) change at the start and fade with the Ndef's own fade time, as effect modulators do.
 - **A `csmorph` or `blkmorph` during a `tmorph`** takes over its own part; the rest of the morph carries on.
+
+## Changed (17 Nov): the output to the master
+
+Federico: the output to the master should always be as it was when the track was saved. A strip that only sends (`sndry`) is the reason: loaded onto a track that goes to the master, its dry signal was suddenly heard.
+
+- **`tsave`** saves `output: \master` or `\none` for tracks and buses; the master strip has no output to save.
+- **`tload`** brings it back: a preset that doesn't go to the master turns the output off first (with mute); one that does turns it on last (with unmute).
+- **`tmorph`:** on at the start, off at the end, so the strip is never silent partway through (as mute).
+- **`tload default`** sends the strip to the master, with no sends.
+- **A preset saved before** has no output and leaves the strip's as it is.
+- Solo and record arm stay out of presets.

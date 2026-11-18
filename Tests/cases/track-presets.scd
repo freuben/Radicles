@@ -2,7 +2,8 @@
 // whole channel strip (its chain, trim, volume, mute, pan, lags, mixer
 // modulators, sends by bus, and its source) as one readable file in
 // Settings/Presets/units/track, onto any strip, changing only what differs.
-// Never solo, record arm or the output to the master.
+// Its output to the master comes back as saved (17 Nov 2026). Never solo or
+// record arm.
 
 ~radTrackClean = {|names|
 	names.do{|name| File.delete(RadUnit.trackPresetPath(name)) };
@@ -37,7 +38,8 @@
 			"chain: " ++ track[\chain].cs }
 		{ track[\source].size != 1 or: { track[\source][0][\def] != \sine } or: {
 			track[\source][0][\args][\freq] != 330 } } { "source: " ++ track[\source].cs }
-		{ [\solo, \output, \input, \kind].any{|k| track.includesKey(k) } } { "session settings saved: " ++ track.keys.cs }
+		{ track[\output] != \master } { "output: " ++ track[\output].cs }
+		{ [\solo, \input, \kind].any{|k| track.includesKey(k) } } { "session settings saved: " ++ track.keys.cs }
 		{ true }
 	},
 	teardown: { ~radTrackClean.(['radtest_track']) }
@@ -117,13 +119,14 @@
 	teardown: { ~radTrackClean.(['radtest_track5']) }
 );
 
-// sends the preset doesn't have are removed; the output to the master stays
+// sends the preset doesn't have are removed; the output to the master comes
+// back on, as saved (it stayed off before 17 Nov 2026)
 ~radTest.("track-load-removes-sends",
 	setup: ["start 2 2", "tsave t 1 radtest_track6", "snd t 2 1 1 -6", "snd t 2 2 2 -9", "outmenu t 2 0"],
 	cmds: [["tload t 2 radtest_track6", 8]],
 	check: {
 		var two = ~radStripNow.(\track2);
-		(two[\sends].isNil and: { two[\output] == \none }) or: { "track2: " ++ two.cs }
+		(two[\sends].isNil and: { two[\output] == \master }) or: { "track2: " ++ two.cs }
 	},
 	teardown: { ~radTrackClean.(['radtest_track6']) }
 );
@@ -236,4 +239,49 @@
 		diff.isEmpty or: { "differences: " ++ diff.collect(_[\address]).cs }
 	},
 	teardown: { ~radTrackClean.(['radtest_track11']) }
+);
+
+// ---- the output to the master, as saved (17 Nov 2026) ----
+
+// a strip that only sends (sndry) keeps its output off on another track
+~radTest.("track-load-output-off",
+	setup: ["start 2 1", "sndry t 1 1 1 -6", "tsave t 1 radtest_dry"],
+	cmds: [["tload t 2 radtest_dry", 8]],
+	check: {
+		var two = ~radStripNow.(\track2);
+		(two[\output] == \none and: { two[\sends] == (bus1: (level: -6)) }) or: { "track2: " ++ two.cs }
+	},
+	teardown: { ~radTrackClean.(['radtest_dry']) }
+);
+
+// on a bus too
+~radTest.("track-load-output-bus",
+	setup: ["start 1 2", "outmenu b 1 0", "tsave b 1 radtest_busdry"],
+	cmds: [["tload b 2 radtest_busdry", 8]],
+	check: { (~radStripNow.(\bus2)[\output] == \none) or: { "bus2: " ++ ~radStripNow.(\bus2).cs } },
+	teardown: { ~radTrackClean.(['radtest_busdry']) }
+);
+
+// a preset saved before then has no output: the strip's is left as it is
+~radTest.("track-load-output-old-preset",
+	setup: ["start 2 1", "outmenu t 2 0"],
+	code: {
+		RadUnit.writeTrackPreset((from: \track, trim: 0, volume: -3, mute: 0, chain: (fx: ()), sends: ()), 'radtest_old');
+		Radicles.cW.callFunc("tload t 2 radtest_old"); 8.wait;
+	},
+	check: {
+		var two = ~radStripNow.(\track2);
+		(two[\output] == \none and: { two[\volume] == -3 }) or: { "track2: " ++ two.cs }
+	},
+	teardown: { ~radTrackClean.(['radtest_old']) }
+);
+
+// tload default: a clean strip goes to the master
+~radTest.("track-load-default-output",
+	setup: ["start 2 1", "sndry t 1 1 1 -6"],
+	cmds: [["tload t 1 default", 8]],
+	check: {
+		var one = ~radStripNow.(\track1);
+		(one[\output] == \master and: { one[\sends].isNil }) or: { "track1: " ++ one.cs }
+	}
 );

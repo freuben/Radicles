@@ -13,6 +13,8 @@
 //   mixer and send modulators: as with tload, at the start (they fade with
 //     the Ndef's own fade time, as effect modulators do)
 //   mute: off at the start, on at the end
+//   output to the master (as saved; 17 Nov 2026): on at the start, off at
+//     the end, so the strip is never silent partway through
 // The time: the command's, else the preset's, else the strip's own
 // (tmorphtime), else the global morphtime. shape none is a tload. A new
 // tmorph, tload, csmorph or blkmorph on the strip stops a running one where
@@ -73,6 +75,8 @@
 			current = this.readStrip(name, az);
 			// mute: off at the start
 			if(track[\mute] != 1 and: { current[\mute] == 1 }, { az.setMute(type, num, 0) });
+			// output to the master: on at the start
+			if(track[\output] == \master, { this.prSetOutput(type, num, \master, az) });
 			// the chain morphs on its own, over the same time
 			if(nofx.not, { az.morphChain(type, num, track[\chain] ? (fx: ()), time, shape) });
 			// the source
@@ -90,9 +94,10 @@
 			{ az.mixWinBool({ az.refreshMixGUI }); az.refreshFunc }.defer;
 			if(left.notEmpty, { ("tmorph " ++ name ++ ": left out " ++ left.join("; ")).warn });
 			time.wait;
-			// removed sends go; mute: on at the end
+			// removed sends go; mute: on at the end; output: off at the end
 			atEnd.do(_.value);
 			if(track[\mute] == 1 and: { current[\mute] != 1 }, { az.setMute(type, num, 1) });
+			if(track[\output] == \none, { this.prSetOutput(type, num, \none, az) });
 			//done: the lags and fade times go back (once the panner's glide,
 			//which starts a fade time later, is over)
 			subs.do{|sub| while({ sub.isPlaying }, { 0.05.wait }) };
