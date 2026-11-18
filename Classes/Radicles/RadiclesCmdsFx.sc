@@ -136,6 +136,17 @@
 		}, "fxbypass: mixTrackNum, slot, state");
 	}
 
+	// the lines fxl posts: the active effects, numbered, each with where it is
+	// ("2  track1 slot 2  dl1"); fx rml N removes number N
+	*fxList {
+		if(aZ.isNil, { ^[] });
+		^(aZ.filters ? []).collect{|item, index|
+			var tagArr = aZ.convFilterTag(item[0]);
+			var where = if(tagArr[0] == \master, { "master" }, { tagArr[0].asString ++ tagArr[1] });
+			(index+1).asString ++ "  " ++ where ++ " slot " ++ tagArr[2] ++ "  " ++ item[1];
+		};
+	}
+
 	// fx, fx rm, fx rml, fxl
 	*prFxAddCmds {
 		var rmByMix;
@@ -346,23 +357,10 @@
 		}, "fx: ['rm', 'rml'], [mixTrackNum, fxlNum]");
 
 		cW.add(\fxl, [\str], {|str1|
-			var filters, tagArr, where;
+			var lines;
 			if(aZ.notNil, {
-				filters = aZ.filters ? [];
-				if(filters.isEmpty, {
-					"no effects".radpostwarn;
-				}, {
-					filters.do{|item, index|
-						tagArr = aZ.convFilterTag(item[0]);
-						if(tagArr[0] == \master, {
-							where = "master";
-						}, {
-							where = tagArr[0].asString ++ tagArr[1];
-						});
-						((index+1).asString ++ "  " ++ where ++ " slot " ++ tagArr[2]
-							++ "  " ++ item[1]).radpostwarn;
-					};
-				});
+				lines = this.fxList;
+				if(lines.isEmpty, { "no effects".radpostwarn }, { lines.do{|line| line.radpostwarn } });
 			}, {
 				"could not find assemblage".warn;
 			});

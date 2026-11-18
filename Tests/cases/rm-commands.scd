@@ -114,11 +114,16 @@
 );
 ~radTest.("fxl",
 	setup: ["start 2 1", "fx t 1 pch", "fx t 1 2 dl1", "fx b 1 pch", "fx m pch"],
-	cmds: ["fxl"]
+	cmds: ["fxl"],
+	check: {
+		var want = ["1  bus1 slot 1  pch", "2  master slot 1  pch", "3  track1 slot 1  pch", "4  track1 slot 2  dl1"];
+		(Radicles.fxList == want) or: { "fxl: " ++ Radicles.fxList.cs }
+	}
 );
 ~radTest.("fxl-no-effects",
 	setup: ["start 2"],
-	cmds: ["fxl"]
+	cmds: ["fxl"],
+	check: { Radicles.fxList.isEmpty or: { "fxl: " ++ Radicles.fxList.cs } }
 );
 
 // the old spellings are gone: they leave tracks, effects and blocks as they were
