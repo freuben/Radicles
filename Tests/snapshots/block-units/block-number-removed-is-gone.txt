@@ -1,0 +1,18 @@
+>> blk 1 noise
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> st 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blk remove 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

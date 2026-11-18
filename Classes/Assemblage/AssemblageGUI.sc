@@ -1719,12 +1719,12 @@
 					srcWin = this.prArgWinGUI(ndefKey, winName, pairs, specArr,
 						winLeft, winDown, "R E M O V E   B L O C K", {|win|
 							//like 'st N': stopping the block closes the window
-							Radicles.cW.callFunc("st " ++ (blockIndex + 1));
+							Radicles.cW.callFunc("st " ++ Block.numberAt(blockIndex));
 						},
 						//presets (blksave, blkload); recording blocks have none
 						if(RadUnit.recordsDef(blockName).not, {
-							[this.prBlkSaveButton(blockIndex + 1, blockName),
-								this.prBlkPresetMenu(blockIndex + 1, blockName)] }));
+							[this.prBlkSaveButton(Block.numberAt(blockIndex), blockName),
+								this.prBlkPresetMenu(Block.numberAt(blockIndex), blockName)] }));
 					sourceWindows = sourceWindows.add(srcWin);
 					if(trackNum.notNil, { this.prSrcWinTracks.put(trackNum, ndefKey) });
 					srcWin.onClose = {
@@ -1825,7 +1825,7 @@
 		{this.prBlockPlaying(blockIndex)} {
 			this.sourceGUI(Block.ndefs[blockIndex], winLeft, winDown, trackNum);
 		}
-		{ this.blockMenu(blockIndex + 1, menuBounds) };
+		{ this.blockMenu(Block.numberAt(blockIndex), menuBounds) };
 	}
 
 	//the source menus: blocks, then for blocks with a buffer a second list

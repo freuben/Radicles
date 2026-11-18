@@ -152,7 +152,7 @@
 		cW.add(\blk, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			if(str2 == '<>', {
 				if(aZ.notNil, {
-					aZ.input(Block.ndefs[num1-1], \track, num2);
+					aZ.input(Block.ndefOf(num1), \track, num2);
 					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
 					"could not find assemblage".warn;
@@ -163,7 +163,7 @@
 			var ndefArr;
 			if(str2 == '<>', {
 				if(aZ.notNil, {
-					ndefArr = arr.collect{|item| Block.ndefs[item-1] };
+					ndefArr = arr.collect{|item| Block.ndefOf(item) };
 					aZ.input(ndefArr, \track, num2);
 					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
@@ -176,7 +176,7 @@
 			if(str2 == '<>', {
 				if(aZ.notNil, {
 					arr1.do{|item, index|
-						aZ.input(Block.ndefs[item-1], \track, arr2[index]);
+						aZ.input(Block.ndefOf(item), \track, arr2[index]);
 					};
 					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
@@ -187,19 +187,19 @@
 
 		cW.add(\blkset, [\str, \num], {|str1, num1|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].getKeysValues.radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num], {|str1, num1, num2|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].getKeysValues[num2-1][1].radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			Block.set(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
@@ -210,7 +210,7 @@
 
 		cW.add(\blkset, [\str, \num, \num, \str], {|str1, num1, num2, str2|
 			var thisIndex, thisKey, modArgs, modifier;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			modArgs = str2.asString.radStringMod;
 			if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
@@ -226,7 +226,7 @@
 
 		cW.add(\blklag, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			Block.lag(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
@@ -237,14 +237,14 @@
 
 		cW.add(\blkxset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			Block.xset(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkxset, [\str, \num, \str, \num], {|str1, num1, str2, num3|
 			var thisIndex;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			Block.xset(num1, [str2, num3]);
 		}, "blocksetn: blk, arg");
 
@@ -300,7 +300,7 @@
 
 		cW.add(\blkgetspec, [\str, \num, \num], {|str1, num1, num2|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			Block.getSpec(num1, thisKey).radpostwarn;
 		}, "blocksetn: blk, arg");

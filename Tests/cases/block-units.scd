@@ -145,6 +145,36 @@
 	}
 );
 
+// a block keeps its number when another is removed: after blk remove 1,
+// 2 is still block2 for every command (play and stop counted positions
+// before, so blk 2 played on block3; decided 18 Nov 2026)
+~radTest.("block-number-after-remove",
+	setup: ["start 3", "blk 1 sine", "blk 2 sine", "blk 3 sine", "blk remove 1"],
+	cmds: [["blk 2 noise", 3], ["st 3", 2], "blkset 2 mul 0.1"],
+	check: {
+		var two = RadUnit.readBlock(\block2) ? (), three = RadUnit.readBlock(\block3);
+		case
+		{ two[\def] != \noise } { "block 2 plays " ++ two[\def].cs }
+		{ three.notNil } { "block 3 still plays: " ++ three.cs }
+		{ Ndef(\block2).get(\mul) != 0.1 } { "block 2 mul: " ++ Ndef(\block2).get(\mul) }
+		{ true }
+	}
+);
+
+// ... and the removed number is gone: a command for it warns and does nothing
+~radTest.("block-number-removed-is-gone",
+	setup: ["start 3", "blk 1 sine", "blk 2 sine", "blk remove 1"],
+	cmds: [["blk 1 noise", 2], "st 1", "blk remove 1"],
+	check: {
+		var two = RadUnit.readBlock(\block2) ? ();
+		case
+		{ two[\def] != \sine } { "block 2 plays " ++ two[\def].cs }
+		{ RadUnit.readBlock(\block1).notNil } { "block 1 is back: " ++ RadUnit.readBlock(\block1).cs }
+		{ Block.ndefs.collect(_.key) != [\block2, \block3] } { "blocks: " ++ Block.ndefs.collect(_.key).cs }
+		{ true }
+	}
+);
+
 // patterns are not in the document yet
 ~radTest.("block-unit-pattern-skipped",
 	setup: ["start 2", "blk 1 sine"],
