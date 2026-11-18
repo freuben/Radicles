@@ -40,6 +40,15 @@ Tests/ci/run-headless.sh update step1-regressions
 
 The headless build has no GUI and no neural-model extensions. Tests marked `gui: true` are skipped there. The placeholder classes in `ci/headless-classes` are copied outside the Quark, so users never compile them.
 
+## Automatic runs on GitHub
+
+Every pull request into `dev` or `master` runs the tests on GitHub's machines (the workflow is `.github/workflows/tests.yml`). It uses the same headless setup as the cloud workspace: no GUI, so `gui: true` tests are skipped, and stand-in sound files instead of the real RadiclesFiles, so the impulse-response tests show as known. A new push to the same pull request stops the older run.
+
+- **First run, or after `Tests/ci/build-sc-linux.sh` changes:** SuperCollider is built from source (about 25 minutes) and kept; later runs reuse it.
+- **The tests** are split across 4 machines, each running a share of the files in `cases/` one after another (about 40 minutes). A new case file is included automatically.
+- **Results:** the pull request shows a green tick or a red cross. Click *Details*, then *Summary*: each machine lists its pass, known, skipped and failed counts and the failed tests. At the bottom of the summary page, *Artifacts* has each machine's results folder (logs, each case's output, and `.actual.txt` next to every snapshot that changed) to download.
+- **One case by hand:** on GitHub, open the *Actions* tab, choose *Tests*, then *Run workflow*. Pick the branch, type a case (a file name from `cases/` without `.scd`, e.g. `track-presets`) and, if you like, one test name; leave both empty to run everything.
+
 ## Write a test
 
 Add it to a file in `cases/`:
