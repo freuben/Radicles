@@ -91,7 +91,7 @@
 	}
 
 	// fxbypass: bypass an effect (Document Model, step 1, PR 4). Without a
-	// state it toggles; 1 bypasses, 0 un-bypasses. Same forms as fxclear.
+	// state it toggles; 1 bypasses, 0 un-bypasses. Same forms as fx rm.
 	*prFxBypassCmds {
 		var byType, byMix;
 		byType = {|str2, num1, num2, state|
@@ -136,8 +136,24 @@
 		}, "fxbypass: mixTrackNum, slot, state");
 	}
 
-	// fx, fxclear, clearfx
+	// fx, fx rm, fx rml, fxl
 	*prFxAddCmds {
+		var rmByMix;
+		rmByMix = {|num1, num2|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.setFx(thisArr[0].asSymbol, thisArr[1], num2, remove: true);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
 		cW.add(\fx, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			if(aZ.notNil, {
 				case
@@ -268,76 +284,89 @@
 			});
 		}, "fx: mixTrackNum, slotNum, filter, extraArgs");
 		//
-		//fxrm (the rm spelling) and fxclear: the same four forms
-		[\fxclear, \fxrm].do{|name|
-			cW.add(name, [\str, \str, \num], {|str1, str2, num1|
+		//fx rm: remove an effect by trackType and number, or by mixer position;
+		//fx rml: by its number in the list of active effects (fxl posts it)
+		cW.add(\fx, [\str, \str, \str, \num, \num], {|str1, str2, str3, num1, num2|
+			if(str2 == 'rm', {
 				if(aZ.notNil, {
 					case
-					{str2 == 'm'} {
-						aZ.setFx(\master, 1, num1, remove: true);
-					};
+					{str3 == 't'} {aZ.setFx(\track, num1, num2, remove: true);}
+					{str3 == 'b'} {aZ.setFx(\bus, num1, num2, remove: true);}
+					{str3 == 'm'} {aZ.setFx(\master, 1, num2, remove: true);}
+					{"Command not Found".warn};
 				}, {
 					"could not find assemblage".warn;
 				});
-			}, name ++ ": trackType, slot");
+			}, {
+				"Command not Found".warn;
+			});
+		}, "fx: rm, trackType, trackNum, slot");
 
-			cW.add(name, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+		cW.add(\fx, [\str, \str, \str, \num], {|str1, str2, str3, num1|
+			if(str2 == 'rm', {
 				if(aZ.notNil, {
 					case
-					{str2 == 't'} {aZ.setFx(\track, num1, num2, remove: true);}
-					{str2 == 'b'} {aZ.setFx(\bus, num1, num2, remove: true);}
-					{str2 == 'm'} {aZ.setFx(\master, 1, num2, remove: true);};
+					{str3 == 'm'} {aZ.setFx(\master, 1, num1, remove: true);}
+					{"Command not Found".warn};
 				}, {
 					"could not find assemblage".warn;
 				});
-			}, name ++ ": trackType, trackNum, slot");
+			}, {
+				"Command not Found".warn;
+			});
+		}, "fx: rm, m, slot");
 
-			cW.add(name, [\str, \num], {|str1, num1|
-				var trackArr, thisArr;
+		cW.add(\fx, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			if(str2 == 'rm', {
+				rmByMix.(num1, num2);
+			}, {
+				"Command not Found".warn;
+			});
+		}, "fx: rm, mixTrackNum, slot");
+
+		cW.add(\fx, [\str, \str, \num], {|str1, str2, num1|
+			var filters, filterTagArr;
+			case
+			{str2 == 'rm'} {rmByMix.(num1, 1);}
+			{str2 == 'rml'} {
 				if(aZ.notNil, {
-					trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-					if(num1 <= (trackArr.size), {
-						thisArr = trackArr[num1-1];
-						if(thisArr[1].isNil, {thisArr[1] = 1});
-						aZ.setFx(thisArr[0].asSymbol, thisArr[1], 1, remove: true);
+					filters = aZ.filters ? [];
+					if((num1 >= 1) and: { num1 <= filters.size }, {
+						filterTagArr = aZ.convFilterTag(filters[num1-1][0]);
+						aZ.setFx(filterTagArr[0].asSymbol, filterTagArr[1],
+							filterTagArr[2], remove: true);
 					}, {
-						"track not found".warn;
+						("No effect number " ++ num1 ++ "; fxl lists them").warn;
 					});
 				}, {
 					"could not find assemblage".warn;
 				});
-			}, name ++ ": mixTrackNum, filter");
+			}
+			{"Command not Found".warn};
+		}, "fx: ['rm', 'rml'], [mixTrackNum, fxlNum]");
 
-			cW.add(name, [\str, \num, \num], {|str1, num1, num2|
-				var trackArr, thisArr;
-				if(aZ.notNil, {
-					trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-					if(num1 <= (trackArr.size), {
-						thisArr = trackArr[num1-1];
-						if(thisArr[1].isNil, {thisArr[1] = 1});
-						aZ.setFx(thisArr[0].asSymbol, thisArr[1], num2, remove: true);
-					}, {
-						"track not found".warn;
-					});
-				}, {
-					"could not find assemblage".warn;
-				});
-			}, name ++ ": mixTrackNum, filter");
-		};
-
-		cW.add(\clearfx, [\str, \num], {|str1, num1|
-			var filterTag, filterTagArr;
+		cW.add(\fxl, [\str], {|str1|
+			var filters, tagArr, where;
 			if(aZ.notNil, {
-				filterTag = aZ.filters[num1-1][0];
-				if(filterTag.notNil, {
-					filterTagArr = aZ.convFilterTag(filterTag).postln;
-					aZ.setFx(filterTagArr[0].asSymbol, filterTagArr[1],
-						filterTagArr[2], remove: true);
+				filters = aZ.filters ? [];
+				if(filters.isEmpty, {
+					"no effects".radpostwarn;
+				}, {
+					filters.do{|item, index|
+						tagArr = aZ.convFilterTag(item[0]);
+						if(tagArr[0] == \master, {
+							where = "master";
+						}, {
+							where = tagArr[0].asString ++ tagArr[1];
+						});
+						((index+1).asString ++ "  " ++ where ++ " slot " ++ tagArr[2]
+							++ "  " ++ item[1]).radpostwarn;
+					};
 				});
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "clearfx: filterNum");
+		}, "fxl: list the active effects (fx rml N removes number N)");
 	}
 
 	// fxset, fxlag, setfx, fxsetn, fxlagn, lagfx

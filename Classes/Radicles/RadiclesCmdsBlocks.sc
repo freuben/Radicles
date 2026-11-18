@@ -110,13 +110,13 @@
 			case
 			{str2 == 'add'} {Block.add(num);}
 			{str2 == 'addn'} {Block.addNum(num);}
-			{str2 == 'remove' or: { str2 == 'rm' }} {Block.remove(num);}
+			{str2 == 'rm'} {Block.remove(num);}
 			{str2 == 'stop'} {Block.stop(num);}
 			{str2 == 'bpm'} {Block.tempo(num);}
 			{str2 == 'tempo'} {Block.tempo(num);}
 			{str2 == 'sdiv'} {Block.schedDiv = num;}
 			;
-		}, "block: ['add', 'addn', 'rm', 'stop'], [channels, number, block, block] (remove also works)");
+		}, "block: ['add', 'addn', 'rm', 'stop'], [channels, number, block, block]");
 
 		cW.add(\blk, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			case
