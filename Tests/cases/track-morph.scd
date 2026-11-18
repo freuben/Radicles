@@ -204,3 +204,22 @@
 	},
 	teardown: { ~radTrackClean.(['radtest_tmwet']) }
 );
+
+// tmorph to default: the source fades out over the morph time and stops
+// (18 Nov 2026)
+~radTest.("tmorph-default-source",
+	setup: ["start 2", "blk 1 sine", "vol t 1 -6"],
+	code: {
+		~radCmd.("tmorph t 1 default 2", 1);
+		~radMidFade = Ndef(\block1).fadeTime;
+		3.wait;
+	},
+	check: {
+		var one = ~radStripNow.(\track1);
+		case
+		{ ~radMidFade != 2 } { "block 1 fade time during the morph: " ++ ~radMidFade }
+		{ RadUnit.readBlock(\block1).notNil } { "block 1 still plays: " ++ RadUnit.readBlock(\block1).cs }
+		{ one[\volume] != 0 } { "track1: " ++ one.cs }
+		{ true }
+	}
+);

@@ -1,5 +1,6 @@
 >> tload t 1 default
 == radpost ==
+Ndef('block1').source = nil;
 Ndef('filterTrack_1_1').clear(0.5);
 Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('inTrack1', 1) * volume.dbamp.lag(lagTime)

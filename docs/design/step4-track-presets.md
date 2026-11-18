@@ -28,7 +28,7 @@ The four commands take the same strip forms as the chain commands: `t 1`, `b 2`,
 | `tload t 3 vox` | the preset onto track 3: source, chain, values, sends |
 | `tload t 3 vox nosrc` | everything except the source (the track keeps what it plays) |
 | `tload t 3 vox nofx` | everything except the chain (the track keeps its effects) |
-| `tload t 3 default` | a clean strip (question 2) |
+| `tload t 3 default` | a clean strip, its source stopped (question 2; changed 18 Nov); `nosrc` keeps the source |
 | `tload` / `tload t` | lists track presets |
 | `tmorph t 3 vox [time] [xfade\|glide\|none]` | morphs track 3 to the preset (see Morph) |
 | `tmorphtime t 3 5` | track 3's own morph time; `tmorphtime t 3` posts it, `default` clears it |
@@ -232,3 +232,12 @@ Federico: the output to the master should always be as it was when the track was
 - **`tload default`** sends the strip to the master, with no sends.
 - **A preset saved before** has no output and leaves the strip's as it is.
 - Solo and record arm stay out of presets.
+
+## Changed (18 Nov): `tload default` has no source
+
+Federico: the default preset should go to the master and have no source on; leaving the source alone was confusing.
+
+- **`tload t 1 default`** stops the blocks feeding the track, as a preset saved with no source does (decision 4). A block that also feeds another track keeps playing.
+- **`tload t 1 default nosrc`** keeps the source, as with any preset.
+- **`tmorph t 1 default`** fades the source out over the morph time.
+- The output to the master is on, as decided on 17 Nov.

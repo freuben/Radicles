@@ -11,7 +11,7 @@
 //   tload t 3 vox           the preset onto track 3: source, chain, values, sends
 //   tload t 3 vox nosrc     ... keeping track 3's source
 //   tload t 3 vox nofx      ... keeping track 3's effects
-//   tload t 3 default       a clean strip (source left alone)
+//   tload t 3 default       a clean strip, its source stopped (nosrc keeps it)
 //   tload                   lists track presets
 // Loading changes only what differs, in this order (design note, 16 Nov):
 // morphs on the strip stop; a preset that mutes mutes first; the source;
@@ -28,8 +28,9 @@
 //   doesn't have is left out and named
 // - a live input (audioin block) comes back with its hardware input
 // - default: trim 0, volume 0 dB, pan centre, unmuted, no lags, no
-//   modulators, an empty chain, no sends, output to the master; the source
-//   is left alone
+//   modulators, an empty chain, no sends, output to the master, and no
+//   source: the blocks feeding the track stop, as a preset saved with no
+//   source (18 Nov 2026; before, the source was left alone)
 // - the output to the master comes back as it was saved (17 Nov 2026): a
 //   preset that doesn't go to the master turns it off first, one that does
 //   turns it on last; a preset saved before then leaves it as it is
@@ -126,9 +127,9 @@
 		^path
 	}
 
-	// the clean strip of tload default
+	// the clean strip of tload default: no source (18 Nov 2026)
 	*defaultTrack {
-		^(default: true, trim: 0, volume: 0, mute: 0, chain: (fx: ()), sends: (), output: \master)
+		^(default: true, trim: 0, volume: 0, mute: 0, chain: (fx: ()), sends: (), output: \master, source: [])
 	}
 
 	// the track in a preset file (default: a clean strip), or nil with the
