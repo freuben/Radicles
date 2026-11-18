@@ -86,17 +86,22 @@ for i in 0 1 2 3 4 5 6 7 8 9; do mkdir -p "$F/SoundFiles/Play/$i"; done
 # Sound files and presets. The real RadiclesFiles comes from RadiclesFiles.zip
 # (see the install guide); pass a copy with RADICLESFILES_ZIP=/path/to/zip to use
 # it (the Models folder is skipped). Without it, make placeholders that match the
-# real files: drums1 and marilyn1, both stereo, in Play/0.
+# real files: drums1 and marilyn1 in Play/0, both stereo, 44.1 kHz, 16 bit, and
+# as long as the real ones (5500001 and 2162688 frames: tests of where a sound
+# file is playing depend on the length). A plain tone stands in for the sound.
 if [ -n "${RADICLESFILES_ZIP:-}" ] && [ -f "$RADICLESFILES_ZIP" ]; then
   tmp=$(mktemp -d); (cd "$tmp" && unzip -q "$RADICLESFILES_ZIP" -x '*/Models/*' '__MACOSX/*' '*.scpv')
   cp -R "$tmp"/RadiclesFiles/. "$F"/; rm -rf "$tmp"
-elif [ ! -f "$F/SoundFiles/Play/0/drums1.wav" ]; then
+elif [ ! -f "$F/SoundFiles/Play/0/drums1.wav" ] || [ "$(wc -c < "$F/SoundFiles/Play/0/drums1.wav")" -lt 1000000 ]; then
   python3 -I - "$F/SoundFiles/Play/0" <<'PY'
 import wave, struct, math, sys, os
-for name, freq in [("drums1", 110.0), ("marilyn1", 220.0)]:
+RATE = 44100
+for name, freq, frames in [("drums1", 110, 5500001), ("marilyn1", 220, 2162688)]:
+    # one second holds a whole number of cycles, so it repeats without a click
+    second = b"".join(struct.pack("<hh", *([int(3000*math.sin(2*math.pi*freq*i/RATE))]*2)) for i in range(RATE))
     w = wave.open(os.path.join(sys.argv[1], name + ".wav"), "wb")
-    w.setnchannels(2); w.setsampwidth(2); w.setframerate(44100)
-    w.writeframes(b"".join(struct.pack("<hh", *([int(3000*math.sin(2*math.pi*freq*i/44100))]*2)) for i in range(44100*2)))
+    w.setnchannels(2); w.setsampwidth(2); w.setframerate(RATE)
+    w.writeframes(second * (frames // RATE) + second[:(frames % RATE) * 4])
     w.close()
 PY
 fi
