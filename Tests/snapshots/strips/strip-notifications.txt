@@ -22,6 +22,7 @@ Ndef('block3').fadeTime = 0.5;
 Ndef('inTrack3', {arg trim=0, lagTime=0;
                 (Ndef.ar('block3', 1) * trim.dbamp.lag(lagTime) )});
 Ndef('inTrack3').set('trim', 0);
+Ndef('block3').clear;
 Ndef('inTrack3').clear(0.5);
 Ndef('track3').clear(0.5);
 Ndef('spaceTrack3').clear(0.5);

@@ -1,0 +1,12 @@
+>> t rmvn [7]
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> b rmvn [4]
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
