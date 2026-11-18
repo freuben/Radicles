@@ -3,8 +3,19 @@
 # cloud workspace (Ubuntu 24.04, no apt access; everything from GitHub).
 # Takes ~25 min on 2 cores. Safe to re-run: skips steps already done.
 # Usage: Tests/ci/build-sc-linux.sh   (then Tests/ci/run-headless.sh)
+# The defaults below are the cloud workspace's paths. The GitHub workflow
+# (.github/workflows/tests.yml) sets them to folders its runner user owns:
+#   PREFIX     where libsndfile, JACK and SuperCollider are installed (/usr/local)
+#   LDCONFIG   command that refreshes the shared-library cache (ldconfig)
+#   SC_DATA    sclang's user data folder: Extensions, downloaded-quarks
+#   SC_CONFIG  sclang's user config folder: sclang_conf.yaml
+#   GUI_CLASSES  where the GUI class files are copied
 set -euo pipefail
 SRC=${SRC:-/home/claude/src}
+PREFIX=${PREFIX:-/usr/local}
+LDCONFIG=${LDCONFIG:-ldconfig}
+SC_DATA=${SC_DATA:-/root/.local/share/SuperCollider}
+SC_CONFIG=${SC_CONFIG:-/root/.config/SuperCollider}
 SC_TAG=${SC_TAG:-Version-3.14.1}
 CI=$(cd "$(dirname "$0")" && pwd)
 # Headless-only classes live OUTSIDE the Radicles Quark, so users never compile them.
@@ -19,31 +30,31 @@ if ! pkg-config --exists sndfile; then
   clone libsndfile/libsndfile "$SRC/libsndfile"
   cmake -S "$SRC/libsndfile" -B "$SRC/libsndfile/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=ON -DENABLE_EXTERNAL_LIBS=OFF -DENABLE_MPEG=OFF -DBUILD_PROGRAMS=OFF \
-    -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
+    -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX"
   ninja -C "$SRC/libsndfile/build" install
 fi
 
 # 2. JACK2 with the dummy driver (lets scsynth run with no sound card)
 if ! pkg-config --exists jack; then
   clone jackaudio/jack2 "$SRC/jack2"
-  (cd "$SRC/jack2" && python3 ./waf configure --prefix=/usr/local --alsa=no --firewire=no \
+  (cd "$SRC/jack2" && python3 ./waf configure --prefix="$PREFIX" --alsa=no --firewire=no \
      --iio=no --portaudio=no --db=no --systemd=no --classic && python3 ./waf build -j2 && python3 ./waf install)
 fi
-ldconfig
+$LDCONFIG
 
 # 3. SuperCollider without Qt/IDE
 if ! command -v sclang >/dev/null; then
   clone supercollider/supercollider "$SRC/supercollider" "--branch $SC_TAG --recurse-submodules --shallow-submodules"
   cmake -S "$SRC/supercollider" -B "$SRC/supercollider/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DSC_QT=OFF -DSC_IDE=OFF -DSUPERNOVA=OFF -DNO_X11=ON -DSC_EL=OFF -DSC_VIM=OFF -DSC_ED=OFF \
-    -DNO_AVAHI=ON -DSC_ABLETON_LINK=OFF -DSC_HIDAPI=OFF -DINSTALL_HELP=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
+    -DNO_AVAHI=ON -DSC_ABLETON_LINK=OFF -DSC_HIDAPI=OFF -DINSTALL_HELP=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX"
   ninja -C "$SRC/supercollider/build" -j2 install
-  ldconfig
+  $LDCONFIG
 fi
 
 # 4. sc3-plugins (Radicles ext dependency). No FFTW available: build every
 #    plugin that compiles without it and install what succeeded.
-EXT=/root/.local/share/SuperCollider/Extensions
+EXT=$SC_DATA/Extensions
 if [ ! -d "$EXT/SC3plugins" ]; then
   clone supercollider/sc3-plugins "$SRC/sc3-plugins" "--recurse-submodules --shallow-submodules"
   mkdir -p /tmp/nofftw
@@ -55,12 +66,12 @@ if [ ! -d "$EXT/SC3plugins" ]; then
 fi
 
 # 5. Quarks and the GUI class library (classes only; no Qt primitives)
-Q=/root/.local/share/SuperCollider/downloaded-quarks
+Q=$SC_DATA/downloaded-quarks
 mkdir -p "$Q"
 clone supercollider-quarks/wslib "$Q/wslib"
 clone freuben/RadiclesLibs "$Q/RadiclesLibs"
 [ -e "$Q/Radicles" ] || ln -s "${RADICLES:-/home/claude/radicles}" "$Q/Radicles"
-G=/home/claude/sc-gui-classes
+G=${GUI_CLASSES:-/home/claude/sc-gui-classes}
 if [ ! -d "$G" ]; then
   for d in Common/GUI Common/Quarks/GUI Common/UnitTesting/GUI JITLib/GUI Platform/linux/GUI deprecated/3.10/GUI deprecated/3.13/GUI; do
     [ -d "$SRC/supercollider/SCClassLibrary/$d" ] || continue
@@ -75,17 +86,22 @@ for i in 0 1 2 3 4 5 6 7 8 9; do mkdir -p "$F/SoundFiles/Play/$i"; done
 # Sound files and presets. The real RadiclesFiles comes from RadiclesFiles.zip
 # (see the install guide); pass a copy with RADICLESFILES_ZIP=/path/to/zip to use
 # it (the Models folder is skipped). Without it, make placeholders that match the
-# real files: drums1 and marilyn1, both stereo, in Play/0.
+# real files: drums1 and marilyn1 in Play/0, both stereo, 44.1 kHz, 16 bit, and
+# as long as the real ones (5500001 and 2162688 frames: tests of where a sound
+# file is playing depend on the length). A plain tone stands in for the sound.
 if [ -n "${RADICLESFILES_ZIP:-}" ] && [ -f "$RADICLESFILES_ZIP" ]; then
   tmp=$(mktemp -d); (cd "$tmp" && unzip -q "$RADICLESFILES_ZIP" -x '*/Models/*' '__MACOSX/*' '*.scpv')
   cp -R "$tmp"/RadiclesFiles/. "$F"/; rm -rf "$tmp"
-elif [ ! -f "$F/SoundFiles/Play/0/drums1.wav" ]; then
+elif [ ! -f "$F/SoundFiles/Play/0/drums1.wav" ] || [ "$(wc -c < "$F/SoundFiles/Play/0/drums1.wav")" -lt 1000000 ]; then
   python3 -I - "$F/SoundFiles/Play/0" <<'PY'
 import wave, struct, math, sys, os
-for name, freq in [("drums1", 110.0), ("marilyn1", 220.0)]:
+RATE = 44100
+for name, freq, frames in [("drums1", 110, 5500001), ("marilyn1", 220, 2162688)]:
+    # one second holds a whole number of cycles, so it repeats without a click
+    second = b"".join(struct.pack("<hh", *([int(3000*math.sin(2*math.pi*freq*i/RATE))]*2)) for i in range(RATE))
     w = wave.open(os.path.join(sys.argv[1], name + ".wav"), "wb")
-    w.setnchannels(2); w.setsampwidth(2); w.setframerate(44100)
-    w.writeframes(b"".join(struct.pack("<hh", *([int(3000*math.sin(2*math.pi*freq*i/44100))]*2)) for i in range(44100*2)))
+    w.setnchannels(2); w.setsampwidth(2); w.setframerate(RATE)
+    w.writeframes(second * (frames // RATE) + second[:(frames % RATE) * 4])
     w.close()
 PY
 fi
@@ -94,8 +110,8 @@ mkdir -p "$F/Settings/Presets" "$F/Settings/Sessions"
 for c in Assemblage Block Bstore Dstore Filter Radicles Session Store Track Tracks; do
   [ -f "$F/Settings/Presets/$c.scd" ] || echo "[]" > "$F/Settings/Presets/$c.scd"
 done
-mkdir -p /root/.config/SuperCollider
-cat > /root/.config/SuperCollider/sclang_conf.yaml <<EOF
+mkdir -p "$SC_CONFIG"
+cat > "$SC_CONFIG/sclang_conf.yaml" <<EOF
 includePaths:
     - $SUPPORT
     - $G
