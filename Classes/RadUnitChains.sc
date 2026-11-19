@@ -181,7 +181,7 @@
 		shape = (shape ?? { chain[\morphShape] } ? \xfade).asSymbol;
 		if([\xfade, \glide, \none].includes(shape).not, {
 			("csload: shape is xfade, glide or none, not " ++ shape).warn; ^false });
-		time = (time ?? { Ndef(strip).fadeTime } ? 0).max(0);
+		time = (time ?? { Radicles.ownFade(strip) } ? 0).max(0);
 		if(shape == \none or: { time == 0 }, {
 			{
 				//a load still running on the strip or its slots stops first

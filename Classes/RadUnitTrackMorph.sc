@@ -43,7 +43,7 @@
 		az = az ? Radicles.aZ;
 		//the time: the command's, else the strip's own fade time (a morphTime
 		//in a preset saved before 19 Nov 2026 is ignored)
-		time = (time ?? { Ndef(name).fadeTime } ? 0).max(0);
+		time = (time ?? { Radicles.ownFade(name) } ? 0).max(0);
 		shape = (shape ?? { track[\morphShape] } ? \xfade).asSymbol;
 		if([\xfade, \glide, \none].includes(shape).not, {
 			("tload: shape is xfade, glide or none, not " ++ shape).warn; ^false });
@@ -69,12 +69,16 @@
 			// the chain moves on its own, over the same time. Its structure
 			// first: a stage rebuilt for an added or removed effect is set to
 			// the values it had when the rebuild was asked for, so the strip's
-			// values move only once the chain is built (a flag, not a
-			// Condition: a chain load stopped by another never calls back)
+			// values move only once the chain is built. A chain load stopped
+			// by another also calls back. A flag with a limit, not a
+			// Condition: should a build die on an error, the values still
+			// move (an effect with buffers that is replaced is built once
+			// the old one has faded, so the limit is past the load's time).
 			if(nofx.not, {
 				var chainBuilt = false, waited = 0;
 				az.morphChain(type, num, track[\chain] ? (fx: ()), time, shape, quiet: true, built: { chainBuilt = true });
-				while({ chainBuilt.not and: { waited < 10 } }, { 0.05.wait; waited = waited + 0.05 });
+				while({ chainBuilt.not and: { waited < (time + 10) } }, { 0.05.wait; waited = waited + 0.05 });
+				if(chainBuilt.not, { ("tload " ++ name ++ ": the effects were not ready in time").warn });
 			});
 			// the source
 			if(nosrc.not and: { kind == \track } and: { track[\source].notNil }, {
@@ -121,7 +125,7 @@
 					if(this.prBlockShared(block, num, az).not and: { this.readBlock(key).notNil }, {
 						//over the load's time (not given when that is the block's
 						//own fade time: Block.stop then has nothing to set)
-						Block.stop(block, if(Ndef(key).fadeTime != time, { time }, { nil }));
+						Block.stop(block, if(Radicles.ownFade(key) != time, { time }, { nil }));
 					});
 				});
 			};
@@ -151,11 +155,9 @@
 				}, {
 					//another block or file: a crossfade over the load's time
 					//(nothing to set when that is the block's own fade time)
-					fade = Ndef(tag).fadeTime;
-					if(fade != time, {
-						("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
-						restores.add({ ("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ fade.cs ++ ";").radcode });
-					});
+					this.prStopBlockMorph(tag);
+					Radicles.holdFade(tag, time);
+					restores.add({ Radicles.releaseFade(tag) });
 					if(this.applyBlock(block, unit, anyDef: true), {
 						Server.default.sync;
 						{ az.updateSourceWin(tag) }.defer;

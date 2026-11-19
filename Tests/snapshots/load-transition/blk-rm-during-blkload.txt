@@ -1,0 +1,14 @@
+>> blkload 1 radtest_lt 3 glide
+== radpost ==
+Ndef('block1').lag('freq', 3);
+Ndef('block1').set('freq', 500);
+== radpostcont ==
+(none)
+
+>> blk rm 1
+== radpost ==
+Ndef('inTrack1').source = nil;
+Ndef('block1').clear(0.5);
+== radpostcont ==
+(none)
+

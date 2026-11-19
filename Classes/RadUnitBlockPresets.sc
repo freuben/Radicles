@@ -236,7 +236,8 @@
 		shape = (shape ?? { unit[\morphShape] } ? \xfade).asSymbol;
 		if([\xfade, \glide, \none].includes(shape).not, {
 			("blkload: shape is xfade, glide or none, not " ++ shape).warn; ^false });
-		fade = Ndef(tag).fadeTime ? 0;
+		//the block's own, also while another load holds a typed time
+		fade = Radicles.ownFade(tag);
 		time = (time ? fade).max(0);
 		if(time == 0, { shape = \none });
 		//the same file and table: the values move
@@ -258,12 +259,8 @@
 			var routine = thisThread, restore, timed = shape != \none and: { time != fade };
 			this.prStopBlockMorph(tag); //a load still running puts its times back first
 			if(timed, {
-				restore = {
-					//unless it was given another fade time meanwhile
-					if(Ndef(tag).fadeTime == time, {
-						("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ fade.cs ++ ";").radcode });
-				};
-				("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
+				restore = { Radicles.releaseFade(tag) };
+				Radicles.holdFade(tag, time);
 				blockMorphs = blockMorphs ?? { IdentityDictionary.new };
 				blockMorphs[tag] = (routine: routine, restore: restore);
 			});

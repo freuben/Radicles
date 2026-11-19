@@ -62,11 +62,13 @@
 		^true
 	}
 
-	*prStopBlockMorph {|tag|
+	// stop a load running on a block, putting its fade time and lags back
+	// (not when the block is being removed: putting a lag back rebuilds it)
+	*prStopBlockMorph {|tag, restore = true|
 		var morph = blockMorphs !? {|m| m[tag] };
 		if(morph.notNil, {
 			morph[\routine].stop;
-			morph[\restore].value;
+			if(restore, { morph[\restore].value });
 			blockMorphs.removeAt(tag);
 		});
 	}
@@ -96,15 +98,10 @@
 			});
 			case
 			{ shape == \xfade } {
-				fade = ndef.fadeTime;
-				//the block's own fade time: nothing to set or to put back
-				if(time != fade, {
-					restore = {
-						("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ fade.cs ++ ";").radcode;
-						putPlace.();
-					};
-					("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
-				}, { restore = { putPlace.() } });
+				//the fade time is the load's while it runs (nothing is set or
+				//put back when it is the block's own)
+				Radicles.holdFade(tag, time);
+				restore = { Radicles.releaseFade(tag); putPlace.() };
 				setFunc = {|ndef, pairs|
 					("Ndef(" ++ ndef.key.cs ++ ").xset(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
 				};

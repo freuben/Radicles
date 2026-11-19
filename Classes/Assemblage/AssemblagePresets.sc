@@ -163,7 +163,7 @@
 			action.(); ^true
 		});
 		//the time: the command's, else the effect's own fade time
-		time = (time ?? { Ndef(ndefKey).fadeTime } ? 0).max(0);
+		time = (time ?? { Radicles.ownFade(ndefKey) } ? 0).max(0);
 		if(time == 0, { shape = \none });
 		this.morphUnit(ndefKey, unit, time, shape, action, quiet: typed.not);
 		^true

@@ -3,7 +3,6 @@
 Ndef('inTrack1').fadeTime = 2;
 Ndef('filterTrack_1_1').fadeTime = 2;
 Ndef('track1').fadeTime = 2;
-Ndef('spaceTrack1').fadeTime = 2;
 Ndef('filterTrack_1_1').xset('pitchRatio', 0.5);
 == radpostcont ==
 (none)
@@ -13,7 +12,6 @@ Ndef('filterTrack_1_1').xset('pitchRatio', 0.5);
 Ndef('inTrack1').fadeTime = 0.5;
 Ndef('filterTrack_1_1').fadeTime = 0.5;
 Ndef('track1').fadeTime = 0.5;
-Ndef('spaceTrack1').fadeTime = 0.5;
 == radpostcont ==
 (none)
 

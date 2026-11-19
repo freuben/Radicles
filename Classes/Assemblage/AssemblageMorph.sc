@@ -30,6 +30,7 @@
 			morph[\routine].stop;
 			morph[\restore].value;
 			morphs.removeAt(filterTag);
+			morph[\stopped].value; //a chain load tells a waiting tload
 		});
 	}
 
@@ -49,16 +50,16 @@
 			shape = \none;
 		});
 		{
-			var routine = thisThread, restore, setFunc, fade, lagKeys, oldLags;
+			var routine = thisThread, restore, setFunc, lagKeys, oldLags;
 			this.prStopMorph(ndefKey); //an interrupted load puts its times back first
 			case
 			{ shape == \xfade } {
-				//csload passes the fade time the slot goes back to
-				fade = fadeBack ?? { Ndef(ndefKey).fadeTime };
-				//the Ndef's own fade time: nothing to set or to put back
-				if(time != fade, {
-					restore = { ("Ndef(" ++ ndefKey.cs ++ ").fadeTime = " ++ fade.cs ++ ";").radcode };
-					("Ndef(" ++ ndefKey.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
+				//the fade time is the load's while it runs (nothing is set or
+				//put back when it is the Ndef's own). csload has already set
+				//it, and puts it back with the strip's (fadeBack).
+				if(fadeBack.isNil, {
+					Radicles.holdFade(ndefKey, time);
+					restore = { Radicles.releaseFade(ndefKey) };
 				}, { restore = {} });
 				setFunc = {|ndef, pairs|
 					("Ndef(" ++ ndef.key.cs ++ ").xset(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
@@ -136,39 +137,42 @@
 				RadDoc.diff(this.prMorphed(cur), this.prMorphed(tgt), 1e-9).notEmpty } };
 		if(changed.isEmpty, { built.(); action.(); ^this });
 		//the time: the command's, else the strip's own fade time
-		time = (time ?? { Ndef(strip).fadeTime } ? 0).max(0);
+		time = (time ?? { Radicles.ownFade(strip) } ? 0).max(0);
 		shape = (shape ?? { chain[\morphShape] } ? \xfade).asSymbol;
 		if([\xfade, \glide, \none].includes(shape).not, {
 			("csload: shape is xfade, glide or none, not " ++ shape).warn; built.(); ^this });
 		if(time == 0, { shape = \none });
 		{
-			var routine = thisThread, restore, fades = [], cond = Condition(false), wait;
+			var routine = thisThread, restore, held = [], cond = Condition(false), wait, leave;
 			wait = { cond.wait; cond.test = false };
+			//stages that keep their own fade time: the panner (no load
+			//rebuilds it, and tload glides the pan with its lag, which
+			//crossfades over this fade time before the values move), and
+			//with glide the effects that stay (their lag does the same)
+			leave = [RadUnit.stripKeys(strip)[2]];
+			if(shape == \glide, { leave = leave ++ same.collect{|slot| RadUnit.chainTag(type, num, slot) } });
 			//a new load on the strip stops the one running, and those of its
 			//slots, putting their times back first
 			this.prStopMorph(strip);
 			current.keys.do{|slot| this.prStopMorph(RadUnit.chainTag(type, num, slot)) };
 			if(shape != \none, {
 				this.prStripStageKeys(type, num).do{|key|
-					var fade = Ndef(key).fadeTime;
-					if(fade != time, {
-						fades = fades.add([key, fade]);
-						("Ndef(" ++ key.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
+					if(leave.includes(key).not, {
+						held = held.add(key);
+						Radicles.holdFade(key, time);
 					});
 				};
 				restore = {
-					//only the stages still there, and not one given another
-					//fade time meanwhile
+					//only the stages still there (one given a fade time
+					//meanwhile, with fade N or fade t 1 4, has nothing held)
 					var keys = this.prStripStageKeys(type, num);
-					fades.do{|pair|
-						if(keys.includes(pair[0]) and: { Ndef(pair[0]).fadeTime == time }, {
-							("Ndef(" ++ pair[0].cs ++ ").fadeTime = " ++ pair[1].cs ++ ";").radcode;
-						});
+					held.do{|key|
+						if(keys.includes(key), { Radicles.releaseFade(key) }, { Radicles.forgetHeldFades([key]) });
 					};
 				};
 			}, { restore = {} });
 			morphs = morphs ?? { IdentityDictionary.new };
-			morphs[strip] = (routine: routine, restore: restore);
+			morphs[strip] = (routine: routine, restore: restore, stopped: built);
 			// 1. slots the preset leaves empty fade out and go
 			changed.reverseDo{|slot|
 				if(target[slot].isNil, {

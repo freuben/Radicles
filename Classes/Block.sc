@@ -135,9 +135,12 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 				aZ.closeSourceWin(ndefs[blockIndex].key);
 			});
 			this.newStartTicket(ndefs[blockIndex].key); //cancel a start still loading
-			//it fades out over its own fade time (a plain clear cut it: a click)
-			string = (ndefs[blockIndex].cs ++ ".clear(" ++ (ndefs[blockIndex].fadeTime ? 0) ++ ");");
+			RadUnit.prStopBlockMorph(ndefs[blockIndex].key, false); //and a preset load still running
+			//it fades out over its own fade time (a plain clear cut it: a
+			//click), also when a load had set another for a while
+			string = (ndefs[blockIndex].cs ++ ".clear(" ++ Radicles.ownFade(ndefs[blockIndex].key) ++ ");");
 			string.radcode;
+			Radicles.forgetHeldFades([ndefs[blockIndex].key]); //nothing to put back on a block that is gone
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
 			liveBlocks.removeAt(blockIndex);
@@ -503,6 +506,9 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 		blockIndex = this.indexOfBlock(block);
 		if(blockIndex.notNil, {
 			ndef = ndefs[blockIndex];
+			//a preset load still running on the block ends here, putting
+			//the block's own fade time and lags back
+			RadUnit.prStopBlockMorph(ndef.key);
 			//a time typed is for this stop only: the block's own fade time
 			//comes back when the fade is over (it used to keep the typed one).
 			//A stop typed during another keeps the first one's own time.

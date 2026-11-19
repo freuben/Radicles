@@ -13,8 +13,9 @@
 				bufIndex = filterBuff.flop[0].indicesOfEqual(filterTag);
 				if(bufIndex.notNil, {
 					bufFunc = {
-						//the old effect fades out over the slot's own fade time
-						(nodeTime + (Ndef(filterTag).fadeTime ? fadeTime)).yield;
+						//the old effect fades out over the slot's fade time; the
+						//fade starts one server latency after it is asked for
+						((Ndef(filterTag).fadeTime ? fadeTime) + (server.latency ? 0.2) + 0.1).yield;
 						bufIndex.reverseDo{|index| //from the end, so removeAt keeps earlier indices valid
 							filterBuff.flop[1][index].do{|item|
 								BStore.removeID(item);
@@ -217,6 +218,7 @@
 					slotFade = Ndef(thisSlot).fadeTime;
 					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ slotFade ++ ");";
 					ndefCS.radcode;
+					Radicles.forgetHeldFades([thisSlot]); //nothing to put back on an effect that is gone
 
 					thisTrack.removeAt(thisFilterIndex);
 					if(type == \master, {num=""});
@@ -241,9 +243,11 @@
 				}.fork(AppClock);
 			}, {
 				"Filter slot not found".warn;
+				action.(); //a caller waiting for the removal carries on
 			});
 		}, {
 			"No filters to remove".warn;
+			action.();
 		});
 	}
 

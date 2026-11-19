@@ -168,8 +168,9 @@
 	teardown: ~radLtClean
 );
 
-// a typed time: every stage of the strip crossfades over it while the load
-// runs, then has its own fade time again; other strips are not touched
+// a typed time: the strip's stages crossfade over it while the load runs,
+// then have their own fade time again (the panner keeps its own: no load
+// rebuilds it); other strips are not touched
 ~radTest.("csload-typed-time",
 	setup: ~radLtChain ++ ["fade t 2 3"],
 	cmds: [["csload t 1 radtest_ltc 2", 0.7]],
@@ -177,7 +178,7 @@
 	check: {
 		var fades = ~radLtFades.(~radLtStrip1 ++ [\track2]);
 		case
-		{ ~radLtMid != [2, 2, 2, 2, 3] } { "fade times during the load: " ++ ~radLtMid.cs }
+		{ ~radLtMid != [2, 2, 2, 0.5, 3] } { "fade times during the load: " ++ ~radLtMid.cs }
 		{ ~radLtRatio.() != 0.5 } { "pitchRatio " ++ ~radLtRatio.() }
 		{ fades != [0.5, 0.5, 0.5, 0.5, 3] } { "fade times after: " ++ fades.cs }
 		{ Radicles.fadeTime != 0.5 } { "the session fade: " ++ Radicles.fadeTime }
@@ -349,6 +350,118 @@
 		{ Ndef(\block1).get(\freq) != 330 } { "freq " ++ Ndef(\block1).get(\freq) }
 		{ (RadUnit.readChain(\track, 1)[\fx] ? ()).size != 1 } { "track 1's chain: " ++ RadUnit.readChain(\track, 1).cs }
 		{ fades.any(_ != 0.5) } { "fade times: " ++ fades.cs }
+		{ true }
+	},
+	teardown: ~radLtClean
+);
+
+// ---- one load during another, fade during a load, a block stopped or removed ----
+// (found by the second look, 19 Nov 2026)
+
+// a second load typed while a timed one runs, without a time of its own:
+// over the effect's own fade time, not the first load's
+~radTest.("fxload-during-timed-load-uses-own-fade",
+	setup: ~radLtFx ++ ["fxset t 1 1 pitchRatio 0.25", "fxsave t 1 1 radtest_lt2", "fxset t 1 1 pitchRatio 2"],
+	code: {
+		Radicles.cW.callFunc("fxload t 1 1 radtest_lt 6"); 1.wait;
+		Radicles.cW.callFunc("fxload t 1 1 radtest_lt2"); 0.4.wait;
+		~radLtMid = Ndef(\filterTrack_1_1).fadeTime; 1.5.wait;
+	},
+	check: {
+		case
+		{ ~radLtMid != 0.5 } { "fade time during the second load: " ++ ~radLtMid }
+		{ ~radLtRatio.() != 0.25 } { "pitchRatio " ++ ~radLtRatio.() }
+		{ Ndef(\filterTrack_1_1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\filterTrack_1_1).fadeTime }
+		{ true }
+	},
+	teardown: ~radLtClean
+);
+
+// the same for a block
+~radTest.("blkload-during-timed-load-uses-own-fade",
+	setup: ~radLtBlk ++ ["blkset 1 freq 700", "blksave 1 radtest_lt2", "blkset 1 freq 330"],
+	code: {
+		Radicles.cW.callFunc("blkload 1 radtest_lt 6"); 1.wait;
+		Radicles.cW.callFunc("blkload 1 radtest_lt2"); 0.4.wait;
+		~radLtMid = Ndef(\block1).fadeTime; 1.5.wait;
+	},
+	check: {
+		case
+		{ ~radLtMid != 0.5 } { "fade time during the second load: " ++ ~radLtMid }
+		{ Ndef(\block1).get(\freq) != 700 } { "freq " ++ Ndef(\block1).get(\freq) }
+		{ Ndef(\block1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\block1).fadeTime }
+		{ true }
+	},
+	teardown: ~radLtClean
+);
+
+// fade N typed while a timed load runs stays when the load ends
+~radTest.("fade-during-fxload-stays",
+	setup: ~radLtFx,
+	cmds: [["fxload t 1 1 radtest_lt 2", 0.5], ["fade 4", 3]],
+	check: {
+		(Ndef(\filterTrack_1_1).fadeTime == 4 and: { ~radLtRatio.() == 0.5 })
+		or: { "fade " ++ Ndef(\filterTrack_1_1).fadeTime ++ ", pitchRatio " ++ ~radLtRatio.() }
+	},
+	teardown: { Radicles.setFade(0.5); ~radLtClean.() }
+);
+
+// fade t 1 3 typed while a chain load runs stays on the strip; the effect,
+// which was not given one, goes back to its own
+~radTest.("fade-strip-during-csload-stays",
+	setup: ~radLtChain,
+	cmds: [["csload t 1 radtest_ltc 2", 0.5], ["fade t 1 3", 3]],
+	check: {
+		var fades = ~radLtFades.(~radLtStrip1);
+		(fades == [3, 0.5, 3, 3]) or: { "fade times: " ++ fades.cs }
+	},
+	teardown: ~radLtClean
+);
+
+// a block removed while a load runs on it: the load ends there, nothing is
+// posted on the block afterwards
+~radTest.("blk-rm-during-blkload",
+	setup: ~radLtBlk,
+	cmds: [["blkload 1 radtest_lt 3 glide", 1], ["blk rm 1", 4]],
+	check: { Block.ndefOf(1).isNil or: { "block 1 is still there" } },
+	teardown: ~radLtClean
+);
+
+// a block stopped while a timed load runs on it fades over its own fade time
+~radTest.("blk-stop-during-blkload",
+	setup: ~radLtBlk,
+	cmds: [["blkload 1 radtest_lt 6", 1], ["blk stop 1", 2]],
+	check: { (Ndef(\block1).fadeTime == 0.5) or: { "fade time: " ++ Ndef(\block1).fadeTime } },
+	teardown: ~radLtClean
+);
+
+// glide in a chain load: the values start moving after the effect's own
+// fade time, not after the load's time (they arrived at twice the time)
+~radTest.("csload-glide-starts-at-once",
+	setup: ~radLtChain,
+	code: { Radicles.cW.callFunc("csload t 1 radtest_ltc 3 glide"); 1.5.wait; ~radLtMid = ~radLtRatio.(); 3.5.wait },
+	check: {
+		var fades = ~radLtFades.(~radLtStrip1);
+		case
+		{ ~radLtMid != 0.5 } { "pitchRatio 1.5 s into the load: " ++ ~radLtMid }
+		{ ~radLtLag.(\filterTrack_1_1, \pitchRatio).notNil } { "lag after: " ++ ~radLtLag.(\filterTrack_1_1, \pitchRatio).cs }
+		{ fades.any(_ != 0.5) } { "fade times after: " ++ fades.cs }
+		{ true }
+	},
+	teardown: ~radLtClean
+);
+
+// a track load that also changes the chain: the pan starts gliding after the
+// panner's own fade time, with the volume, not after the load's time
+~radTest.("tload-pan-with-chain-starts-at-once",
+	setup: ["start 2", "fx t 2 pch", "fxset t 2 1 pitchRatio 0.5", "pan t 2 -0.5", "vol t 2 -6", "tsave t 2 radtest_ltt"],
+	code: { Radicles.cW.callFunc("tload t 1 radtest_ltt 3"); 1.8.wait; ~radLtMid = Ndef(\spaceTrack1).get(\pan); 3.5.wait },
+	check: {
+		var one = ~radLtStripNow.(\track1), fades = ~radLtFades.(~radLtStrip1);
+		case
+		{ ~radLtMid != -0.5 } { "pan 1.8 s into the load: " ++ ~radLtMid }
+		{ one[\volume] != -6 or: { one[\lags].notNil } } { "track1: " ++ one.cs }
+		{ fades.any(_ != 0.5) } { "fade times after: " ++ fades.cs }
 		{ true }
 	},
 	teardown: ~radLtClean
