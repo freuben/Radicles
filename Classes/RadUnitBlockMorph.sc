@@ -1,59 +1,29 @@
-// Radicles: block morph (Document Model, step 2, PR 4). blkmorph moves a
-// block to one of its presets over time, as fxmorph does for effects:
-//   blkmorph 1 warmLoop             over the global morph time (morphtime 5)
-//   blkmorph 1 warmLoop 4           over 4 seconds
-//   blkmorph 1 warmLoop 4 glide     glide the values (or none: at once)
-//   blkmorph 1 default 4            to the definition's default values
-//   blkmorphtime 1 5                block 1's own morph time (6 Nov 2026)
-// Time: the command's, else the preset's, else the block's own
-// (blkmorphtime), else the global one (morphtime), as for effects. A block
-// keeps its own time while it plays the same definition.
-// Shapes (decided 3 Nov 2026: crossfade is the default for every block):
-//   \xfade: the Ndef's fade time becomes the morph time, then one xset, a
-//     single crossfade between the block as it was and as the preset has it.
-//   \glide: each changed value gets the morph time as its lag, then one set.
+// Radicles: a block preset loaded as a transition (Document Model, step 2,
+// PR 4; "Time in Radicles", 19 Nov 2026). blkload moves a block to one of
+// its presets over time, as fxload does for effects:
+//   blkload 1 warmLoop             a crossfade over block 1's own fade time
+//   blkload 1 warmLoop 4           over 4 seconds
+//   blkload 1 warmLoop 4 glide     glide the values
+//   blkload 1 warmLoop none        at once (as a time of 0)
+//   blkload 1 default 4            to the definition's default values
+// Time: the command's, else the block's own fade time (fade blk 1 4).
+// Shape: the command's, else the preset's morphShape, else xfade (decided
+// 3 Nov 2026: crossfade is the default for every block):
+//   \xfade: one xset, a single crossfade between the block as it was and as
+//     the preset has it, over the Ndef's fade time. Only when another time
+//     was typed is the fade time set to it first, and put back afterwards.
+//   \glide: each changed value gets the time as its lag, then one set.
 //   \none: the values are set at once.
 // A sound-file block that reports its position (RadPosition) keeps its
 // place: before anything makes a new copy of the block (the xset, a lag,
 // a modulator), startPos is set to where the file is, so the new copy
-// carries on from there; once the morph is over startPos goes back
+// carries on from there; once the load is over startPos goes back
 // (PlayBuf reads it only when it starts or is triggered, so that is silent).
-// Refused, with the reason: a preset with another sound file or table
-// (crossfading two files is step 3's strip morph), recording blocks and
-// patterns (no presets), a block playing another definition.
+// A preset with another sound file or table plays the block again with it
+// (RadUnit.loadBlockPreset): a crossfade whatever the shape, over the time
+// typed or the block's fade time, and the file starts where the preset says.
 
 + RadUnit {
-
-	// block N's own morph time (blkmorphtime N 5, or from a preset it
-	// loaded), or nil for the global one. Kept only while the block plays the
-	// definition it was given for (def: the one playing, read if not given)
-	*blockMorphTimeOf {|tag, def|
-		var entry = blockMorphTimes !? {|m| m[tag.asSymbol] };
-		if(entry.isNil, { ^nil });
-		def = def ?? { (Block.liveBlocks ? []).detect{|item| item.notNil and: { item[0] == tag.asSymbol } } !? (_[1]) };
-		^if(def == entry[\def], { entry[\time] }, { nil })
-	}
-
-	// give block N its own morph time; nil goes back to the global one
-	*setBlockMorphTime {|block, time|
-		var tag = this.blockTag(block), unit = this.readBlock(tag);
-		if(unit.isNil, { ("No block " ++ block ++ " playing").warn; ^false });
-		blockMorphTimes = blockMorphTimes ?? { IdentityDictionary.new };
-		if(time.isNil, { blockMorphTimes.removeAt(tag) }, {
-			blockMorphTimes[tag] = (def: unit[\def], time: time.max(0)) });
-		this.sync(tag);
-		^true
-	}
-
-	// forget all blocks' own morph times (Block.clear, Block.removeAll)
-	*clearBlockMorphTimes { blockMorphTimes = nil }
-
-	// posts block N's morph time
-	*postBlockMorphTime {|block|
-		var tag = this.blockTag(block), own = this.blockMorphTimeOf(tag);
-		(RadDoc.addressString(this.address(tag)) ++ " morph time: " ++
-			(own ?? { morphTime.asString ++ " (global)" })).postln;
-	}
 
 	// where block N's file will be when a message sent now reaches the
 	// server, as a startPos (0-1), or nil if the block reports no position.
@@ -101,37 +71,12 @@
 		});
 	}
 
-	// blkmorph N name [time [shape]]: returns true when the morph starts
-	*morphBlockPreset {|block, name, time, shape, action|
-		var tag = this.blockTag(block), current, unit;
-		current = this.prPresetBlock(block, "morph");
-		if(current.isNil, { ^false });
-		unit = this.blockPresetFor(block, current[\def], name);
-		if(unit.isNil, { ^false });
-		if(RadDoc.diff((data: current[\data], buffer: current[\buffer]),
-			(data: unit[\data], buffer: unit[\buffer])).notEmpty, {
-			("blkmorph: " ++ name ++ " has another sound file or table than block " ++ block ++
-				"; morphing between two files comes later (blkload " ++ block ++ " " ++ name ++
-				" loads it, with a crossfade)").warn;
-			^false
-		});
-		//already there
-		if(RadDoc.diff((args: current[\args], mods: current[\mods]), (args: unit[\args], mods: unit[\mods]), 1e-9).isEmpty, {
-			action.(); ^true
-		});
-		time = (time ?? { unit[\morphTime] } ?? { this.blockMorphTimeOf(tag) } ?? { morphTime }).max(0);
-		shape = (shape ?? { unit[\morphShape] } ? \xfade).asSymbol;
-		if([\xfade, \glide, \none].includes(shape).not, {
-			("blkmorph: shape is xfade, glide or none, not " ++ shape).warn; ^false });
-		^this.morphBlockUnit(block, unit, time, shape, action)
-	}
-
-	// morph block N to unit (same definition, file and table) over time with
-	// shape: blkmorph, and tmorph for a track's source (step 4)
+	// bring block N to unit (same definition, file and table) over time with
+	// shape: blkload, and tload for a track's source (step 4)
 	*morphBlockUnit {|block, unit, time, shape, action|
 		var tag = this.blockTag(block), current = this.readBlock(tag), keepPlace, startPos;
 		if(current.isNil, { ("No block " ++ block ++ " playing").warn; ^false });
-		//a sound file keeps its place: startPos is the place while the morph
+		//a sound file keeps its place: startPos is the place while the load
 		//makes new copies, and the preset's afterwards
 		keepPlace = shape != \none and: { Block.reportsPosition(block) }
 		and: { (current[\args] ? ()).includesKey(\startPos) };
@@ -139,7 +84,7 @@
 		if(keepPlace, { unit = unit.deepCopy; unit[\args].removeAt(\startPos) });
 		{
 			var routine = thisThread, restore, setFunc, fade, lagKeys, oldLags, ndef = Ndef(tag), putPlace;
-			this.prStopBlockMorph(tag); //an interrupted morph puts its times back first
+			this.prStopBlockMorph(tag); //an interrupted load puts its times back first
 			putPlace = {
 				if(keepPlace, {
 					("Ndef(" ++ tag.cs ++ ").set('startPos', " ++ startPos.cs ++ ");").radcode });
@@ -152,11 +97,14 @@
 			case
 			{ shape == \xfade } {
 				fade = ndef.fadeTime;
-				restore = {
-					("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ fade.cs ++ ";").radcode;
-					putPlace.();
-				};
-				("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
+				//the block's own fade time: nothing to set or to put back
+				if(time != fade, {
+					restore = {
+						("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ fade.cs ++ ";").radcode;
+						putPlace.();
+					};
+					("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
+				}, { restore = { putPlace.() } });
 				setFunc = {|ndef, pairs|
 					("Ndef(" ++ ndef.key.cs ++ ").xset(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
 				};

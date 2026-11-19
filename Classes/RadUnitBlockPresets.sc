@@ -5,7 +5,9 @@
 // values, its modulators, and its sound file (by name and Play folder) or
 // wavetable (by name); never its position or its block number.
 //   blksave 1 warmLoop          block 1's unit -> your presets for its definition
-//   blkload 1 warmLoop          block 1 to the preset (same definition only)
+//   blkload 1 warmLoop          block 1 to the preset (same definition only),
+//                               a crossfade over the block's fade time
+//   blkload 1 warmLoop 4 glide  over 4 seconds, gliding (see RadUnitBlockMorph.sc)
 //   blkload 1 warmLoop nobuf    the preset's values, keeping block 1's file or table
 //   blkload 1 default           the definition's defaults, no modulators
 // Rules (decided 3 Nov 2026): a preset loads only into a block already
@@ -211,22 +213,69 @@
 			if(current.isNil, { ("Block " ++ block ++ " did not start again").warn; ^false });
 		});
 		this.prApplyArgsMods(Ndef(tag), current, unit, setFunc);
-		//a preset with its own morph time gives it to the block (as for effects)
-		unit[\morphTime] !? {|time| if(time != current[\morphTime], { this.setBlockMorphTime(block, time) }) };
+		//a morphTime in a preset saved before 19 Nov 2026 is ignored
 		^true
 	}
 
-	// blkload N name [nobuf]: loads a preset into the block, then rebuilds its
-	// window if one is open
-	*loadBlockPreset {|block, name, nobuf = false, action|
-		var current = this.prPresetBlock(block, "load into"), unit;
+	// blkload N name [time] [xfade|glide|none] [nobuf]: brings the block to a
+	// preset, then rebuilds its window if one is open. A transition ("Time in
+	// Radicles", 19 Nov 2026): time is the command's, else the block's own
+	// fade time; shape the command's, else the preset's morphShape, else
+	// \xfade; a time of 0 or \none sets the values at once.
+	// - the same sound file and table: the values move as the shape says
+	//   (morphBlockUnit), a sound file keeping its place
+	// - another sound file or table: the block plays again with it, which is
+	//   a crossfade over the block's fade time whatever the shape; when
+	//   another time was typed the fade time is set to it for the change and
+	//   put back once the fade has ended
+	*loadBlockPreset {|block, name, nobuf = false, action, time, shape|
+		var current = this.prPresetBlock(block, "load into"), unit, tag = this.blockTag(block), fade;
 		if(current.isNil, { ^false });
 		unit = this.blockPresetFor(block, current[\def], name, nobuf);
 		if(unit.isNil, { ^false });
+		shape = (shape ?? { unit[\morphShape] } ? \xfade).asSymbol;
+		if([\xfade, \glide, \none].includes(shape).not, {
+			("blkload: shape is xfade, glide or none, not " ++ shape).warn; ^false });
+		fade = Ndef(tag).fadeTime ? 0;
+		time = (time ? fade).max(0);
+		if(time == 0, { shape = \none });
+		//the same file and table: the values move
+		if(RadDoc.diff((data: current[\data], buffer: current[\buffer]),
+			(data: unit[\data], buffer: unit[\buffer])).isEmpty, {
+			//already there
+			if(RadDoc.diff((args: current[\args], mods: current[\mods]),
+				(args: unit[\args], mods: unit[\mods]), 1e-9).isEmpty, {
+				action.(); ^true
+			});
+			^this.morphBlockUnit(block, unit, time, shape, action)
+		});
+		//another file or table: the block plays again, a crossfade
+		if(shape == \glide, {
+			("blkload: " ++ name ++ " has another sound file or table than block " ++ block ++
+				": a crossfade (glide is for values)").postln;
+		});
 		{
+			var routine = thisThread, restore, timed = shape != \none and: { time != fade };
+			this.prStopBlockMorph(tag); //a load still running puts its times back first
+			if(timed, {
+				restore = {
+					//unless it was given another fade time meanwhile
+					if(Ndef(tag).fadeTime == time, {
+						("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ fade.cs ++ ";").radcode });
+				};
+				("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
+				blockMorphs = blockMorphs ?? { IdentityDictionary.new };
+				blockMorphs[tag] = (routine: routine, restore: restore);
+			});
 			if(this.applyBlock(block, unit), {
 				Server.default.sync;
-				Radicles.aZ !? {|az| az.updateSourceWin(this.blockTag(block)) };
+				Radicles.aZ !? {|az| az.updateSourceWin(tag) };
+				//the fade starts one server latency after it is asked for
+				if(timed, { (time + (Server.default.latency ? 0.2) + 0.1).wait });
+			});
+			if(timed and: { blockMorphs !? {|m| m[tag] } !? {|m| m[\routine] === routine } ? false }, {
+				restore.value;
+				blockMorphs.removeAt(tag);
 			});
 			action.();
 		}.fork(AppClock);

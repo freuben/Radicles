@@ -13,7 +13,8 @@
 				bufIndex = filterBuff.flop[0].indicesOfEqual(filterTag);
 				if(bufIndex.notNil, {
 					bufFunc = {
-						(nodeTime+fadeTime).yield;
+						//the old effect fades out over the slot's own fade time
+						(nodeTime + (Ndef(filterTag).fadeTime ? fadeTime)).yield;
 						bufIndex.reverseDo{|index| //from the end, so removeAt keeps earlier indices valid
 							filterBuff.flop[1][index].do{|item|
 								BStore.removeID(item);
@@ -32,7 +33,7 @@
 			replacing = (filters ? []).detect{|item| item[0] == filterTag } !? {|item| item[1] != filter } ? false;
 			wasBypassed = replacing and: { this.isBypassed(filterTag) };
 			if(wasBypassed, { this.prClearBypass(filterTag) });
-			//so is its morph time, which belonged to the effect it replaces
+			//a load still running on the effect it replaces stops
 			if(replacing, { this.prClearMorph(filterTag) });
 			ndefArr = this.getThisTrack(type, num);
 			ndefSpace = ndefArr.last;
@@ -168,12 +169,14 @@
 		}.fork;
 	}
 
-	removeBufFromFilter {arg thisSlot, actionBuf;
+	// fade: the time the removed effect fades out over (its own fade time;
+	// the session's when not given)
+	removeBufFromFilter {arg thisSlot, actionBuf, fade;
 		var cond, bufArrInd;
 		cond = Condition(false);
 		{
 			server.sync;
-			fadeTime.wait;
+			(fade ? fadeTime).wait;
 			if(filterBuff.notNil, {
 				if(filterBuff.notEmpty, {
 					bufArrInd = filterBuff.flop[0].indexOf(thisSlot);
@@ -198,8 +201,7 @@
 
 	removeFilter {arg type=\track, num= 1, slot=1, action, actionBuf;
 		var thisTrack, thisSlot, ndefCS, setArr, thisFilterTag, thisFilterIndex,
-		keyArr, activeMods, modArr, cond;
-		this.globFadeTime;
+		keyArr, activeMods, modArr, cond, slotFade;
 		thisTrack = this.getThisTrack(type, num);
 		if(thisTrack.size > 2, {
 			thisFilterTag = this.findFilterTag(type, num, slot);
@@ -210,7 +212,8 @@
 					this.ndefModClear(thisSlot);
 					this.prClearBypass(thisSlot);
 					this.prClearMorph(thisSlot);
-					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ Ndef(thisSlot).fadeTime ++ ");";
+					slotFade = Ndef(thisSlot).fadeTime;
+					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ slotFade ++ ");";
 					ndefCS.radcode;
 
 					thisTrack.removeAt(thisFilterIndex);
@@ -220,7 +223,7 @@
 					//aqui talvez
 					specs[setArr[0]].removeAt(thisFilterIndex);
 
-					this.removeBufFromFilter(thisSlot, actionBuf);
+					this.removeBufFromFilter(thisSlot, actionBuf, slotFade);
 					filters = filters.reject({|item| item[0] == thisSlot });
 					trackDataArr = trackDataArr.reject({|item| item[0] == thisSlot });
 					trackBufferArr = trackBufferArr.reject({|item| item[0] == thisSlot });

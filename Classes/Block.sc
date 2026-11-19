@@ -180,7 +180,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockCount = 1;
 		liveBuffers = nil;
 		this.prFreePositionBuses;
-		RadUnit.clearBlockMorphTimes;
 		RadUnit.syncBlocks; //document (step 2)
 	}
 
@@ -193,7 +192,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockCount = 1;
 		liveBuffers = nil;
 		this.prFreePositionBuses;
-		RadUnit.clearBlockMorphTimes;
 		RadUnit.syncBlocks; //document (step 2)
 	}
 

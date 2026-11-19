@@ -188,7 +188,7 @@
 	// posted code stay as they are. Changes only what differs. Call inside a
 	// Routine. Returns true when applied. setFunc, if given, sends the effect's
 	// changed plain values instead of one posted set: {|ndef, pairs| ... }
-	// (fxmorph uses it for xset, or lag then set).
+	// (a load uses it for xset, or lag then set).
 	*apply {|tag, unit, az, setFunc|
 		var current, info, cond, pairs;
 		az = az ? Radicles.aZ;
@@ -211,11 +211,7 @@
 			current = this.read(tag, az);
 		});
 		this.prApplyArgsMods(Ndef(tag), current, unit, setFunc);
-		//a preset with its own morph time gives it to the slot; one without
-		//leaves the slot's as it is
-		if(unit[\morphTime].notNil and: { unit[\morphTime] != current[\morphTime] }, {
-			az.setMorphTime(tag, unit[\morphTime]);
-		});
+		//a morphTime in a preset saved before 19 Nov 2026 is ignored
 		^true
 	}
 

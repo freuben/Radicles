@@ -9,12 +9,14 @@
 //   <RadiclesLibs>/<lib>/Settings/Presets/units/track/<name>.scd (read too)
 //   tsave t 1 vox           track 1 -> your track presets (b 1, m, or a mixer position)
 //   tload t 3 vox           the preset onto track 3: source, chain, values, sends
+//   tload t 3 vox 10 glide  ... over 10 seconds, values gliding (a transition:
+//                           see RadUnitTrackMorph.sc; none or 0: at once)
 //   tload t 3 vox nosrc     ... keeping track 3's source
 //   tload t 3 vox nofx      ... keeping track 3's effects
 //   tload t 3 default       a clean strip, its source stopped (nosrc keeps it)
 //   tload                   lists track presets
-// Loading changes only what differs, in this order (design note, 16 Nov):
-// morphs on the strip stop; a preset that mutes mutes first; the source;
+// Loading at once (none, or a time of 0) changes only what differs, in this
+// order (design note, 16 Nov): loads running on the strip stop; a preset that mutes mutes first; the source;
 // the chain (as csload); trim, volume, pan, lags, mixer modulators; the
 // sends; a preset that unmutes unmutes last. Decisions (16 Nov 2026):
 // - the source has no block number: it goes to the block(s) feeding the
@@ -114,7 +116,6 @@
 			//source when loaded (16 Nov 2026)
 			track[\source] = source;
 		});
-		az.trackMorphTimeOf(name) !? {|time| track[\morphTime] = time };
 		^track
 	}
 
@@ -194,9 +195,12 @@
 		^track
 	}
 
-	// tload: the preset onto the strip. Returns false when there is no such
-	// preset or strip.
-	*loadTrackPreset {|type, num, name, nosrc = false, nofx = false, action, az|
+	// tload: the preset onto the strip, as a transition (morphTrack, in
+	// RadUnitTrackMorph.sc): time in seconds, else the strip's own fade time;
+	// shape \xfade, \glide or \none, else the preset's morphShape, else
+	// \xfade; a time of 0 or \none loads at once (applyTrack). Returns false
+	// when there is no such preset or strip.
+	*loadTrackPreset {|type, num, name, nosrc = false, nofx = false, action, az, time, shape|
 		var track;
 		az = az ? Radicles.aZ;
 		if(az.isNil, { "could not find assemblage".warn; ^false });
@@ -206,11 +210,7 @@
 		if(track.isNil, { ^false });
 		//the libraries its effects, blocks and wavetables come from
 		this.useLibraries(this.trackLibraries(track, nosrc, nofx), "tload");
-		{
-			this.applyTrack(type, num, track, nosrc, nofx, az);
-			action.();
-		}.fork(AppClock);
-		^true
+		^this.morphTrack(type, num, track, time, shape, nosrc, nofx, action, az)
 	}
 
 	// bring a strip to a track preset, changing only what differs, in the
@@ -220,7 +220,7 @@
 		az = az ? Radicles.aZ;
 		current = this.readStrip(name, az);
 		if(current.isNil, { ("No " ++ name).warn; ^nil });
-		// 1. morphs running on the strip stop where they are
+		// 1. loads running on the strip stop where they are
 		this.prStopStripMorphs(type, num, az);
 		// 2. a preset that mutes mutes first
 		if(track[\mute] == 1 and: { current[\mute] != 1 }, { az.setMute(type, num, 1) });
@@ -240,7 +240,6 @@
 		if(track[\mute] != 1 and: { this.readStrip(name, az) !? { |s| s[\mute] == 1 } ? false }, { az.setMute(type, num, 0) });
 		// a preset that goes to the master turns the output on last
 		if(track[\output] == \master, { this.prSetOutput(type, num, \master, az) });
-		track[\morphTime] !? {|time| az.setTrackMorphTime(name, time) };
 		Server.default.sync;
 		{ az.mixWinBool({ az.refreshMixGUI }); az.refreshFunc }.defer;
 		if(left.notEmpty, { ("tload " ++ name ++ ": left out " ++ left.join("; ")).warn });
@@ -260,7 +259,7 @@
 		});
 	}
 
-	// stop the morphs running on a strip: its chain's, its slots', and those
+	// stop the loads running on a strip: its chain's, its slots', and those
 	// of the blocks feeding it
 	*prStopStripMorphs {|type, num, az|
 		var name = this.stripName(type, num);

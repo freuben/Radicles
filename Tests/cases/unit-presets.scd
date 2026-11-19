@@ -229,10 +229,10 @@
 	check: { File.exists(RadUnit.presetPath(\filter, \pch, \default)).not or: { "a default file was written" } }
 );
 
-// fxmorph to default
-~radTest.("preset-default-morph",
+// to default over a typed time
+~radTest.("preset-default-timed",
 	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5"],
-	cmds: [["fxmorph t 1 1 default 1", 2.5]],
+	cmds: [["fxload t 1 1 default 1", 2.5]],
 	check: { (Ndef(\filterTrack_1_1).get(\pitchRatio) == 1.0 and: { Ndef(\filterTrack_1_1).fadeTime == 0.5 })
 		or: { "pitchRatio " ++ Ndef(\filterTrack_1_1).get(\pitchRatio) } }
 );

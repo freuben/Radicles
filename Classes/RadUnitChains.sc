@@ -1,20 +1,26 @@
 // Radicles: effect-chain presets (Document Model, step 3, PR 2). A chain
 // preset holds a strip's effects: each slot's effect unit as fxsave writes it
-// (values, modulators, buffer or data by name), whether the slot is bypassed,
-// and the slot's own morph time. Nothing else of the strip (its trim,
+// (values, modulators, buffer or data by name) and whether the slot is
+// bypassed. Nothing else of the strip (its trim,
 // volume, pan, sends and source go with track presets, step 4). One folder
 // for every strip, since a chain belongs to no definition:
 //   <RadiclesFiles>/Settings/Presets/units/chain/<name>.scd   (your own)
 //   <RadiclesLibs>/<lib>/Settings/Presets/units/chain/<name>.scd (read too)
 //   cssave t 1 warmVox      track 1's chain -> your presets
 //   csload t 3 warmVox      the chain onto track 3 (any strip: a bus, the master)
+//   csload t 3 warmVox 8    ... over 8 seconds
+//   csload t 3 warmVox 8 glide   values glide in slots that keep their effect
+//   csload t 3 warmVox none      at once (as a time of 0)
 //   csload t 3 default      an empty chain: every effect on track 3 removed
 //   csload                  lists chain presets
 // Loading changes only what differs: a slot holding the same effect gets the
 // preset's values and modulators (as fxload does), a slot with another effect
 // or none gets the preset's effect, a slot the preset leaves empty is
-// removed, and bypass follows the preset. Chain presets saved before Nov 2026
-// (PresetFile \track) still load, as they did.
+// removed, and bypass follows the preset. Loading is a transition ("Time in
+// Radicles", 19 Nov 2026): a crossfade over the strip's own fade time
+// (Ndef(\track3).fadeTime) unless a time or a shape is typed; see
+// Assemblage:morphChain. Chain presets saved before Nov 2026 (PresetFile
+// \track) still load, at once, as they did.
 
 + RadUnit {
 
@@ -65,7 +71,7 @@
 	}
 
 	// the chain of a strip: (fx: (slot: unit, ...)), the units as the document
-	// has them (with bypass and the slot's morph time)
+	// has them (with bypass)
 	*readChain {|type, num, az|
 		var fx = ();
 		az = az ? Radicles.aZ;
@@ -78,7 +84,7 @@
 				};
 			});
 		};
-		^(fx: fx) ++ (az.chainMorphTimeOf(this.stripName(type, num)) !? {|time| (morphTime: time) } ? ())
+		^(fx: fx)
 	}
 
 	// write a chain as a preset file; returns the path
@@ -153,10 +159,13 @@
 
 	*stripName {|type, num| ^if(type.asSymbol == \master, { \master }, { (type.asString ++ num).asSymbol }) }
 
-	// csload: the preset's chain onto the strip (or an old preset as before).
+	// csload: the preset's chain onto the strip, as a transition (or an old
+	// preset at once, as before). time: seconds, else the strip's own fade
+	// time; shape: \xfade, \glide or \none, else the preset's morphShape,
+	// else \xfade. A time of 0 or \none loads at once (applyChain).
 	// Returns false when there is no such preset.
-	*loadChainPreset {|type, num, name, action, az|
-		var chain;
+	*loadChainPreset {|type, num, name, action, az, time, shape|
+		var chain, strip, typed = time.notNil or: { shape.notNil };
 		az = az ? Radicles.aZ;
 		if(az.isNil, { "could not find assemblage".warn; ^false });
 		if(az.getThisTrack(type, num).isNil, { ("No " ++ this.stripName(type, num)).warn; ^false });
@@ -168,10 +177,23 @@
 		if(chain.isNil, { ^false });
 		//the libraries its effects come from (step 4)
 		this.useLibraries(this.chainLibraries(chain), "csload");
-		{
-			this.applyChain(type, num, chain, az);
-			action.();
-		}.fork(AppClock);
+		strip = this.stripName(type, num);
+		shape = (shape ?? { chain[\morphShape] } ? \xfade).asSymbol;
+		if([\xfade, \glide, \none].includes(shape).not, {
+			("csload: shape is xfade, glide or none, not " ++ shape).warn; ^false });
+		time = (time ?? { Ndef(strip).fadeTime } ? 0).max(0);
+		if(shape == \none or: { time == 0 }, {
+			{
+				//a load still running on the strip or its slots stops first
+				az.prStopMorph(strip);
+				(az.filters ? []).do{|item|
+					if(az.filterTagOnStrip(item[0], type, num), { az.prStopMorph(item[0]) }) };
+				this.applyChain(type, num, chain, az);
+				action.();
+			}.fork(AppClock);
+			^true
+		});
+		az.morphChain(type, num, chain, time, shape, action, typed.not);
 		^true
 	}
 
@@ -216,26 +238,7 @@
 			Server.default.sync;
 			{ az.updateFxWin(tag) }.defer;
 		};
-		//a preset with its own morph time gives it to the strip (as fxload does)
-		chain[\morphTime] !? {|time| az.setChainMorphTime(this.stripName(type, num), time) };
+		//a morphTime in a preset saved before 19 Nov 2026 is ignored
 		{ az.refreshFunc }.defer;
-	}
-
-	// csmorph: morph the strip's chain to a preset (Assemblage:morphChain).
-	// Returns false when there is no such preset.
-	*morphChainPreset {|type, num, name, time, shape, action, az|
-		var chain;
-		az = az ? Radicles.aZ;
-		if(az.isNil, { "could not find assemblage".warn; ^false });
-		if(az.getThisTrack(type, num).isNil, { ("No " ++ this.stripName(type, num)).warn; ^false });
-		if(this.chainPresetExists(name).not, {
-			("No chain preset " ++ name ++ (this.isOldChainPreset(name).if(
-				{ " in the new format (csmorph uses presets saved with cssave since Nov 2026)" }, { "" }))).warn;
-			^false });
-		chain = this.readChainPreset(name);
-		if(chain.isNil, { ^false });
-		this.useLibraries(this.chainLibraries(chain), "csmorph");
-		az.morphChain(type, num, chain, time, shape, action);
-		^true
 	}
 }
