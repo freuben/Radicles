@@ -1,12 +1,8 @@
->> tload t 1 radtest_ltt nofx 2 xfade
-== radpost ==
-Ndef('track1').set('volume', -6, 'lagTime', 2);
-== radpostcont ==
-(none)
-
 >> <code>
 == radpost ==
-Ndef('track1').set('lagTime', 0);
+Ndef('track1').fadeTime = 2;
+Ndef('track1').xset('volume', -6);
+Ndef('track1').fadeTime = 0.5;
 == radpostcont ==
 (none)
 

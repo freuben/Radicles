@@ -1,0 +1,23 @@
+>> <code>
+== radpost ==
+Ndef('inTrack1').fadeTime = 3;
+Ndef('filterTrack_1_1').fadeTime = 3;
+Ndef('track1').fadeTime = 3;
+Ndef('filterTrack_1_1').clear(3);
+Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track1').set('volume', -6, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('spaceTrack1', {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track1', 1), pan) * 3.dbamp;
+});
+Ndef('spaceTrack1').set('pan', -0.5);
+Ndef('track1').xset('volume', 0);
+Ndef('spaceTrack1').fadeTime = 3;
+Ndef('spaceTrack1').xset('pan', 0);
+Ndef('inTrack1').fadeTime = 0.5;
+Ndef('track1').fadeTime = 0.5;
+Ndef('spaceTrack1').fadeTime = 0.5;
+== radpostcont ==
+(none)
+
