@@ -202,6 +202,8 @@
 	removeFilter {arg type=\track, num= 1, slot=1, action, actionBuf;
 		var thisTrack, thisSlot, ndefCS, setArr, thisFilterTag, thisFilterIndex,
 		keyArr, activeMods, modArr, cond, slotFade;
+		//(it used to put every strip's fade time back to the session's here,
+		//which wiped the fade times single things were given)
 		thisTrack = this.getThisTrack(type, num);
 		if(thisTrack.size > 2, {
 			thisFilterTag = this.findFilterTag(type, num, slot);
