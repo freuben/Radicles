@@ -533,7 +533,7 @@
 		Radicles.cW.callFunc("tload t 1 default 3"); 1.5.wait;
 		~radLtMid = [~radLtFx1.(), Ndef(\block1).source.notNil, Ndef(\track1).get(\volume), Ndef(\track1).fadeTime,
 			Ndef(\spaceTrack1).get(\pan)];
-		4.wait },
+		5.5.wait },
 	check: {
 		case
 		{ ~radLtMid != [true, true, -inf, 3, -0.5] } { "1.5 s into the load (effect, block, volume, fade time, pan): " ++ ~radLtMid.cs }
@@ -581,11 +581,14 @@
 ~radTest.("tload-onto-empty-silent-while-built",
 	setup: ~radLtWhole ++ ["tsave t 1 radtest_ltt"],
 	code: {
-		Radicles.cW.callFunc("tload t 2 radtest_ltt 3"); 0.15.wait;
+		var waited = 0;
+		Radicles.cW.callFunc("tload t 2 radtest_ltt 3"); 0.1.wait;
 		~radLtMid = [Ndef(\track2).get(\volume)];
-		1.6.wait;
+		//however long the build takes on this machine
+		while({ Ndef(\track2).get(\volume) == -inf and: { waited < 8 } }, { 0.05.wait; waited = waited + 0.05 });
+		0.3.wait;
 		~radLtMid = ~radLtMid ++ [Ndef(\track2).get(\volume), Ndef(\track2).fadeTime];
-		4.wait },
+		4.5.wait },
 	check: {
 		case
 		{ ~radLtMid != [-inf, -6, 3] } { "volume at the start, then volume and fade time during the fade: " ++ ~radLtMid.cs }
@@ -611,4 +614,66 @@
 		{ true }
 	},
 	teardown: ~radLtClean
+);
+
+// the same line typed again during the fade-out: the fade goes on to its
+// end, the track is not emptied early
+~radTest.("tload-default-twice",
+	setup: ~radLtWhole,
+	code: {
+		Radicles.cW.callFunc("tload t 1 default 3"); 1.wait;
+		Radicles.cW.callFunc("tload t 1 default 3"); 1.wait;
+		~radLtMid = [~radLtFx1.(), Ndef(\block1).source.notNil];
+		4.5.wait },
+	check: {
+		case
+		{ ~radLtMid != [true, true] } { "2 s into the fade (effect, block): " ++ ~radLtMid.cs }
+		{ ~radLtFx1.() or: { Ndef(\block1).source.notNil } } { "not emptied at the end" }
+		{ Ndef(\track1).get(\volume) != 0 } { "volume after: " ++ Ndef(\track1).get(\volume) }
+		{ Ndef(\track1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\track1).fadeTime }
+		{ true }
+	}
+);
+
+// a block with a longer fade time than the strip: the volume comes back
+// only once the stopped block has faded
+~radTest.("tload-default-waits-for-block-fade",
+	setup: ~radLtWhole ++ ["fade blk 1 3"],
+	code: {
+		Radicles.cW.callFunc("tload t 1 default 1"); 2.8.wait;
+		~radLtMid = [Ndef(\block1).source.isNil, Ndef(\track1).get(\volume)];
+		3.5.wait },
+	check: {
+		case
+		{ ~radLtMid != [true, -inf] } { "2.8 s in (block stopped, volume): " ++ ~radLtMid.cs }
+		{ Ndef(\track1).get(\volume) != 0 } { "volume after: " ++ Ndef(\track1).get(\volume) }
+		{ true }
+	}
+);
+
+// a pattern is not stopped by a preset with no source, so the track does
+// not fade out (it would come back at full level)
+~radTest.("tload-default-pattern-does-not-fade-out",
+	setup: ["start 2", ["pn 1 test1", 2]],
+	code: {
+		Radicles.cW.callFunc("tload t 1 default 2"); 1.wait;
+		~radLtMid = Ndef(\track1).get(\volume);
+		2.5.wait },
+	check: {
+		case
+		{ ~radLtMid != 0 } { "volume 1 s into the load: " ++ ~radLtMid }
+		{ Ndef(\block1).source.isNil } { "the pattern stopped" }
+		{ true }
+	},
+	teardown: { if(Ndef(\block1).source.notNil, { Radicles.cW.callFunc("st 1"); 1.wait }) }
+);
+
+// t rm during the fade-out stops the load: no error, the track is gone
+~radTest.("t-rm-during-fade-out",
+	setup: ~radLtWhole,
+	code: {
+		Radicles.cW.callFunc("tload t 1 default 3"); 1.wait;
+		Radicles.cW.callFunc("t rm 1"); 5.wait },
+	check: { Radicles.aZ.mixTrackNames.includes(\track1).not or: { "track 1 is still there" } },
+	noWarnings: true
 );

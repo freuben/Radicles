@@ -9,6 +9,9 @@ Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 Radicles.selLibs(["Main", "RadTestLib"]);
+Ndef('track2').set('volume', -inf, 'lagTime', 0.1);
+Ndef('block2', {arg freq = 220, mul = 0.1; SinOsc.ar(freq, 0, mul)});
+Ndef('block2').xset('mul', 0.1, 'freq', 220);
 Ndef.ar('filterTrack_2_1', 1);
 Ndef('filterTrack_2_1').fadeTime = 0.5;
 Ndef('filterTrack_2_1', {arg gain = 1; Ndef.ar('inTrack2', 1) * gain});
@@ -16,9 +19,9 @@ Ndef('filterTrack_2_1').set('gain', 1);
 Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('filterTrack_2_1', 1) * volume.dbamp.lag(lagTime)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
-Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
-Ndef('block2', {arg freq = 220, mul = 0.1; SinOsc.ar(freq, 0, mul)});
-Ndef('block2').xset('mul', 0.1, 'freq', 220);
+Ndef('track2').set('volume', -inf, 'lagTime', 0.1, 'mute', 0, 'solo', 1);
+Ndef('track2').set('lagTime', 0);
+Ndef('track2').xset('volume', 0);
 == radpostcont ==
 (none)
 

@@ -1,7 +1,8 @@
 >> tload t 2 radtest_tm10 1 nosrc nofx
 == radpost ==
-Ndef('track2').set('volume', -6, 'lagTime', 1);
-Ndef('track2').set('lagTime', 0);
+Ndef('track2').fadeTime = 1;
+Ndef('track2').xset('volume', -6);
+Ndef('track2').fadeTime = 0.5;
 == radpostcont ==
 (none)
 

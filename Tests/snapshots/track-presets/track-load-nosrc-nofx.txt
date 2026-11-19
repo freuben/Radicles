@@ -12,8 +12,7 @@ Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('filterTrack_2_1', 1) * volume.dbamp.lag(lagTime)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
-Ndef('track2').set('volume', -6, 'lagTime', 0.5);
-Ndef('track2').set('lagTime', 0);
+Ndef('track2').xset('volume', -6);
 == radpostcont ==
 (none)
 
@@ -21,8 +20,7 @@ Ndef('track2').set('lagTime', 0);
 == radpost ==
 Ndef('block3', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
 Ndef('block3').xset('freq', 440, 'phase', 0, 'mul', 0.4);
-Ndef('track3').set('volume', -6, 'lagTime', 0.5);
-Ndef('track3').set('lagTime', 0);
+Ndef('track3').xset('volume', -6);
 == radpostcont ==
 (none)
 

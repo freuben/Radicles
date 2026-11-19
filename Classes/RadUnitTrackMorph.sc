@@ -137,8 +137,11 @@
 		if(input.any{|key| this.isBlockTag(key).not }, { ^nil }); //fed by something else
 		playing = input.select{|key| Ndef(key).source.notNil };
 		if(track[\source].isEmpty, {
-			^if(playing.notEmpty and: { playing.every{|key|
-				this.prBlockShared(key.asString.divNumStr[1].asInteger, num, az).not } }, { \out }, { nil })
+			//only when every block that plays will really be stopped (a
+			//pattern, or a block that also feeds another track, plays on:
+			//the track must not come back with it at full level)
+			^if(playing.notEmpty and: { playing.every{|key| this.readBlock(key).notNil and: {
+				this.prBlockShared(key.asString.divNumStr[1].asInteger, num, az).not } } }, { \out }, { nil })
 		});
 		^if(playing.isEmpty, { \in }, { nil })
 	}
@@ -150,21 +153,24 @@
 		var name = this.stripName(type, num), key = this.stripKeys(name)[1], latency = (Server.default.latency ? 0.2) + 0.1;
 		var routine = thisThread, restores = List.new, morph, current, silent, volume = track[\volume] ? 0;
 		var volMod = if(track[\default] == true, { nil }, { (track[\mods] ? ())[\volume] });
-		//applyTrack stops the loads running on the strip, this one included:
-		//it is taken off the list first, and put back for the fade after it
-		var apply = {
-			if(this.prTrackMorphs[name] === morph, { trackMorphs.removeAt(name) });
-			this.applyTrack(type, num, silent, false, nofx, az);
-			this.prTrackMorphs[name] = morph;
-		};
+		var before = this.prTrackMorphs[name], silentAt, going, tail;
+		//applyTrack stops the loads running on the strip, but not this one
+		//(it stays on the list, so another tload or t rm still stops it)
+		var apply = { this.applyTrack(type, num, silent, false, nofx, az, false) };
 		var fade = {|value|
 			Radicles.holdFade(key, time);
 			restores.add({ Radicles.releaseFade(key) });
 			("Ndef(" ++ key.cs ++ ").xset('volume', " ++ value.cs ++ ");").radcode;
 			{ az.mixWinBool({ az.refreshMixGUI }) }.defer;
+			if(value == -inf, { morph[\silentAt] = Main.elapsedTime + time + latency });
 			(time + latency).wait;
+			morph.removeAt(\silentAt);
 			restores.do(_.value); restores.clear;
 		};
+		//a fade-out already on its way on this strip (the same line typed
+		//again, or another preset with no source): its volume reads -inf
+		//from the start, so the time it has left is taken from the load
+		silentAt = before !? {|m| m[\silentAt] };
 		this.prStopTrackMorph(name);
 		this.prStopStripMorphs(type, num, az);
 		morph = (routine: routine, subs: [], restore: { restores.do(_.value) });
@@ -179,14 +185,29 @@
 		silent[\mods] = (track[\mods] ? ()).copy;
 		silent[\mods].removeAt(\volume);
 		if(way == \out, {
-			//nothing to fade when the track is muted or already silent
-			if(current[\mute] != 1 and: { current[\volume] != -inf }, { fade.(-inf) });
+			//what will go, for the longest of their fade times: the blocks
+			//(Block.stop fades over the block's own) and the effects
+			going = (this.readInput(name, az) ? []).select{|k| this.isBlockTag(k) };
+			if(nofx.not, { going = going ++ (az.filters ? []).collect(_[0]).select{|tag| az.filterTagOnStrip(tag, type, num) } });
+			tail = (going.collect{|k| Radicles.ownFade(k) } ++ [Radicles.ownFade(name)]).maxItem;
+			case
+			//nothing to fade when the track is muted
+			{ current[\mute] == 1 } { }
+			{ silentAt.notNil } {
+				morph[\silentAt] = silentAt;
+				(silentAt - Main.elapsedTime).max(0).wait;
+				morph.removeAt(\silentAt);
+			}
+			//or already silent
+			{ current[\volume] != -inf } { fade.(-inf) };
 			apply.();
 			//what was removed has gone before the volume comes back
-			(Radicles.ownFade(name) + latency).wait;
-			this.prApplyStripValues(type, num, track, az);
+			(tail + latency).wait;
+			if(this.readStrip(name, az).notNil, { this.prApplyStripValues(type, num, track, az) });
 		}, {
-			if(current[\volume] != -inf, { az.setVolume(type, num, -inf, 0) });
+			//silent first, over a tenth of a second: a block that was just
+			//stopped, or an effect's tail, may still sound, and a cut clicks
+			if(current[\volume] != -inf, { az.setVolume(type, num, -inf, 0.1); 0.15.wait });
 			apply.();
 			Server.default.sync;
 			latency.wait;
