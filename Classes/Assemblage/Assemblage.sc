@@ -907,8 +907,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					inputs[thisBusIndLabel][1] = newLabelArr;
 				});
 				//the senders after the one leaving move up a place: so do their values
-				this.prRenumberSends(Ndef(oldLabel), oldLabelArr, newLabelArr);
-				("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radcode;
+				//(not when the bus itself is going: its input is cleared with
+				//its last sender, and rebuilding it just before that asked the
+				//server for a synth whose SynthDef the clear had already freed)
+				if(clearTrack.not, {
+					this.prRenumberSends(Ndef(oldLabel), oldLabelArr, newLabelArr);
+					("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radcode;
+				});
 			});
 			//look the bus input up again: entries may have been removed above
 			spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
