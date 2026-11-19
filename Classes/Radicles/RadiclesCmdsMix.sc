@@ -57,6 +57,124 @@
 		this.prNdefCmds;
 		this.prMixModStringCmds;
 		this.prPanCmds;
+		this.prTrackPresetCmds;
+	}
+
+	// tsave, tload: track presets (Document Model, step 4: RadUnitTracks.sc).
+	// tload / tload t list them; tsave t 1 name; tload t 1 name|default
+	// [nosrc] [nofx]; t 1 can be b 1, m, or a mixer position (tload 3 name)
+	*prTrackPresetCmds {
+		var stripOf, mixOf, save, load, optsOf, morph, trackTime;
+		stripOf = {|str2, num1|
+			case
+			{str2 == 't'} {[\track, num1]}
+			{str2 == 'b'} {[\bus, num1]}
+			{str2 == 'm'} {[\master, 1]}
+			{ ("tload/tsave: t, b or m, not " ++ str2).warn; nil };
+		};
+		mixOf = {|num1|
+			var trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr}, thisArr;
+			if(num1 <= trackArr.size and: { num1 >= 1 }, {
+				thisArr = trackArr[num1-1];
+				[thisArr[0].asSymbol, thisArr[1] ? 1]
+			}, { "track not found".warn; nil });
+		};
+		//nosrc and nofx, in any order; nil (and a warning) for anything else
+		optsOf = {|opts|
+			var bad = opts.reject{|opt| [\nosrc, \nofx].includes(opt.asSymbol) };
+			if(bad.notEmpty, { ("tload: options are nosrc and nofx, not " ++ bad.join(", ")).warn; nil }, {
+				[opts.includes(\nosrc), opts.includes(\nofx)] });
+		};
+		save = {|strip, name|
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				strip !? { RadUnit.saveTrackPreset(strip[0], strip[1], name, az: aZ) } });
+		};
+		load = {|strip, name, opts|
+			var flags = optsOf.(opts.collect(_.asSymbol));
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				if(strip.notNil and: { flags.notNil }, {
+					RadUnit.loadTrackPreset(strip[0], strip[1], name, flags[0], flags[1], az: aZ) });
+			});
+		};
+		cW.add(\tload, [\str], {|str1| RadUnit.postTrackPresets }, "tload: lists track presets");
+		cW.add(\tload, [\str, \str], {|str1, str2| RadUnit.postTrackPresets }, "tload: [trackType] lists track presets");
+		[[], [\str], [\str, \str]].do{|extra|
+			var post = ["", ", option", ", option, option"][extra.size];
+			cW.add(\tload, [\str, \str, \str] ++ extra, {|str1, str2, str3 ... opts|
+				load.(stripOf.(str2, 1), str3, opts);
+			}, "tload: trackType, preset" ++ post);
+			cW.add(\tload, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3 ... opts|
+				load.(stripOf.(str2, num1), str3, opts);
+			}, "tload: trackType, trackNum, preset" ++ post);
+			cW.add(\tload, [\str, \num, \str] ++ extra, {|str1, num1, str2 ... opts|
+				if(aZ.notNil, { load.(mixOf.(num1), str2, opts) }, { "could not find assemblage".warn });
+			}, "tload: mixTrackNum, preset" ++ post);
+		};
+		//tmorph t 3 vox [time] [xfade|glide|none] [nosrc] [nofx] (step 4, PR 3):
+		//after the preset's name, a number is the time; xfade, glide or none
+		//the shape; nosrc and nofx as for tload
+		morph = {|strip, name, rest|
+			var time, shape, opts = [], bad = [];
+			rest.do{|item|
+				case
+				{ item.isNumber } { time = item }
+				{ [\xfade, \glide, \none].includes(item.asSymbol) } { shape = item.asSymbol }
+				{ [\nosrc, \nofx].includes(item.asSymbol) } { opts = opts.add(item.asSymbol) }
+				{ bad = bad.add(item) };
+			};
+			case
+			{ aZ.isNil } { "could not find assemblage".warn }
+			{ bad.notEmpty } { ("tmorph: after the preset, a time, xfade|glide|none, nosrc, nofx; not " ++ bad.join(", ")).warn }
+			{ strip.notNil } {
+				RadUnit.morphTrackPreset(strip[0], strip[1], name, time, shape, opts.includes(\nosrc), opts.includes(\nofx), az: aZ) };
+		};
+		[[], [\num], [\str], [\num, \str], [\str, \str], [\num, \str, \str], [\str, \str, \str], [\num, \str, \str, \str]].do{|extra|
+			cW.add(\tmorph, [\str, \str, \str] ++ extra, {|str1, str2, str3 ... rest|
+				morph.(stripOf.(str2, 1), str3, rest);
+			}, "tmorph: m, preset [time] [shape] [nosrc] [nofx]");
+			cW.add(\tmorph, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3 ... rest|
+				morph.(stripOf.(str2, num1), str3, rest);
+			}, "tmorph: trackType, trackNum, preset [time] [shape] [nosrc] [nofx]");
+			cW.add(\tmorph, [\str, \num, \str] ++ extra, {|str1, num1, str2 ... rest|
+				if(aZ.notNil, { morph.(mixOf.(num1), str2, rest) }, { "could not find assemblage".warn });
+			}, "tmorph: mixTrackNum, preset [time] [shape] [nosrc] [nofx]");
+		};
+		//tmorphtime t 1 5: the strip's own track morph time; tmorphtime t 1
+		//posts it; tmorphtime t 1 default goes back to the global morphtime
+		trackTime = {|strip, time|
+			var name;
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				strip !? {
+					name = RadUnit.stripName(strip[0], strip[1]);
+					if(time.notNil, { aZ.setTrackMorphTime(name, if(time == \default, nil, { time.max(0) })) });
+					(name ++ " track morph time: " ++ (aZ.trackMorphTimeOf(name) ?? { RadUnit.morphTime.asString ++ " (global)" })).postln;
+				};
+			});
+		};
+		cW.add(\tmorphtime, [\str, \str], {|str1, str2| trackTime.(stripOf.(str2, 1)) },
+			"tmorphtime: m (posts it)");
+		cW.add(\tmorphtime, [\str, \str, \num], {|str1, str2, num1|
+			if(str2 == 'm', { trackTime.(stripOf.(str2, 1), num1) }, { trackTime.(stripOf.(str2, num1)) });
+		}, "tmorphtime: trackType, trackNum (posts it), or m, time");
+		cW.add(\tmorphtime, [\str, \str, \str], {|str1, str2, str3|
+			if(str3 == 'default', { trackTime.(stripOf.(str2, 1), \default) }, { "tmorphtime: a time or default".warn });
+		}, "tmorphtime: m, default");
+		cW.add(\tmorphtime, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			trackTime.(stripOf.(str2, num1), num2);
+		}, "tmorphtime: trackType, trackNum, time");
+		cW.add(\tmorphtime, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+			if(str3 == 'default', { trackTime.(stripOf.(str2, num1), \default) }, { "tmorphtime: a time or default".warn });
+		}, "tmorphtime: trackType, trackNum, default");
+
+		cW.add(\tsave, [\str, \str, \str], {|str1, str2, str3|
+			save.(stripOf.(str2, 1), str3);
+		}, "tsave: trackType, preset");
+		cW.add(\tsave, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+			save.(stripOf.(str2, num1), str3);
+		}, "tsave: trackType, trackNum, preset");
+		cW.add(\tsave, [\str, \num, \str], {|str1, num1, str2|
+			if(aZ.notNil, { save.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
+		}, "tsave: mixTrackNum, preset");
 	}
 
 	// mixnames, t, b: track names, adding and removing tracks and buses
@@ -77,23 +195,23 @@
 					aZ.autoAddTrack(\track, 1, action: {|item|
 						var ndefKey;
 						ndefKey = item[0][0];
-						Block.add(Ndef(item[0][0]).numChannels, {|item|
-							aZ.input(item, \track, ndefKey.asString.divNumStr[1]);
+						Block.forTrack(ndefKey.asString.divNumStr[1], {
 							{aZ.refreshFunc}.defer;
 						});
 					});
 				}
-				{str2 == 'rmv'} {
+				{str2 == 'rm'} {
 					getTrack = (aZ.mixTrackNames.select{|item|
 						item.asString.contains("track")
 					}.last).asString.divNumStr;
 					aZ.removeTrack(\track, getTrack[1]);
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: ['names', 'add', 'rmv']");
+		}, "track: ['names', 'add', 'rm']");
 
 		cW.add(\b, [\str, \str], {|str1, str2|
 			var getTrack;
@@ -102,17 +220,18 @@
 				{str2 == 'add'} {
 					aZ.autoAddTrack(\bus, 1);
 				}
-				{str2 == 'rmv'} {
+				{str2 == 'rm'} {
 					getTrack = (aZ.mixTrackNames.select{|item|
 						item.asString.contains("bus");
 					}.last).asString.divNumStr;
 					aZ.removeTrack(\bus, getTrack[1]);
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "bus: ['add', 'rmv']");
+		}, "bus: ['add', 'rm']");
 
 		cW.add(\t, [\str, \str, \num], {|str1, str2, num1|
 			var cond, getTrack;
@@ -123,9 +242,7 @@
 					aZ.autoAddTrack(\track, num1, action: {|item|
 						var ndefKey;
 						ndefKey = item[0][0];
-						Block.add(Ndef(item[0][0]).numChannels, {|item|
-							aZ.input(item, \track, ndefKey.asString.divNumStr[1]);
-						});
+						Block.forTrack(ndefKey.asString.divNumStr[1]);
 					});
 				}
 				{str2 == 'addn'} {
@@ -134,8 +251,7 @@
 						aZ.autoAddTrack(\track, action: {|item|
 							var ndefKey;
 							ndefKey = item[0][0];
-							Block.add(Ndef(item[0][0]).numChannels, {|it|
-								aZ.input(it, \track, ndefKey.asString.divNumStr[1]);
+							Block.forTrack(ndefKey.asString.divNumStr[1], {
 								server.sync;
 								cond.test = true; cond.signal;
 							});
@@ -146,7 +262,10 @@
 					{aZ.refreshFunc}.defer; //only if the mixer is open
 					}.fork;
 				}
-				{str2 == 'rmvn'} {
+				{str2 == 'rm'} {
+					aZ.removeTrack(\track, num1);
+				}
+				{str2 == 'rmn'} {
 					{num1.do{
 						cond.test = false;
 						getTrack = (aZ.mixTrackNames.select{|item|
@@ -157,11 +276,12 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: add, chanNum");
+		}, "track: ['add', 'addn', 'rm', 'rmn'], [chanNum, number, track, number]");
 
 		cW.add(\b, [\str, \str, \num], {|str1, str2, num1|
 			var cond, getTrack;
@@ -178,7 +298,10 @@
 						cond.wait;
 					};}.fork;
 				}
-				{str2 == 'rmvn'} {
+				{str2 == 'rm'} {
+					aZ.removeTrack(\bus, num1);
+				}
+				{str2 == 'rmn'} {
 					{num1.do{
 						cond.test = false;
 						getTrack = (aZ.mixTrackNames.select{|item|
@@ -189,18 +312,19 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "bus: add, chanNum");
+		}, "bus: ['add', 'addn', 'rm', 'rmn'], [chanNum, number, bus, number]");
 
 		cW.add(\t, [\str, \str, \arr], {|str1, str2, arr1|
 			var cond;
 			cond = Condition.new(false);
 			if(aZ.notNil, {
 				case
-				{str2 == 'rmvn'} {
+				{str2 == 'rm'} {
 					{arr1.do{|item|
 						cond.test = false;
 						aZ.removeTrack(\track, item,
@@ -208,18 +332,19 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: rmvn,");
+		}, "track: rm, [tracks]");
 
 		cW.add(\b, [\str, \str, \arr], {|str1, str2, arr1|
 			var cond;
 			cond = Condition.new(false);
 			if(aZ.notNil, {
 				case
-				{str2 == 'rmvn'} {
+				{str2 == 'rm'} {
 					{arr1.do{|item|
 						cond.test = false;
 						aZ.removeTrack(\bus, item,
@@ -227,11 +352,52 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: rmvn,");
+		}, "bus: rm, [buses]");
+
+		cW.add(\t, [\str, \str, \dash], {|str1, str2, arr1|
+			var cond;
+			cond = Condition.new(false);
+			if(aZ.notNil, {
+				case
+				{str2 == 'rm'} {
+					{arr1.do{|item|
+						cond.test = false;
+						aZ.removeTrack(\track, item,
+							{cond.test = true; cond.signal});
+						cond.wait;
+					};}.fork;
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "track: rm, firstTrack-lastTrack");
+
+		cW.add(\b, [\str, \str, \dash], {|str1, str2, arr1|
+			var cond;
+			cond = Condition.new(false);
+			if(aZ.notNil, {
+				case
+				{str2 == 'rm'} {
+					{arr1.do{|item|
+						cond.test = false;
+						aZ.removeTrack(\bus, item,
+							{cond.test = true; cond.signal});
+						cond.wait;
+					};}.fork;
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "bus: rm, firstBus-lastBus");
 
 		cW.add(\t, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			var cond;
@@ -244,8 +410,7 @@
 						aZ.autoAddTrack(\track, num2, action: {|item|
 							var ndefKey;
 							ndefKey = item[0][0];
-							Block.add(Ndef(item[0][0]).numChannels, {|it|
-								aZ.input(it, \track, ndefKey.asString.divNumStr[1]);
+							Block.forTrack(ndefKey.asString.divNumStr[1], {
 								server.sync;
 								cond.test = true; cond.signal;
 							});
@@ -255,7 +420,9 @@
 					};
 					{aZ.refreshFunc}.defer; //only if the mixer is open
 					}.fork;
-				};
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -272,7 +439,9 @@
 						aZ.autoAddTrack(\bus, num2, action: {cond.test = true; cond.signal});
 						cond.wait;
 					};}.fork;
-				};
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -359,7 +528,7 @@
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
 				aZ.setVolume(trackArr[0], trackArr[1], num2);
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vol: masterTrackNum, value");
 
@@ -369,7 +538,7 @@
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
 				aZ.setVolumeLag(trackArr[0], trackArr[1], num2);
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vollag: masterTrackNum, value");
 
@@ -379,7 +548,7 @@
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
 				aZ.setPan(trackArr[0], trackArr[1], num2);
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, value");
 
@@ -389,7 +558,7 @@
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
 				aZ.setPanLag(trackArr[0], trackArr[1], num2);
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "panlag: masterTrackNum, value");
 
@@ -399,7 +568,7 @@
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
 				aZ.setTrim(trackArr[0], trackArr[1], num2);
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trim: masterTrackNum, value");
 
@@ -409,7 +578,7 @@
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
 				aZ.setTrimLag(trackArr[0], trackArr[1], num2);
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trimlag: masterTrackNum, value");
 		//dash for multiple tracks
@@ -504,7 +673,7 @@
 					aZ.setVolume(trackArr[0], trackArr[1], num1);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vol: masterTrackNum, value");
 
@@ -516,7 +685,7 @@
 					aZ.setVolumeLag(trackArr[0], trackArr[1], num1);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vollag: masterTrackNum, value");
 
@@ -528,7 +697,7 @@
 					aZ.setPan(trackArr[0], trackArr[1], num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, value");
 
@@ -540,7 +709,7 @@
 					aZ.setPanLag(trackArr[0], trackArr[1], num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "panlag: masterTrackNum, value");
 
@@ -552,7 +721,7 @@
 					aZ.setTrim(trackArr[0], trackArr[1], num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trim: masterTrackNum, value");
 
@@ -564,7 +733,7 @@
 					aZ.setTrimLag(trackArr[0], trackArr[1], num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trimlag: masterTrackNum, value");
 		//arrays instead of dashes
@@ -660,7 +829,7 @@
 					aZ.setVolume(trackArr[0], trackArr[1], num1);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vol: masterTrackNum, value");
 
@@ -672,7 +841,7 @@
 					aZ.setVolumeLag(trackArr[0], trackArr[1], num1);
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vollag: masterTrackNum, value");
 
@@ -684,7 +853,7 @@
 					aZ.setPan(trackArr[0], trackArr[1], num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, value");
 
@@ -696,7 +865,7 @@
 					aZ.setPanLag(trackArr[0], trackArr[1], num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "panlag: masterTrackNum, value");
 
@@ -708,7 +877,7 @@
 					aZ.setTrim(trackArr[0], trackArr[1], num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trim: masterTrackNum, value");
 
@@ -720,7 +889,7 @@
 					aZ.setTrimLag(trackArr[0], trackArr[1], num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trimlag: masterTrackNum, value");
 		//bulk track controls
@@ -1326,8 +1495,9 @@
 		cW.add(\sndry, [\str, \str, \num, \num, \num, \num], {|str1, str2, num1, num2, num3, num4|
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.setSend(\track, num1, num2, num3, num4);}
-				{str2 == 'b'} {aZ.setSend(\bus, num1, num2, num3, num4);}
+				//dry: the track's output to the master goes off, as in the other forms
+				{str2 == 't'} {aZ.setSend(\track, num1, num2, num3, num4, false);}
+				{str2 == 'b'} {aZ.setSend(\bus, num1, num2, num3, num4, false);}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -2231,7 +2401,7 @@
 				if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
 				aZ.modMix(trackArr[0], trackArr[1], \vol, modArgs[0], modArgs[1], modifier: modifier)
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vol: masterTrackNum, mod");
 
@@ -2243,7 +2413,7 @@
 				if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
 				aZ.modMix(trackArr[0], trackArr[1], \pan, modArgs[0], modArgs[1], modifier: modifier)
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, mod");
 
@@ -2255,7 +2425,7 @@
 				if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
 				aZ.modMix(trackArr[0], trackArr[1], \trim, modArgs[0], modArgs[1], modifier: modifier)
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trim: masterTrackNum, mod");
 
@@ -2321,13 +2491,13 @@
 			var trackArr, modArgs, modifier;
 			if(aZ.notNil, {
 				dash.do{|item|
-					trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-					modArgs = str2.asString.radStringMod;
-					if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
-					{aZ.modMix(trackArr[0], trackArr[1], \vol, modArgs[0], modArgs[1], modifier: modifier)}.defer;
+					{trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
+						modArgs = str2.asString.radStringMod;
+						if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
+						aZ.modMix(trackArr[0], trackArr[1], \vol, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vol: masterTrackNum, mod");
 
@@ -2335,13 +2505,13 @@
 			var trackArr, modArgs, modifier;
 			if(aZ.notNil, {
 				dash.do{|item|
-					trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-					modArgs = str2.asString.radStringMod;
-					if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
-					{aZ.modMix(trackArr[0], trackArr[1], \pan, modArgs[0], modArgs[1], modifier: modifier)}.defer;
+					{trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
+						modArgs = str2.asString.radStringMod;
+						if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
+						aZ.modMix(trackArr[0], trackArr[1], \pan, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, mod");
 
@@ -2349,13 +2519,13 @@
 			var trackArr, modArgs, modifier;
 			if(aZ.notNil, {
 				dash.do{|item|
-					trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-					modArgs = str2.asString.radStringMod;
-					if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
-					{aZ.modMix(trackArr[0], trackArr[1], \trim, modArgs[0], modArgs[1], modifier: modifier)}.defer;
+					{trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
+						modArgs = str2.asString.radStringMod;
+						if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
+						aZ.modMix(trackArr[0], trackArr[1], \trim, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trim: masterTrackNum, mod");
 
@@ -2427,7 +2597,7 @@
 						aZ.modMix(trackArr[0], trackArr[1], \vol, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "vol: masterTrackNum, value");
 
@@ -2441,7 +2611,7 @@
 						aZ.modMix(trackArr[0], trackArr[1], \pan, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, value");
 
@@ -2455,7 +2625,7 @@
 						aZ.modMix(trackArr[0], trackArr[1], \trim, modArgs[0], modArgs[1], modifier: modifier)}.defer;
 				};
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "trim: masterTrackNum, value");
 
@@ -2670,7 +2840,7 @@
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
 				aZ.setPan(trackArr[0], trackArr[1], num3, num2);
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, value");
 
@@ -2680,7 +2850,7 @@
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
 				aZ.setPanLag(trackArr[0], trackArr[1], num3, num2);
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "panlag: masterTrackNum, value");
 
@@ -2719,7 +2889,7 @@
 					aZ.setPan(trackArr[0], trackArr[1], num2, num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, value");
 
@@ -2731,7 +2901,7 @@
 					aZ.setPanLag(trackArr[0], trackArr[1], num2, num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "panlag: masterTrackNum, value");
 
@@ -2771,7 +2941,7 @@
 					aZ.setPan(trackArr[0], trackArr[1], num2, num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, value");
 
@@ -2783,7 +2953,7 @@
 					aZ.setPanLag(trackArr[0], trackArr[1], num2, num1);
 				}
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "panlag: masterTrackNum, value");
 
@@ -2880,7 +3050,7 @@
 				if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
 				aZ.modMix(trackArr[0], trackArr[1], keyValues, modArgs[0], modArgs[1], modifier: modifier)
 			}, {
-				"assemblage is already running".warn;
+				"could not find assemblage".warn;
 			});
 		}, "pan: masterTrackNum, panNum, mod");
 
@@ -2922,7 +3092,7 @@
 		modifier: modifier)}.defer;
 		};
 		}, {
-		"assemblage is already running".warn;
+		"could not find assemblage".warn;
 		});
 		}, "pan: masterTrackNum, mod");*/
 

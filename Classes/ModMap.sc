@@ -32,6 +32,7 @@ ModMap : Radicles {
 		if(lag.notNil, {
 			this.lag(ndef.key.asString.divNumStr[1], key, lag);
 		});
+		RadUnit.syncModTarget(ndef); //document (step 1)
 		^modMap;
 	}
 
@@ -50,6 +51,7 @@ ModMap : Radicles {
 				modInfoArr.removeAt(index);
 		});
 		};
+		RadUnit.syncModTarget(ndef); //document (step 1)
 	}
 
 	*unmapAt {arg index;

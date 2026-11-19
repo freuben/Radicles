@@ -1,0 +1,8 @@
+>> blkmorph 1 default 0.5
+== radpost ==
+Ndef('block1').fadeTime = 0.5;
+Ndef('block1').xset('freq', 440);
+Ndef('block1').fadeTime = 0.5;
+== radpostcont ==
+(none)
+

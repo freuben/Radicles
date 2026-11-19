@@ -102,25 +102,77 @@
 
 	writeFxPreset {arg filterNum, presetName;
 		this.fxWarn(filterNum, {|ndefKey|
-			this.prepWriteFxPreset(ndefKey, presetName);
+			this.writeUnitPreset(ndefKey, presetName);
 		});
 	}
 
 	writeFxTrackPreset {arg trackType, trackNum, trackSlot, presetName;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
-			this.prepWriteFxPreset(ndefKey, presetName);
+			this.writeUnitPreset(ndefKey, presetName);
 		});
 	}
 
+	// an effect's preset in the new format (one readable file per preset, in
+	// the effect's own folder); saving over an existing name asks first, and
+	// is refused where there is no window to ask in
+	writeUnitPreset {arg ndefKey, presetName, action;
+		var unit, path, write;
+		unit = RadUnit.read(ndefKey, this);
+		if(unit.isNil, { "No filter to save".warn; ^this });
+		if(RadUnit.validPresetName(presetName).not, {
+			("Preset names use letters, digits, - and _ only: " ++ presetName).warn; ^this });
+		if(presetName.asSymbol == \default, {
+			"default is the effect's own default values (fxload t 1 1 default); choose another name".warn; ^this });
+		write = {
+			path = RadUnit.writePreset(unit, presetName);
+			("Saved preset " ++ presetName ++ " for " ++ unit[\def] ++ ": " ++ path).postln;
+			action.(path);
+		};
+		//only your own presets count: one of the same name in the effect's
+		//library is not replaced (yours is read first)
+		if(File.exists(RadUnit.presetPath(\filter, unit[\def], presetName)), {
+			if(GUI.current.notNil, {
+				{ Window.warnQuestion("Preset " ++ presetName ++ " for " ++ unit[\def] ++
+					" exists. Replace it?", write) }.defer;
+			}, {
+				("Preset " ++ presetName ++ " for " ++ unit[\def] ++
+					" exists; not replaced (no window to ask in)").warn;
+			});
+		}, write);
+	}
+
+	// apply an effect preset in the new format to the slot at ndefKey (the
+	// slot must hold the same effect); returns false if there is no such preset
+	loadUnitPreset {arg ndefKey, presetName, action;
+		var def, unit;
+		def = (filters ? []).detect{|item| item[0] == ndefKey } !? {|item| item[1] };
+		if(def.isNil or: { RadUnit.presetExists(\filter, def, presetName).not }, { ^false });
+		unit = RadUnit.presetFor(ndefKey, def, presetName, this);
+		if(unit.isNil, { ^true });
+		{
+			if(RadUnit.apply(ndefKey, unit, this), {
+				server.sync;
+				this.updateFxWin(ndefKey);
+			});
+			action.();
+		}.fork(AppClock);
+		^true
+	}
+
 	writeTrackPreset {arg trackType=\track, trackNum=1, presetName;
-		var dataArr, filterKeyArr;
+		var dataArr, filterKeyArr, bypassSlots;
 		filterKeyArr = (filters ? []).collect({|item| item[0] }).select{|item|
 			this.filterTagOnStrip(item, trackType, trackNum) };
 		filterKeyArr.do{|item|
 			dataArr = dataArr.add(this.prepareWriteFxPreset(item));
 		};
+		//bypassed slots (PR 4), as a third element that older code ignores;
+		//left out when none, so such presets are written as before
+		bypassSlots = filterKeyArr.select{|tag| this.isBypassed(tag) }
+		.collect{|tag| this.convFilterTag(tag)[2].asInteger };
 		if(presetName.notNil, {
-			PresetFile.write(\track, presetName, [trackType, dataArr]);
+			PresetFile.write(\track, presetName, [trackType, dataArr]
+				++ if(bypassSlots.notEmpty, { [(bypass: bypassSlots)] }, { [] }));
 		});
 	}
 
@@ -209,26 +261,34 @@
 	}
 
 	loadFxPreset {arg filterNum, presetName;
-		this.fxWarn(filterNum, {|ndefKey, filterType|
-			{
-				this.loadRawFxPreset(ndefKey, presetName, filterType);
-				server.sync;
-				this.updateFxWin(ndefKey);
-			}.fork(AppClock);
+		this.fxWarn(filterNum, {|ndefKey|
+			this.loadAnyFxPreset(ndefKey, presetName);
 		});
 	}
 
 	loadFxTrackPreset {arg trackType, trackNum, trackSlot, presetName;
-		var filterType;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
+			this.loadAnyFxPreset(ndefKey, presetName);
+		});
+	}
+
+	// a preset in the new format for this effect; else one saved in the old
+	// format (before November 2026); else say why nothing was loaded
+	loadAnyFxPreset {arg ndefKey, presetName;
+		var filterType, others;
+		if(this.loadUnitPreset(ndefKey, presetName), { ^this });
+		filterType = (filters ? []).detect{|item| item[0] == ndefKey } !? {|item| item[1] };
+		if((PresetFile.read(\filter) ? []).includes(presetName.asSymbol), {
 			{
-				if(filters.notNil, {
-					filterType = filters.flop[1][filters.flop[0].indexOf(ndefKey)];
-				});
 				this.loadRawFxPreset(ndefKey, presetName, filterType);
 				server.sync;
 				this.updateFxWin(ndefKey);
 			}.fork(AppClock);
+		}, {
+			others = RadUnit.allPresets(\filter).select{|item| item[1] == presetName.asSymbol }
+			.collect(_[0]);
+			("No preset " ++ presetName ++ " for " ++ filterType ++ if(others.notEmpty, {
+				" (there is one for " ++ others.join(", ") ++ ")" }, { "" })).warn;
 		});
 	}
 
@@ -287,7 +347,13 @@
 					server.sync;
 					this.modRawPreset(item[0], item[1], {cond.test = true; cond.signal;});
 					cond.wait;
-				}
+				};
+				//slots saved bypassed (PR 4)
+				(dataArr[2] !? {|extra| extra[\bypass] } ? []).do{|slot|
+					cond.test = false;
+					this.bypassFx(trackType, trackNum, slot, 1, {cond.test = true; cond.signal;});
+					cond.wait;
+				};
 			});
 		}.fork
 	}

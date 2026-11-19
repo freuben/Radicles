@@ -1,0 +1,8 @@
+>> blkmorph 1 radtest_hi 1 glide
+== radpost ==
+Ndef('block1').lag('freq', 1);
+Ndef('block1').set('freq', 500);
+Ndef('block1').lag('freq', nil);
+== radpostcont ==
+(none)
+

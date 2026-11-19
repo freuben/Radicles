@@ -76,11 +76,11 @@ var vol = {|key| Ndef(key).get('volume') };
 	setup: ["start 2", "fx t 1 pch", "fx 2 2 dl1", "fx 2 3 pch"],
 	cmds: ["fxclear t 1", "fxclear 2 2", "clear fx 1"],
 	noWarnings: true,
-	known: "outdated handout: clear fx 1 is now clearfx 1; fxclear t 1 only works for the master (m)"
+	known: "outdated handout: fxclear t 1 is now fx rm t 1 1, fxclear 2 2 is now fx rm 2 2, and clear fx 1 is now fx rml 1"
 );
 ~radTest.("fx-clear-current",
 	setup: ["start 2", "fx t 1 pch", "fx 2 2 dl1", "fx 2 3 pch"],
-	cmds: ["fxclear t 1 1", "fxclear 2 2", "clearfx 1"],
+	cmds: ["fx rm t 1 1", "fx rm 2 2", "fx rml 1"],
 	noWarnings: true,
 	check: { (Radicles.aZ.filters.isNil or: { Radicles.aZ.filters.isEmpty }) or: { "filters left: " ++ Radicles.aZ.filters.cs } }
 );
@@ -148,15 +148,14 @@ var vol = {|key| Ndef(key).get('volume') };
 	cmds: [["(^ lt 1)", 2], ["(4 ^ lt 1)", 9]]
 );
 
-// Simultaneous commands
-~radTest.("simultaneous-commands",
-	setup: ["start 2"],
-	cmds: ["(lp 1 drums1 & lp 2 marilyn2 & fx 1 pch)"],
-	noWarnings: true,
-	known: "marilyn2 is not in RadiclesFiles.zip (Play/0 has drums1 and marilyn1)"
-);
+// Simultaneous commands. The handout loads marilyn2, which RadiclesFiles
+// doesn't have; the test uses marilyn1 instead (17 Nov 2026).
+// the three commands run at the same time, so their posts race: compared in
+// any order, after a fixed wait long enough for both buffers to load (the
+// quiet-wait could end between the effect and the second block)
 ~radTest.("simultaneous-commands-marilyn1",
 	setup: ["start 2"],
-	cmds: ["(lp 1 drums1 & lp 2 marilyn1 & fx 1 pch)"],
-	noWarnings: true
+	cmds: [["(lp 1 drums1 & lp 2 marilyn1 & fx 1 pch)", 5]],
+	noWarnings: true,
+	anyOrder: true
 );

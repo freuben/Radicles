@@ -240,7 +240,7 @@
 							if(val != inf, {
 								if(busNum != 0, {
 									nodeTime.yield;
-									this.setSendKnob(trackType, trackNum, slotNum, val);
+									this.setSendKnob(trackType, trackNum, slotNum, val, busNum: busNum);
 								});
 							});
 						}.fork(AppClock);
@@ -267,8 +267,12 @@
 		});
 	}
 
-	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, lagTime=0, db=true;
+	//busNum: the bus the slot sends to, when the caller knows it; otherwise it
+	//is looked up from the slot (it used to take the slot number for the bus
+	//number, so snd t 3 1 3 -12 with the mixer open left the level at -inf)
+	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, lagTime=0, db=true, busNum;
 		var trackIndex, value, thisResult, thisKey, thisBusKey;
+		busNum = busNum ?? { this.sendSlotBus(trackType, trackNum, slotNum) } ? slotNum;
 		if(db.not, {
 			value = val.ampdb;
 		}, {
@@ -277,13 +281,13 @@
 		thisKey = (trackType.asString ++ trackNum).asSymbol;
 		trackIndex = mixTrackNames.indexOf(thisKey);
 		if(trackIndex.notNil, {
-			thisBusKey = (\busIn ++ slotNum).asSymbol;
+			thisBusKey = (\busIn ++ busNum).asSymbol;
 			if(busArr.flop[0].select({|item| item.notNil}).includes(thisBusKey), {
 				if(busArr.flop[1][busArr.flop[0].indexOf(thisBusKey)].includes(
 					Ndef((trackType ++ trackNum).asSymbol);
 				), {
 					thisResult = this.sendsFunc((trackType.asString ++ trackNum).asSymbol,
-						("busIn" ++ slotNum).asSymbol);
+						("busIn" ++ busNum).asSymbol);
 					if(thisResult.notNil, {
 						thisResult.(value, lagTime);
 					});

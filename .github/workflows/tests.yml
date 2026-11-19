@@ -1,0 +1,147 @@
+# Radicles tests on GitHub (see Tests/README.md, "Automatic runs on GitHub").
+# Job 1 (build) builds headless SuperCollider once and caches it; later runs
+# restore it in a minute. Job 2 (test) runs the suite split across SHARDS
+# machines, each running its share of Tests/cases/ one case after another.
+name: Tests
+
+on:
+  pull_request:
+    branches: [dev, master]
+  workflow_dispatch:
+    inputs:
+      case:
+        description: "One case file from Tests/cases, without .scd (empty: the whole suite)"
+        required: false
+        default: ""
+      test:
+        description: "One test name in that case (needs a case; empty: all its tests)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  # a new push to the same pull request cancels the older run; manual runs never cancel each other
+  group: tests-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  SC_TAG: Version-3.14.1
+  SHARDS: 4
+
+jobs:
+  build:
+    name: Build SuperCollider (cached)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Plan the shards
+        id: plan
+        env:
+          CASE: ${{ inputs.case }}
+          TEST: ${{ inputs.test }}
+        run: |
+          if [ -n "$TEST" ] && [ -z "$CASE" ]; then
+            echo "::error::A test name needs its case: fill in 'case' too."; exit 1
+          fi
+          if [ -n "$CASE" ]; then
+            if ! [[ "$CASE" =~ ^[A-Za-z0-9_.-]+$ ]] || [ ! -f "Tests/cases/$CASE.scd" ]; then
+              echo "::error::No case file Tests/cases/$CASE.scd (give the file name without .scd)."; exit 1
+            fi
+            echo 'shards=[1]' >> "$GITHUB_OUTPUT"; echo 'count=1' >> "$GITHUB_OUTPUT"
+          else
+            echo "shards=[$(seq -s, 1 "$SHARDS")]" >> "$GITHUB_OUTPUT"; echo "count=$SHARDS" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare the runner
+        run: Tests/ci/github-setup.sh
+
+      - name: Restore the SuperCollider build
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          # the SuperCollider version plus the scripts that build it: change either and it rebuilds
+          key: radtest-ubuntu-24.04-${{ env.SC_TAG }}-${{ hashFiles('Tests/ci/build-sc-linux.sh', 'Tests/ci/install-sc3-plugins.sh', 'Tests/ci/github-setup.sh') }}
+          path: |
+            ${{ env.PREFIX }}
+            ${{ env.GUI_CLASSES }}
+            ${{ env.SC_DATA }}/Extensions/SC3plugins
+
+      - name: Build SuperCollider, JACK, libsndfile, sc3-plugins (about 25 minutes)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: Tests/ci/build-sc-linux.sh
+
+      - name: Save the build
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          # the SuperCollider version plus the scripts that build it: change either and it rebuilds
+          key: radtest-ubuntu-24.04-${{ env.SC_TAG }}-${{ hashFiles('Tests/ci/build-sc-linux.sh', 'Tests/ci/install-sc3-plugins.sh', 'Tests/ci/github-setup.sh') }}
+          path: |
+            ${{ env.PREFIX }}
+            ${{ env.GUI_CLASSES }}
+            ${{ env.SC_DATA }}/Extensions/SC3plugins
+
+  test:
+    name: Tests ${{ matrix.shard }} of ${{ needs.build.outputs.count }}
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.build.outputs.shards) }}
+    env:
+      RADTEST_OUT: ${{ github.workspace }}/Tests/results-all
+      RADTEST_TITLE: shard ${{ matrix.shard }} of ${{ needs.build.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare the runner
+        run: Tests/ci/github-setup.sh
+
+      - name: Restore the SuperCollider build
+        uses: actions/cache/restore@v4
+        with:
+          # the SuperCollider version plus the scripts that build it: change either and it rebuilds
+          key: radtest-ubuntu-24.04-${{ env.SC_TAG }}-${{ hashFiles('Tests/ci/build-sc-linux.sh', 'Tests/ci/install-sc3-plugins.sh', 'Tests/ci/github-setup.sh') }}
+          fail-on-cache-miss: true
+          path: |
+            ${{ env.PREFIX }}
+            ${{ env.GUI_CLASSES }}
+            ${{ env.SC_DATA }}/Extensions/SC3plugins
+
+      # With the build restored this only does the quick steps: clones wslib
+      # and RadiclesLibs, links this checkout as the Radicles quark, makes the
+      # stand-in RadiclesFiles folder and writes sclang's configuration.
+      - name: Set up quarks, RadiclesFiles and sclang's configuration
+        run: |
+          Tests/ci/build-sc-linux.sh
+          for tool in sclang scsynth jackd; do
+            command -v "$tool" >/dev/null || { echo "::error::$tool is missing from the restored build"; exit 1; }
+          done
+
+      - name: Run the tests
+        env:
+          CASE: ${{ inputs.case }}
+          TEST: ${{ inputs.test }}
+        run: Tests/ci/run-shard.sh run "${{ matrix.shard }}" "${{ needs.build.outputs.count }}" "$CASE" "$TEST"
+
+      - name: Write the summary
+        if: always()
+        run: Tests/ci/run-shard.sh summary >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: radtest-results-${{ matrix.shard }}-of-${{ needs.build.outputs.count }}
+          path: ${{ env.RADTEST_OUT }}
+          if-no-files-found: warn
+          overwrite: true

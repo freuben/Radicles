@@ -1,0 +1,7 @@
+>> pn 1 test1
+== radpost ==
+Pdef('patt1', Pbind('instrument', Pdefn('instrument1', 'default'), 'note', Pdefn('note1', Pseq([1, 2, 3, 'rest'], inf) ), 'dur', Pdefn('dur1', Pseq([0.5, 0.5, 0.25, 0.5], inf) ) ) );
+Ndef('block1', Pdef('patt1'));
+== radpostcont ==
+(none)
+

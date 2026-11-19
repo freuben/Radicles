@@ -1,0 +1,16 @@
+>> fxmorph 2 1 radtest_m 1
+== radpost ==
+Ndef('filterTrack_2_1').fadeTime = 1;
+Ndef('filterTrack_2_1').xset('pitchRatio', 0.5);
+Ndef('filterTrack_2_1').fadeTime = 0.5;
+== radpostcont ==
+(none)
+
+>> fxmorph m 1 radtest_m 1
+== radpost ==
+Ndef('filterMaster_1_1').fadeTime = 1;
+Ndef('filterMaster_1_1').xset('pitchRatio', 0.5);
+Ndef('filterMaster_1_1').fadeTime = 0.5;
+== radpostcont ==
+(none)
+

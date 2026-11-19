@@ -8,11 +8,176 @@
 		this.prFxGetCmds;
 		this.prFxModCmds;
 		this.prFxPresetCmds;
+		this.prFxBypassCmds;
+		this.prFxMorphCmds;
 		this.prChannelStripCmds;
 	}
 
-	// fx, fxclear, clearfx
+	// fxmorph and morphtime (Document Model, step 1, PR 5). fxmorph takes the
+	// forms of fxload, then an optional time and an optional shape (xfade,
+	// glide, none): fxmorph t 1 2 warm, fxmorph t 1 2 warm 10 glide.
+	// morphtime 5 sets the global morph time; morphtime t 1 2 5 a slot's own
+	// (morphtime t 1 2 default goes back to the global one).
+	*prFxMorphCmds {
+		var tagOf, tagOfMix, morph, timeOf, postTime;
+		tagOf = {|str2, num1, num2|
+			case
+			{str2 == 't'} {aZ.findFilterTag(\track, num1, num2)}
+			{str2 == 'b'} {aZ.findFilterTag(\bus, num1, num2)}
+			{str2 == 'm'} {aZ.findFilterTag(\master, 1, num2)};
+		};
+		tagOfMix = {|num1, num2|
+			var trackArr, thisArr;
+			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+			if(num1 <= (trackArr.size), {
+				thisArr = trackArr[num1-1];
+				if(thisArr[1].isNil, {thisArr[1] = 1});
+				aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
+			}, {
+				"track not found".warn; nil
+			});
+		};
+		morph = {|tagFunc, preset, time, shape|
+			var tag;
+			if(aZ.notNil, {
+				tag = tagFunc.value;
+				if(tag.notNil, { aZ.morphUnitPreset(tag, preset, time, shape) }, { "No effect in this slot".warn });
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
+		//slot 1 when no slot is given, as in fxload
+		[[], [\num], [\num, \str]].do{|extra|
+			cW.add(\fxmorph, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3, time, shape|
+				morph.({ tagOf.(str2, num1, if(str2 == 'm', num1, 1)) }, str3, time, shape);
+			}, "fxmorph: trackType, trackNum, preset" ++ ["", ", time", ", time, shape"][extra.size]);
+			cW.add(\fxmorph, [\str, \str, \num, \num, \str] ++ extra, {|str1, str2, num1, num2, str3, time, shape|
+				morph.({ tagOf.(str2, num1, num2) }, str3, time, shape);
+			}, "fxmorph: trackType, trackNum, slot, preset" ++ ["", ", time", ", time, shape"][extra.size]);
+			cW.add(\fxmorph, [\str, \num, \str] ++ extra, {|str1, num1, str2, time, shape|
+				morph.({ tagOfMix.(num1, 1) }, str2, time, shape);
+			}, "fxmorph: mixTrackNum, preset" ++ ["", ", time", ", time, shape"][extra.size]);
+			cW.add(\fxmorph, [\str, \num, \num, \str] ++ extra, {|str1, num1, num2, str2, time, shape|
+				morph.({ tagOfMix.(num1, num2) }, str2, time, shape);
+			}, "fxmorph: mixTrackNum, slot, preset" ++ ["", ", time", ", time, shape"][extra.size]);
+		};
+		//morph time
+		postTime = {|tag|
+			var own = aZ.morphTimeOf(tag);
+			(RadDoc.addressString(RadUnit.address(tag)) ++ " morph time: " ++
+				(own ?? { RadUnit.morphTime.asString ++ " (global)" })).postln;
+		};
+		cW.add(\morphtime, [\str], {|str1|
+			("morph time: " ++ RadUnit.morphTime).postln;
+		}, "morphtime: posts the global morph time");
+		cW.add(\morphtime, [\str, \num], {|str1, num1|
+			RadUnit.morphTime = num1.max(0);
+			("morph time: " ++ RadUnit.morphTime).postln;
+		}, "morphtime: sets the global morph time (seconds)");
+		cW.add(\morphtime, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			var tag;
+			if(aZ.notNil, { tag = tagOf.(str2, num1, num2); if(tag.notNil, { postTime.(tag) }) });
+		}, "morphtime: trackType, trackNum, slot (posts it)");
+		cW.add(\morphtime, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+			var tag;
+			if(aZ.notNil, { tag = tagOf.(str2, num1, num2);
+				if(tag.notNil, { aZ.setMorphTime(tag, num3.max(0)); postTime.(tag) }) });
+		}, "morphtime: trackType, trackNum, slot, time");
+		cW.add(\morphtime, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
+			var tag;
+			if(aZ.notNil, { tag = tagOf.(str2, num1, num2);
+				if(tag.notNil and: { str3 == 'default' }, { aZ.setMorphTime(tag, nil); postTime.(tag) }) });
+		}, "morphtime: trackType, trackNum, slot, default");
+	}
+
+	// fxbypass: bypass an effect (Document Model, step 1, PR 4). Without a
+	// state it toggles; 1 bypasses, 0 un-bypasses. Same forms as fx rm.
+	*prFxBypassCmds {
+		var byType, byMix;
+		byType = {|str2, num1, num2, state|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.bypassFx(\track, num1, num2, state)}
+				{str2 == 'b'} {aZ.bypassFx(\bus, num1, num2, state)}
+				{str2 == 'm'} {aZ.bypassFx(\master, 1, num2, state)};
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
+		byMix = {|num1, num2, state|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.bypassFx(thisArr[0].asSymbol, thisArr[1], num2, state);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
+		cW.add(\fxbypass, [\str, \str, \num], {|str1, str2, num1|
+			if(str2 == 'm', { byType.(str2, 1, num1) }, { "fxbypass: m slot, or t/b num slot".warn });
+		}, "fxbypass: m, slot");
+		cW.add(\fxbypass, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			byType.(str2, num1, num2);
+		}, "fxbypass: trackType, trackNum, slot");
+		cW.add(\fxbypass, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+			byType.(str2, num1, num2, num3.asInteger.clip(0, 1));
+		}, "fxbypass: trackType, trackNum, slot, state");
+		cW.add(\fxbypass, [\str, \num, \num], {|str1, num1, num2|
+			byMix.(num1, num2);
+		}, "fxbypass: mixTrackNum, slot");
+		cW.add(\fxbypass, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+			byMix.(num1, num2, num3.asInteger.clip(0, 1));
+		}, "fxbypass: mixTrackNum, slot, state");
+	}
+
+	// the active effects in the order fxl numbers them: tracks, buses, master,
+	// each by number, then slot. Each item is [tag, [type, number, slot], name].
+	*fxOrdered {
+		var rank = (track: 0, bus: 1, master: 2);
+		if(aZ.isNil, { ^[] });
+		^(aZ.filters ? []).collect{|item| [item[0], aZ.convFilterTag(item[0]), item[1]] }
+		.sort{|a, b|
+			var key = {|x| [rank[x[1][0].asSymbol] ? 3, x[1][1].asInteger, x[1][2].asInteger] };
+			var ka = key.(a), kb = key.(b);
+			var diff = (ka - kb).detect{|x| x != 0 } ? 0;
+			diff <= 0
+		};
+	}
+
+	// the lines fxl posts: the active effects, numbered, each with where it is
+	// ("2  track1 slot 2  dl1"); fx rml N removes number N
+	*fxList {
+		^this.fxOrdered.collect{|item, index|
+			var tagArr = item[1];
+			var where = if(tagArr[0].asSymbol == \master, { "master" }, { tagArr[0].asString ++ tagArr[1] });
+			(index+1).asString ++ "  " ++ where ++ " slot " ++ tagArr[2] ++ "  " ++ item[2];
+		};
+	}
+
+	// fx, fx rm, fx rml, fxl
 	*prFxAddCmds {
+		var rmByMix;
+		rmByMix = {|num1, num2|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 <= (trackArr.size), {
+					thisArr = trackArr[num1-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					aZ.setFx(thisArr[0].asSymbol, thisArr[1], num2, remove: true);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
 		cW.add(\fx, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			if(aZ.notNil, {
 				case
@@ -143,73 +308,76 @@
 			});
 		}, "fx: mixTrackNum, slotNum, filter, extraArgs");
 		//
-		cW.add(\fxclear, [\str, \str, \num], {|str1, str2, num1|
-			if(aZ.notNil, {
-				case
-				{str2 == 'm'} {
-					aZ.setFx(\master, 1, num1, remove: true);
-				};
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxclear: trackType, slot");
-
-		cW.add(\fxclear, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.setFx(\track, num1, num2, remove: true);}
-				{str2 == 'b'} {aZ.setFx(\bus, num1, num2, remove: true);}
-				{str2 == 'm'} {aZ.setFx(\master, 1, num2, remove: true);};
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxclear: trackType, trackNum, slot");
-
-		cW.add(\fxclear, [\str, \num], {|str1, num1|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.setFx(thisArr[0].asSymbol, thisArr[1], 1, remove: true);
+		//fx rm: remove an effect by trackType and number, or by mixer position;
+		//fx rml: by its number in the list of active effects (fxl posts it)
+		cW.add(\fx, [\str, \str, \str, \num, \num], {|str1, str2, str3, num1, num2|
+			if(str2 == 'rm', {
+				if(aZ.notNil, {
+					case
+					{str3 == 't'} {aZ.setFx(\track, num1, num2, remove: true);}
+					{str3 == 'b'} {aZ.setFx(\bus, num1, num2, remove: true);}
+					{str3 == 'm'} {aZ.setFx(\master, 1, num2, remove: true);}
+					{"Command not Found".warn};
 				}, {
-					"track not found".warn;
+					"could not find assemblage".warn;
 				});
 			}, {
-				"could not find assemblage".warn;
+				"Command not Found".warn;
 			});
-		}, "fxclear: mixTrackNum, filter");
+		}, "fx: rm, trackType, trackNum, slot");
 
-		cW.add(\fxclear, [\str, \num, \num], {|str1, num1, num2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.setFx(thisArr[0].asSymbol, thisArr[1], num2, remove: true);
+		cW.add(\fx, [\str, \str, \str, \num], {|str1, str2, str3, num1|
+			if(str2 == 'rm', {
+				if(aZ.notNil, {
+					case
+					{str3 == 'm'} {aZ.setFx(\master, 1, num1, remove: true);}
+					{"Command not Found".warn};
 				}, {
-					"track not found".warn;
+					"could not find assemblage".warn;
 				});
 			}, {
-				"could not find assemblage".warn;
+				"Command not Found".warn;
 			});
-		}, "fxclear: mixTrackNum, filter");
+		}, "fx: rm, m, slot");
 
-		cW.add(\clearfx, [\str, \num], {|str1, num1|
-			var filterTag, filterTagArr;
-			if(aZ.notNil, {
-				filterTag = aZ.filters[num1-1][0];
-				if(filterTag.notNil, {
-					filterTagArr = aZ.convFilterTag(filterTag).postln;
-					aZ.setFx(filterTagArr[0].asSymbol, filterTagArr[1],
-						filterTagArr[2], remove: true);
+		cW.add(\fx, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			if(str2 == 'rm', {
+				rmByMix.(num1, num2);
+			}, {
+				"Command not Found".warn;
+			});
+		}, "fx: rm, mixTrackNum, slot");
+
+		cW.add(\fx, [\str, \str, \num], {|str1, str2, num1|
+			var filters, filterTagArr;
+			case
+			{str2 == 'rm'} {rmByMix.(num1, 1);}
+			{str2 == 'rml'} {
+				if(aZ.notNil, {
+					filters = this.fxOrdered;
+					if((num1 >= 1) and: { num1 <= filters.size }, {
+						filterTagArr = filters[num1-1][1];
+						aZ.setFx(filterTagArr[0].asSymbol, filterTagArr[1],
+							filterTagArr[2], remove: true);
+					}, {
+						("No effect number " ++ num1 ++ "; fxl lists them").warn;
+					});
+				}, {
+					"could not find assemblage".warn;
 				});
+			}
+			{"Command not Found".warn};
+		}, "fx: ['rm', 'rml'], [mixTrackNum, fxlNum]");
+
+		cW.add(\fxl, [\str], {|str1|
+			var lines;
+			if(aZ.notNil, {
+				lines = this.fxList;
+				if(lines.isEmpty, { "no effects".radpostwarn }, { lines.do{|line| line.radpostwarn } });
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "clearfx: filterNum");
+		}, "fxl: list the active effects (fx rml N removes number N)");
 	}
 
 	// fxset, fxlag, setfx, fxsetn, fxlagn, lagfx
@@ -1847,6 +2015,18 @@
 		}, "setfx: filterNum, fxArg");
 	}
 
+	// every effect preset as [effect, name], sorted: the new format (one file
+	// per preset) and presets saved in the old format, without repeats
+	*fxPresetList {
+		var list = RadUnit.allPresets(\filter);
+		(PresetFile.read(\filter) ? []).do{|item|
+			var pair = [PresetFile.read(\filter, item)[0], item];
+			if(list.any{|it| it == pair }.not, { list = list.add(pair) });
+		};
+		^list.sort({ arg a, b; var x = a[0].asString, y = b[0].asString;
+			(x < y) or: { (x == y) and: { a[1].asString <= b[1].asString } } })
+	}
+
 	// fxload, loadfx, fxsave, savefx, fxlags, lagsfx
 	*prFxPresetCmds {
 		cW.add(\fxunmod, [\str, \num, \str, \num], {|str1, num1, str2, num2|
@@ -1929,6 +2109,12 @@
 			});
 		}, "load: filterNum, preset");
 
+		//fxsave <effect> <preset> <library>: copy one of your presets into the
+		//effect's library, to share it with the library
+		cW.add(\fxsave, [\str, \str, \str, \str], {|str1, str2, str3, str4|
+			RadUnit.publishPreset(\filter, str2, str3, str4);
+		}, "fxsave: effect, preset, library (copies your preset into the library)");
+
 		cW.add(\fxsave, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			if(aZ.notNil, {
 				case
@@ -1999,17 +2185,11 @@
 
 		//print fx presets
 		cW.add(\fxload, [\str], {|str1|
-			PresetFile.read(\filter).collect{|item|
-				[PresetFile.read(\filter, item)[0], item]; }
-			.sort({ arg a, b; a[0] <= b[0] }).dopostln;
+			this.fxPresetList.dopostln;
 		}, "fxload: prints all fx presets that can be loaded");
 
 		cW.add(\fxload, [\str, \str], {|str1, str2|
-			var resultArr;
-			resultArr = PresetFile.read(\filter).collect{|item|
-				[PresetFile.read(\filter, item)[0], item]; }
-			.sort({ arg a, b; a[0] <= b[0] });
-			resultArr.select({|item| item[0] == str2 }).dopostln;
+			this.fxPresetList.select({|item| item[0] == str2 }).dopostln;
 		}, "fxload: fxType, fx presets with for this type");
 		//fxs lags
 		cW.add(\fxlags, [\str, \str, \num, \num], {|str1, str2, num1, num2|
@@ -2069,6 +2249,7 @@
 
 	// csload, cssave, csfree
 	*prChannelStripCmds {
+		var stripOf, mixOf, save, load, morph, postChainTime, chainTime;
 		cW.add(\lagsfx, [\str, \num, \num], {|str1, num1, num2|
 			var filterTag, filterTagArr;
 			if(aZ.notNil, {
@@ -2083,106 +2264,106 @@
 			});
 		}, "save: filterNum, preset");
 
-		//assmeblage track presets
+		//effect-chain presets (Document Model, step 3, PR 2: RadUnitChains.sc).
+		//csload / csload t lists them; cssave t 1 name; csload t 1 name|default;
+		//t 1 can be b 1, m, or a mixer position (csload 3 name)
+		stripOf = {|str2, num1|
+			case
+			{str2 == 't'} {[\track, num1]}
+			{str2 == 'b'} {[\bus, num1]}
+			{str2 == 'm'} {[\master, 1]}
+			{ ("csload/cssave: t, b or m, not " ++ str2).warn; nil };
+		};
+		mixOf = {|num1|
+			var trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr}, thisArr;
+			if(num1 <= trackArr.size and: { num1 >= 1 }, {
+				thisArr = trackArr[num1-1];
+				[thisArr[0].asSymbol, thisArr[1] ? 1]
+			}, { "track not found".warn; nil });
+		};
+		save = {|strip, name| strip !? { RadUnit.saveChainPreset(strip[0], strip[1], name, az: aZ) } };
+		load = {|strip, name| strip !? { RadUnit.loadChainPreset(strip[0], strip[1], name, az: aZ) } };
+
 		cW.add(\csload, [\str], {|str1|
-			if(aZ.notNil, {
-				aZ.listTrackPresets(nil).dopostln;
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "csload: [trackType, presetName]");
+			RadUnit.postChainPresets;
+		}, "csload: lists chain presets");
 
 		cW.add(\csload, [\str, \str], {|str1, str2|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.listTrackPresets(\track);}
-				{str2 == 'b'} {aZ.listTrackPresets(\bus);}
-				{str2 == 'm'} {aZ.listTrackPresets(\master);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "csload: [trackType, presetName]");
+			RadUnit.postChainPresets;
+		}, "csload: [trackType] lists chain presets");
 
 		cW.add(\csload, [\str, \str, \str], {|str1, str2, str3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.loadTrackPreset(\track, 1, str3);}
-				{str2 == 'b'} {aZ.loadTrackPreset(\bus, 1, str3);}
-				{str2 == 'm'} {aZ.loadTrackPreset(\master, 1, str3);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
+			if(aZ.notNil, { load.(stripOf.(str2, 1), str3) }, { "could not find assemblage".warn });
 		}, "csload: [trackType, presetName]");
 
 		cW.add(\csload, [\str, \str, \num, \str], {|str1, str2, num1, str3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.loadTrackPreset(\track, num1, str3);}
-				{str2 == 'b'} {aZ.loadTrackPreset(\bus, num1, str3);}
-				{str2 == 'm'} {aZ.loadTrackPreset(\master, num1, str3);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
+			if(aZ.notNil, { load.(stripOf.(str2, num1), str3) }, { "could not find assemblage".warn });
 		}, "csload: [trackType, trackNum, presetName]");
 
 		cW.add(\csload, [\str, \num, \str], {|str1, num1, str2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.loadTrackPreset(thisArr[0].asSymbol, thisArr[1], str2);
-				}, {
-					"track not found".warn;
-				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "csload: mixTrackNum, slot1, preset");
+			if(aZ.notNil, { load.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
+		}, "csload: mixTrackNum, preset");
 
 		cW.add(\cssave, [\str, \str, \str], {|str1, str2, str3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.writeTrackPreset(\track, 1, str3);}
-				{str2 == 'b'} {aZ.writeTrackPreset(\bus, 1, str3);}
-				{str2 == 'm'} {aZ.writeTrackPreset(\master, 1, str3);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
+			if(aZ.notNil, { save.(stripOf.(str2, 1), str3) }, { "could not find assemblage".warn });
 		}, "cssave: [trackType, presetName]");
 
 		cW.add(\cssave, [\str, \str, \num, \str], {|str1, str2, num1, str3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.writeTrackPreset(\track, num1, str3);}
-				{str2 == 'b'} {aZ.writeTrackPreset(\bus, num1, str3);}
-				{str2 == 'm'} {aZ.writeTrackPreset(\master, num1, str3);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
+			if(aZ.notNil, { save.(stripOf.(str2, num1), str3) }, { "could not find assemblage".warn });
 		}, "cssave: [trackType, trackNum, presetName]");
 
 		cW.add(\cssave, [\str, \num, \str], {|str1, num1, str2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.writeTrackPreset(thisArr[0].asSymbol, thisArr[1], str2);
-				}, {
-					"track not found".warn;
-				});
-			}, {
-				"could not find assemblage".warn;
+			if(aZ.notNil, { save.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
+		}, "cssave: mixTrackNum, preset");
+
+		//csmorph t 1 warmVox [time] [xfade|glide|none]: the chain morphs to the
+		//preset (step 3, PR 3); csmorph m warmVox ..., csmorph 3 warmVox ...
+		morph = {|strip, name, time, shape|
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				strip !? { RadUnit.morphChainPreset(strip[0], strip[1], name, time, shape, az: aZ) } });
+		};
+		[[], [\num], [\num, \str]].do{|extra|
+			var post = ["", ", time", ", time, shape"][extra.size];
+			cW.add(\csmorph, [\str, \str, \str] ++ extra, {|str1, str2, str3, time, shape|
+				morph.(stripOf.(str2, 1), str3, time, shape);
+			}, "csmorph: trackType, preset" ++ post);
+			cW.add(\csmorph, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3, time, shape|
+				morph.(stripOf.(str2, num1), str3, time, shape);
+			}, "csmorph: trackType, trackNum, preset" ++ post);
+			cW.add(\csmorph, [\str, \num, \str] ++ extra, {|str1, num1, str2, time, shape|
+				if(aZ.notNil, { morph.(mixOf.(num1), str2, time, shape) }, { "could not find assemblage".warn });
+			}, "csmorph: mixTrackNum, preset" ++ post);
+		};
+		//csmorphtime t 1 5: the strip's chain morph time; csmorphtime t 1 posts
+		//it; csmorphtime t 1 default goes back to the global morphtime
+		postChainTime = {|strip|
+			var name = RadUnit.stripName(strip[0], strip[1]), own = aZ.chainMorphTimeOf(name);
+			(name ++ " chain morph time: " ++ (own ?? { RadUnit.morphTime.asString ++ " (global)" })).postln;
+		};
+		chainTime = {|strip, time|
+			if(aZ.isNil, { "could not find assemblage".warn }, {
+				strip !? {
+					if(time.notNil, {
+						aZ.setChainMorphTime(RadUnit.stripName(strip[0], strip[1]), if(time == \default, nil, { time.max(0) }));
+					});
+					postChainTime.(strip);
+				};
 			});
-		}, "cssave: mixTrackNum, slot1, preset");
+		};
+		cW.add(\csmorphtime, [\str, \str], {|str1, str2| chainTime.(stripOf.(str2, 1)) },
+			"csmorphtime: m (posts it)");
+		cW.add(\csmorphtime, [\str, \str, \num], {|str1, str2, num1|
+			if(str2 == 'm', { chainTime.(stripOf.(str2, 1), num1) }, { chainTime.(stripOf.(str2, num1)) });
+		}, "csmorphtime: trackType, trackNum (posts it), or m, time");
+		cW.add(\csmorphtime, [\str, \str, \str], {|str1, str2, str3|
+			if(str3 == 'default', { chainTime.(stripOf.(str2, 1), \default) }, { "csmorphtime: a time or default".warn });
+		}, "csmorphtime: m, default");
+		cW.add(\csmorphtime, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			chainTime.(stripOf.(str2, num1), num2);
+		}, "csmorphtime: trackType, trackNum, time");
+		cW.add(\csmorphtime, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+			if(str3 == 'default', { chainTime.(stripOf.(str2, num1), \default) }, { "csmorphtime: a time or default".warn });
+		}, "csmorphtime: trackType, trackNum, default");
 
 		cW.add(\csfree, [\str, \str], {|str1, str2|
 			if(aZ.notNil, {

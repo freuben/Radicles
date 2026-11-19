@@ -129,9 +129,9 @@ File.mkdir(~radAuditDir);
 // 8. Sends, including a send that leaves the master path (sndry)
 ~radAuditPair.("sends", ["start 3 1", "snd t 1 1 1 -6", "sndry t 2 1 1 -3"]);
 
-// 9. A track added after start (stereo)
-~radAuditPair.("addtrack", ["start 2", "t add 2", "vol t 3 -5"],
-	known: "tracks added with t add are not saved (Sessions and Scenes)");
+// 9. A track added after start (stereo); saved since step 3 PR 1 (t add
+// keeps mixTrackNames up to date, which saving reads)
+~radAuditPair.("addtrack", ["start 2", "t add 2", "vol t 3 -5"]);
 
 // 10. Solo
 ~radAuditPair.("solo", ["start 2", "solo t 1"]);

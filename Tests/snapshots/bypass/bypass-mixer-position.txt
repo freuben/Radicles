@@ -1,0 +1,10 @@
+>> fxbypass 2 1 1
+== radpost ==
+Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('inTrack2', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('filterTrack_2_1').pause;
+== radpostcont ==
+(none)
+

@@ -1,0 +1,7 @@
+>> blk rm 1
+== radpost ==
+Ndef('inTrack1').source = nil;
+Ndef('block1').clear(0.5);
+== radpostcont ==
+(none)
+

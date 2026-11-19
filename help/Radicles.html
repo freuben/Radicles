@@ -361,6 +361,20 @@ fxclear t 1 1 //track 1, slot 1 (fxclear m 1 for the master)
 fxclear t 1 2
 fxclear 1 1 //multitrack
 clearfx 1
+//bypass an effect: the chain goes around it, the effect keeps its settings
+fxbypass t 1 1 //toggle (fxbypass m 1 for the master)
+fxbypass t 1 1 1 //bypass
+fxbypass t 1 1 0 //back in
+fxbypass 1 1 //multitrack
+//morph an effect to one of its presets over time (crossfade by default)
+fxmorph t 1 1 warm //the slot's or the global morph time
+fxmorph t 1 1 warm 10 //10 seconds
+fxmorph t 1 1 warm 10 glide //each value glides (lag) instead of a crossfade
+morphtime 5 //global morph time (2 by default)
+morphtime t 1 1 8 //this slot's own morph time, saved with its presets
+morphtime t 1 1 default //back to the global one
+//share a preset with a library: copies your preset raveSetting1 of nnt into RAVE
+fxsave nnt raveSetting1 RAVE
 
 //get filter information
 fxget m 1

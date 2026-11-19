@@ -8,7 +8,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<>recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10,
-	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow;
+	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow, <bypassed, <morphTimes, morphs, <chainMorphTimes;
+	//each strip's own track morph time (tmorphtime, step 4)
+	var <trackMorphTimes;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);
@@ -16,6 +18,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	initAssemblage {arg trackNum=1, busNum=0, chanNum=2, spaceType, memSize, action;
 		var chanMaster, chanTrack, chanBus, spaceMaster, spaceTrack, spaceBus, inArr;
+		RadUnit.syncAll(this); //document (step 1): a new mixer starts with no effects
 		server.waitForBoot{
 			{
 				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
@@ -62,6 +65,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				server.sync;
 				this.play;
 				this.updateMixInfo;
+				RadUnit.syncStrips(this); //document (step 3): the strips
 				oiIns = Ndef(\spaceMaster).numChannels;
 				/*oiOuts = Ndef(\spaceMaster).numChannels;*/
 				oiOuts = server.options.numOutputBusChannels;
@@ -214,7 +218,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	autoRoute {arg trackInfo, action;
 		var newArr, ndefArr, ndefCS, synthArr, intArr, thisSynthFunc;
 		{
-			newArr = trackInfo.reverse;
+			//a bypassed effect is left out of the chain (AssemblageBypass)
+			newArr = this.activeStages(trackInfo).reverse;
 			ndefArr = newArr.flop[0];
 			synthArr = newArr.flop[1];
 			(newArr.size-1).do{|index|
@@ -257,11 +262,17 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			});
 			chanNum ?? {chanNum = systemChanNum};
 			trackInfo = this.addTrack(type, chanNum, spaceType, trackSynth, trackSpecs);
+			//mixTrackNames as the window would make it, so lists kept by position
+			//(soloStates, outputSettings) match it with no window open too
+			this.updateMixInfo;
 			server.sync;
 			this.autoRoute(trackInfo);
 			server.sync;
-			this.inputMaster;
+			//to the master by each strip's output (inputMaster would connect every
+			//strip, also one set to no output, and solo then failed on the extra input)
+			this.outputMasterFunc;
 			server.sync;
+			RadUnit.syncStrips(this); //document (step 3): the new strip
 			{this.refreshFunc}.defer;
 			server.sync;
 			action.(trackInfo);
@@ -285,7 +296,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	removeTrack {arg trackType=\track, trackNum=1, action={};
-		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums, indArrBusIn;
+		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums, indArrBusIn, cond;
+
+		//a track or bus that isn't there: say so and do nothing (it posted
+		//three clear lines for Ndefs that didn't exist, then failed)
+		if(trackType != \master and: {
+			(mixTrackNames ? []).includes((trackType ++ trackNum).asSymbol).not }, {
+			(trackType.asString.capitalise ++ " " ++ trackNum ++ " not found").warn;
+			action.();
+			^this
+		});
 
 		if(trackType != \master, {
 			{
@@ -293,10 +313,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				inTrack = ("in" ++ trackString.capitalise).asSymbol;
 				realTrack = trackString.asSymbol;
 				spaceTrack = ("space" ++ trackString.capitalise).asSymbol;
-				indexTrack = mixTrackNames.indexOf(realTrack);
 
-				this.removeTrackFilters(trackType, trackNum, false, true);
+				//morphs running on the strip stop first
+				RadUnit.prStopStripMorphs(trackType, trackNum, this);
+				//wait until its effects are really gone (it only synced before)
+				cond = Condition(false);
+				this.removeTrackFilters(trackType, trackNum, false, true,
+					{ cond.test = true; cond.signal }, false);
+				cond.wait;
 				server.sync;
+				//a track's source goes with it (18 Nov 2026)
+				if(trackType == \track, { this.prRemoveTrackSource(trackNum) });
+				//where the strip sits now, looked up after the waits above
+				indexTrack = mixTrackNames.indexOf(realTrack);
 
 				("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
 				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
@@ -322,10 +351,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(busArr.flat.select({|item| item.notNil}).size != 0, {
 						indArrBusIn =
 						busArr.flop[0].indexOf( (trackType ++  "In" ++ trackNum).asSymbol );
-						busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr}.do{|it|
-							this.removeBus(it[1], trackNum, it[0].asSymbol, true);
-							server.sync;
-						};
+						//nil when nothing sends to this bus (other buses may have sends)
+						if(indArrBusIn.notNil, {
+							busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr}.do{|it|
+								this.removeBus(it[1], trackNum, it[0].asSymbol, true);
+								server.sync;
+							};
+						});
 					});
 				});
 
@@ -347,6 +379,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					busCount = this.updateTrackCount(trackType);
 				});
+				//what was kept under the strip's name
+				trackMorphTimes !? {|times| times.removeAt(realTrack) };
+				chainMorphTimes !? {|times| times.removeAt(realTrack) };
+				RadUnit.syncStrips(this); //document (step 3): the strip is gone
 				//refresh win if open
 				this.mixWinBool({
 					nodeTime.yield;
@@ -645,6 +681,46 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
+	// A track that is removed takes its source with it: its input is
+	// forgotten, and a block that fed it is removed too, unless that block
+	// also feeds another track (Federico, 18 Nov 2026). An input that is not a
+	// block (an Ndef of your own) is only unplugged.
+	prRemoveTrackSource {arg trackNum;
+		var tag = ("inTrack" ++ trackNum).asSymbol, entry, sources;
+		entry = (inputs ? []).detect{|item| item[0] == tag };
+		if(entry.notNil, {
+			sources = entry[1].asArray;
+			inputs.remove(entry);
+			sources.do{|ndef|
+				var number;
+				if(ndef.isKindOf(NodeProxy) and: { RadUnit.isBlockTag(ndef.key) }, {
+					number = ndef.key.asString.divNumStr[1].asInteger;
+					if(RadUnit.prBlockShared(number, trackNum, this).not, { Block.remove(number) });
+				});
+			};
+		});
+	}
+
+	// Unplug an Ndef (a block that is being removed) from every track it
+	// feeds: a track fed only by it is left with no input, and its input menu
+	// and source slot show empty; a track fed by several keeps the others.
+	removeInput {arg ndef;
+		(inputs ? []).copy.do{|item|
+			var tag = item[0], fed = item[1], num, rest;
+			if(tag.asString.beginsWith("inTrack") and: { fed.asArray.includes(ndef) }, {
+				num = tag.asString.divNumStr[1].asInteger;
+				rest = fed.asArray.reject{|other| other == ndef };
+				if(rest.isEmpty, {
+					inputs.remove(item);
+					("Ndef(" ++ tag.cs ++ ").source = nil;").radcode;
+					this.prSourceChanged(num, nil);
+				}, {
+					this.input(if(rest.size == 1, { rest[0] }, { rest }), \track, num);
+				});
+			});
+		};
+	}
+
 	getTrackInput {arg type=\master, num=1;
 		var inTag, index, trackTag;
 		//inputs are stored under 'in' keys, e.g. inTrack1, inMaster
@@ -794,7 +870,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	removeBus {arg trackNum= 1, busNum=1, trackType=\track, clearTrack=false;
 		var oldLabel, newBusInd, newLabelArr, spaceBusNum, spaceBusLabel,
-		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel, trackKey;
+		spaceInNdef, spaceInSel, spaceInInd, thisBusIndLabel, trackKey, oldLabelArr;
 		oldLabel = ("busIn" ++ busNum).asSymbol;
 		spaceBusLabel = ("inBus" ++ busNum).asSymbol;
 		spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
@@ -803,6 +879,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		if(spaceInInd.notNil, {
 			newBusInd = busArr.flop[0].indexOf(oldLabel);
 			newLabelArr = busArr.flop[1][newBusInd];
+			oldLabelArr = newLabelArr;
 			newLabelArr = newLabelArr.select({|item|
 				item.key != trackKey;
 			});
@@ -829,6 +906,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					inputs[thisBusIndLabel][1] = newLabelArr;
 				});
+				//the senders after the one leaving move up a place: so do their values
+				this.prRenumberSends(Ndef(oldLabel), oldLabelArr, newLabelArr);
 				("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radcode;
 			});
 			//look the bus input up again: entries may have been removed above
@@ -845,6 +924,41 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		}, {
 			"Bus not found".warn;
 		});
+	}
+
+	// A bus input's controls are named by the sender's place: vol1, lag1,
+	// vol2, lag2, ... When a sender leaves, the senders after it move up a
+	// place, so their levels, lags and modulators have to move with them before
+	// the input is rebuilt. They did not: track 2's send took the level track
+	// 1's send had (18 Nov 2026). The values are moved in the Ndef's node map
+	// (not sent to the synth that is fading out), and the places left over at
+	// the end are cleared (set to nil), so a sender added later starts from
+	// the defaults.
+	prRenumberSends {arg ndef, oldArr, newArr;
+		var map = ndef.nodeMap, sets = [], moved = IdentityDictionary.new;
+		var keysAt = {|index| [("vol" ++ (index + 1)).asSymbol, ("lag" ++ (index + 1)).asSymbol] };
+		newArr.do{|sender, newIndex|
+			var oldIndex = oldArr.indexOf(sender);
+			if(oldIndex.notNil and: { oldIndex != newIndex }, {
+				[keysAt.(oldIndex), keysAt.(newIndex)].flop.do{|pair|
+					moved[pair[0]] = pair[1];
+					//nil clears a value the new place held and the old one did not
+					if(map[pair[0]].notNil or: { map[pair[1]].notNil }, {
+						sets = sets ++ [pair[1], map[pair[0]]] });
+				};
+			});
+		};
+		(oldArr.size - newArr.size).do{|count|
+			keysAt.(newArr.size + count).do{|key|
+				if(map[key].notNil, { sets = sets ++ [key, nil] }) };
+		};
+		if(sets.notEmpty, {
+			(ndef.cs ++ ".nodeMap.set(" ++ sets.collect(_.cs).join(", ") ++ ");").radcode;
+		});
+		//modulators on the moved places follow them
+		(ModMap.modNodes ? []).do{|item|
+			if(item[1] == ndef and: { moved[item[2]].notNil }, { item[2] = moved[item[2]] });
+		};
 	}
 
 	sortTrackNames {arg trackNameArr;
@@ -953,7 +1067,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		mastOutWin=nil; oiIns=nil; oiOuts=nil; recInputArr=nil; winDirRec=nil; muteButArr=nil;
 		recButArr=nil; soloButArr=nil; spaceButArr=nil; recordingButton=nil; recordingValBut=nil;
 		setOutputMenu=nil; setInputMenu=nil; modSendArr=nil; trackDataArr=nil; trackBufferArr=nil;
-		trackCount=1; busCount=1; winRefresh=false;
+		trackCount=1; busCount=1; winRefresh=false; bypassed=nil; morphTimes=nil; morphs=nil; chainMorphTimes=nil; trackMorphTimes=nil;
 	}
 
 	clearNdefs {arg action;
@@ -1004,6 +1118,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			nodeTime.yield;
 			this.clearNdefs({
 				this.resetVars;
+				RadUnit.syncAll(this); //document (step 1): no effects left
 				nodeTime.yield;
 				action.();
 			});

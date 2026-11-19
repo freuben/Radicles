@@ -1,0 +1,6 @@
+>> tload t 1 default nosrc
+== radpost ==
+Ndef('track1').set('volume', 0);
+== radpostcont ==
+(none)
+

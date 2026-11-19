@@ -18,8 +18,7 @@
 	\frz1, \frz2, \mga, \sdf, \srt, \srv, \ssq, \cvi1, \cvi2, \cvt1, \cvt2, \mmi, \mmt
 ].do{|name|
 	var known = (
-		convrev1: "convrev1 needs an impulse response, which only the mixer GUI can pass (principle 9)",
-		ctp: "ctp indexes a mono signal with [0] (fails on 3.13 and 3.14)"
+		convrev1: "convrev1 needs an impulse response, which only the mixer GUI can pass (principle 9)"
 	)[name];
 	~radTest.("main-fx-" ++ name, setup: ["start 2"], cmds: ["fx 1 " ++ name], known: known,
 		check: {

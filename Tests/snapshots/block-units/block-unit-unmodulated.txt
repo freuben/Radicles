@@ -1,0 +1,7 @@
+>> unmodblk 1 freq
+== radpost ==
+Ndef('block1').xset('freq', 440);
+Ndef('mod1').clear(0.5);
+== radpostcont ==
+(none)
+

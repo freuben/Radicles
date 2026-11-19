@@ -4,11 +4,89 @@
 + Radicles {
 	*loadBlkCmds {
 		this.prBlockCmds;
+		this.prBlockPresetCmds;
 		this.prPlayCmds;
 		this.prBlockInCmds;
 		this.prStopCmds;
 		this.prRecBufCmds;
 		this.prClockCmds;
+	}
+
+	// blksave, blkload: block presets (Document Model step 2; see RadUnitBlockPresets.sc)
+	*prBlockPresetCmds {
+		cW.add(\blksave, [\str, \num, \str], {|str1, num1, str2|
+			RadUnit.saveBlockPreset(num1.asInteger, str2);
+		}, "blksave: block, preset");
+
+		//blksave 1 name keep [file]: keep the recording block 1 plays as a
+		//file in SoundFiles/Play/recordings, then save the preset with it
+		cW.add(\blksave, [\str, \num, \str, \str], {|str1, num1, str2, str3|
+			if(str3 == 'keep', {
+				RadUnit.saveBlockPreset(num1.asInteger, str2, keep: true);
+			}, {
+				("blksave " ++ num1 ++ " " ++ str2 ++ ": unknown option " ++ str3 ++ " (keep keeps the recording as a file)").warn;
+			});
+		}, "blksave: block, preset, keep (keeps the recording the block plays as a file)");
+
+		cW.add(\blksave, [\str, \num, \str, \str, \str], {|str1, num1, str2, str3, str4|
+			if(str3 == 'keep', {
+				RadUnit.saveBlockPreset(num1.asInteger, str2, keep: true, fileName: str4.asString);
+			}, {
+				("blksave " ++ num1 ++ " " ++ str2 ++ ": unknown option " ++ str3 ++ " (keep keeps the recording as a file)").warn;
+			});
+		}, "blksave: block, preset, keep, file name (keeps the recording as recordings/<file>.wav)");
+
+		//blksave <block definition> <preset> <library>: copy one of your
+		//presets into the definition's library, to share it with the library
+		cW.add(\blksave, [\str, \str, \str, \str], {|str1, str2, str3, str4|
+			RadUnit.publishPreset(\block, str2, str3, str4);
+		}, "blksave: block definition, preset, library (copies your preset into the library)");
+
+		//blkmorph 1 warmLoop [time [shape]]: moves block 1 to a preset over
+		//time (xfade by default, glide, none); see RadUnitBlockMorph.sc
+		cW.add(\blkmorph, [\str, \num, \str], {|str1, num1, str2|
+			RadUnit.morphBlockPreset(num1.asInteger, str2);
+		}, "blkmorph: block, preset");
+		cW.add(\blkmorph, [\str, \num, \str, \num], {|str1, num1, str2, num2|
+			RadUnit.morphBlockPreset(num1.asInteger, str2, num2);
+		}, "blkmorph: block, preset, time");
+		cW.add(\blkmorph, [\str, \num, \str, \num, \str], {|str1, num1, str2, num2, str3|
+			RadUnit.morphBlockPreset(num1.asInteger, str2, num2, str3);
+		}, "blkmorph: block, preset, time, shape (xfade, glide, none)");
+
+		//blkmorphtime 1 5: block 1's own morph time (blkmorphtime 1 posts it,
+		//blkmorphtime 1 default goes back to the global morphtime)
+		cW.add(\blkmorphtime, [\str, \num], {|str1, num1|
+			RadUnit.postBlockMorphTime(num1.asInteger);
+		}, "blkmorphtime: block (posts it)");
+		cW.add(\blkmorphtime, [\str, \num, \num], {|str1, num1, num2|
+			if(RadUnit.setBlockMorphTime(num1.asInteger, num2), { RadUnit.postBlockMorphTime(num1.asInteger) });
+		}, "blkmorphtime: block, time");
+		cW.add(\blkmorphtime, [\str, \num, \str], {|str1, num1, str2|
+			if(str2 == 'default', {
+				if(RadUnit.setBlockMorphTime(num1.asInteger, nil), { RadUnit.postBlockMorphTime(num1.asInteger) });
+			}, { ("blkmorphtime " ++ num1 ++ ": a time in seconds or default, not " ++ str2).warn });
+		}, "blkmorphtime: block, default");
+
+		cW.add(\blkload, [\str, \num, \str], {|str1, num1, str2|
+			RadUnit.loadBlockPreset(num1.asInteger, str2);
+		}, "blkload: block, preset");
+
+		cW.add(\blkload, [\str, \num, \str, \str], {|str1, num1, str2, str3|
+			if(str3 == 'nobuf', {
+				RadUnit.loadBlockPreset(num1.asInteger, str2, true);
+			}, {
+				("blkload " ++ num1 ++ " " ++ str2 ++ ": unknown option " ++ str3 ++ " (nobuf keeps the block's sound file or table)").warn;
+			});
+		}, "blkload: block, preset, nobuf (keep the block's sound file or table)");
+
+		cW.add(\blkload, [\str], {|str1|
+			RadUnit.allPresets(\block).dopostln;
+		}, "blkload: prints all block presets");
+
+		cW.add(\blkload, [\str, \str], {|str1, str2|
+			RadUnit.presetNames(\block, str2).dopostln;
+		}, "blkload: block definition, its presets");
 	}
 
 	// blk, blkset, blklag, blkxset, blkget, modblkset, unmodblk
@@ -32,13 +110,13 @@
 			case
 			{str2 == 'add'} {Block.add(num);}
 			{str2 == 'addn'} {Block.addNum(num);}
-			{str2 == 'remove'} {Block.remove(num);}
+			{str2 == 'rm'} {Block.remove(num);}
 			{str2 == 'stop'} {Block.stop(num);}
 			{str2 == 'bpm'} {Block.tempo(num);}
 			{str2 == 'tempo'} {Block.tempo(num);}
 			{str2 == 'sdiv'} {Block.schedDiv = num;}
 			;
-		}, "block: ['add', 'addn', 'remove', 'stop'], [channels, number, block, block]");
+		}, "block: ['add', 'addn', 'rm', 'stop'], [channels, number, block, block]");
 
 		cW.add(\blk, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			case
@@ -74,7 +152,7 @@
 		cW.add(\blk, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			if(str2 == '<>', {
 				if(aZ.notNil, {
-					aZ.input(Block.ndefs[num1-1], \track, num2);
+					aZ.input(Block.ndefOf(num1), \track, num2);
 					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
 					"could not find assemblage".warn;
@@ -85,7 +163,7 @@
 			var ndefArr;
 			if(str2 == '<>', {
 				if(aZ.notNil, {
-					ndefArr = arr.collect{|item| Block.ndefs[item-1] };
+					ndefArr = arr.collect{|item| Block.ndefOf(item) };
 					aZ.input(ndefArr, \track, num2);
 					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
@@ -98,7 +176,7 @@
 			if(str2 == '<>', {
 				if(aZ.notNil, {
 					arr1.do{|item, index|
-						aZ.input(Block.ndefs[item-1], \track, arr2[index]);
+						aZ.input(Block.ndefOf(item), \track, arr2[index]);
 					};
 					aZ.mixWinBool({aZ.refreshMixGUI;});
 				}, {
@@ -109,19 +187,19 @@
 
 		cW.add(\blkset, [\str, \num], {|str1, num1|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].getKeysValues.radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num], {|str1, num1, num2|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].getKeysValues[num2-1][1].radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			Block.set(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
@@ -132,7 +210,7 @@
 
 		cW.add(\blkset, [\str, \num, \num, \str], {|str1, num1, num2, str2|
 			var thisIndex, thisKey, modArgs, modifier;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			modArgs = str2.asString.radStringMod;
 			if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
@@ -148,7 +226,7 @@
 
 		cW.add(\blklag, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			Block.lag(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
@@ -159,14 +237,14 @@
 
 		cW.add(\blkxset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			Block.xset(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkxset, [\str, \num, \str, \num], {|str1, num1, str2, num3|
 			var thisIndex;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			Block.xset(num1, [str2, num3]);
 		}, "blocksetn: blk, arg");
 
@@ -181,6 +259,24 @@
 		cW.add(\blklagn, [\str, \num, \arr], {|str1, num1, arr1|
 			Block.lag(num1, arr1);
 		}, "blocksetn: blk, val");
+
+		//blkget 1 position: where block 1 plays, in seconds of its file
+		//(sound-file blocks that report it; see RadPosition)
+		cW.add(\blkget, [\str, \num, \str], {|str1, num1, str2|
+			if(str2 == 'position', {
+				Block.position(num1.asInteger, {|seconds|
+					var dur = Block.bufferOf(num1.asInteger) !? {|b| b.duration };
+					if(seconds.isNil, {
+						("block" ++ num1 ++ " reports no position (sound-file blocks such as play and loop do)").warn;
+					}, {
+						("// block" ++ num1 ++ " position: " ++ seconds.round(0.001) ++ " s"
+							++ (dur !? {|d| " of " ++ d.round(0.001) ++ " s" } ? "")).radpost;
+					});
+				});
+			}, {
+				("blkget " ++ num1 ++ " " ++ str2 ++ ": unknown (position)").warn;
+			});
+		}, "blkget: block, position");
 
 		cW.add(\blkget, [\str, \num, \str, \num], {|str1, num1, str2, num2|
 			Block.set(num1, [str2, num2]);
@@ -204,7 +300,7 @@
 
 		cW.add(\blkgetspec, [\str, \num, \num], {|str1, num1, num2|
 			var thisIndex, thisKey;
-			thisIndex = Block.ndefs.indexOf(Ndef(("block" ++ num1).asSymbol));
+			thisIndex = Block.indexOfBlock(num1);
 			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
 			Block.getSpec(num1, thisKey).radpostwarn;
 		}, "blocksetn: blk, arg");

@@ -507,6 +507,17 @@
 		});
 	}
 
+	//a send's modulator made or taken off elsewhere (track presets, step 4):
+	//keep modSendArr, which removing a send reads, up to date
+	prAddModSend {arg trackType, trackNum, sendSlot, modNdef;
+		this.prForgetModSend(trackType, trackNum, sendSlot);
+		modSendArr = modSendArr.add([trackType, trackNum, sendSlot, modNdef]);
+	}
+
+	prForgetModSend {arg trackType, trackNum, sendSlot;
+		modSendArr = modSendArr !? {|arr| arr.reject{|item| item.copyFromStart(2) == [trackType, trackNum, sendSlot] } };
+	}
+
 	unmodSend {arg trackType, trackNum, sendSlot, value;
 		var trackKey, indArr, busInArr, slotArr, volArg, thisBusIn, modifier;
 		busInArr = this.prepareModSend(trackType, trackNum, sendSlot);

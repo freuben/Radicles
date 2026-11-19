@@ -1,0 +1,50 @@
+>> csload b 1 radtest_chain5
+== radpost ==
+Ndef.ar('filterBus_1_1', 1);
+Ndef('filterBus_1_1').fadeTime = 0.5;
+Ndef('filterBus_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inBus1', 1), freq.lag(lag));});
+Ndef('filterBus_1_1').set('lag', 0.1, 'freq', 20000);
+Ndef('bus1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterBus_1_1', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('bus1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef.ar('filterBus_1_2', 1);
+Ndef('filterBus_1_2').fadeTime = 0.5;
+Ndef('filterBus_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inBus1', 1), freq.lag(lag));});
+Ndef('filterBus_1_1').set('freq', 20000, 'lag', 0.1);
+Ndef('filterBus_1_2', {arg freq=20000 , lag=0.1 ; HPF.ar(Ndef.ar('filterBus_1_1', 1), freq.lag(lag));});
+Ndef('filterBus_1_2').set('lag', 0.1, 'freq', 20000);
+Ndef('bus1', {arg volume=0, lagTime=0, mute=0, solo=1;
+                (Ndef.ar('filterBus_1_2', 1) * volume.dbamp.lag(lagTime)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('bus1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+== radpostcont ==
+(none)
+
+>> csload m radtest_chain5
+== radpost ==
+Ndef.ar('filterMaster_1_1', 2);
+Ndef('filterMaster_1_1').fadeTime = 0.5;
+Ndef('filterMaster_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inMaster', 2), freq.lag(lag));});
+Ndef('filterMaster_1_1').set('lag', 0.1, 'freq', 20000);
+Ndef('master', {arg volume=0, lagTime=0, mute=0, off=0;
+                    (Ndef.ar('filterMaster_1_1', 2) * volume.dbamp.lag(lagTime)
+                        *mute.linlin(0,1,1,0).lag(0.1)
+                        *off.linlin(0,1,1,0)
+                )});
+Ndef('master').set('volume', 0, 'lagTime', 0, 'mute', 0, 'off', 0);
+Ndef.ar('filterMaster_1_2', 2);
+Ndef('filterMaster_1_2').fadeTime = 0.5;
+Ndef('filterMaster_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inMaster', 2), freq.lag(lag));});
+Ndef('filterMaster_1_1').set('freq', 20000, 'lag', 0.1);
+Ndef('filterMaster_1_2', {arg freq=20000 , lag=0.1 ; HPF.ar(Ndef.ar('filterMaster_1_1', 2), freq.lag(lag));});
+Ndef('filterMaster_1_2').set('lag', 0.1, 'freq', 20000);
+Ndef('master', {arg volume=0, lagTime=0, mute=0, off=0;
+                    (Ndef.ar('filterMaster_1_2', 2) * volume.dbamp.lag(lagTime)
+                        *mute.linlin(0,1,1,0).lag(0.1)
+                        *off.linlin(0,1,1,0)
+                )});
+Ndef('master').set('volume', 0, 'lagTime', 0, 'mute', 0, 'off', 0);
+== radpostcont ==
+(none)
+

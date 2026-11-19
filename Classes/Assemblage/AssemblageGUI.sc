@@ -1069,7 +1069,11 @@
 								peakArr = peakArr.add(peakVal);
 							});
 						});
-						if(peakArr.notNil, {
+						//while the window is rebuilt (a strip was removed) its lists are
+						//gone or of another size for a moment: skip that reading
+						if(peakArr.notNil and: { levelTextArr.notNil } and: { peakMax.notNil }
+							and: { levelArr.notNil } and: { peakArr.size == levelArr.flat.size }
+							and: { levelTextArr.size >= levelArr.size } and: { peakMax.size >= levelArr.size }, {
 							peakArr = peakArr.reshapeLike(levelArr);
 							peakArr.do{|item, index|
 								var peakDb;
@@ -1231,7 +1235,7 @@
 							});
 						});
 					});
-				});
+				}, [this.prFxBypassButton(filterTag), this.prFxSaveButton(filterTag), this.prFxPresetMenu(filterTag, filterKey)]);
 			filtersWindow = filtersWindow.add(filtersWin);
 			filtersWin.onClose = {
 				filtersWindow = filtersWindow.reject({|item| item.name == filtersWin.name });
@@ -1249,18 +1253,26 @@
 	// or mapped to a controller are greyed out. The button at the top shows
 	// buttonString and calls buttonAction with the window. Returns the window.
 	prArgWinGUI {arg ndefKey, winName, pairs, specArr, winLeft=0, winDown=0,
-		buttonString, buttonAction;
+		buttonString, buttonAction, headerViews;
 		var filtersWin, fltCanvas, fxKnobTextArr, fltVlay, fltWinWidth, fltWinHeight,
-		stringLengh, argArr, defaultArgArr, specBool, removeButton, fltWinTop;
+		stringLengh, argArr, defaultArgArr, specBool, removeButton, fltWinTop,
+		textWidth, valueWidth, buttonWidth, rowWidth, headerWidth, margin = 8, spacing = 6, rowHeight = 15;
 		argArr = pairs.flop[0];
 		defaultArgArr = pairs.flop[1];
-		stringLengh = argArr.collect({|item| item.asString.size }).maxItem*4.8;
+		//sizes from the text as it is drawn, so nothing is cut off
+		textWidth = {|string| (try { string.bounds(basicFont).width } { string.size * 5 }).ceil + 8 };
+		stringLengh = argArr.collect({|item| textWidth.(item.asString) }).maxItem;
+		valueWidth = textWidth.("-0.00000"); //values show 8 characters
+		buttonWidth = textWidth.(buttonString.asString) + 12;
+		rowWidth = stringLengh + 180 + valueWidth + (2 * spacing);
+		headerWidth = buttonWidth + (headerViews ? []).sum{|view|
+			(try { view.getProperty(\minimumWidth) } { 60 } ? 60) + spacing };
 		filtersWin = ScrollView()
 		.name_(winName);
 		filtersWin.hasHorizontalScroller = false;
-		fltWinWidth = (250) + stringLengh + 7;
+		fltWinWidth = rowWidth.max(headerWidth) + (2 * margin);
 		fltWinTop = screenBounds.height-filtersWin.bounds.top-winDown;
-		fltWinHeight = ( ((argArr.size+1) * (15 + 7)) + 13 + 6 ).min(fltWinTop);
+		fltWinHeight = ((argArr.size + 1) * rowHeight + (argArr.size * spacing) + (2 * margin)).min(fltWinTop);
 		filtersWin.fixedHeight = fltWinHeight;
 		filtersWin.fixedWidth = fltWinWidth;
 		/*filtersWin.alwaysOnTop = true;*/
@@ -1279,7 +1291,7 @@
 			.background_(Color.black)
 			.stringColor_(Color.white)
 			.font_(basicFont)
-			.minWidth_(40).maxWidth_(40).maxHeight_(10).minHeight_(10);
+			.minWidth_(valueWidth).maxWidth_(valueWidth).maxHeight_(10).minHeight_(10);
 			hidNodes = HIDMap.hidNodes;
 			if(hidNodes.notNil, {
 				if(hidNodes.notEmpty, {
@@ -1365,19 +1377,172 @@
 			};
 			fltVlay = fltVlay.add(HLayout(*finalLayout) );
 		};
-		removeButton = Button().maxHeight_(15).minHeight_(15)
+		removeButton = Button().maxHeight_(15).minHeight_(15).minWidth_(buttonWidth)
 		.states_([["", colorCritical, Color.black]])
 		.string_(buttonString)
 		.font_(basicFont)
 		.srcAction = { buttonAction.(filtersWin) };
 		removeButton.canFocus = false;
-		fltVlay = [removeButton] ++ fltVlay;
-		fltCanvas.layout = VLayout(*fltVlay);
+		//views next to the button (an effect window's PRESET menu)
+		fltVlay = [if(headerViews.notNil, { HLayout(removeButton, *headerViews).spacing_(spacing).margins_(0) },
+			{ removeButton })] ++ fltVlay.collect{|row| row.spacing_(spacing).margins_(0) };
+		fltCanvas.layout = VLayout(*fltVlay).spacing_(spacing).margins_(margin);
 		filtersWin.canvas = fltCanvas;
 		filtersWin.bounds = Rect(winLeft, winDown, fltWinWidth, fltWinHeight);
 		filtersWin.front;
 		^filtersWin;
 	}
+	// an effect window's BYPASS button, lit while the effect is bypassed;
+	// pressing it is like fxbypass (AssemblageBypass)
+	prFxBypassButton {arg filterTag;
+		var button, info = this.convFilterTag(filterTag);
+		button = Button().maxHeight_(15).minHeight_(15).fixedWidth_(60)
+		.font_(basicFont)
+		.states_([["BYPASS", Color.white, Color.black], ["BYPASS", Color.white, colorWarning]]);
+		button.value = this.isBypassed(filterTag).binaryValue;
+		button.canFocus = false;
+		button.srcAction = {|view|
+			this.bypassFx(info[0], info[1].asInteger, info[2].asInteger, view.value);
+		};
+		^button
+	}
+
+	// an effect window's PRESET menu: this effect's presets (new format);
+	// choosing one loads it into the slot, like fxload
+	// (default first: the effect's own default values)
+	prFxPresetMenu {arg filterTag, filterKey;
+		var menu;
+		menu = PopUpMenu().maxHeight_(15).minHeight_(15).fixedWidth_(90)
+		.font_(basicFont)
+		.background_(Color.black).stringColor_(Color.white);
+		this.prFillPresetMenu(menu, filterKey);
+		menu.canFocus = false;
+		menu.srcAction = {|view|
+			//a library's preset reads "name · LIB": the name is the first word
+			if(view.value > 0, { this.loadUnitPreset(filterTag, view.items[view.value].split($ ).first.asSymbol) });
+		};
+		^menu
+	}
+
+	//kind: \filter (an effect window) or \block (a source window)
+	prFillPresetMenu {arg menu, filterKey, kind = \filter;
+		menu.items = ["PRESET", "default"] ++ RadUnit.presetNames(kind, filterKey).collect{|name|
+			var source = RadUnit.presetSource(kind, filterKey, name);
+			if(source == \own or: { source.isNil }, { name.asString }, { name.asString ++ " · " ++ source })
+		};
+		menu.value = 0;
+	}
+
+	// an effect window's SAVE button: asks for a name in a small window, then
+	// saves like fxsave (asking first if the name exists) and adds it to the menu
+	prFxSaveButton {arg filterTag;
+		var button = Button().maxHeight_(15).minHeight_(15).fixedWidth_(50)
+		.font_(basicFont)
+		.states_([["SAVE", Color.white, Color.black]]);
+		button.canFocus = false;
+		button.srcAction = { this.prSavePresetWindow(filterTag) };
+		^button
+	}
+
+	prSavePresetWindow {arg filterTag;
+		var def, parent;
+		def = (filters ? []).detect{|item| item[0] == filterTag } !? {|item| item[1] };
+		if(def.isNil, { ^this });
+		parent = (filtersWindow ? []).detect{|w| w.name.beginsWith(filterTag.asString ++ " ") };
+		^this.prPresetNameWindow(filterTag.asString ++ " | " ++ def, parent, {|name|
+			this.writeUnitPreset(filterTag, name, {
+				{ (filtersWindow ? []).detect{|w| w.name.beginsWith(filterTag.asString ++ " ") }
+					!? {|w| this.prRefillPresetMenu(w, def, \filter) } }.defer;
+			});
+		});
+	}
+
+	//the PRESET menu of an open argument window, filled again (after a save)
+	prRefillPresetMenu {arg win, def, kind;
+		win.canvas.children.detect{|v| v.isKindOf(PopUpMenu) } !? {|menu| this.prFillPresetMenu(menu, def, kind) };
+	}
+
+	// the small window a SAVE button opens: asks for a preset name, then calls
+	// saveFunc with it (a Symbol) and, when keepLabel is given, whether its
+	// check box is ticked. Shared by effect and source windows.
+	prPresetNameWindow {arg title, parent, saveFunc, keepLabel;
+		var win, field, save, keepBox;
+		win = Window("Save preset · " ++ title,
+			Rect(parent !? {|w| w.bounds.left + 20 } ? 200, parent !? {|w| w.bounds.top + 40 } ? 200, 300,
+				if(keepLabel.notNil, { 95 }, { 70 })),
+			resizable: false);
+		if(keepLabel.notNil, {
+			keepBox = CheckBox().string_(keepLabel).font_(basicFont).value_(false);
+			try { keepBox.palette = keepBox.palette.windowText_(Color.white) };
+		});
+		win.background = Color.black;
+		field = TextField().font_(basicFont).background_(colorTextField);
+		save = {
+			var name = field.string.stripWhiteSpace;
+			case
+			{ name.isEmpty } { }
+			{ RadUnit.validPresetName(name).not } {
+				("Preset names use letters, digits, - and _ only: " ++ name).warn }
+			{
+				saveFunc.(name.asSymbol, keepBox !? {|box| box.value } ? false);
+				win.close;
+			};
+		};
+		field.action = { save.() };
+		//nil in a layout is a stretch: leave the check box out when there is none
+		win.layout = VLayout(*[
+			StaticText().string_("Preset name (letters, digits, - and _):")
+			.font_(basicFont).stringColor_(Color.white),
+			field,
+			keepBox,
+			HLayout(nil,
+				Button().states_([["Cancel", Color.white, Color.black]]).font_(basicFont)
+				.action_({ win.close }),
+				Button().states_([["Save", Color.white, Color.black]]).font_(basicFont)
+				.action_({ save.() })
+			)
+		].reject(_.isNil));
+		win.front;
+		field.focus(true);
+		^win
+	}
+
+	// a source window's PRESET menu: the presets of the block's definition;
+	// choosing one loads it into the block, like blkload (default first)
+	prBlkPresetMenu {arg block, blockName;
+		var menu;
+		menu = PopUpMenu().maxHeight_(15).minHeight_(15).fixedWidth_(90)
+		.font_(basicFont)
+		.background_(Color.black).stringColor_(Color.white);
+		this.prFillPresetMenu(menu, blockName, \block);
+		menu.canFocus = false;
+		menu.srcAction = {|view|
+			//a library's preset reads "name · LIB": the name is the first word
+			if(view.value > 0, { RadUnit.loadBlockPreset(block, view.items[view.value].split($ ).first.asSymbol) });
+		};
+		^menu
+	}
+
+	// a source window's SAVE button: asks for a name, then saves like blksave
+	// (asking first if the name exists) and adds it to the menu
+	prBlkSaveButton {arg block, blockName;
+		var button = Button().maxHeight_(15).minHeight_(15).fixedWidth_(50)
+		.font_(basicFont)
+		.states_([["SAVE", Color.white, Color.black]]);
+		button.canFocus = false;
+		button.srcAction = {
+			var tag = RadUnit.blockTag(block), unit = RadUnit.readBlock(tag);
+			this.prPresetNameWindow(tag.asString ++ " | " ++ blockName, this.prSourceWin(tag), {|name, keep|
+				RadUnit.saveBlockPreset(block, name, {
+					{ this.prSourceWin(tag) !? {|w| this.prRefillPresetMenu(w, blockName, \block) } }.defer;
+				}, keep);
+			},
+			//a block playing a recording: offer to keep it as a file (blksave N name keep)
+			if(unit.notNil and: { RadUnit.prHasRecBuffer(unit[\buffer]) }, { "keep the recording as a file" }));
+		};
+		^button
+	}
+
 	filterGUIIndex {arg index=0, topLeftArr, mixButton;
 		var filterTag, filterKey, filterPairs, filterInfo, top, left, thisFilter, defaultPos;
 		if(filters.notNil, {
@@ -1389,6 +1554,8 @@
 				filterPairs = this.getFilterPairs(filterInfo[0], filterInfo[1], filterInfo[2]);
 				if(topLeftArr.isNil, {
 					defaultPos = {top = 75; left = 75;};
+					filtersWindow = filtersWindow !? {|wins|
+						wins.reject{|item| item.isClosed or: { item.bounds.isNil } } };
 					if(filtersWindow.isNil, {
 						defaultPos.();
 					}, {
@@ -1556,8 +1723,12 @@
 					srcWin = this.prArgWinGUI(ndefKey, winName, pairs, specArr,
 						winLeft, winDown, "R E M O V E   B L O C K", {|win|
 							//like 'st N': stopping the block closes the window
-							Radicles.cW.callFunc("st " ++ (blockIndex + 1));
-						});
+							Radicles.cW.callFunc("st " ++ Block.numberAt(blockIndex));
+						},
+						//presets (blksave, blkload); recording blocks have none
+						if(RadUnit.recordsDef(blockName).not, {
+							[this.prBlkSaveButton(Block.numberAt(blockIndex), blockName),
+								this.prBlkPresetMenu(Block.numberAt(blockIndex), blockName)] }));
 					sourceWindows = sourceWindows.add(srcWin);
 					if(trackNum.notNil, { this.prSrcWinTracks.put(trackNum, ndefKey) });
 					srcWin.onClose = {
@@ -1658,7 +1829,7 @@
 		{this.prBlockPlaying(blockIndex)} {
 			this.sourceGUI(Block.ndefs[blockIndex], winLeft, winDown, trackNum);
 		}
-		{ this.blockMenu(blockIndex + 1, menuBounds) };
+		{ this.blockMenu(Block.numberAt(blockIndex), menuBounds) };
 	}
 
 	//the source menus: blocks, then for blocks with a buffer a second list
@@ -1812,19 +1983,27 @@
 		}.defer;
 	}
 
+	// rebuild the effect's window, if it is open, where it was
 	updateFxWin {arg ndefKey;
-		var convTag, getWin;
-		if(filtersWindow.notNil, {
-			if(filtersWindow.notEmpty, {
-				getWin = filtersWindow.detect({|item, index|
-					item.name.beginsWith(ndefKey.asString ++ " ") });
-				if(getWin.notNil, {
-					getWin.close;
-				});
-				server.sync;
-				convTag = this.convFilterTag(ndefKey);
-				this.filterGUI(convTag[0], convTag[1], convTag[2]);
-			});
+		var convTag, getWin, bounds;
+		getWin = (filtersWindow ? []).detect({|item|
+			item.name.beginsWith(ndefKey.asString ++ " ") and: { item.isClosed.not } });
+		if(getWin.notNil, {
+			bounds = getWin.bounds;
+			getWin.close;
+			//a closed window stays listed until its onClose runs, which can
+			//be later: drop it now, so reopening never reads its bounds
+			filtersWindow = filtersWindow.reject{|item| item === getWin };
+			server.sync;
+			convTag = this.convFilterTag(ndefKey);
+			this.filterGUI(convTag[0], convTag[1], convTag[2], [bounds.left, bounds.top]);
+			//placed again once Qt has shown it: a window placed before it is shown
+			//counts its title bar differently and would come back 20 px higher
+			{
+				(filtersWindow ? []).detect{|item|
+					item.name.beginsWith(ndefKey.asString ++ " ") and: { item.isClosed.not } }
+				!? {|win| win.bounds = win.bounds.moveTo(bounds.left, bounds.top) };
+			}.defer(0.1);
 		});
 	}
 

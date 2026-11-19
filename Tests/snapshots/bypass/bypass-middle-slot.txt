@@ -1,0 +1,8 @@
+>> fxbypass t 1 2
+== radpost ==
+Ndef('filterTrack_1_3', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('filterTrack_1_1', 1), freq.lag(lag));});
+Ndef('filterTrack_1_3').set('freq', 20000, 'lag', 0.1);
+Ndef('filterTrack_1_2').pause;
+== radpostcont ==
+(none)
+

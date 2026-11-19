@@ -1,0 +1,6 @@
+>> blkmorph 1 radtest_hi 4 none
+== radpost ==
+Ndef('block1').set('freq', 500);
+== radpostcont ==
+(none)
+

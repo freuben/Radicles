@@ -1,0 +1,12 @@
+>> blkget 1 position
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

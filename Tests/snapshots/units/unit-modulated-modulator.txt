@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+Ndef('mod2', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(0.0, 1.0) + add});
+Ndef('mod1').xset('phase', Ndef('mod2'));
+== radpostcont ==
+(none)
+

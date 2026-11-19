@@ -1,0 +1,12 @@
+>> blk 1 sine
+== radpost ==
+Ndef('block1', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+== radpostcont ==
+(none)
+
+>> blkset 1 freq 330
+== radpost ==
+Ndef('block1').set('freq', 330);
+== radpostcont ==
+(none)
+

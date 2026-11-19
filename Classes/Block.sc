@@ -1,6 +1,6 @@
 Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
-	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048;
+	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers, positionBuses, making;
 
 	*add {arg channels=1, action;
 		var ndefTag, ndefCS1, ndefCS2;
@@ -49,16 +49,101 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}.fork;
 	}
 
+	// A block keeps its number for the whole session: the block typed as N is
+	// the one named blockN, wherever it sits in the lists once another block
+	// has been removed (decided 18 Nov 2026; play, stop and remove counted
+	// positions before, while blkset, the presets and the posted code went by
+	// name). These answer nil when there is no such block.
+	*indexOfBlock {arg block;
+		var tag;
+		if(block.isNumber.not or: { ndefs.isNil }, { ^nil });
+		tag = ("block" ++ block.asInteger).asSymbol;
+		^ndefs.detectIndex{|ndef| ndef.key == tag };
+	}
+
+	*ndefOf {arg block;
+		^this.indexOfBlock(block) !? {|index| ndefs[index] };
+	}
+
+	// the number of the block at a place in the lists (block3 -> 3)
+	*numberAt {arg index;
+		^ndefs[index] !? {|ndef| ndef.key.asString.divNumStr[1].asInteger };
+	}
+
+	// Make the block with this number (blockN) when it isn't there: after it
+	// was removed, or a number that never existed. It goes into the lists in
+	// number order. It is connected to the track with its number when that
+	// track exists and nothing feeds it (as start sets blocks up); otherwise
+	// it is left unconnected, and a note says so. Call inside a Routine.
+	*make {arg block;
+		var tag, ndef, channels = 1, index, trackKey, connected = false;
+		block = block.asInteger;
+		tag = ("block" ++ block).asSymbol;
+		trackKey = ("track" ++ block).asSymbol;
+		if(aZ.notNil and: { (aZ.trackNames ? []).includes(trackKey) }, {
+			channels = Ndef(("inTrack" ++ block).asSymbol).numChannels ? 1;
+		});
+		("Ndef.ar(" ++ tag.cs ++ ", " ++ channels.cs ++ ");").radcode;
+		server.sync;
+		("Ndef(" ++ tag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";").radcode;
+		server.sync;
+		ndef = Ndef(tag);
+		index = (ndefs ? []).count{|item| item.key.asString.divNumStr[1].asInteger < block };
+		ndefs = (ndefs ? []).insert(index, ndef);
+		blocks = (blocks ? []).insert(index, [tag, channels]);
+		liveBlocks = (liveBlocks ? []).insert(index, nil);
+		timecond = (timecond ? []).insert(index, Condition(false));
+		blockCount = max(blockCount, block + 1);
+		if(aZ.notNil and: { (aZ.trackNames ? []).includes(trackKey) }
+			and: { RadUnit.readInput(trackKey, aZ).isNil }, {
+			aZ.input(ndef, \track, block);
+			server.sync;
+			connected = true;
+			{ aZ.refreshFunc }.defer;
+		});
+		if(connected.not, {
+			("// " ++ tag ++ " is not connected to a track (blk " ++ block ++ " <> 1 connects it to track 1)").radcode;
+		});
+		^ndef
+	}
+
+	// The block of a track: block N feeds track N. Makes it when it isn't
+	// there (a new track's block takes the track's number, also after other
+	// tracks and blocks were removed), and connects it when nothing feeds the
+	// track.
+	*forTrack {arg num, action;
+		{
+			var ndef = this.ndefOf(num);
+			if(ndef.isNil, { ndef = this.make(num) }, {
+				if(aZ.notNil and: { RadUnit.readInput(("track" ++ num).asSymbol, aZ).isNil }, {
+					aZ.input(ndef, \track, num);
+					server.sync;
+				});
+			});
+			action.(ndef);
+		}.fork(AppClock);
+	}
+
 	*remove {arg block=1;
 		var blockIndex, string;
-		blockIndex = block - 1;
-		if((block >= 1).and(block <= blocks.size), {
-			string = (ndefs[blockIndex].cs ++ ".clear;");
+		blockIndex = this.indexOfBlock(block);
+		if(blockIndex.notNil, {
+			//unplug it from the tracks it feeds first, so no track is left
+			//pointing at a block that is gone
+			if(aZ.notNil, {
+				aZ.removeInput(ndefs[blockIndex]);
+				aZ.closeSourceWin(ndefs[blockIndex].key);
+			});
+			this.newStartTicket(ndefs[blockIndex].key); //cancel a start still loading
+			//it fades out over its own fade time (a plain clear cut it: a click)
+			string = (ndefs[blockIndex].cs ++ ".clear(" ++ (ndefs[blockIndex].fadeTime ? 0) ++ ");");
 			string.radcode;
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
 			liveBlocks.removeAt(blockIndex);
 			timecond.removeAt(blockIndex);
+			RadUnit.syncBlocks; //document (step 2)
+			if(aZ.notNil, { aZ.refreshSourceSlots; { aZ.refreshFunc }.defer });
 		}, {
 			"Block Number not Found".warn;
 		});
@@ -67,9 +152,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	*removeArr {arg blockArr;
 		var newArr, string;
 		blockArr.do{|item|
-			if((item >= 1).and(item <= blocks.size), {
-				newArr = newArr.add(item-1);
-				string = (ndefs[item-1].cs ++ ".clear;");
+			var index = this.indexOfBlock(item);
+			if(index.notNil, {
+				newArr = newArr.add(index);
+				string = (ndefs[index].cs ++ ".clear;");
 				string.radcode;
 			}, {
 				"Block Number not Found".warn;
@@ -79,6 +165,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blocks.removeAtAll(newArr);
 		liveBlocks.removeAll(newArr);
 		timecond.removeAll(newArr);
+		RadUnit.syncBlocks; //document (step 2)
 	}
 
 	*removeAll {var string;
@@ -91,6 +178,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		liveBlocks = [];
 		timecond = [];
 		blockCount = 1;
+		liveBuffers = nil;
+		this.prFreePositionBuses;
+		RadUnit.clearBlockMorphTimes;
+		RadUnit.syncBlocks; //document (step 2)
 	}
 
 	*clear {
@@ -100,16 +191,24 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		liveBlocks = [];
 		timecond = [];
 		blockCount = 1;
+		liveBuffers = nil;
+		this.prFreePositionBuses;
+		RadUnit.clearBlockMorphTimes;
+		RadUnit.syncBlocks; //document (step 2)
 	}
 
 	*initCond {arg block=1;
-		timecond[block-1] = Condition(false);
-		timecond[block-1].test = false;
+		this.indexOfBlock(block) !? {|index|
+			timecond[index] = Condition(false);
+			timecond[index].test = false;
+		};
 	}
 
 	*syncStart {arg block=1;
-		timecond[block-1].test = true;
-		timecond[block-1].signal;
+		this.indexOfBlock(block) !? {|index|
+			timecond[index].test = true;
+			timecond[index].signal;
+		};
 	}
 
 	*allSync {
@@ -142,9 +241,14 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		storeType, dataString, cond, bufferArr, bufferID, bufInfo, bstoreSize, bufStrings, bufLoaded, bufWait,
 		pattArr, extraPattCount, bufIndex, bufString, bufIDs, extraArgsBool, thisExcludeLibs,
 		startKey, ticket, cancelStart;
+		// names as symbols, as the call window passes them: a String block
+		// name found no definition (nothing played), and a String buffer was
+		// taken for an array of buffers (one per letter)
+		if(blockName.isString, { blockName = blockName.asSymbol });
+		if(buffer.isString, { buffer = buffer.asSymbol });
 		if(block >= 1, {
-			blockIndex = block-1;
-			if(ndefs[blockIndex].notNil, {
+			blockIndex = this.indexOfBlock(block);
+			if(blockIndex.notNil, {
 				startKey = ndefs[blockIndex].key;
 				ticket = this.newStartTicket(startKey);
 				// a start cancelled while loading frees what it loaded (unless a
@@ -172,7 +276,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						thisExcludeLibs = excludeLibs;
 						thisExcludeLibs = thisExcludeLibs.select({|item| item != "Main"});
 						blockFunc = SynthFile.read(\block, blockName, thisExcludeLibs);
-						blockFuncString = blockFunc.cs;
+						blockFuncString = this.prPositionString(startKey, blockFunc.cs);
 						if(blockFuncString.includesString("\\buffer")
 							.or(blockFuncString.includesString("'buffer'")), {
 								if(buffer.isArray.not, {
@@ -191,7 +295,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 											/*bufIndex = BufferSystem.bufferArray.indexOf(buf);
 											bufString = BufferSystem.globVarArray[bufIndex];*/
 											/*blockFunc.postln;*/
-											blockFunc = blockFuncString.replace("\\buffer",
+											blockFunc = this.prFileRateString(blockFuncString, buf).replace("\\buffer",
 												bufString).replace("'buffer'", bufString).interpret;
 											}, {
 												blockFunc = nil;
@@ -216,8 +320,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 										bufIndex = BufferSystem.bufferArray.indexOf(bufIDs);
 										bufString = BufferSystem.globVarArray[bufIndex];*/
 										bufString = BStore.buffStrByID(buffer);
-										blockFunc = blockFuncString.replace("\\buffer",
-											bufString).replace("'buffer'", bufString).interpret;
+										blockFunc = this.prFileRateString(blockFuncString, BStore.buffByID(buffer))
+										.replace("\\buffer", bufString).replace("'buffer'", bufString).interpret;
 										/*"this buffer is an existing buffer with ID".postln;*/
 									}, {
 										buffer.do{|item|
@@ -308,7 +412,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 						/*blockFuncCS = blockFunc;*/
 					});
 					if(sync, {
-						timecond[block-1].wait;
+						timecond[blockIndex].wait;
 					});
 					if(this.isCurrentStart(startKey, ticket).not, { cancelStart.value }, {
 						if(liveBlocks[blockIndex].notNil, {
@@ -364,6 +468,10 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 							if(blockFunc.notNil, {
 								ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
 								liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
+								//document (step 2): the buffer by what it is, then the unit
+								this.prSetBufferForm(startKey, blockName, bufferID ?? {
+									if(buffer.isArray and: { [\alloc, \play, \cue].includes(buffer[0]) }, { buffer }) });
+								RadUnit.sync(startKey);
 								if(aZ.notNil, { aZ.updateSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 							});
 							action.();
@@ -371,7 +479,21 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 				}.fork;
 			}, {
-				"This block does not exist".warn;
+				//a block that isn't there (removed, or never made) is made, then
+				//played; a newer start for the same number while it is being
+				//made replaces this one
+				making = making ?? { IdentityDictionary.new };
+				if(making[block].isNil, {
+					making[block] = [blockName, buffer, extraArgs, data, sync, xfade, action];
+					{
+						var args;
+						this.make(block);
+						args = making.removeAt(block);
+						this.play(block, *args);
+					}.fork(AppClock);
+				}, {
+					making[block] = [blockName, buffer, extraArgs, data, sync, xfade, action];
+				});
 			});
 		}, {
 			"Block not found".warn;
@@ -380,8 +502,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*stop {arg block=1, fadeOut;
 		var blockIndex, slotIndex, ndefCS;
-		if(block >= 1, {
-			blockIndex = block-1;
+		blockIndex = this.indexOfBlock(block);
+		if(blockIndex.notNil, {
 			if(fadeOut.notNil, {
 				ndefCS = (ndefs[blockIndex].cs ++ ".fadeTime = " ++
 					fadeOut ++ ";");
@@ -393,6 +515,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			ndefCS = (ndefs[blockIndex].cs	 ++ ".source = "
 				++ "nil;" );
 			ndefCS.radcode;
+			RadUnit.sync(ndefs[blockIndex].key); //document (step 2)
 			if(aZ.notNil, { aZ.closeSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 			if(liveBlocks[blockIndex].notNil, {
 				this.buffree(blockIndex, fadeOut, {
@@ -410,6 +533,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	*playAll {arg blockArr, blockName, buffer, extraArgs, data, sync=false, xfade=false, action;
 		var blockNameArr, bufferArr, extraArgsArr, dataArr, syncArr, xfadeArr, cond;
 		cond = Condition(false);
+		if(blockName.isString, { blockName = blockName.asSymbol });
+		if(buffer.isString, { buffer = buffer.asSymbol });
 		if(blockName.isArray, {blockNameArr = blockName}, {blockNameArr =
 			blockName!blockArr.size});
 		if(buffer.isArray, {bufferArr = buffer}, {bufferArr = buffer!blockArr.size});
@@ -454,7 +579,9 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		thisBlock = liveBlocks;
 		thisBuffer = thisBlock[blockIndex][2];
 		{
-			fadeOut.wait;
+			//the fade starts one server latency after it is asked for, so it
+			//ends that much later: freeing the buffer at fadeOut cut its tail
+			((fadeOut ? 0) + (server.latency ? 0.2) + 0.1).wait;
 			if(thisBuffer.notNil, {
 				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
 					/*"remove buffer".postln;*/
@@ -473,8 +600,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*set {arg block, argArr, post=true;
 		var blockIndex;
-		if((block >= 1), {
-			blockIndex = block-1;
+		blockIndex = this.indexOfBlock(block);
+		if(blockIndex.notNil, {
 			if(post == true, {
 				(ndefs[blockIndex].cs	++ ".set(" ++
 					argArr.cs.replace("[", "").replace("]", "") ++  ");").radcode;
@@ -486,8 +613,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*xset {arg block, argArr, post=true;
 		var blockIndex;
-		if((block >= 1), {
-			blockIndex = block-1;
+		blockIndex = this.indexOfBlock(block);
+		if(blockIndex.notNil, {
 			if(post == true, {
 				(ndefs[blockIndex].cs	++ ".xset(" ++
 					argArr.cs.replace("[", "").replace("]", "") ++  ");").radcode;
@@ -499,8 +626,8 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 
 	*lag {arg block, argArr;
 		var blockIndex, string;
-		if((block >= 1), {
-			blockIndex = block-1;
+		blockIndex = this.indexOfBlock(block);
+		if(blockIndex.notNil, {
 			argArr.keysValuesDo{|key, val|
 				string = ndefs[blockIndex].cs ++ ".lag(" ++ key.cs
 				++ ", " ++ val.cs ++ ");";
@@ -824,6 +951,145 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			[\alloc, \cue].includes(item[0]) and: { item[1] == tag.asSymbol } };
 		if(id.notNil, { ^[id, nil] });
 		^[tag, nil];
+	}
+
+	// a definition that streams a file from disk (cue) writes \fileRate where
+	// it needs the file's sample rate, which only the file's header knows
+	// (a cue buffer holds a few frames at the server's rate, so BufRateScale
+	// is 1): it becomes the number, so the file plays at its own speed (6 Nov
+	// 2026). Without a file it is the server's rate (speed 1).
+	*prFileRateString {arg string, buf;
+		var path, file, rate;
+		if(string.includesString("\\fileRate").not and: { string.includesString("'fileRate'").not }, { ^string });
+		path = buf !? {|b| b.path };
+		if(path.notNil and: { File.exists(path.standardizePath) }, {
+			file = SoundFile.openRead(path.standardizePath);
+			file !? { rate = file.sampleRate; file.close };
+		});
+		rate = rate !? {|r| r.asInteger.asString } ?? { "SampleRate.ir" };
+		^string.replace("\\fileRate", rate).replace("'fileRate'", rate);
+	}
+
+	// ---- the document (Document Model, step 2) ----
+
+	// a block's buffer by what it is, never by its number (numbers change from
+	// one run to the next): what Block.play needs to load it again.
+	//   [\play, \audio, \drums1]   -> (play: 'drums1', folder: 0)
+	//   [\cue, \cue1, \marilyn1]   -> (cue: 'marilyn1', folder: 0)
+	//   [\alloc, \alloc2, [2048]]  -> (alloc: 2048)  (with channels: n if more than 1)
+	//   a recording buffer         -> (rec: 1)       (@1)
+	// folder: the Play folder (BStore.playFolder) the file was read from.
+	// Several buffers (vosc) give an Array of these.
+	*bufferForm {arg id, folder;
+		var index, size;
+		folder = folder ? BStore.playFolder;
+		if(id.isArray.not or: { id.isEmpty }, { ^nil });
+		if(id[0].isArray, { ^id.collect{|item| this.bufferForm(item, folder) } });
+		^case
+		{ id[0] == \play } { (play: id[2], folder: folder) }
+		{ id[0] == \cue } { (cue: id[2], folder: folder) }
+		{ id[0] == \alloc } {
+			index = (recbuffers ? []).indexOfEqual(id);
+			if(index.notNil, { (rec: index + 1) }, {
+				size = id[2].asArray;
+				if(size.size > 1 and: { size[1] != 1 }, {
+					(alloc: size[0], channels: size[1]) }, { (alloc: size[0]) })
+			})
+		}
+		{ nil };
+	}
+
+	// ---- position (step 2, PR 3; see RadPosition) ----
+
+	// a block definition's code with \position replaced by the block's
+	// control bus (made, and posted, the first time the block needs one)
+	*prPositionString {arg key, string;
+		var name;
+		if(string.includesString("\\position").not and: { string.includesString("'position'").not }, { ^string });
+		positionBuses = positionBuses ?? { IdentityDictionary.new };
+		name = "~position" ++ key.asString.divNumStr[1];
+		if(positionBuses[key].isNil or: { positionBuses[key].index.isNil }, {
+			(name ++ " = Bus.control(s, 1);").radcode;
+			positionBuses[key] = name.interpret;
+		});
+		^string.replace("\\position", name).replace("'position'", name);
+	}
+
+	//a server that quits or boots starts its bus numbers again: forget the
+	//position buses, so a block never writes to a bus an Ndef owns now
+	*initClass {
+		Class.initClassTree(ServerQuit);
+		Class.initClassTree(ServerBoot);
+		ServerQuit.add(this);
+		ServerBoot.add(this);
+	}
+
+	*doOnServerQuit {arg server; if(server === Server.default, { positionBuses = nil }) }
+
+	*doOnServerBoot {arg server; if(server === Server.default, { positionBuses = nil }) }
+
+	*prFreePositionBuses {
+		positionBuses !? {|buses| buses.do{|bus| try { bus.free } } };
+		positionBuses = nil;
+	}
+
+	// the control bus a block writes its position to, or nil
+	*positionBus {arg block=1;
+		^positionBuses !? {|buses| buses[("block" ++ block).asSymbol] }
+	}
+
+	// does block N play a definition that reports its position?
+	*reportsPosition {arg block=1;
+		var source = this.ndefOf(block) !? {|ndef| ndef.source };
+		^source.isKindOf(Function) and: { source.def.sourceCode.asString.contains("RadPosition") }
+		and: { this.positionBus(block).notNil }
+	}
+
+	// the buffer block N plays (the first, for several), or nil
+	*bufferOf {arg block=1;
+		var id = liveBlocks !? { this.indexOfBlock(block) } !? {|index| liveBlocks[index] } !? {|entry| entry[2] };
+		if(id.isNil, { ^nil });
+		if(id[0].isArray, { id = id[0] });
+		^BStore.buffByID(id)
+	}
+
+	// where block N plays, in seconds of its file: action is called with the
+	// position, or nil when the block reports none (asks the server)
+	*position {arg block=1, action;
+		if(this.reportsPosition(block).not, { action.(nil); ^nil });
+		this.positionBus(block).get({|value| action.(value) });
+	}
+
+	// the startPos (0-1) that starts block N's file at seconds, or nil
+	*startPosOf {arg block=1, seconds;
+		var buf = this.bufferOf(block);
+		if(buf.isNil or: { buf.duration.isNil } or: { buf.duration <= 0 }, { ^nil });
+		^(seconds / buf.duration).clip(0, 1)
+	}
+
+	// remember the buffer of a block that just started, by what it is (the
+	// Play folder can change later); blocks without a buffer have none
+	*prSetBufferForm {arg key, blockName, id;
+		liveBuffers = liveBuffers ?? { IdentityDictionary.new };
+		liveBuffers[key] = if(blockName == \pattern, { nil }, { this.bufferForm(id) });
+	}
+
+	// what Block.play takes to load a buffer form again: a file's name, a
+	// size to allocate, or a recording buffer (several for an Array)
+	*bufferArgOf {arg form;
+		if(form.isNil, { ^nil });
+		if(form.isKindOf(Dictionary).not, { ^form.asArray.collect{|item| this.bufferArgOf(item) } });
+		^case
+		{ form[\play].notNil } { form[\play] }
+		{ form[\cue].notNil } { form[\cue] }
+		{ form[\rec].notNil } { this.recBuf(form[\rec]) }
+		{ form[\alloc].notNil } { form[\alloc] }
+		{ nil };
+	}
+
+	// the buffer form of a playing block (the unit's buffer), or nil
+	*bufferFormOf {arg key;
+		^liveBuffers !? {|b| b[key.asSymbol] } !? {|form| form.deepCopy }
 	}
 
 	//modulation

@@ -1,0 +1,8 @@
+>> blk 1 cue marilyn1
+== radpost ==
+~buffer0 = Buffer.cueSoundFileBuf(s, "<RadiclesFiles>/SoundFiles/Play/0/marilyn1.wav", 0, 2, 32768, bufnum: 0);
+Ndef('block1', {arg loop=1 , mul=1 , rate=1 ;
+    VDiskIn.ar(~buffer0.numChannels, ~buffer0, rate * 44100 / SampleRate.ir, loop)*mul;});
+== radpostcont ==
+(none)
+

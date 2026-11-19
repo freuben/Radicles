@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+Ndef('filterTrack_1_1').fadeTime = 4;
+Ndef('filterTrack_1_1').xset('pitchRatio', 0.5);
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+== radpostcont ==
+(none)
+

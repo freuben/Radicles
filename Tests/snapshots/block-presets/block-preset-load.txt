@@ -1,0 +1,6 @@
+>> blkload 1 radtest_low
+== radpost ==
+Ndef('block1').set('freq', 330);
+== radpostcont ==
+(none)
+

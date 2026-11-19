@@ -129,11 +129,10 @@
 [
 	\ons, \ons2, \ons3, \ons4, \pch, \hpch, \pch2, \hpch2, \loud, \loudt, \onst, \ons2t, \ons3t, \ons4t,
 	\pcht, \hpcht, \pch2t, \hpch2t, \rms, \amp, \rmst, \ampt, \diss, \disst, \cent, \centt, \flat, \flatt,
-	\pcile, \pcilet, \entr, \entrt, \mel1, \mel1t, \mel13, \mel13t, \pwr, \pwrt, \flux, \fluxt,
+	\pcile, \pcilet, \entr, \entrt, \mel1, \mel1t, \mel2t, \mel13, \mel13t, \pwr, \pwrt, \flux, \fluxt,
 	\slope, \slopet, \peak, \peakt, \crest, \crestt, \key, \keyt
 ].do{|name|
 	var tartini = [\pch2, \hpch2, \pch2t, \hpch2t].includes(name);
 	~radTest.("listening-mod-" ++ name, setup: ["start 2", "blk 1 sinenv"], cmds: ["blkset 1 freq " ++ name],
-		cloud: tartini.not, note: tartini.if({"uses Tartini (sc3-plugins PitchDetection), not in the cloud build"}),
-		known: (name == \mel13t).if({"mel2t-mel13t: Ndef(\\trackN).ar is a 1-element array, so MFCC.kr(chain)[n] is nil (fix: .flat[n]); mel1t returns all 13 coefficients"}));
+		cloud: tartini.not, note: tartini.if({"uses Tartini (sc3-plugins PitchDetection), not in the cloud build"}));
 };

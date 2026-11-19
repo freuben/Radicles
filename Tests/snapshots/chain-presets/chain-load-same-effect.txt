@@ -1,0 +1,6 @@
+>> csload t 2 radtest_chain4
+== radpost ==
+Ndef('filterTrack_2_1').set('pitchRatio', 0.5);
+== radpostcont ==
+(none)
+

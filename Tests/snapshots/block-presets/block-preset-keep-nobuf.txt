@@ -1,0 +1,6 @@
+>> blkload 1 radtest_k nobuf
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

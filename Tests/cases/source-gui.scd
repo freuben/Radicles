@@ -13,7 +13,7 @@
 };
 
 // the effect window is built by the shared code and looks as before:
-// a REMOVE FILTER button and a slider per argument with a spec
+// a REMOVE FILTER button (and BYPASS, PR 4) and a slider per argument with a spec
 ~radTest.("fx-window-shared-builder",
 	setup: ["start 2", "fx t 1 pch"],
 	code: {
@@ -26,7 +26,7 @@
 		~radFxSliders[0].valueAction = 0.5;
 	},
 	check: {
-		((~radFxButton == ["R E M O V E   F I L T E R"]) and: { ~radFxSliders.size == 4 })
+		((~radFxButton.asArray.sort == ["BYPASS", "R E M O V E   F I L T E R", "SAVE"]) and: { ~radFxSliders.size == 4 })
 		or: { "buttons: " ++ ~radFxButton.cs ++ ", sliders: " ++ ~radFxSliders.size }
 	},
 	teardown: ~radCloseWins,
@@ -48,7 +48,7 @@
 		~radSrcSliders.first !? {|sl| sl.valueAction = 0.5 };
 	},
 	check: {
-		((~radSrcName == "block1 | sine") and: { ~radSrcButton == ["R E M O V E   B L O C K"] }
+		((~radSrcName == "block1 | sine") and: { ~radSrcButton.asArray.sort == ["R E M O V E   B L O C K", "SAVE"] }
 			and: { ~radSrcSliders.size == 3 })
 		or: { "window: " ++ ~radSrcName.cs ++ ", buttons: " ++ ~radSrcButton.cs
 			++ ", sliders: " ++ ~radSrcSliders.size }
@@ -62,7 +62,7 @@
 	setup: ["start 2", "blk 1 sine", "blkgui 1"],
 	code: {
 		0.5.wait;
-		~radSrcWin.(\block1) !? {|w| ~radKids.(w, Button).first.doAction };
+		~radSrcWin.(\block1) !? {|w| ~radKids.(w, Button).detect{|b| b.string == "R E M O V E   B L O C K" }.doAction };
 		1.wait;
 	},
 	check: {
@@ -162,5 +162,53 @@
 		or: { "sliders: " ++ sliders.size ++ ", disabled: " ++ sliders.count{|sl| sl.enabled.not } }
 	},
 	teardown: ~radCloseWins,
+	gui: true
+);
+
+// the effect window reopens after a change made with it open: one window for
+// the slot, open, with the change shown (before the fix in PR 3 the closed
+// window was still listed and reopening read its bounds: nil.top)
+~radFxWins = {|tag| (~radAZ.() !? {|a| a.filtersWindow } ? []).select{|w|
+	w.name.beginsWith(tag.asString ++ " ") } };
+
+~radTest.("fx-window-reopens-after-modulation",
+	setup: ["start 2", "fx t 1 pch"],
+	code: {
+		~radAZ.().filterGUI(\track, 1, 1); 0.5.wait;
+		Radicles.cW.callFunc("fxset t 1 1 pitchDispertion sin"); 2.wait;
+	},
+	check: {
+		var wins = ~radFxWins.(\filterTrack_1_1), sliders;
+		sliders = wins.last !? {|w| ~radKids.(w, Slider) } ? [];
+		case
+		{ wins.size != 1 } { "windows for the slot: " ++ wins.size }
+		{ wins[0].isClosed } { "the listed window is closed" }
+		{ sliders.count{|sl| sl.enabled.not } != 1 } { "disabled sliders: " ++ sliders.count{|sl| sl.enabled.not } }
+		{ true }
+	},
+	teardown: ~radCloseWins,
+	gui: true
+);
+
+~radTest.("fx-window-reopens-after-old-preset",
+	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5"],
+	code: {
+		Radicles.aZ.prepWriteFxPreset(\filterTrack_1_1, \radtest_old);
+		Radicles.cW.callFunc("fxset t 1 1 pitchRatio 2"); 0.5.wait;
+		~radAZ.().filterGUI(\track, 1, 1); 0.5.wait;
+		Radicles.cW.callFunc("fxload t 1 1 radtest_old"); 2.wait;
+	},
+	check: {
+		var wins = ~radFxWins.(\filterTrack_1_1);
+		case
+		{ Ndef(\filterTrack_1_1).get(\pitchRatio) != 0.5 } { "not loaded: " ++ Ndef(\filterTrack_1_1).get(\pitchRatio) }
+		{ wins.size != 1 } { "windows for the slot: " ++ wins.size }
+		{ wins[0].isClosed } { "the listed window is closed" }
+		{ true }
+	},
+	teardown: {
+		~radCloseWins.();
+		PresetFile.remove(\filter, 'radtest_old', false, path: 0, post: false);
+	},
 	gui: true
 );

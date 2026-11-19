@@ -1,0 +1,18 @@
+>> vollag t 1 2
+== radpost ==
+Ndef('track1').set('lagTime', 2);
+== radpostcont ==
+(none)
+
+>> trimlag t 2 0.5
+== radpost ==
+Ndef('inTrack2').lag('trim', 0.5);
+== radpostcont ==
+(none)
+
+>> panlag t 2 1.5
+== radpost ==
+Ndef('spaceTrack2').lag('pan', 1.5);
+== radpostcont ==
+(none)
+

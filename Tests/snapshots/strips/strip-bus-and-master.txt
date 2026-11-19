@@ -1,0 +1,12 @@
+>> vol b 1 -3
+== radpost ==
+Ndef('bus1').set('volume', -3);
+== radpostcont ==
+(none)
+
+>> vol m -2
+== radpost ==
+Ndef('master').set('volume', -2);
+== radpostcont ==
+(none)
+

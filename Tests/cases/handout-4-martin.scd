@@ -6,7 +6,7 @@
 
 ~radTest.("remove-tracks",
 	setup: ["start 4 1"],
-	cmds: ["t rmvn [2,3]"]
+	cmds: ["t rm [2,3]"]
 );
 
 ~radTest.("stop-with-fade",
@@ -24,7 +24,7 @@
 ~radTest.("channel-strip-presets",
 	setup: ["start 2", "fx t 1 pch"],
 	cmds: ["cssave t 1 radtest_martin", "csload t 2 radtest_martin"],
-	teardown: { PresetFile.remove(\track, 'radtest_martin', false, path: 0, post: false) }
+	teardown: { File.delete(RadUnit.chainPresetPath('radtest_martin')) }
 );
 
 ~radTest.("buffers-and-loops",
