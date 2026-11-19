@@ -1,0 +1,32 @@
+>> fade t 9 4
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fade b 1 4
+== radpost ==
+Ndef('inBus1').fadeTime = 4;
+Ndef('bus1').fadeTime = 4;
+Ndef('spaceBus1').fadeTime = 4;
+== radpostcont ==
+(none)
+
+>> fade blk 9 4
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fade fx t 1 3 4
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fade zz 1 4
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

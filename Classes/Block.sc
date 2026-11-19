@@ -501,9 +501,13 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*stop {arg block=1, fadeOut;
-		var blockIndex, slotIndex, ndefCS;
+		var blockIndex, slotIndex, ndefCS, ownFade, ndef, ticket;
 		blockIndex = this.indexOfBlock(block);
 		if(blockIndex.notNil, {
+			ndef = ndefs[blockIndex];
+			//a time typed is for this stop only: the block's own fade time
+			//comes back when the fade is over (it used to keep the typed one)
+			ownFade = ndef.fadeTime;
 			if(fadeOut.notNil, {
 				ndefCS = (ndefs[blockIndex].cs ++ ".fadeTime = " ++
 					fadeOut ++ ";");
@@ -519,11 +523,18 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			if(aZ.notNil, { aZ.closeSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 			if(liveBlocks[blockIndex].notNil, {
 				this.buffree(blockIndex, fadeOut, {
-					liveBlocks[blockIndex] = nil;
-					ndefs[blockIndex].fadeTime = fadeTime;
+					//by name: the block's place in the lists may have changed
+					this.indexOfBlock(block) !? {|index|
+						if(ndefs[index] === ndef, { liveBlocks[index] = nil }) };
 				});
 			});
-			ndefs[blockIndex].fadeTime = fadeOut;
+			if(fadeOut != ownFade, {
+				{
+					(fadeOut + (server.latency ? 0.2) + 0.1).wait;
+					//unless it was given another fade time, or removed, meanwhile
+					if(ndef.fadeTime == fadeOut and: { ndefs.includes(ndef) }, { ndef.fadeTime = ownFade });
+				}.fork;
+			});
 		}, {
 			"Block not found".warn;
 		});

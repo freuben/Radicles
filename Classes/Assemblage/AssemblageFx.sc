@@ -210,7 +210,7 @@
 					this.ndefModClear(thisSlot);
 					this.prClearBypass(thisSlot);
 					this.prClearMorph(thisSlot);
-					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
+					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ Ndef(thisSlot).fadeTime ++ ");";
 					ndefCS.radcode;
 
 					thisTrack.removeAt(thisFilterIndex);
@@ -260,7 +260,7 @@
 						this.ndefModClear(item[0]);
 						this.prClearBypass(item[0]);
 						this.prClearMorph(item[0]);
-						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
+						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ Ndef(item[0]).fadeTime ++ ");";
 						ndefCS.radcode;
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));
 						specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });

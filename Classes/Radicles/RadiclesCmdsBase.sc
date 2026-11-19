@@ -167,7 +167,7 @@
 
 		cW.add(\rad, [\str, \str, \num], {|str1, str2, num1|
 			case
-			{str2 == 'fade'} {Radicles.fadeTime = num1};
+			{str2 == 'fade'} {Radicles.setFade(num1)};
 		}, "radicles: ['fade']");
 
 		cW.add(\start, [\str, \num], {|str, num|
@@ -411,9 +411,47 @@
 				Radicles.fadeTime.radpostwarn;
 			}, "fade: fadeTime");
 
+			//fade 4: everything running and made later. One thing's own fade
+			//time, until the next fade N: fade t 1 4, fade b 1 4, fade m 4,
+			//fade blk 1 4, fade fx t 1 2 4, fade fx m 1 4. Without the time
+			//it is posted.
 			cW.add(\fade, [\str, \num], {|str1, num1|
-				Radicles.fadeTime = num1;
-			}, "fade: fadeTime");
+				Radicles.setFade(num1);
+			}, "fade: time (everything running and made later)");
+
+			cW.add(\fade, [\str, \str], {|str1, str2|
+				if(str2 == 'm', { Radicles.fadeOf(nil, \m) }, { "Command not Found".warn });
+			}, "fade: m (posts the master's fade time)");
+
+			cW.add(\fade, [\str, \str, \num], {|str1, str2, num1|
+				case
+				{str2 == 'm'} { Radicles.fadeOf(num1, \m) }
+				{[\t, \b, \blk].includes(str2)} { Radicles.fadeOf(nil, str2, num1) }
+				{"Command not Found".warn};
+			}, "fade: m, time / [t, b, blk], number (posts it)");
+
+			cW.add(\fade, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+				if([\t, \b, \blk].includes(str2), { Radicles.fadeOf(num2, str2, num1) },
+					{ "Command not Found".warn });
+			}, "fade: [t, b, blk], number, time");
+
+			cW.add(\fade, [\str, \str, \str, \num], {|str1, str2, str3, num1|
+				if(str2 == 'fx' and: { str3 == 'm' }, { Radicles.fadeOf(nil, \fx, 1, \m, num1) },
+					{ "Command not Found".warn });
+			}, "fade: fx, m, slot (posts it)");
+
+			cW.add(\fade, [\str, \str, \str, \num, \num], {|str1, str2, str3, num1, num2|
+				case
+				{str2 != 'fx'} {"Command not Found".warn}
+				{str3 == 'm'} { Radicles.fadeOf(num2, \fx, 1, \m, num1) }
+				{[\t, \b].includes(str3)} { Radicles.fadeOf(nil, \fx, num1, str3, num2) }
+				{"Command not Found".warn};
+			}, "fade: fx, m, slot, time / fx, [t, b], number, slot (posts it)");
+
+			cW.add(\fade, [\str, \str, \str, \num, \num, \num], {|str1, str2, str3, num1, num2, num3|
+				if(str2 == 'fx' and: { [\t, \b].includes(str3) }, { Radicles.fadeOf(num3, \fx, num1, str3, num2) },
+					{ "Command not Found".warn });
+			}, "fade: fx, [t, b], number, slot, time");
 
 			cW.add(\imp, [\str, \str], {|str1, str2|
 				if((str2 == 'All').or(str2 == 'all'), {

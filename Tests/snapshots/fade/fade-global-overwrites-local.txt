@@ -1,0 +1,6 @@
+>> fade 2
+== radpost ==
+Ndef.dictFor(s).fadeTime = 2;
+== radpostcont ==
+(none)
+
