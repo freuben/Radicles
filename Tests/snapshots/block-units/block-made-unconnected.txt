@@ -1,0 +1,16 @@
+>> blk 5 sine
+== radpost ==
+Ndef.ar('block5', 1);
+Ndef('block5').fadeTime = 0.5;
+// block5 is not connected to a track (blk 5 <> 1 connects it to track 1)
+Ndef('block5', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+== radpostcont ==
+(none)
+
+>> blk add 1
+== radpost ==
+Ndef.ar('block6', 1);
+Ndef('block6').fadeTime = 0.5;
+== radpostcont ==
+(none)
+
