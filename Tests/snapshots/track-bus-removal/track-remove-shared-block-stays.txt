@@ -1,4 +1,4 @@
->> t rmvn [1]
+>> t rm [1]
 == radpost ==
 Ndef('inTrack1').clear(0.5);
 Ndef('track1').clear(0.5);

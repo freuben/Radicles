@@ -131,7 +131,7 @@ var a = { Radicles.aZ };
 
 // Bug 13 (#16): saving a mixer preset failed after a bus had been removed.
 ~radTest.("b13-preset-after-bus-removed",
-	setup: ["start 2 2", "b rmv"],
+	setup: ["start 2 2", "b rm"],
 	code: { a.().writeTracksPreset('radtest_b13'); 1.wait },
 	check: { PresetFile.read(\tracks, 'radtest_b13').notNil or: { "preset not saved" } },
 	teardown: { PresetFile.remove(\tracks, 'radtest_b13', false, path: 0, post: false) }

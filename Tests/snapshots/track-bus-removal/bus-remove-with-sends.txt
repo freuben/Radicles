@@ -1,4 +1,4 @@
->> b rmvn [1]
+>> b rm [1]
 == radpost ==
 Ndef('inBus1').clear(0.5);
 Ndef('bus1').clear(0.5);

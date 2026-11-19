@@ -117,7 +117,7 @@
 // removing a bypassed effect forgets the bypass; a new effect there sounds
 ~radTest.("bypass-removed",
 	setup: ["start 2", "fx t 1 1 pch", ["fxbypass t 1 1", 3]],
-	cmds: ["fxclear t 1 1", "fx t 1 1 dl1"],
+	cmds: ["fx rm t 1 1", "fx t 1 1 dl1"],
 	check: {
 		case
 		{ (Radicles.aZ.bypassed ? []).notEmpty } { "bypassed: " ++ Radicles.aZ.bypassed.cs }

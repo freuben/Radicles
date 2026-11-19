@@ -166,7 +166,7 @@
 	setup: ~radMorphSetup ++ ["morphtime t 1 1 4"],
 	code: {
 		Radicles.cW.callFunc("fxmorph t 1 1 radtest_m"); 1.wait;
-		Radicles.cW.callFunc("fxclear t 1 1"); 5.wait;
+		Radicles.cW.callFunc("fx rm t 1 1"); 5.wait;
 	},
 	check: { Radicles.aZ.morphTimeOf(\filterTrack_1_1).isNil or: { "slot morph time kept" } },
 	teardown: ~radMorphClean

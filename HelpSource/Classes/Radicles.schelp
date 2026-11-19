@@ -47,10 +47,12 @@ t add 2 ///adds stereo track
 b add 1 ///adds mono bus
 t addn 2 //adds 2 tracks
 b addn 2 2 //adds two stereo buses
-t rmv //remove track
-b rmv //remove bus
-t rmvn 2 //remove 2 tracks
-b rmvn [2,4] //remove tracks 2 and 4
+t rm //remove the last track
+b rm //remove the last bus
+t rm 2 //remove track 2
+b rm [2,4] //remove buses 2 and 4
+t rm 2-4 //remove tracks 2, 3 and 4
+t rmn 2 //remove the last 2 tracks
 
 //mix control:
 vol t 1 -20
@@ -179,10 +181,12 @@ lagfx 1 pitchRatio 0.5
 fxlagn t 1 2 10 //lag all parameters in filter
 fxlagn [[track,1,1,[1,2,2,1.1]], [track,1,2,[1,0.8,2,1.1]]]//array of tracks to lag
 //remove filters
-fxclear t 1 1 //track 1, slot 1 (fxclear m 1 for the master)
-fxclear t 1 2
-fxclear 1 1 //multitrack
-clearfx 1
+fx rm t 1 1 //track 1, slot 1 (fx rm m 1 for the master)
+fx rm t 1 2
+fx rm 1 1 //multitrack: strip 1, slot 1
+fx rm 1 //multitrack: strip 1, slot 1
+fxl //list the active effects, numbered
+fx rml 1 //remove effect number 1 in that list
 //bypass an effect: the chain goes around it, the effect keeps its settings
 fxbypass t 1 1 //toggle (fxbypass m 1 for the master)
 fxbypass t 1 1 1 //bypass
@@ -269,7 +273,7 @@ blk clear
 
 blk add 2 //channels (adds one block with specified channels)
 blk addn 4 //number (adds the given number of blocks)
-blk remove 1 //block (removes block 1)
+blk rm 1 //block (removes block 1)
 blk stop 1 //block (stops block 1)
 blk bpm 1 //sets bpm to 1
 blk tempo 1 //sets bpm to 1

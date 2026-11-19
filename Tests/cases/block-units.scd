@@ -138,18 +138,18 @@
 // removing blocks and clearing them all
 ~radTest.("block-unit-remove",
 	setup: ["start 2", "blk 1 sine", "blk 2 sine"],
-	cmds: ["blk remove 1"],
+	cmds: ["blk rm 1"],
 	check: {
 		var blocks = RadDoc.current.at(\blocks) ? ();
 		(blocks.keys == Set[\block2]) or: { "blocks: " ++ blocks.keys.cs }
 	}
 );
 
-// a block keeps its number when another is removed: after blk remove 1,
+// a block keeps its number when another is removed: after blk rm 1,
 // 2 is still block2 for every command (play and stop counted positions
 // before, so blk 2 played on block3; decided 18 Nov 2026)
 ~radTest.("block-number-after-remove",
-	setup: ["start 3", "blk 1 sine", "blk 2 sine", "blk 3 sine", "blk remove 1"],
+	setup: ["start 3", "blk 1 sine", "blk 2 sine", "blk 3 sine", "blk rm 1"],
 	cmds: [["blk 2 noise", 3], ["st 3", 2], "blkset 2 mul 0.1"],
 	check: {
 		var two = RadUnit.readBlock(\block2) ? (), three = RadUnit.readBlock(\block3);
@@ -166,7 +166,7 @@
 // connected to a block that was gone; 18 Nov 2026)
 ~radTest.("block-remove-unplugs",
 	setup: ["start 3", "blk 1 sine", "blk 2 sine"],
-	cmds: [["blk remove 1", 3]],
+	cmds: [["blk rm 1", 3]],
 	check: {
 		case
 		{ RadUnit.readInput(\track1).notNil } { "track 1 input: " ++ RadUnit.readInput(\track1).cs }
@@ -180,7 +180,7 @@
 // playing on a removed block's number makes the block again, in its place,
 // connected to its track (Federico, 18 Nov 2026)
 ~radTest.("block-remade-after-remove",
-	setup: ["start 3", "blk 1 sine", "blk 2 sine", ["blk remove 1", 3]],
+	setup: ["start 3", "blk 1 sine", "blk 2 sine", ["blk rm 1", 3]],
 	cmds: [["blk 1 noise", 5]],
 	check: {
 		var one = RadUnit.readBlock(\block1) ? (), two = RadUnit.readBlock(\block2) ? ();
@@ -209,8 +209,8 @@
 
 // stopping or setting a block that isn't there warns and changes nothing
 ~radTest.("block-missing-warns",
-	setup: ["start 3", "blk 2 sine", ["blk remove 1", 3]],
-	cmds: ["st 1", "blkset 1 mul 0.1", "blk remove 1"],
+	setup: ["start 3", "blk 2 sine", ["blk rm 1", 3]],
+	cmds: ["st 1", "blkset 1 mul 0.1", "blk rm 1"],
 	check: {
 		var two = RadUnit.readBlock(\block2) ? ();
 		case

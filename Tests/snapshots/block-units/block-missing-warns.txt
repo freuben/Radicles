@@ -10,7 +10,7 @@
 == radpostcont ==
 (none)
 
->> blk remove 1
+>> blk rm 1
 == radpost ==
 (none)
 == radpostcont ==

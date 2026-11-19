@@ -1069,7 +1069,11 @@
 								peakArr = peakArr.add(peakVal);
 							});
 						});
-						if(peakArr.notNil, {
+						//while the window is rebuilt (a strip was removed) its lists are
+						//gone or of another size for a moment: skip that reading
+						if(peakArr.notNil and: { levelTextArr.notNil } and: { peakMax.notNil }
+							and: { levelArr.notNil } and: { peakArr.size == levelArr.flat.size }
+							and: { levelTextArr.size >= levelArr.size } and: { peakMax.size >= levelArr.size }, {
 							peakArr = peakArr.reshapeLike(levelArr);
 							peakArr.do{|item, index|
 								var peakDb;

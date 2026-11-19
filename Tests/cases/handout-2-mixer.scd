@@ -76,11 +76,11 @@ var vol = {|key| Ndef(key).get('volume') };
 	setup: ["start 2", "fx t 1 pch", "fx 2 2 dl1", "fx 2 3 pch"],
 	cmds: ["fxclear t 1", "fxclear 2 2", "clear fx 1"],
 	noWarnings: true,
-	known: "outdated handout: clear fx 1 is now clearfx 1; fxclear t 1 only works for the master (m)"
+	known: "outdated handout: fxclear t 1 is now fx rm t 1 1, fxclear 2 2 is now fx rm 2 2, and clear fx 1 is now fx rml 1"
 );
 ~radTest.("fx-clear-current",
 	setup: ["start 2", "fx t 1 pch", "fx 2 2 dl1", "fx 2 3 pch"],
-	cmds: ["fxclear t 1 1", "fxclear 2 2", "clearfx 1"],
+	cmds: ["fx rm t 1 1", "fx rm 2 2", "fx rml 1"],
 	noWarnings: true,
 	check: { (Radicles.aZ.filters.isNil or: { Radicles.aZ.filters.isEmpty }) or: { "filters left: " ++ Radicles.aZ.filters.cs } }
 );

@@ -1,0 +1,36 @@
+>> t rmv
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> t rmvn 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fxclear t 1 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fxrm t 1 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> clearfx 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blk remove 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

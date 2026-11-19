@@ -51,7 +51,7 @@
 // a slot the preset leaves empty fades out and goes; one only in the preset
 // fades in
 ~radTest.("csmorph-remove-and-insert",
-	setup: ["start 2", "fx t 1 lpf", "fx t 1 3 dl1", "cssave t 1 radtest_cm4", "fxclear t 1 3", "fx t 1 2 hpf"],
+	setup: ["start 2", "fx t 1 lpf", "fx t 1 3 dl1", "cssave t 1 radtest_cm4", "fx rm t 1 3", "fx t 1 2 hpf"],
 	cmds: [["csmorph t 1 radtest_cm4 1", 5]],
 	check: {
 		var fx = ~radCmChain.(\track1).collect(_[\def]);

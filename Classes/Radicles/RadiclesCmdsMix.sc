@@ -200,17 +200,18 @@
 						});
 					});
 				}
-				{str2 == 'rmv'} {
+				{str2 == 'rm'} {
 					getTrack = (aZ.mixTrackNames.select{|item|
 						item.asString.contains("track")
 					}.last).asString.divNumStr;
 					aZ.removeTrack(\track, getTrack[1]);
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: ['names', 'add', 'rmv']");
+		}, "track: ['names', 'add', 'rm']");
 
 		cW.add(\b, [\str, \str], {|str1, str2|
 			var getTrack;
@@ -219,17 +220,18 @@
 				{str2 == 'add'} {
 					aZ.autoAddTrack(\bus, 1);
 				}
-				{str2 == 'rmv'} {
+				{str2 == 'rm'} {
 					getTrack = (aZ.mixTrackNames.select{|item|
 						item.asString.contains("bus");
 					}.last).asString.divNumStr;
 					aZ.removeTrack(\bus, getTrack[1]);
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "bus: ['add', 'rmv']");
+		}, "bus: ['add', 'rm']");
 
 		cW.add(\t, [\str, \str, \num], {|str1, str2, num1|
 			var cond, getTrack;
@@ -260,7 +262,10 @@
 					{aZ.refreshFunc}.defer; //only if the mixer is open
 					}.fork;
 				}
-				{str2 == 'rmvn'} {
+				{str2 == 'rm'} {
+					aZ.removeTrack(\track, num1);
+				}
+				{str2 == 'rmn'} {
 					{num1.do{
 						cond.test = false;
 						getTrack = (aZ.mixTrackNames.select{|item|
@@ -271,11 +276,12 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: add, chanNum");
+		}, "track: ['add', 'addn', 'rm', 'rmn'], [chanNum, number, track, number]");
 
 		cW.add(\b, [\str, \str, \num], {|str1, str2, num1|
 			var cond, getTrack;
@@ -292,7 +298,10 @@
 						cond.wait;
 					};}.fork;
 				}
-				{str2 == 'rmvn'} {
+				{str2 == 'rm'} {
+					aZ.removeTrack(\bus, num1);
+				}
+				{str2 == 'rmn'} {
 					{num1.do{
 						cond.test = false;
 						getTrack = (aZ.mixTrackNames.select{|item|
@@ -303,18 +312,19 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "bus: add, chanNum");
+		}, "bus: ['add', 'addn', 'rm', 'rmn'], [chanNum, number, bus, number]");
 
 		cW.add(\t, [\str, \str, \arr], {|str1, str2, arr1|
 			var cond;
 			cond = Condition.new(false);
 			if(aZ.notNil, {
 				case
-				{str2 == 'rmvn'} {
+				{str2 == 'rm'} {
 					{arr1.do{|item|
 						cond.test = false;
 						aZ.removeTrack(\track, item,
@@ -322,18 +332,19 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: rmvn,");
+		}, "track: rm, [tracks]");
 
 		cW.add(\b, [\str, \str, \arr], {|str1, str2, arr1|
 			var cond;
 			cond = Condition.new(false);
 			if(aZ.notNil, {
 				case
-				{str2 == 'rmvn'} {
+				{str2 == 'rm'} {
 					{arr1.do{|item|
 						cond.test = false;
 						aZ.removeTrack(\bus, item,
@@ -341,11 +352,52 @@
 						cond.wait;
 					};}.fork;
 				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
 				;
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "track: rmvn,");
+		}, "bus: rm, [buses]");
+
+		cW.add(\t, [\str, \str, \dash], {|str1, str2, arr1|
+			var cond;
+			cond = Condition.new(false);
+			if(aZ.notNil, {
+				case
+				{str2 == 'rm'} {
+					{arr1.do{|item|
+						cond.test = false;
+						aZ.removeTrack(\track, item,
+							{cond.test = true; cond.signal});
+						cond.wait;
+					};}.fork;
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "track: rm, firstTrack-lastTrack");
+
+		cW.add(\b, [\str, \str, \dash], {|str1, str2, arr1|
+			var cond;
+			cond = Condition.new(false);
+			if(aZ.notNil, {
+				case
+				{str2 == 'rm'} {
+					{arr1.do{|item|
+						cond.test = false;
+						aZ.removeTrack(\bus, item,
+							{cond.test = true; cond.signal});
+						cond.wait;
+					};}.fork;
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "bus: rm, firstBus-lastBus");
 
 		cW.add(\t, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			var cond;
@@ -368,7 +420,9 @@
 					};
 					{aZ.refreshFunc}.defer; //only if the mixer is open
 					}.fork;
-				};
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -385,7 +439,9 @@
 						aZ.autoAddTrack(\bus, num2, action: {cond.test = true; cond.signal});
 						cond.wait;
 					};}.fork;
-				};
+				}
+				{ ("Command not Found: " ++ str1 ++ " " ++ str2).warn }
+				;
 			}, {
 				"could not find assemblage".warn;
 			});
