@@ -1,5 +1,6 @@
 >> t rmvn [2]
 == radpost ==
+Ndef('block2').clear;
 Ndef('inTrack2').clear(0.5);
 Ndef('track2').clear(0.5);
 Ndef('spaceTrack2').clear(0.5);

@@ -107,6 +107,23 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		^ndef
 	}
 
+	// The block of a track: block N feeds track N. Makes it when it isn't
+	// there (a new track's block takes the track's number, also after other
+	// tracks and blocks were removed), and connects it when nothing feeds the
+	// track.
+	*forTrack {arg num, action;
+		{
+			var ndef = this.ndefOf(num);
+			if(ndef.isNil, { ndef = this.make(num) }, {
+				if(aZ.notNil and: { RadUnit.readInput(("track" ++ num).asSymbol, aZ).isNil }, {
+					aZ.input(ndef, \track, num);
+					server.sync;
+				});
+			});
+			action.(ndef);
+		}.fork(AppClock);
+	}
+
 	*remove {arg block=1;
 		var blockIndex, string;
 		blockIndex = this.indexOfBlock(block);

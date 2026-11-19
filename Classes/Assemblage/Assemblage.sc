@@ -296,7 +296,16 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	removeTrack {arg trackType=\track, trackNum=1, action={};
-		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums, indArrBusIn;
+		var trackString, inTrack, realTrack, spaceTrack, indexTrack, indArr, thisBusNums, indArrBusIn, cond;
+
+		//a track or bus that isn't there: say so and do nothing (it posted
+		//three clear lines for Ndefs that didn't exist, then failed)
+		if(trackType != \master and: {
+			(mixTrackNames ? []).includes((trackType ++ trackNum).asSymbol).not }, {
+			(trackType.asString.capitalise ++ " " ++ trackNum ++ " not found").warn;
+			action.();
+			^this
+		});
 
 		if(trackType != \master, {
 			{
@@ -304,10 +313,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				inTrack = ("in" ++ trackString.capitalise).asSymbol;
 				realTrack = trackString.asSymbol;
 				spaceTrack = ("space" ++ trackString.capitalise).asSymbol;
-				indexTrack = mixTrackNames.indexOf(realTrack);
 
-				this.removeTrackFilters(trackType, trackNum, false, true);
+				//morphs running on the strip stop first
+				RadUnit.prStopStripMorphs(trackType, trackNum, this);
+				//wait until its effects are really gone (it only synced before)
+				cond = Condition(false);
+				this.removeTrackFilters(trackType, trackNum, false, true,
+					{ cond.test = true; cond.signal }, false);
+				cond.wait;
 				server.sync;
+				//a track's source goes with it (18 Nov 2026)
+				if(trackType == \track, { this.prRemoveTrackSource(trackNum) });
+				//where the strip sits now, looked up after the waits above
+				indexTrack = mixTrackNames.indexOf(realTrack);
 
 				("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
 				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
@@ -333,10 +351,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					if(busArr.flat.select({|item| item.notNil}).size != 0, {
 						indArrBusIn =
 						busArr.flop[0].indexOf( (trackType ++  "In" ++ trackNum).asSymbol );
-						busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr}.do{|it|
-							this.removeBus(it[1], trackNum, it[0].asSymbol, true);
-							server.sync;
-						};
+						//nil when nothing sends to this bus (other buses may have sends)
+						if(indArrBusIn.notNil, {
+							busArr.flop[1][indArrBusIn].collect{|item| item.key.asString.divNumStr}.do{|it|
+								this.removeBus(it[1], trackNum, it[0].asSymbol, true);
+								server.sync;
+							};
+						});
 					});
 				});
 
@@ -358,6 +379,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					busCount = this.updateTrackCount(trackType);
 				});
+				//what was kept under the strip's name
+				trackMorphTimes !? {|times| times.removeAt(realTrack) };
+				chainMorphTimes !? {|times| times.removeAt(realTrack) };
 				RadUnit.syncStrips(this); //document (step 3): the strip is gone
 				//refresh win if open
 				this.mixWinBool({
@@ -654,6 +678,26 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(type == \track, { this.prSourceChanged(num, ndefsIn) });
 		}, {
 			"Wrong track type".warn;
+		});
+	}
+
+	// A track that is removed takes its source with it: its input is
+	// forgotten, and a block that fed it is removed too, unless that block
+	// also feeds another track (Federico, 18 Nov 2026). An input that is not a
+	// block (an Ndef of your own) is only unplugged.
+	prRemoveTrackSource {arg trackNum;
+		var tag = ("inTrack" ++ trackNum).asSymbol, entry, sources;
+		entry = (inputs ? []).detect{|item| item[0] == tag };
+		if(entry.notNil, {
+			sources = entry[1].asArray;
+			inputs.remove(entry);
+			sources.do{|ndef|
+				var number;
+				if(ndef.isKindOf(NodeProxy) and: { RadUnit.isBlockTag(ndef.key) }, {
+					number = ndef.key.asString.divNumStr[1].asInteger;
+					if(RadUnit.prBlockShared(number, trackNum, this).not, { Block.remove(number) });
+				});
+			};
 		});
 	}
 
