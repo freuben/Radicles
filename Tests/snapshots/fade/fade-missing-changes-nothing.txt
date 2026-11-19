@@ -4,11 +4,9 @@
 == radpostcont ==
 (none)
 
->> fade b 1 4
+>> fade b 9 4
 == radpost ==
-Ndef('inBus1').fadeTime = 4;
-Ndef('bus1').fadeTime = 4;
-Ndef('spaceBus1').fadeTime = 4;
+(none)
 == radpostcont ==
 (none)
 

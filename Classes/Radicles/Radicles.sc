@@ -47,6 +47,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	*setFade {arg secs;
 		secs = secs.max(0);
 		fadeTime = secs;
+		Block.forgetStopFade;
 		("Ndef.dictFor(s).fadeTime = " ++ secs ++ ";").radcode;
 	}
 
@@ -92,6 +93,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		if(secs.isNil, {
 			Ndef(keys[if(keys.size > 1, { 1 }, { 0 })]).fadeTime.radpostwarn;
 		}, {
+			if(kind == \blk, { Block.forgetStopFade(keys[0]) });
 			keys.do{|key| ("Ndef(" ++ key.cs ++ ").fadeTime = " ++ secs.max(0) ++ ";").radcode };
 		});
 	}

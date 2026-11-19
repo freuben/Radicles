@@ -1,4 +1,4 @@
-Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
+Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
 	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers, positionBuses, making;
 
@@ -501,13 +501,15 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*stop {arg block=1, fadeOut;
-		var blockIndex, slotIndex, ndefCS, ownFade, ndef, ticket;
+		var blockIndex, slotIndex, ndefCS, ownFade, ndef, token;
 		blockIndex = this.indexOfBlock(block);
 		if(blockIndex.notNil, {
 			ndef = ndefs[blockIndex];
 			//a time typed is for this stop only: the block's own fade time
-			//comes back when the fade is over (it used to keep the typed one)
-			ownFade = ndef.fadeTime;
+			//comes back when the fade is over (it used to keep the typed one).
+			//A stop typed during another keeps the first one's own time.
+			stopFades = stopFades ?? { IdentityDictionary.new };
+			ownFade = stopFades[ndef.key] !? {|pending| pending[\own] } ?? { ndef.fadeTime };
 			if(fadeOut.notNil, {
 				ndefCS = (ndefs[blockIndex].cs ++ ".fadeTime = " ++
 					fadeOut ++ ";");
@@ -522,17 +524,24 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			RadUnit.sync(ndefs[blockIndex].key); //document (step 2)
 			if(aZ.notNil, { aZ.closeSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 			if(liveBlocks[blockIndex].notNil, {
-				this.buffree(blockIndex, fadeOut, {
-					//by name: the block's place in the lists may have changed
+				this.buffree(blockIndex, fadeOut, {|entry|
+					//by name, and only if it still is what was stopped: the
+					//block may have moved in the lists or been started again
 					this.indexOfBlock(block) !? {|index|
-						if(ndefs[index] === ndef, { liveBlocks[index] = nil }) };
+						if(ndefs[index] === ndef and: { liveBlocks[index] === entry }, { liveBlocks[index] = nil }) };
 				});
 			});
 			if(fadeOut != ownFade, {
+				token = Object.new;
+				stopFades[ndef.key] = (own: ownFade, token: token);
 				{
 					(fadeOut + (server.latency ? 0.2) + 0.1).wait;
-					//unless it was given another fade time, or removed, meanwhile
-					if(ndef.fadeTime == fadeOut and: { ndefs.includes(ndef) }, { ndef.fadeTime = ownFade });
+					//the newest stop puts the own time back, unless the block
+					//was given a fade time (fade N, fade blk N) or removed meanwhile
+					if(stopFades !? {|fades| fades[ndef.key] } !? {|pending| pending[\token] === token } ? false, {
+						stopFades.removeAt(ndef.key);
+						if(ndefs.includes(ndef), { ndef.fadeTime = ownFade });
+					});
 				}.fork;
 			});
 		}, {
@@ -585,19 +594,30 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		});
 	}
 
+	// a fade time given on purpose (fade N, fade blk N T) stays: a running
+	// blk stop N T no longer puts the old one back
+	*forgetStopFade {arg key;
+		if(key.isNil, { stopFades = nil }, { stopFades !? {|fades| fades.removeAt(key) } });
+	}
+
 	*buffree {arg blockIndex=0, fadeOut, func;
-		var thisBuffer, thisBlock;
-		thisBlock = liveBlocks;
-		thisBuffer = thisBlock[blockIndex][2];
+		var thisBuffer, entry;
+		//what the block was playing when it was stopped: if it has been
+		//started again by the time the fade is over, that is another entry
+		entry = liveBlocks[blockIndex];
+		thisBuffer = entry[2];
 		{
+			var others;
 			//the fade starts one server latency after it is asked for, so it
 			//ends that much later: freeing the buffer at fadeOut cut its tail
 			((fadeOut ? 0) + (server.latency ? 0.2) + 0.1).wait;
 			if(thisBuffer.notNil, {
-				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
-					/*"remove buffer".postln;*/
+				//free it unless something else plays it: another block, or
+				//this block started again with the same file
+				others = (liveBlocks ? []).select{|item|
+					item.notNil and: { item !== entry } and: { item[2] == thisBuffer } };
+				if(others.isEmpty, {
 					server.sync;
-					/*this.nodeTime.wait;*/
 					if(thisBuffer.rank <= 1, {
 						BStore.removeID(thisBuffer);
 					}, {
@@ -605,7 +625,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 				});
 			});
-			func.();
+			func.(entry);
 		}.fork;
 	}
 
