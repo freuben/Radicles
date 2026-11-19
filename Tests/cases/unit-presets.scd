@@ -146,8 +146,13 @@
 ~radPresetRoundTrip = {|defs|
 	var problems = [];
 	defs.do{|def|
-		var tag = \filterTrack_1_1, specs, setAll, saved, now, diff;
+		var tag = \filterTrack_1_1, specs, setAll, saved, now, diff, waited = 0;
 		Radicles.cW.callFunc("fx t 1 1 " ++ def); 2.wait;
+		//an effect with buffers is in the document only once the buffers of
+		//the one it replaced are freed (after its fade); on a slow machine
+		//that is later than 2 s
+		while({ (((RadDoc.current.at([\track1, \fx]) ? ())[1] ? ())[\def] != def) and: { waited < 10 } },
+			{ 0.1.wait; waited = waited + 0.1 });
 		specs = SpecFile.read(\filter, def, false) ? [];
 		setAll = {|pos|
 			specs.do{|item|
@@ -307,7 +312,7 @@
 		Radicles.postCapture = nil;
 		~radPresetDefs.do{|def|
 			var win, canvas, font = Font("Monaco", 8);
-			Radicles.cW.callFunc("fx t 1 1 " ++ def); 1.5.wait;
+			Radicles.cW.callFunc("fx t 1 1 " ++ def); 0.9.wait;
 			Radicles.aZ.filterGUI(\track, 1, 1); 0.5.wait;
 			win = Radicles.aZ.filtersWindow.last;
 			canvas = win.canvas;
