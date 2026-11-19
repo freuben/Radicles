@@ -12,10 +12,13 @@ Ndef('bus1', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('filterBus_1_1', 1) * volume.dbamp.lag(lagTime)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('bus1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
-Ndef('bus1').set('volume', -6);
+Ndef('bus1').set('volume', -6, 'lagTime', 0.5);
 Ndef('busIn2', {arg vol1 = -inf, lag1 = 0, vol2 = -inf, lag2 = 0; [Ndef.ar('track1', 1)*vol1.dbamp.lag(lag1), Ndef.ar('bus1', 1)*vol2.dbamp.lag(lag2); ].sum});
 Ndef('busIn2').set('vol1', -9, 'lag1', 0);
-Ndef('busIn2').set('vol2', -9);
+Ndef('busIn2').set('vol2', -inf);
+Ndef('busIn2').set('vol2', -9, 'lag2', 0.5);
+Ndef('bus1').set('lagTime', 0);
+Ndef('busIn2').set('vol2', -9, 'lag2', 0);
 == radpostcont ==
 (none)
 
@@ -35,7 +38,8 @@ Ndef('master', {arg volume=0, lagTime=0, mute=0, off=0;
                         *off.linlin(0,1,1,0)
                 )});
 Ndef('master').set('volume', 0, 'lagTime', 0, 'mute', 0, 'off', 0);
-Ndef('master').set('volume', -6);
+Ndef('master').set('volume', -6, 'lagTime', 0.5);
+Ndef('master').set('lagTime', 0);
 == radpostcont ==
 (none)
 

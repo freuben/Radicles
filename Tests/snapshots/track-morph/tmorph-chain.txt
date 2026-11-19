@@ -1,5 +1,10 @@
 >> <code>
 == radpost ==
+Ndef('inTrack2').fadeTime = 1;
+Ndef('filterTrack_2_1').fadeTime = 1;
+Ndef('filterTrack_2_2').fadeTime = 1;
+Ndef('track2').fadeTime = 1;
+Ndef('spaceTrack2').fadeTime = 1;
 Ndef('filterTrack_2_2').clear(1);
 Ndef('filterTrack_2_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
@@ -15,9 +20,11 @@ Ndef('spaceTrack2', {arg pan = 0 ;
     Pan2.ar(Ndef.ar('track2', 1), pan) * 3.dbamp;
 });
 Ndef('spaceTrack2').set('pan', 0);
-Ndef('filterTrack_2_1').fadeTime = 1;
 Ndef('filterTrack_2_1').xset('pitchRatio', 0.5);
+Ndef('inTrack2').fadeTime = 0.5;
 Ndef('filterTrack_2_1').fadeTime = 0.5;
+Ndef('track2').fadeTime = 0.5;
+Ndef('spaceTrack2').fadeTime = 0.5;
 == radpostcont ==
 (none)
 

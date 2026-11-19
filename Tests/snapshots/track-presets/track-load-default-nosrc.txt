@@ -1,6 +1,7 @@
 >> tload t 1 default nosrc
 == radpost ==
-Ndef('track1').set('volume', 0);
+Ndef('track1').set('volume', 0, 'lagTime', 0.5);
+Ndef('track1').set('lagTime', 0);
 == radpostcont ==
 (none)
 

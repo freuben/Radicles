@@ -117,7 +117,12 @@
 	// (Ndef(\track1).fadeTime). Every stage of the strip crossfades over that
 	// time while the load runs: a stage with another fade time is set to it,
 	// and put back afterwards (posted; nothing is posted when they agree).
-	morphChain {arg type, num, chain, time, shape, action, quiet = false;
+	// built: called once the chain's structure is in place (effects removed,
+	// added and replaced), before the time is waited; also when nothing
+	// changes or the shape is refused. tload waits for it before it moves the
+	// strip's values, because a rebuilt stage is set to the values it had
+	// when the rebuild was asked for.
+	morphChain {arg type, num, chain, time, shape, action, quiet = false, built;
 		var strip = RadUnit.stripName(type, num), current, target = chain[\fx] ? (), slots, same, changed;
 		current = RadUnit.readChain(type, num, this)[\fx];
 		//which slots differ, and how
@@ -129,12 +134,12 @@
 			cur.isNil or: { tgt.isNil } or: { cur[\def] != tgt[\def] } or: {
 				(cur[\bypass] == true) != (tgt[\bypass] == true) } or: {
 				RadDoc.diff(this.prMorphed(cur), this.prMorphed(tgt), 1e-9).notEmpty } };
-		if(changed.isEmpty, { action.(); ^this });
+		if(changed.isEmpty, { built.(); action.(); ^this });
 		//the time: the command's, else the strip's own fade time
 		time = (time ?? { Ndef(strip).fadeTime } ? 0).max(0);
 		shape = (shape ?? { chain[\morphShape] } ? \xfade).asSymbol;
 		if([\xfade, \glide, \none].includes(shape).not, {
-			("csload: shape is xfade, glide or none, not " ++ shape).warn; ^this });
+			("csload: shape is xfade, glide or none, not " ++ shape).warn; built.(); ^this });
 		if(time == 0, { shape = \none });
 		{
 			var routine = thisThread, restore, fades = [], cond = Condition(false), wait;
@@ -201,6 +206,7 @@
 				});
 			};
 			server.sync;
+			built.();
 			changed.do{|slot| this.updateFxWin(RadUnit.chainTag(type, num, slot)) };
 			this.refreshFunc;
 			if(shape != \none, { time.wait });

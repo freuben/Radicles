@@ -66,8 +66,16 @@
 			if(track[\mute] != 1 and: { current[\mute] == 1 }, { az.setMute(type, num, 0) });
 			// output to the master: on at the start
 			if(track[\output] == \master, { this.prSetOutput(type, num, \master, az) });
-			// the chain moves on its own, over the same time
-			if(nofx.not, { az.morphChain(type, num, track[\chain] ? (fx: ()), time, shape, quiet: true) });
+			// the chain moves on its own, over the same time. Its structure
+			// first: a stage rebuilt for an added or removed effect is set to
+			// the values it had when the rebuild was asked for, so the strip's
+			// values move only once the chain is built (a flag, not a
+			// Condition: a chain load stopped by another never calls back)
+			if(nofx.not, {
+				var chainBuilt = false, waited = 0;
+				az.morphChain(type, num, track[\chain] ? (fx: ()), time, shape, quiet: true, built: { chainBuilt = true });
+				while({ chainBuilt.not and: { waited < 10 } }, { 0.05.wait; waited = waited + 0.05 });
+			});
 			// the source
 			if(nosrc.not and: { kind == \track } and: { track[\source].notNil }, {
 				left = left ++ this.prMorphSource(num, track[\source], time, shape, restores, az);
@@ -164,7 +172,7 @@
 
 	*prGlideStripValues {|type, num, track, time, restores, subs, az|
 		var name = this.stripName(type, num), inKey, key, spaceKey, current, curMods, tgtMods, left = [];
-		var pan, panKeys, panDefaults, curLags, tgtLags, trimLag;
+		var pan, panKeys, panDefaults, curLags, tgtLags, trimLag, volMoved = false;
 		#inKey, key, spaceKey = this.stripKeys(name);
 		current = this.readStrip(name, az);
 		curMods = current[\mods] ? ();
@@ -184,11 +192,12 @@
 		this.prApplyArgsMods(Ndef(key), (args: (volume: current[\volume]), mods: curMods[\volume] !? {|m| (volume: m) } ? ()),
 			(args: (volume: track[\volume] ? 0), mods: tgtMods[\volume] !? {|m| (volume: m) } ? ()),
 			{|ndef, pairs|
+				volMoved = true;
 				az.setVolume(type, num, pairs[1], time);
 				restores.add({ az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
 			});
 		//a volume that doesn't change still takes the preset's lag at the end
-		if((curLags[\volume] ? 0) != (tgtLags[\volume] ? 0), {
+		if(volMoved.not and: { (curLags[\volume] ? 0) != (tgtLags[\volume] ? 0) }, {
 			restores.add({ az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
 		});
 		if((curLags[\trim] ? 0) != (tgtLags[\trim] ? 0), { az.setTrimLag(type, num, tgtLags[\trim] ? 0) });
@@ -265,7 +274,16 @@
 								az.setSendKnob(type, num, slot, send[\level] ? -inf, send[\lag] ? 0) };
 						});
 					}, {
-						if(cur[\mod].isNil, { this.prModSend(type, num, busNum.(bus), keys, send, az) });
+						//a modulated send: the level under the modulator is set
+						//at once (it is what comes back when the modulator goes)
+						if(cur[\mod].isNil, {
+							if((cur[\lag] ? 0) != (send[\lag] ? 0) or: {
+								RadDoc.diff((v: cur[\level]), (v: send[\level] ? -inf)).notEmpty }, {
+								az.setSendKnob(type, num, this.prSendSlot(type, num, busNum.(bus), az),
+									send[\level] ? -inf, send[\lag] ? 0);
+							});
+							this.prModSend(type, num, busNum.(bus), keys, send, az);
+						});
 					});
 				});
 			};

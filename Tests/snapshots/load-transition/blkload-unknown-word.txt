@@ -1,0 +1,12 @@
+>> blkload 1 radtest_lt sideways
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blkload 1 radtest_lt 2 sideways
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
