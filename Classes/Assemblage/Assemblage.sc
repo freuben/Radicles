@@ -21,7 +21,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			{
 				//the volume moves as a steady fader move (see addTrack)
 				masterSynth = {arg volume=0, lagTime=0.05, mute=0, off=0, ramp=0.05;
-					(\in * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
+					(\in * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
 						*mute.linlin(0,1,1,0).lag(0.1)
 						*off.linlin(0,1,1,0)
 				)};
@@ -143,9 +143,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			//(Assemblage:volumeArgs); 'lagTime' is the strip's own time for typed
 			//values (vollag). The linear VarLag, not its default form or an
 			//EnvGen: those miss a value that arrives one control block after
-			//another and flatten a modulator.
+			//another and flatten a modulator. The time is never below one
+			//control block (VarLag divides by it), and it must not change on a
+			//running synth without a new value: VarLag then overshoots.
 			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
-				(\in * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
+				(\in * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
 					*mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )} };
 			trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ], ['lagTime', [0, 10] ],
 				['mute', [0, 1] ], ['solo', [0,1] ] ];

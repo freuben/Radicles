@@ -71,7 +71,9 @@
 		1.wait;
 		~radMrFull = ~radMrLevel.();
 		Radicles.aZ.setVolume(\track, 1, -inf, 2);
-		0.7.wait; //the reading takes 0.3 s: this one is taken 1 s into the move
+		//the move starts a server latency (0.2 s) later and the reading takes
+		//0.3 s: this one is taken 1 s into the move
+		0.9.wait;
 		~radMrHalf = ~radMrLevel.();
 		1.2.wait;
 		~radMrEnd = ~radMrLevel.();
@@ -144,4 +146,24 @@
 	setup: ["start 2"],
 	cmds: [["vol t 1 sin", 2]],
 	check: { (~radMrCtl.(\ramp) == 0) or: { "ramp " ++ ~radMrCtl.(\ramp) } }
+);
+
+// a modulator mapped while a slow move is under way: the sound stays a
+// number (a ramp whose time is set to 0 mid-move gives infinity), and the
+// same value typed again with another time does not send the time
+~radTest.("ramp-time-never-changes-mid-move",
+	setup: ["start 2", "blk 1 sine", "vollag t 1 4"],
+	code: {
+		Radicles.cW.callFunc("vol t 1 -20"); 0.6.wait;
+		Radicles.cW.callFunc("vol t 1 sin"); 1.wait;
+		~radMrMod = ~radMrLevel.();
+		Radicles.cW.callFunc("vol t 2 -20"); 0.3.wait;
+		Radicles.cW.callFunc("vollag t 2 0"); Radicles.cW.callFunc("vol t 2 -20"); 0.3.wait;
+		~radMrSame = Ndef(\track2).nodeMap.at(\ramp) },
+	check: {
+		case
+		{ ~radMrMod.isNaN or: { ~radMrMod.abs == inf } or: { ~radMrMod > 2 } } { "the level with the modulator: " ++ ~radMrMod }
+		{ ~radMrSame.notNil } { "a time was sent with a value the strip already had: " ++ ~radMrSame }
+		{ true }
+	}
 );

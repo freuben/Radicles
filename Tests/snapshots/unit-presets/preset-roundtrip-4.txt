@@ -7,7 +7,7 @@ Ndef('filterTrack_1_1', {arg freq=3 , decayTime=0.025 ;
     trig = Decay.kr(Dust.kr(freq), decayTime);
     Gate.ar(Ndef.ar('inTrack1', 1), trig)});
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
-                (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
+                (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 Ndef('filterTrack_1_1').xset('decayTime', 0.0, 'freq', 0.3);

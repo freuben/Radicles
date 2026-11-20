@@ -172,17 +172,20 @@
 	*shortLag { ^0.05 }
 
 	// a control of a strip's Ndef as it stands (its default when never set)
+	// (the two times, lagTime and ramp, both start at the short default)
 	stripControl {arg ndef, key;
-		^ndef.nodeMap.at(key) ?? { ndef.getKeysValues.detect{|pair| pair[0] == key } !? {|pair| pair[1] } } ? Assemblage.shortLag
+		^ndef.nodeMap.at(key) ? Assemblage.shortLag
 	}
 
 	// the arguments that move a strip's volume to value over time seconds:
 	// the time is sent only when the strip's last move had another, so the
 	// usual line stays set('volume', x). Typed values pass the strip's own
 	// time or the one typed; the window's fader and mapped controls pass
-	// Radicles.ctlLag.
+	// Radicles.ctlLag. Not with a value the strip already has: a new time
+	// without a new value makes the ramp overshoot (see addTrack).
 	volumeArgs {arg ndef, value, time;
-		^"'volume', " ++ value ++ if(this.stripControl(ndef, \ramp) != time, { ", 'ramp', " ++ time }, { "" })
+		^"'volume', " ++ value ++ if(this.stripControl(ndef, \ramp) != time and: { ndef.nodeMap.at(\volume) != value },
+			{ ", 'ramp', " ++ time }, { "" })
 	}
 
 	setVolumeLag {arg trackType=\track, trackNum=1, lag=0;
