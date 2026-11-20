@@ -44,6 +44,21 @@
 		});
 	}
 
+	// a volume set on a strip (vol, a fader, MIDI) while its whole-track
+	// fade-out is on its way: the performer has changed their mind. The load
+	// stops and the track stays as it is, its source and effects on (Federico,
+	// 20 Nov 2026). Before, the level came back and the track was emptied
+	// anyway when the time was up, while it sounded. Called by
+	// Assemblage:setVolume before it sets the value. Not during a fade-in or
+	// a part-by-part load: there the new volume is one more value.
+	*volumeSetDuringLoad {|type, num|
+		var name = this.stripName(type, num), morph = this.prTrackMorphs[name];
+		if(morph.notNil and: { morph[\silentAt].notNil }, {
+			this.prStopTrackMorph(name);
+			("tload stopped: " ++ name ++ " stays as it is").postln;
+		});
+	}
+
 	// bring a strip to track over time (tload). Returns true when it starts.
 	*morphTrack {|type, num, track, time, shape, nosrc = false, nofx = false, action, az|
 		var name = this.stripName(type, num), kind = this.stripKind(name);
