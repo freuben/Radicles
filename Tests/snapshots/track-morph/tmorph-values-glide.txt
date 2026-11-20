@@ -2,7 +2,7 @@
 == radpost ==
 Ndef('inTrack1').set('lagTime', 3);
 Ndef('inTrack1').set('trim', 3);
-Ndef('track1').set('volume', -6, 'lagTime', 3);
+Ndef('track1').set('volume', -6, 'ramp', 3);
 Ndef('spaceTrack1').lag('pan', 3);
 Ndef('busIn1', {arg vol1 = -inf, lag1 = 0, vol2 = -inf, lag2 = 0; [Ndef.ar('track2', 1)*vol1.dbamp.lag(lag1), Ndef.ar('track1', 1)*vol2.dbamp.lag(lag2); ].sum});
 Ndef('busIn1').set('vol1', -9, 'lag1', 0);
@@ -10,7 +10,6 @@ Ndef('busIn1').set('vol2', -inf);
 Ndef('busIn1').set('vol2', -9, 'lag2', 3);
 Ndef('spaceTrack1').set('pan', 0.5);
 Ndef('inTrack1').set('lagTime', 0);
-Ndef('track1').set('lagTime', 0);
 Ndef('spaceTrack1').lag('pan', 0);
 Ndef('busIn1').set('vol2', -9, 'lag2', 0);
 == radpostcont ==

@@ -3,8 +3,8 @@
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
 Ndef('filterTrack_1_1', {arg gain = 1; Ndef.ar('inTrack1', 1) * gain});
-Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 Ndef.ar('filterTrack_1_2', 1);
@@ -16,8 +16,8 @@ Ndef('filterTrack_1_2', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersi
  ;
         PitchShift.ar(Ndef.ar('filterTrack_1_1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
  });
-Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('filterTrack_1_2', 1) * volume.dbamp.lag(lagTime)
+Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('filterTrack_1_2', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 Radicles.selLibs(["Main", "RadTestLib"]);
@@ -25,8 +25,8 @@ Ndef.ar('filterTrack_2_1', 1);
 Ndef('filterTrack_2_1').fadeTime = 0.5;
 Ndef('filterTrack_2_1', {arg gain = 1; Ndef.ar('inTrack2', 1) * gain});
 Ndef('filterTrack_2_1').set('gain', 1);
-Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('filterTrack_2_1', 1) * volume.dbamp.lag(lagTime)
+Ndef('track2', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('filterTrack_2_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 Ndef.ar('filterTrack_2_2', 1);
@@ -39,8 +39,8 @@ Ndef('filterTrack_2_2', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersi
         PitchShift.ar(Ndef.ar('filterTrack_2_1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
  });
 Ndef('filterTrack_2_2').set('pitchDispertion', 0.0, 'pitchRatio', 1.0, 'winSize', 0.02, 'timeDispersion', 0.0001);
-Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('filterTrack_2_2', 1) * volume.dbamp.lag(lagTime)
+Ndef('track2', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('filterTrack_2_2', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track2').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 == radpostcont ==

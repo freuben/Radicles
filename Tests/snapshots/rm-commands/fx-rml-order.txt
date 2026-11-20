@@ -1,8 +1,8 @@
 >> fx rml 3
 == radpost ==
 Ndef('filterBus_1_1').clear(0.5);
-Ndef('bus1', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('inBus1', 1) * volume.dbamp.lag(lagTime)
+Ndef('bus1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('inBus1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('bus1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 Ndef('spaceBus1', {arg pan = 0 ;

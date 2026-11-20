@@ -381,7 +381,8 @@
 		// lags: those the preset has, and 0 for those it hasn't
 		curLags = current[\lags] ? ();
 		tgtLags = if(track[\default] == true, { () }, { track[\lags] ? () });
-		if((curLags[\volume] ? 0) != (tgtLags[\volume] ? 0), { az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
+		if((curLags[\volume] ? Assemblage.shortLag) != (tgtLags[\volume] ? Assemblage.shortLag), {
+			az.setVolumeLag(type, num, tgtLags[\volume] ? Assemblage.shortLag) });
 		if((curLags[\trim] ? 0) != (tgtLags[\trim] ? 0), { az.setTrimLag(type, num, tgtLags[\trim] ? 0) });
 		panKeys.do{|k|
 			var cur = (curLags[\pan] ? ())[k] ? 0, tgt = (tgtLags[\pan] ? ())[k] ? 0, keys;

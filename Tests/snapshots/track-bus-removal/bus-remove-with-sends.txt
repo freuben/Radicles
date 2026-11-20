@@ -18,8 +18,8 @@ Ndef.ar('bus3', 1);
 Ndef('bus3').fadeTime = 0.5;
 Ndef.ar('spaceBus3', 2);
 Ndef('spaceBus3').fadeTime = 0.5;
-Ndef('bus3', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('inBus3', 1) * volume.dbamp.lag(lagTime)
+Ndef('bus3', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('inBus3', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('inMaster').source = {arg trim=0, lagTime=0;
                 ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus2', 2) * 1, Ndef.ar('spaceBus3', 2) * 1].sum * trim.dbamp.lag(lagTime) )}

@@ -246,7 +246,7 @@
 	check: {
 		var one = ~radLtStripNow.(\track1);
 		case
-		{ ~radLtMid != [2, 0] } { "track1's fade time and volume lag during the load: " ++ ~radLtMid }
+		{ ~radLtMid != [2, 0.05] } { "track1's fade time and volume lag during the load: " ++ ~radLtMid }
 		{ Ndef(\track1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\track1).fadeTime }
 		{ ~radLtRatio.() != 2 } { "nofx: pitchRatio " ++ ~radLtRatio.() }
 		{ one[\volume] != -6 or: { one[\lags].notNil } } { "track1: " ++ one.cs }
@@ -490,12 +490,12 @@
 	teardown: ~radLtClean
 );
 
-// with glide they glide as before: a lag over the time, then it goes back
+// with glide the volume glides: one steady move over the time (its 'ramp')
 ~radTest.("tload-strip-values-glide",
 	setup: ["start 2", "vol t 2 -6", "tsave t 2 radtest_ltt"],
 	code: {
 		Radicles.cW.callFunc("tload t 1 radtest_ltt 2 glide"); 0.8.wait;
-		~radLtMid = [Ndef(\track1).fadeTime, Ndef(\track1).get(\lagTime) ? 0]; 3.wait },
+		~radLtMid = [Ndef(\track1).fadeTime, Ndef(\track1).get(\ramp) ? 0]; 3.wait },
 	check: {
 		var one = ~radLtStripNow.(\track1);
 		case

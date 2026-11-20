@@ -21,6 +21,11 @@ ModMap : Radicles {
 		});
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
+		//a strip's volume moves by a ramp, which would dull a modulator: its
+		//time is 0 while one is mapped (the next move sets it again)
+		if(key == \volume and: { ndef.controlKeys.includes(\ramp) } and: { ndef.nodeMap.at(\ramp) != 0 }, {
+			(ndef.cs ++ ".set('ramp', 0);").radcode;
+		});
 		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radcode;
 		modNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
 			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radcode;

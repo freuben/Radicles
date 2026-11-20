@@ -9,8 +9,8 @@ var freeze, chain, input, frameSize=2048;
     freeze = Onsets.kr(chain, thresh).lag(lagTime);
     chain = PV_MagFreeze(chain, freeze);
     (adjVol * IFFT(chain));});
-Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 == radpostcont ==

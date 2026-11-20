@@ -155,19 +155,34 @@
 		if(trackIndex.notNil, {
 			//vol typed during a whole-track fade-out stops that load
 			RadUnit.volumeSetDuringLoad(trackType, trackNum);
-			if(lag.isNil, {
-				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
-					value ++ ");").radcode(\radpostcont);
-			}, {
-				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
-					value ++ ", 'lagTime', " ++ lag ++ ");").radcode(\radpostcont);
-			});
+			//over lag seconds when one is given (for this move only), else
+			//over the strip's own time (vollag)
+			(mixTrackNdefs[trackIndex].cs ++ ".set(" ++ this.volumeArgs(mixTrackNdefs[trackIndex],
+				value, lag ?? { this.stripControl(mixTrackNdefs[trackIndex], \lagTime) }) ++ ");").radcode(\radpostcont);
 			this.mixWinBool({
 				setVolSlider.(trackIndex, value); //slider always shows dB
 			});
 		}, {
 			"Track not found".warn;
 		});
+	}
+
+	// the time a strip's own value moves over when none is given, and the
+	// time of the short smooth move a new strip starts with
+	*shortLag { ^0.05 }
+
+	// a control of a strip's Ndef as it stands (its default when never set)
+	stripControl {arg ndef, key;
+		^ndef.nodeMap.at(key) ?? { ndef.getKeysValues.detect{|pair| pair[0] == key } !? {|pair| pair[1] } } ? Assemblage.shortLag
+	}
+
+	// the arguments that move a strip's volume to value over time seconds:
+	// the time is sent only when the strip's last move had another, so the
+	// usual line stays set('volume', x). Typed values pass the strip's own
+	// time or the one typed; the window's fader and mapped controls pass
+	// Radicles.ctlLag.
+	volumeArgs {arg ndef, value, time;
+		^"'volume', " ++ value ++ if(this.stripControl(ndef, \ramp) != time, { ", 'ramp', " ++ time }, { "" })
 	}
 
 	setVolumeLag {arg trackType=\track, trackNum=1, lag=0;

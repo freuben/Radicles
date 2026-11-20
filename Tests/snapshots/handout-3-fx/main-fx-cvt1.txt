@@ -8,8 +8,8 @@ Ndef('filterTrack_1_1', {arg mix=0, track=1, frameSize=1024 , adjVol=1;
     input = Ndef.ar('inTrack1', 1);
     (Convolution.ar(input,signal, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
         +(input*mix.linlin(0,1,1,0))});
-Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
+Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp, warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
 == radpostcont ==
