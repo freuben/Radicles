@@ -44,13 +44,16 @@
 		});
 	}
 
-	// a volume set on a strip (vol, a fader, MIDI) while its whole-track
-	// fade-out is on its way: the performer has changed their mind. The load
-	// stops and the track stays as it is, its source and effects on (Federico,
-	// 20 Nov 2026). Before, the level came back and the track was emptied
-	// anyway when the time was up, while it sounded. Called by
-	// Assemblage:setVolume before it sets the value. Not during a fade-in or
-	// a part-by-part load: there the new volume is one more value.
+	// vol typed for a strip while its whole-track fade-out is on its way: the
+	// performer has changed their mind. The load stops and the track stays
+	// as it is, its source and effects on (Federico, 20 Nov 2026). Before,
+	// the level came back and the track was emptied anyway when the time was
+	// up, while it sounded. Called by Assemblage:setVolume (every vol
+	// command) before it sets the value. Not during a fade-in or a
+	// part-by-part load: there the new volume is one more value. Not by the
+	// mixer's fader or a MIDI control, which set the Ndef themselves: with
+	// those the load goes on (open question in the PR). A modulator on the
+	// volume, removed when the fade-out began, does not come back.
 	*volumeSetDuringLoad {|type, num|
 		var name = this.stripName(type, num), morph = this.prTrackMorphs[name];
 		if(morph.notNil and: { morph[\silentAt].notNil }, {
