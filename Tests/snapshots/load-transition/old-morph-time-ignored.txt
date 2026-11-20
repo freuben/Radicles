@@ -4,8 +4,7 @@ Ndef('filterTrack_1_1').xset('pitchRatio', 0.5);
 Ndef('block1').xset('freq', 500);
 Ndef('filterTrack_2_1').xset('pitchRatio', 0.25);
 Ndef('filterTrack_2_1').xset('pitchRatio', 0.75);
-Ndef('track2').set('volume', -9, 'lagTime', 0.5);
-Ndef('track2').set('lagTime', 0);
+Ndef('track2').xset('volume', -9);
 == radpostcont ==
 (none)
 

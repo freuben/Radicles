@@ -6,8 +6,15 @@
 //   source, same block definition and file: as blkload
 //   source, another definition or file: crossfade (the block's fade time is
 //     the load's time while it plays the new one)
-//   trim, volume, pan: glide (a lag over the time, then the strip's own lag
-//     goes back)
+//   trim, volume, pan: crossfade (one xset each, the stage's fade time being
+//     the load's time while it runs), so they move on the same curve as the
+//     effects and the source. A lag moves fast and then creeps: the level
+//     arrived long before the rest (Federico, 19 Nov 2026). With glide they
+//     glide as before (a lag over the time, then the strip's own lag back).
+//   a track that ends with no source (tload t 1 default) fades out whole:
+//     its volume crossfades to silence over the time, then it is emptied and
+//     set at once, unheard. A track with no source that gets one is built at
+//     once in silence and its volume fades up (19 Nov 2026). Not with nosrc.
 //   sends: glide; a send only in the preset is made at -inf and glides up,
 //     a send only on the strip glides to -inf and is removed at the end
 //   mixer and send modulators: at the start (they fade with the Ndef's own
@@ -55,6 +62,14 @@
 			}.fork(AppClock);
 			^true
 		});
+		//a track that ends, or starts, with no source fades as a whole
+		if(kind == \track and: { nosrc.not } and: { track[\source].notNil }, {
+			var whole = this.prWholeFade(num, track, az);
+			if(whole.notNil, {
+				{ this.prFadeWholeTrack(whole, type, num, track, time, nofx, action, az) }.fork(AppClock);
+				^true
+			});
+		});
 		{
 			var routine = thisThread, restores = List.new, subs = List.new, atEnd = List.new, current, left = [], morph;
 			this.prStopTrackMorph(name);
@@ -85,7 +100,7 @@
 				left = left ++ this.prMorphSource(num, track[\source], time, shape, restores, az);
 			});
 			// trim, volume, pan
-			left = left ++ this.prGlideStripValues(type, num, track, time, restores, subs, az);
+			left = left ++ this.prGlideStripValues(type, num, track, time, restores, subs, az, shape);
 			// sends
 			if(kind != \master, {
 				left = left ++ this.prGlideSends(type, num, track[\sends] ? (), time, restores, atEnd, az);
@@ -110,6 +125,99 @@
 			action.();
 		}.fork(AppClock);
 		^true
+	}
+
+	// ---- a whole track fading out or in ----
+
+	// \out when the track sounds and the preset has no source (every block
+	// feeding it would stop), \in when nothing sounds on the track and the
+	// preset has a source, else nil
+	*prWholeFade {|num, track, az|
+		var name = this.stripName(\track, num), input = this.readInput(name, az) ? [], playing;
+		if(input.any{|key| this.isBlockTag(key).not }, { ^nil }); //fed by something else
+		playing = input.select{|key| Ndef(key).source.notNil };
+		if(track[\source].isEmpty, {
+			//only when every block that plays will really be stopped (a
+			//pattern, or a block that also feeds another track, plays on:
+			//the track must not come back with it at full level)
+			^if(playing.notEmpty and: { playing.every{|key| this.readBlock(key).notNil and: {
+				this.prBlockShared(key.asString.divNumStr[1].asInteger, num, az).not } } }, { \out }, { nil })
+		});
+		^if(playing.isEmpty, { \in }, { nil })
+	}
+
+	// the track's volume crossfades to silence over time, then the preset is
+	// applied at once, unheard (\out); or the preset is applied at once with
+	// the volume at silence, then the volume crossfades up over time (\in)
+	*prFadeWholeTrack {|way, type, num, track, time, nofx, action, az|
+		var name = this.stripName(type, num), key = this.stripKeys(name)[1], latency = (Server.default.latency ? 0.2) + 0.1;
+		var routine = thisThread, restores = List.new, morph, current, silent, volume = track[\volume] ? 0;
+		var volMod = if(track[\default] == true, { nil }, { (track[\mods] ? ())[\volume] });
+		var before = this.prTrackMorphs[name], silentAt, going, tail;
+		//applyTrack stops the loads running on the strip, but not this one
+		//(it stays on the list, so another tload or t rm still stops it)
+		var apply = { this.applyTrack(type, num, silent, false, nofx, az, false) };
+		var fade = {|value|
+			Radicles.holdFade(key, time);
+			restores.add({ Radicles.releaseFade(key) });
+			("Ndef(" ++ key.cs ++ ").xset('volume', " ++ value.cs ++ ");").radcode;
+			{ az.mixWinBool({ az.refreshMixGUI }) }.defer;
+			if(value == -inf, { morph[\silentAt] = Main.elapsedTime + time + latency });
+			(time + latency).wait;
+			morph.removeAt(\silentAt);
+			restores.do(_.value); restores.clear;
+		};
+		//a fade-out already on its way on this strip (the same line typed
+		//again, or another preset with no source): its volume reads -inf
+		//from the start, so the time it has left is taken from the load
+		silentAt = before !? {|m| m[\silentAt] };
+		this.prStopTrackMorph(name);
+		this.prStopStripMorphs(type, num, az);
+		morph = (routine: routine, subs: [], restore: { restores.do(_.value) });
+		this.prTrackMorphs[name] = morph;
+		current = this.readStrip(name, az);
+		//a modulator on the volume goes first: the fade sets the volume itself
+		(current[\mods] ? ())[\volume] !? { ModMap.unmap(Ndef(key), \volume, current[\volume]) };
+		//the preset with a silent volume; its own volume (and a modulator on
+		//it) comes at the end
+		silent = track.copy;
+		silent[\volume] = -inf;
+		silent[\mods] = (track[\mods] ? ()).copy;
+		silent[\mods].removeAt(\volume);
+		if(way == \out, {
+			//what will go, for the longest of their fade times: the blocks
+			//(Block.stop fades over the block's own) and the effects
+			going = (this.readInput(name, az) ? []).select{|k| this.isBlockTag(k) };
+			if(nofx.not, { going = going ++ (az.filters ? []).collect(_[0]).select{|tag| az.filterTagOnStrip(tag, type, num) } });
+			tail = (going.collect{|k| Radicles.ownFade(k) } ++ [Radicles.ownFade(name)]).maxItem;
+			case
+			//nothing to fade when the track is muted
+			{ current[\mute] == 1 } { }
+			{ silentAt.notNil } {
+				morph[\silentAt] = silentAt;
+				(silentAt - Main.elapsedTime).max(0).wait;
+				morph.removeAt(\silentAt);
+			}
+			//or already silent
+			{ current[\volume] != -inf } { fade.(-inf) };
+			apply.();
+			//what was removed has gone before the volume comes back
+			(tail + latency).wait;
+			if(this.readStrip(name, az).notNil, { this.prApplyStripValues(type, num, track, az) });
+		}, {
+			//silent first, over a tenth of a second: a block that was just
+			//stopped, or an effect's tail, may still sound, and a cut clicks
+			if(current[\volume] != -inf, { az.setVolume(type, num, -inf, 0.1); 0.15.wait });
+			apply.();
+			Server.default.sync;
+			latency.wait;
+			if(volume != -inf, { fade.(volume) });
+			if(volMod.notNil, { this.prApplyStripValues(type, num, track, az) });
+		});
+		if(this.prTrackMorphs[name] === morph, { trackMorphs.removeAt(name) });
+		Server.default.sync;
+		{ az.mixWinBool({ az.refreshMixGUI }); az.refreshFunc }.defer;
+		action.();
 	}
 
 	// ---- the source ----
@@ -172,9 +280,14 @@
 
 	// ---- trim, volume, pan ----
 
-	*prGlideStripValues {|type, num, track, time, restores, subs, az|
+	*prGlideStripValues {|type, num, track, time, restores, subs, az, shape = \glide|
 		var name = this.stripName(type, num), inKey, key, spaceKey, current, curMods, tgtMods, left = [];
-		var pan, panKeys, panDefaults, curLags, tgtLags, trimLag, volMoved = false;
+		var pan, panKeys, panDefaults, curLags, tgtLags, trimLag, volMoved = false, xfade = shape != \glide;
+		//a crossfade: the stage's fade time is the load's while it runs
+		var hold = {|stage|
+			Radicles.holdFade(stage, time);
+			restores.add({ Radicles.releaseFade(stage) });
+		};
 		#inKey, key, spaceKey = this.stripKeys(name);
 		current = this.readStrip(name, az);
 		curMods = current[\mods] ? ();
@@ -186,17 +299,27 @@
 		this.prApplyArgsMods(Ndef(inKey), (args: (trim: current[\trim]), mods: curMods[\trim] !? {|m| (trim: m) } ? ()),
 			(args: (trim: track[\trim] ? 0), mods: tgtMods[\trim] !? {|m| (trim: m) } ? ()),
 			{|ndef, pairs|
-				("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ time.cs ++ ");").radcode(\radpostcont);
-				az.setTrim(type, num, pairs[1]);
-				restores.add({ ("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ trimLag.cs ++ ");").radcode(\radpostcont) });
+				if(xfade, {
+					hold.(inKey);
+					("Ndef(" ++ inKey.cs ++ ").xset('trim', " ++ pairs[1].cs ++ ");").radcode;
+				}, {
+					("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ time.cs ++ ");").radcode(\radpostcont);
+					az.setTrim(type, num, pairs[1]);
+					restores.add({ ("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ trimLag.cs ++ ");").radcode(\radpostcont) });
+				});
 			});
 		// volume: its lagTime is the load's time, then the preset's volume lag
 		this.prApplyArgsMods(Ndef(key), (args: (volume: current[\volume]), mods: curMods[\volume] !? {|m| (volume: m) } ? ()),
 			(args: (volume: track[\volume] ? 0), mods: tgtMods[\volume] !? {|m| (volume: m) } ? ()),
 			{|ndef, pairs|
-				volMoved = true;
-				az.setVolume(type, num, pairs[1], time);
-				restores.add({ az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
+				if(xfade, {
+					hold.(key);
+					("Ndef(" ++ key.cs ++ ").xset('volume', " ++ pairs[1].cs ++ ");").radcode;
+				}, {
+					volMoved = true;
+					az.setVolume(type, num, pairs[1], time);
+					restores.add({ az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
+				});
 			});
 		//a volume that doesn't change still takes the preset's lag at the end
 		if(volMoved.not and: { (curLags[\volume] ? 0) != (tgtLags[\volume] ? 0) }, {
@@ -218,6 +341,15 @@
 			{|ndef, pairs|
 				var keys = pairs[0, 2..], ndefKeys = Ndef(spaceKey).getKeysValues.collect(_[0]);
 				var tgtPanLags = tgtLags[\pan] ? ();
+				if(xfade, {
+					hold.(spaceKey);
+					("Ndef(" ++ spaceKey.cs ++ ").xset(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
+					//the preset's pan lags, where they differ, once the fade is over
+					restores.add({
+						keys.do{|k| if(((curLags[\pan] ? ())[k] ? 0) != (tgtPanLags[k] ? 0), {
+							az.setPanLag(type, num, tgtPanLags[k] ? 0, ndefKeys.indexOf(k) + 1) }) };
+					});
+				}, {
 				subs.add({
 					("Ndef(" ++ spaceKey.cs ++ ").lag(" ++ keys.collect{|k| [k, time] }.flatten.collect(_.cs).join(", ") ++ ");").radcode;
 					Server.default.sync;
@@ -227,6 +359,7 @@
 				}.fork(AppClock));
 				restores.add({
 					keys.do{|k| az.setPanLag(type, num, tgtPanLags[k] ? 0, ndefKeys.indexOf(k) + 1) };
+				});
 				});
 			});
 		^left

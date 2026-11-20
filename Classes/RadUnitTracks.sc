@@ -215,13 +215,14 @@
 
 	// bring a strip to a track preset, changing only what differs, in the
 	// order above. Call inside a Routine. Returns the parts left out.
-	*applyTrack {|type, num, track, nosrc = false, nofx = false, az|
+	*applyTrack {|type, num, track, nosrc = false, nofx = false, az, stopTrack = true|
 		var name = this.stripName(type, num), kind = this.stripKind(name), current, left = [];
 		az = az ? Radicles.aZ;
 		current = this.readStrip(name, az);
 		if(current.isNil, { ("No " ++ name).warn; ^nil });
 		// 1. loads running on the strip stop where they are
-		this.prStopStripMorphs(type, num, az);
+		// (stopTrack false: called from a track load, which goes on)
+		this.prStopStripMorphs(type, num, az, stopTrack);
 		// 2. a preset that mutes mutes first
 		if(track[\mute] == 1 and: { current[\mute] != 1 }, { az.setMute(type, num, 1) });
 		// a preset that doesn't go to the master turns the output off first
@@ -261,9 +262,9 @@
 
 	// stop the loads running on a strip: its chain's, its slots', and those
 	// of the blocks feeding it
-	*prStopStripMorphs {|type, num, az|
+	*prStopStripMorphs {|type, num, az, stopTrack = true|
 		var name = this.stripName(type, num);
-		this.prStopTrackMorph(name);
+		if(stopTrack, { this.prStopTrackMorph(name) });
 		az.prStopMorph(name);
 		(az.filters ? []).do{|item| if(az.filterTagOnStrip(item[0], type, num), { az.prStopMorph(item[0]) }) };
 		(this.readInput(name, az) ? []).do{|key| if(this.isBlockTag(key), { this.prStopBlockMorph(key) }) };

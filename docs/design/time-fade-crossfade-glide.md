@@ -11,6 +11,32 @@ Status, 19 Nov 2026:
   them more. The lag commands stay as they are, and a load with `glide`
   glides over the fade time (or the time typed) until this is decided. The
   sections on lag below are a proposal, not a decision.
+- **`tload`, after Federico tried it by ear (19 Nov, evening): decided.**
+  - *The strip's values crossfade.* In a track load the volume, trim and pan
+    are set with one crossfade each (`xset`, the stage's fade time being the
+    load's time meanwhile), not with a lag. A lag moves fast and then creeps
+    (about two thirds of the way in the first seventh of the time), so the
+    level arrived long before the effects and the source. With `glide` typed
+    they glide with a lag as before. Sends stay on a lag: a bus's input is
+    shared by every track that sends to it, and two track loads at once
+    would restart each other's crossfade there.
+  - *A track that ends with no source fades out whole* (`tload t 1 default`,
+    or any preset saved without a source): its volume crossfades to silence
+    over the time with the effects still on, then the source and the effects
+    are removed and the preset's values set, unheard. Before, the effects
+    came off while the sound was still fading, and the dry sound appeared on
+    its way out.
+  - *A track with no source that gets one fades in whole:* it is built at
+    once with its volume at silence, then the volume crossfades up.
+  - *Not with `nosrc`* (the source keeps playing, so the effects change one
+    by one as in `csload`), and not when a block also feeds another track.
+  - *Left as it is:* a load from one sounding setting to another moves part
+    by part, so for a moment the old source is heard through the new
+    effects. A real crossfade of the whole track needs the old and the new
+    track side by side; Federico: it doesn't bother him when it is a
+    crossfade, only when it is a fade-out.
+  - `fade N` does not touch the mixer lags (`vollag`, `panlag`); they stay
+    independent.
 - Local fade spellings agreed: `fade t 1 4`, `fade b 1 4`, `fade m 4`,
   `fade blk 1 4`, `fade fx t 1 2 4`, `fade fx m 1 4`.
 

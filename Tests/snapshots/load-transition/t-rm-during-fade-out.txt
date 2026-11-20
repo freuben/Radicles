@@ -1,0 +1,15 @@
+>> <code>
+== radpost ==
+Ndef('track1').fadeTime = 3;
+Ndef('track1').xset('volume', -inf);
+Ndef('track1').fadeTime = 0.5;
+Ndef('filterTrack_1_1').clear(0.5);
+Ndef('block1').clear(0.5);
+Ndef('inTrack1').clear(0.5);
+Ndef('track1').clear(0.5);
+Ndef('spaceTrack1').clear(0.5);
+Ndef('inMaster').source = {arg trim=0, lagTime=0;
+                ([Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+== radpostcont ==
+(none)
+

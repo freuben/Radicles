@@ -13,12 +13,13 @@
 ~radStripNow = {|name| RadUnit.refresh(RadDoc.current.copy).at(name) ? () };
 ~radCmd = {|cmd, wait = 0.5| Radicles.cW.callFunc(cmd); wait.wait };
 
-// values glide over the morph time, then the strip's own lags come back
+// with glide the values glide over the time, then the strip's own lags come
+// back (without the word they crossfade: load-transition.scd)
 ~radTest.("tmorph-values-glide",
 	setup: ["start 2 1", "vol t 2 -6", "pan t 2 0.5", "trim t 2 3", "snd t 2 1 1 -9",
 		"tsave t 2 radtest_tm1", "vol t 1 -20"],
 	code: {
-		~radCmd.("tload t 1 radtest_tm1 3", 1);
+		~radCmd.("tload t 1 radtest_tm1 3 glide", 1);
 		~radMid = [Ndef(\track1).get(\lagTime), Ndef(\inTrack1).get(\lagTime), ~radStripNow.(\track1)[\sends]];
 		4.wait;
 		~radEnd = ~radStripNow.(\track1);
@@ -139,13 +140,13 @@
 	setup: ["start 2", "vol t 2 -6", "tsave t 2 radtest_tm9", "fade t 1 3"],
 	code: {
 		~radCmd.("tload t 1 radtest_tm9", 1);
-		~radMidLag = Ndef(\track1).get(\lagTime);
+		~radMidLag = [Ndef(\track1).get(\lagTime) ? 0, Ndef(\track1).fadeTime];
 		4.wait;
 	},
 	check: {
 		var one = ~radStripNow.(\track1);
 		case
-		{ ~radMidLag != 3 } { "volume lag during the load: " ++ ~radMidLag }
+		{ ~radMidLag != [0, 3] } { "volume lag and fade time during the load: " ++ ~radMidLag }
 		{ one[\volume] != -6 or: { one[\lags].notNil } } { "track1 after: " ++ one.cs }
 		{ Ndef(\track1).fadeTime != 3 } { "track1's fade time after: " ++ Ndef(\track1).fadeTime }
 		{ true }
@@ -205,19 +206,20 @@
 	teardown: { ~radTrackClean.(['radtest_tmwet']) }
 );
 
-// tload default over a time: the source fades out over it and stops
-// (18 Nov 2026)
+// tload default over a time: the track fades out whole over it (its
+// volume; the block keeps its own fade time), then the source stops
+// (18 and 19 Nov 2026)
 ~radTest.("tmorph-default-source",
 	setup: ["start 2", "blk 1 sine", "vol t 1 -6"],
 	code: {
 		~radCmd.("tload t 1 default 2", 1);
-		~radMidFade = Ndef(\block1).fadeTime;
-		3.wait;
+		~radMidFade = [Ndef(\block1).fadeTime, Ndef(\track1).fadeTime, Ndef(\track1).get(\volume)];
+		4.wait;
 	},
 	check: {
 		var one = ~radStripNow.(\track1);
 		case
-		{ ~radMidFade != 2 } { "block 1 fade time during the morph: " ++ ~radMidFade }
+		{ ~radMidFade != [0.5, 2, -inf] } { "block 1's and track 1's fade time and the volume during the load: " ++ ~radMidFade }
 		{ RadUnit.readBlock(\block1).notNil } { "block 1 still plays: " ++ RadUnit.readBlock(\block1).cs }
 		{ one[\volume] != 0 } { "track1: " ++ one.cs }
 		{ true }
