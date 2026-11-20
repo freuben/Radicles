@@ -153,6 +153,8 @@
 			trackIndex = mixTrackNames.indexOf((trackType ++ trackNum).asSymbol);
 		});
 		if(trackIndex.notNil, {
+			//vol typed during a whole-track fade-out stops that load
+			RadUnit.volumeSetDuringLoad(trackType, trackNum);
 			if(lag.isNil, {
 				(mixTrackNdefs[trackIndex].cs ++ ".set('volume', " ++
 					value ++ ");").radcode(\radpostcont);
