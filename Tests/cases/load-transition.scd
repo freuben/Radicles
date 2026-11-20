@@ -616,6 +616,46 @@
 	teardown: ~radLtClean
 );
 
+// vol typed during a whole-track fade-out: the load stops, the track keeps
+// its source and its effect at the typed level, and the fade time is back.
+// Checked after the time the load would have emptied the track at.
+~radTest.("vol-during-fade-out-stops-load",
+	setup: ~radLtWhole,
+	code: {
+		Radicles.cW.callFunc("tload t 1 default 3"); 1.wait;
+		Radicles.cW.callFunc("vol t 1 -9"); 4.wait },
+	check: {
+		var one = ~radLtStripNow.(\track1);
+		case
+		{ ~radLtFx1.().not or: { Ndef(\block1).source.isNil } } { "the effect or the block went" }
+		{ one[\volume] != -9 } { "track1: " ++ one.cs }
+		{ Ndef(\track1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\track1).fadeTime }
+		{ true }
+	},
+	noWarnings: true,
+	teardown: ~radLtClean
+);
+
+// the same on a fade-in: the volume is one more value, the load goes on
+~radTest.("vol-during-fade-in-load-goes-on",
+	setup: ~radLtWhole ++ ["tsave t 1 radtest_ltt", ["tload t 1 default none", 2]],
+	code: {
+		var waited = 0;
+		Radicles.cW.callFunc("tload t 1 radtest_ltt 3");
+		//once the fade up has started (the track is built first, which takes
+		//longer on a slow machine)
+		while({ Ndef(\track1).fadeTime != 3 and: { waited < 10 } }, { 0.1.wait; waited = waited + 0.1 });
+		0.5.wait;
+		Radicles.cW.callFunc("vol t 1 -9"); 4.wait },
+	check: {
+		case
+		{ ~radLtFx1.().not or: { Ndef(\block1).source.isNil } } { "the effect or the block is not there" }
+		{ Ndef(\track1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\track1).fadeTime }
+		{ true }
+	},
+	teardown: ~radLtClean
+);
+
 // the same line typed again during the fade-out: the fade goes on to its
 // end, the track is not emptied early
 ~radTest.("tload-default-twice",
