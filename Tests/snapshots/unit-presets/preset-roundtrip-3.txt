@@ -9,7 +9,7 @@ vol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
-Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+Ndef('track1').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.05);
 Ndef('filterTrack_1_1').xset('vol', -33.39, 'freq', 257.65, 'q', 11.1063, 'lagTime', 3.7, 'mix', 0.37);
 Ndef('filterTrack_1_1', {arg freq1=30 , freq2=80 , freq3=200 , freq4=500 , freq5=1200 , freq6=3500 , freq7=10000 , freq8=17000 , gain1=0 , gain2=0 , gain3=0 , gain4=0 , gain5=0 , gain6=0 , gain7=0 , gain8=0 , q1=0.71 , q2=1.10 , q3=0.98 , q4=0.71 , q5=0.71 , q6=0.71 , q7=0.71 , q8=0.71 , on1=0 , on2=1 , on3=1 , on4=1 , on5=1 , on6=1 , on7=1 , on8=0 , lag=0.5, masterGain=0 , lagOn=0.1 ;
     var signal;
