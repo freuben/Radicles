@@ -640,7 +640,12 @@
 ~radTest.("vol-during-fade-in-load-goes-on",
 	setup: ~radLtWhole ++ ["tsave t 1 radtest_ltt", ["tload t 1 default none", 2]],
 	code: {
-		Radicles.cW.callFunc("tload t 1 radtest_ltt 3"); 1.5.wait;
+		var waited = 0;
+		Radicles.cW.callFunc("tload t 1 radtest_ltt 3");
+		//once the fade up has started (the track is built first, which takes
+		//longer on a slow machine)
+		while({ Ndef(\track1).fadeTime != 3 and: { waited < 10 } }, { 0.1.wait; waited = waited + 0.1 });
+		0.5.wait;
 		Radicles.cW.callFunc("vol t 1 -9"); 4.wait },
 	check: {
 		case
