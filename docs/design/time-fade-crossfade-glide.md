@@ -4,7 +4,9 @@ Status, 19 Nov 2026:
 
 - **Fade and crossfade: decided,** and built in two PRs. The first (`fade N`
   for everything, own fade times, one-off times) is done; the second (loading
-  a preset is a crossfade, the `morph` words removed) is next.
+  a preset is a crossfade, the `morph` words and the own morph times
+  removed) is built: `fxload`, `blkload`, `csload` and `tload` take, after
+  the preset's name and in any order, a time and `xfade`, `glide` or `none`.
 - **Lag, glide times and `mixlag`: on hold.** Federico wants to think about
   them more. The lag commands stay as they are, and a load with `glide`
   glides over the fade time (or the time typed) until this is decided. The

@@ -1,6 +1,0 @@
->> blkmorphtime 1 3
-== radpost ==
-(none)
-== radpostcont ==
-(none)
-

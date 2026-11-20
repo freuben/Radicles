@@ -1,0 +1,9 @@
+>> <code>
+== radpost ==
+Ndef('block1').fadeTime = 6;
+Ndef('block1').xset('freq', 500);
+Ndef('block1').fadeTime = 0.5;
+Ndef('block1').xset('freq', 700);
+== radpostcont ==
+(none)
+

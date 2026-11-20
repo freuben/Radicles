@@ -1,13 +1,12 @@
->> blkmorph 1 radtest_hi 1
+>> blkload 1 radtest_hi
 == radpost ==
-Ndef('block1').fadeTime = 1;
 Ndef('block1').xset('freq', 500);
 == radpostcont ==
 (none)
 
 >> <code>
 == radpost ==
-Ndef('block1').fadeTime = 0.5;
+(none)
 == radpostcont ==
 (none)
 

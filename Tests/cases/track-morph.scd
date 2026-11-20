@@ -1,9 +1,11 @@
-// Track morph (Document Model, step 4, PR 3): tmorph moves a whole strip to a
-// track preset over one morph time: the chain as csmorph, the source as
-// blkmorph (or a crossfade to another block), trim, volume, pan and sends
-// glide, mute switches off at the start or on at the end, the output to the
-// master on at the start or off at the end. tmorphtime gives a strip its own
-// time.
+// A track preset loaded over time (Document Model, step 4, PR 3; "Time in
+// Radicles", 19 Nov 2026): tload moves a whole strip to a track preset over
+// one time: the chain as csload, the source as blkload (or a crossfade to
+// another block), trim, volume, pan and sends glide, mute switches off at the
+// start or on at the end, the output to the master on at the start or off at
+// the end. Without a time, the strip's own fade time is used. (These tests
+// were written for tmorph, which tload replaced; see also
+// load-transition.scd.)
 
 ~radTrackClean = {|names|
 	names.do{|name| File.delete(RadUnit.trackPresetPath(name)) };
@@ -16,7 +18,7 @@
 	setup: ["start 2 1", "vol t 2 -6", "pan t 2 0.5", "trim t 2 3", "snd t 2 1 1 -9",
 		"tsave t 2 radtest_tm1", "vol t 1 -20"],
 	code: {
-		~radCmd.("tmorph t 1 radtest_tm1 3", 1);
+		~radCmd.("tload t 1 radtest_tm1 3", 1);
 		~radMid = [Ndef(\track1).get(\lagTime), Ndef(\inTrack1).get(\lagTime), ~radStripNow.(\track1)[\sends]];
 		4.wait;
 		~radEnd = ~radStripNow.(\track1);
@@ -33,12 +35,12 @@
 	teardown: { ~radTrackClean.(['radtest_tm1']) }
 );
 
-// the source: the same block morphs as blkmorph; another block crossfades in
+// the source: the same block moves as blkload does; another block crossfades in
 ~radTest.("tmorph-source",
 	setup: ["start 3", "blk 1 sine", "blkset 1 freq 330", "tsave t 1 radtest_tm2", "blk 2 sine", "blk 3 noise"],
 	code: {
-		~radCmd.("tmorph t 2 radtest_tm2 2", 0.2);
-		~radCmd.("tmorph t 3 radtest_tm2 2", 1);
+		~radCmd.("tload t 2 radtest_tm2 2", 0.2);
+		~radCmd.("tload t 3 radtest_tm2 2", 1);
 		~radMidFade = Ndef(\block3).fadeTime;
 		3.wait;
 	},
@@ -54,10 +56,10 @@
 	teardown: { ~radTrackClean.(['radtest_tm2']) }
 );
 
-// the chain morphs as csmorph
+// the chain moves as csload does
 ~radTest.("tmorph-chain",
 	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5", "tsave t 1 radtest_tm3", "fx t 2 pch", "fx t 2 2 dl1"],
-	code: { ~radCmd.("tmorph t 2 radtest_tm3 1", 3) },
+	code: { ~radCmd.("tload t 2 radtest_tm3 1", 3) },
 	check: {
 		var fx = ~radStripNow.(\track2)[\fx] ? ();
 		(fx.collect(_[\def]) == (1: \pch) and: { fx[1][\args][\pitchRatio] == 0.5 }) or: { "track2 fx: " ++ fx.cs }
@@ -69,7 +71,7 @@
 ~radTest.("tmorph-send-removed",
 	setup: ["start 2 1", "tsave t 2 radtest_tm4", "snd t 1 1 1 -6"],
 	code: {
-		~radCmd.("tmorph t 1 radtest_tm4 2", 1);
+		~radCmd.("tload t 1 radtest_tm4 2", 1);
 		~radMidSends = ~radStripNow.(\track1)[\sends];
 		2.wait;
 	},
@@ -88,8 +90,8 @@
 ~radTest.("tmorph-mute",
 	setup: ["start 2", "mute t 2", "tsave t 2 radtest_tm5", "unmute t 2", "tsave t 2 radtest_tm6", "mute t 2"],
 	code: {
-		~radCmd.("tmorph t 1 radtest_tm5 2", 0.5);
-		~radCmd.("tmorph t 2 radtest_tm6 2", 0.5);
+		~radCmd.("tload t 1 radtest_tm5 2", 0.5);
+		~radCmd.("tload t 2 radtest_tm6 2", 0.5);
 		~radMidMutes = [~radStripNow.(\track1)[\mute], ~radStripNow.(\track2)[\mute]];
 		2.5.wait;
 	},
@@ -106,7 +108,7 @@
 // none: at once, as tload
 ~radTest.("tmorph-none",
 	setup: ["start 2", "vol t 2 -6", "tsave t 2 radtest_tm7"],
-	code: { ~radCmd.("tmorph t 1 radtest_tm7 5 none", 1) },
+	code: { ~radCmd.("tload t 1 radtest_tm7 5 none", 1) },
 	check: {
 		var one = ~radStripNow.(\track1);
 		(one[\volume] == -6 and: { one[\lags].isNil }) or: { "track1: " ++ one.cs }
@@ -114,12 +116,12 @@
 	teardown: { ~radTrackClean.(['radtest_tm7']) }
 );
 
-// a tload during a morph stops it where it is and puts the lags back
+// a tload (at once) during another stops it where it is and puts the lags back
 ~radTest.("tmorph-interrupted",
 	setup: ["start 2 1", "vol t 2 -6", "snd t 2 1 1 -9", "tsave t 2 radtest_tm8"],
 	code: {
-		~radCmd.("tmorph t 1 radtest_tm8 6", 1);
-		~radCmd.("tload t 1 default", 3);
+		~radCmd.("tload t 1 radtest_tm8 6", 1);
+		~radCmd.("tload t 1 default none", 3);
 	},
 	check: {
 		var one = ~radStripNow.(\track1);
@@ -132,32 +134,30 @@
 	teardown: { ~radTrackClean.(['radtest_tm8']) }
 );
 
-// tmorphtime: a strip's own time, in the document, saved in its presets,
-// used by tmorph when the command gives none
-~radTest.("tmorphtime",
-	setup: ["start 2", "vol t 2 -6", "tmorphtime t 2 3", "tsave t 2 radtest_tm9", "tmorphtime t 2 default"],
-	cmds: ["tmorphtime t 1 4", "tmorphtime t 1", "tmorphtime t 1 default"],
+// the strip's own fade time is the load's time when the command gives none
+~radTest.("tmorph-strip-fade-time",
+	setup: ["start 2", "vol t 2 -6", "tsave t 2 radtest_tm9", "fade t 1 3"],
 	code: {
-		~radDocTime = [~radStripNow.(\track2)[\trackMorphTime], RadUnit.readTrackPreset('radtest_tm9')[\morphTime]];
-		~radCmd.("tmorph t 1 radtest_tm9", 1);
+		~radCmd.("tload t 1 radtest_tm9", 1);
 		~radMidLag = Ndef(\track1).get(\lagTime);
-		3.wait;
+		4.wait;
 	},
 	check: {
+		var one = ~radStripNow.(\track1);
 		case
-		{ ~radDocTime != [nil, 3] } { "document, preset: " ++ ~radDocTime.cs }
-		{ ~radMidLag != 3 } { "volume lag during the morph: " ++ ~radMidLag }
-		{ Radicles.aZ.trackMorphTimeOf(\track1) != 3 } { "track1's own time after: " ++ Radicles.aZ.trackMorphTimeOf(\track1) }
+		{ ~radMidLag != 3 } { "volume lag during the load: " ++ ~radMidLag }
+		{ one[\volume] != -6 or: { one[\lags].notNil } } { "track1 after: " ++ one.cs }
+		{ Ndef(\track1).fadeTime != 3 } { "track1's fade time after: " ++ Ndef(\track1).fadeTime }
 		{ true }
 	},
 	teardown: { ~radTrackClean.(['radtest_tm9']) }
 );
 
-// nosrc and nofx work with tmorph too; an unknown word is refused
+// nosrc and nofx with a time; an unknown word is refused
 ~radTest.("tmorph-options",
 	setup: ["start 2", "blk 1 sine", "fx t 1 pch", "vol t 1 -6", "tsave t 1 radtest_tm10", "blk 2 noise", "fx t 2 dl1"],
-	//the first waits out its morph, so the lag going back is in its own snapshot
-	cmds: [["tmorph t 2 radtest_tm10 1 nosrc nofx", 2.5], "tmorph t 2 radtest_tm10 1 sideways"],
+	//the first waits out its load, so the lag going back is in its own snapshot
+	cmds: [["tload t 2 radtest_tm10 1 nosrc nofx", 2.5], "tload t 2 radtest_tm10 1 sideways"],
 	check: {
 		var two = ~radStripNow.(\track2);
 		case
@@ -173,7 +173,7 @@
 ~radTest.("tmorph-output-off-at-end",
 	setup: ["start 2 1", "sndry t 2 1 1 -6", "tsave t 2 radtest_tmdry"],
 	code: {
-		~radCmd.("tmorph t 1 radtest_tmdry 2", 1);
+		~radCmd.("tload t 1 radtest_tmdry 2", 1);
 		~radMidOut = ~radStripNow.(\track1)[\output];
 		3.wait;
 	},
@@ -191,7 +191,7 @@
 ~radTest.("tmorph-output-on-at-start",
 	setup: ["start 2 1", "tsave t 2 radtest_tmwet", "outmenu t 1 0"],
 	code: {
-		~radCmd.("tmorph t 1 radtest_tmwet 2", 1);
+		~radCmd.("tload t 1 radtest_tmwet 2", 1);
 		~radMidOut = ~radStripNow.(\track1)[\output];
 		3.wait;
 	},
@@ -205,12 +205,12 @@
 	teardown: { ~radTrackClean.(['radtest_tmwet']) }
 );
 
-// tmorph to default: the source fades out over the morph time and stops
+// tload default over a time: the source fades out over it and stops
 // (18 Nov 2026)
 ~radTest.("tmorph-default-source",
 	setup: ["start 2", "blk 1 sine", "vol t 1 -6"],
 	code: {
-		~radCmd.("tmorph t 1 default 2", 1);
+		~radCmd.("tload t 1 default 2", 1);
 		~radMidFade = Ndef(\block1).fadeTime;
 		3.wait;
 	},

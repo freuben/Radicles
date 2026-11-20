@@ -141,21 +141,31 @@
 		}, write);
 	}
 
-	// apply an effect preset in the new format to the slot at ndefKey (the
-	// slot must hold the same effect); returns false if there is no such preset
-	loadUnitPreset {arg ndefKey, presetName, action;
-		var def, unit;
+	// bring the slot at ndefKey to an effect preset in the new format (the
+	// slot must hold the same effect); returns false if there is no such
+	// preset. Loading is a transition ("Time in Radicles", 19 Nov 2026): a
+	// crossfade over the effect's own fade time, unless a time (seconds; 0 is
+	// at once) or a shape (\xfade, \glide, \none) is given; a preset may name
+	// the shape it prefers (morphShape). See AssemblageMorph.sc.
+	loadUnitPreset {arg ndefKey, presetName, action, time, shape;
+		var def, unit, current, typed = time.notNil or: { shape.notNil };
 		def = (filters ? []).detect{|item| item[0] == ndefKey } !? {|item| item[1] };
 		if(def.isNil or: { RadUnit.presetExists(\filter, def, presetName).not }, { ^false });
 		unit = RadUnit.presetFor(ndefKey, def, presetName, this);
 		if(unit.isNil, { ^true });
-		{
-			if(RadUnit.apply(ndefKey, unit, this), {
-				server.sync;
-				this.updateFxWin(ndefKey);
-			});
-			action.();
-		}.fork(AppClock);
+		shape = (shape ?? { unit[\morphShape] } ? \xfade).asSymbol;
+		if([\xfade, \glide, \none].includes(shape).not, {
+			("fxload: shape is xfade, glide or none, not " ++ shape).warn; ^true });
+		//already there: nothing to do
+		current = RadUnit.read(ndefKey, this);
+		if(current.notNil and: {
+			RadDoc.diff(this.prMorphed(current), this.prMorphed(unit), 1e-9).isEmpty }, {
+			action.(); ^true
+		});
+		//the time: the command's, else the effect's own fade time
+		time = (time ?? { Radicles.ownFade(ndefKey) } ? 0).max(0);
+		if(time == 0, { shape = \none });
+		this.morphUnit(ndefKey, unit, time, shape, action, quiet: typed.not);
 		^true
 	}
 
@@ -260,23 +270,25 @@
 		this.loadRawFilterPreset(newFilterNdef, dataArr, filterType);
 	}
 
-	loadFxPreset {arg filterNum, presetName;
+	loadFxPreset {arg filterNum, presetName, time, shape;
 		this.fxWarn(filterNum, {|ndefKey|
-			this.loadAnyFxPreset(ndefKey, presetName);
+			this.loadAnyFxPreset(ndefKey, presetName, time, shape);
 		});
 	}
 
-	loadFxTrackPreset {arg trackType, trackNum, trackSlot, presetName;
+	// fxload: time and shape as for loadUnitPreset
+	loadFxTrackPreset {arg trackType, trackNum, trackSlot, presetName, time, shape;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
-			this.loadAnyFxPreset(ndefKey, presetName);
+			this.loadAnyFxPreset(ndefKey, presetName, time, shape);
 		});
 	}
 
-	// a preset in the new format for this effect; else one saved in the old
-	// format (before November 2026); else say why nothing was loaded
-	loadAnyFxPreset {arg ndefKey, presetName;
+	// a preset in the new format for this effect (a transition); else one
+	// saved in the old format (before November 2026), set at once as it
+	// always was; else say why nothing was loaded
+	loadAnyFxPreset {arg ndefKey, presetName, time, shape;
 		var filterType, others;
-		if(this.loadUnitPreset(ndefKey, presetName), { ^this });
+		if(this.loadUnitPreset(ndefKey, presetName, nil, time, shape), { ^this });
 		filterType = (filters ? []).detect{|item| item[0] == ndefKey } !? {|item| item[1] };
 		if((PresetFile.read(\filter) ? []).includes(presetName.asSymbol), {
 			{

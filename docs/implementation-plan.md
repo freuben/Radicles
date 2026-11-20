@@ -1,5 +1,7 @@
 # Document Model – Implementation Plan
 
+> **Changed on 19 Nov 2026:** the `morph` commands and the morph times described here are gone. Loading a preset is itself the transition (`fxload`, `blkload`, `csload`, `tload` take a time and `xfade`, `glide` or `none`); see [Time in Radicles](design/time-fade-crossfade-glide.md). The rest of this note stands.
+
 Oct 31, 2026 · @Federico
 
 ## How we work

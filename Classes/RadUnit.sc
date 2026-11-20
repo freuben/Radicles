@@ -8,17 +8,12 @@
 // Patterns (blk 1 pattern ...) are not in the document yet.
 
 RadUnit {
-	// the global morph time in seconds (morphtime 5), used when neither the
-	// command nor the unit gives one (Document Model, step 1, PR 5)
-	classvar <>morphTime = 2;
-
-	// running block morphs: tag -> (routine:, restore:) (step 2, PR 4)
+	// block loads that are running: tag -> (routine:, restore:) (step 2, PR 4)
 	classvar blockMorphs;
-	classvar trackMorphs; // strip name -> a running tmorph, see RadUnitTrackMorph.sc
-	classvar blockMorphTimes; // tag -> (def:, time:), see RadUnitBlockMorph.sc
+	classvar trackMorphs; // strip name -> a running tload, see RadUnitTrackMorph.sc
 
 	// seconds from asking where a block plays to its new copy starting
-	// (blkmorph), on top of the server's latency (Ndefs send their messages
+	// (blkload), on top of the server's latency (Ndefs send their messages
 	// that much ahead); measured in the tests
 	classvar <>placeLead = -0.025;
 
@@ -97,7 +92,6 @@ RadUnit {
 		extra = (az.trackBufferArr ? []).detect{|item| item[0] == tag };
 		if(extra.notNil and: { extra[1].notNil }, { unit[\buffer] = this.plain(extra[1]) });
 		if(az.isBypassed(tag), { unit[\bypass] = true });
-		(az.morphTimes !? {|m| m[tag] }) !? {|time| unit[\morphTime] = time };
 		^unit
 	}
 
@@ -119,7 +113,6 @@ RadUnit {
 		if(entry[3].notNil, { unit[\data] = this.plain(entry[3]) });
 		buffer = Block.bufferFormOf(tag);
 		if(buffer.notNil, { unit[\buffer] = buffer });
-		this.blockMorphTimeOf(tag, entry[1]) !? {|time| unit[\morphTime] = time };
 		^unit
 	}
 

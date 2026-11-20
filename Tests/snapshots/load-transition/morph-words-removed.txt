@@ -1,0 +1,60 @@
+>> fxmorph t 1 1 radtest_lt
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> fxmorph t 1 1 radtest_lt 1 glide
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blkmorph 1 radtest_lt
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> csmorph t 1 radtest_ltc
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> tmorph t 1 radtest_ltt
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> morphtime 5
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> morphtime t 1 1 5
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blkmorphtime 1 5
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> csmorphtime t 1 5
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> tmorphtime t 1 5
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

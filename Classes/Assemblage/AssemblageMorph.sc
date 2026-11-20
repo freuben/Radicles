@@ -1,94 +1,66 @@
-// Assemblage: effect morph and morph time (Document Model, step 1, PR 5).
-// fxmorph moves an effect to one of its presets over time, through the
-// reconciler (RadUnit.apply):
-//   \xfade (default): the Ndef's fade time is set to the morph time, then one
-//     xset with every changed argument, a single crossfade; the fade time
-//     goes back afterwards.
-//   \glide: each changed argument gets the morph time as its lag, then one
-//     set; the earlier lags go back afterwards.
-//   \none: the values are set at once.
+// Assemblage: loading an effect or a chain preset as a transition (Document
+// Model, step 1, PR 5; "Time in Radicles", 19 Nov 2026). fxload and csload
+// bring an effect or a chain to a preset over a time, through the reconciler
+// (RadUnit.apply). The time is the command's, else the fade time of the thing
+// loaded onto (the effect's Ndef; for a chain, the strip's). The shape is the
+// command's, else the preset's morphShape, else xfade:
+//   \xfade (default): one xset with every changed argument, a single
+//     crossfade over the Ndef's fade time. Only when another time was typed
+//     is the fade time set to it first, and put back afterwards.
+//   \glide: each changed argument gets the time as its lag, then one set;
+//     the earlier lags go back afterwards.
+//   \none (or a time of 0): the values are set at once.
 // Modulators the preset adds, changes or removes fade with the rest (ModMap
 // maps with xset over the fade time). The fade time and lags always go
-// back, also when a morph is interrupted by another or the effect is removed.
+// back, also when a load is interrupted by another or the effect is removed.
 // Part of the Assemblage class: the class and its variables are in Assemblage.sc.
 
 + Assemblage {
 
-	// the morph time a slot was given (morphtime t 1 2 5, or from a preset),
-	// or nil for the global one (RadUnit.morphTime)
-	morphTimeOf {arg filterTag; ^morphTimes !? {|m| m[filterTag] } }
-
-	// give a slot its own morph time; nil goes back to the global one
-	setMorphTime {arg filterTag, time;
-		morphTimes = morphTimes ?? { IdentityDictionary.new };
-		if(time.isNil, { morphTimes.removeAt(filterTag) }, { morphTimes[filterTag] = time });
-		RadUnit.sync(filterTag, this); //document (step 1)
-	}
-
-	// forget a slot's morph settings and stop a morph in it (its effect was
-	// removed or replaced by another)
+	// stop a load running in a slot (its effect was removed or replaced by
+	// another)
 	prClearMorph {arg filterTag;
 		this.prStopMorph(filterTag);
-		morphTimes !? {|m| m.removeAt(filterTag) };
 	}
 
-	// stop a running morph in a slot, putting the fade time and lags back
+	// stop a running load in a slot, putting the fade time and lags back
 	prStopMorph {arg filterTag;
 		var morph = morphs !? {|m| m[filterTag] };
 		if(morph.notNil, {
 			morph[\routine].stop;
 			morph[\restore].value;
 			morphs.removeAt(filterTag);
+			morph[\stopped].value; //a chain load tells a waiting tload
 		});
 	}
 
-	// the part of a unit a morph changes
+	// the part of a unit a load changes
 	prMorphed {arg unit;
 		^(args: unit[\args], mods: unit[\mods], data: unit[\data], buffer: unit[\buffer])
 	}
 
-	// morph the effect at ndefKey to one of its presets (new format)
-	morphUnitPreset {arg ndefKey, presetName, time, shape, action;
-		var def, unit, current;
-		def = (filters ? []).detect{|item| item[0] == ndefKey } !? {|item| item[1] };
-		if(def.isNil, { "No effect in this slot".warn; ^this });
-		if(RadUnit.presetExists(\filter, def, presetName).not, {
-			("No preset " ++ presetName ++ " for " ++ def ++
-				" (fxmorph uses presets saved with fxsave)").warn; ^this });
-		unit = RadUnit.presetFor(ndefKey, def, presetName, this);
-		if(unit.isNil, { ^this });
-		//already there: nothing to morph (a morph time the preset has still
-		//goes to the slot)
-		current = RadUnit.read(ndefKey, this);
-		if(RadDoc.diff(this.prMorphed(current), this.prMorphed(unit), 1e-9).isEmpty, {
-			unit[\morphTime] !? {|t| if(t != current[\morphTime], { this.setMorphTime(ndefKey, t) }) };
-			action.(); ^this
-		});
-		//the time: the command's, the preset's, the slot's, else the global one
-		time = (time ?? { unit[\morphTime] } ?? { this.morphTimeOf(ndefKey) } ?? { RadUnit.morphTime }).max(0);
-		shape = (shape ?? { unit[\morphShape] } ? \xfade).asSymbol;
-		if([\xfade, \glide, \none].includes(shape).not, {
-			("fxmorph: shape is xfade, glide or none, not " ++ shape).warn; ^this });
-		this.morphUnit(ndefKey, unit, time, shape, action);
-	}
-
-	// morph the effect at ndefKey to unit (same effect) over time, with shape
-	// \xfade, \glide or \none (fxmorph, and csmorph for each slot that keeps
-	// its effect)
-	morphUnit {arg ndefKey, unit, time, shape, action, fadeBack;
+	// bring the effect at ndefKey to unit (same effect) over time, with shape
+	// \xfade, \glide or \none (fxload, and csload for each slot that keeps
+	// its effect). fadeBack: the fade time the Ndef goes back to, when the
+	// caller has already changed it (csload). quiet: don't say that a
+	// bypassed effect is set at once (a load with no time or shape typed).
+	morphUnit {arg ndefKey, unit, time, shape, action, fadeBack, quiet = false;
 		if(this.isBypassed(ndefKey) and: { shape != \none }, {
-			"The effect is bypassed: its values are set at once".postln;
+			if(quiet.not, { "The effect is bypassed: its values are set at once".postln });
 			shape = \none;
 		});
 		{
-			var routine = thisThread, restore, setFunc, fade, lagKeys, oldLags;
-			this.prStopMorph(ndefKey); //an interrupted morph puts its times back first
+			var routine = thisThread, restore, setFunc, lagKeys, oldLags;
+			this.prStopMorph(ndefKey); //an interrupted load puts its times back first
 			case
 			{ shape == \xfade } {
-				//csmorph passes the fade time from before it changed it
-				fade = fadeBack ?? { Ndef(ndefKey).fadeTime };
-				restore = { ("Ndef(" ++ ndefKey.cs ++ ").fadeTime = " ++ fade.cs ++ ";").radcode };
-				("Ndef(" ++ ndefKey.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
+				//the fade time is the load's while it runs (nothing is set or
+				//put back when it is the Ndef's own). csload has already set
+				//it, and puts it back with the strip's (fadeBack).
+				if(fadeBack.isNil, {
+					Radicles.holdFade(ndefKey, time);
+					restore = { Radicles.releaseFade(ndefKey) };
+				}, { restore = {} });
 				setFunc = {|ndef, pairs|
 					("Ndef(" ++ ndef.key.cs ++ ").xset(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
 				};
@@ -129,32 +101,29 @@
 		}.fork(AppClock);
 	}
 
-	// ---- chain morph (Document Model, step 3, PR 3) ----
+	// ---- chain load (Document Model, step 3, PR 3) ----
 
-	// a strip's own chain morph time (csmorphtime t 1 5), or nil
-	chainMorphTimeOf {arg strip; ^chainMorphTimes !? {|m| m[strip.asSymbol] } }
-
-	// a strip's own track morph time (tmorphtime t 1 5, step 4), or nil
-	trackMorphTimeOf {arg strip; ^trackMorphTimes !? {|m| m[strip.asSymbol] } }
-
-	setTrackMorphTime {arg strip, time;
-		trackMorphTimes = trackMorphTimes ?? { IdentityDictionary.new };
-		if(time.isNil, { trackMorphTimes.removeAt(strip.asSymbol) }, { trackMorphTimes[strip.asSymbol] = time });
+	// the Ndef keys of a strip's stages: its input, its effects, the strip
+	// and its panner (empty when there is no such strip)
+	prStripStageKeys {arg type, num;
+		^(this.getThisTrack(type, num) ? []).collect{|item| item[0] }
 	}
 
-	setChainMorphTime {arg strip, time;
-		chainMorphTimes = chainMorphTimes ?? { IdentityDictionary.new };
-		if(time.isNil, { chainMorphTimes.removeAt(strip.asSymbol) }, { chainMorphTimes[strip.asSymbol] = time });
-	}
-
-	// morph a strip's chain to chain over time, slot by slot (agreed 2 Nov):
-	// the same effect morphs as fxmorph does (shape xfade or glide); another
+	// bring a strip's chain to chain over time, slot by slot (agreed 2 Nov):
+	// the same effect moves as fxload does (shape xfade or glide); another
 	// effect crossfades from the old one to the new; a slot the preset leaves
 	// empty fades out and is removed; a slot filled only in the preset fades
-	// in; bypass follows, fading. Slots that do not differ are not touched.
-	// For the crossfades, the mixer's fade time is the morph time while the
-	// morph runs (Radicles.fadeTime), then goes back.
-	morphChain {arg type, num, chain, time, shape, action;
+	// in; bypass follows. Slots that do not differ are not touched.
+	// The time: the command's, else the strip's own fade time
+	// (Ndef(\track1).fadeTime). Every stage of the strip crossfades over that
+	// time while the load runs: a stage with another fade time is set to it,
+	// and put back afterwards (posted; nothing is posted when they agree).
+	// built: called once the chain's structure is in place (effects removed,
+	// added and replaced), before the time is waited; also when nothing
+	// changes or the shape is refused. tload waits for it before it moves the
+	// strip's values, because a rebuilt stage is set to the values it had
+	// when the rebuild was asked for.
+	morphChain {arg type, num, chain, time, shape, action, quiet = false, built;
 		var strip = RadUnit.stripName(type, num), current, target = chain[\fx] ? (), slots, same, changed;
 		current = RadUnit.readChain(type, num, this)[\fx];
 		//which slots differ, and how
@@ -166,31 +135,44 @@
 			cur.isNil or: { tgt.isNil } or: { cur[\def] != tgt[\def] } or: {
 				(cur[\bypass] == true) != (tgt[\bypass] == true) } or: {
 				RadDoc.diff(this.prMorphed(cur), this.prMorphed(tgt), 1e-9).notEmpty } };
-		if(changed.isEmpty, {
-			chain[\morphTime] !? {|t| this.setChainMorphTime(strip, t) };
-			action.(); ^this
-		});
-		//the time: the command's, the preset's, the strip's, else the global one
-		time = (time ?? { chain[\morphTime] } ?? { this.chainMorphTimeOf(strip) } ?? { RadUnit.morphTime }).max(0);
-		shape = (shape ? \xfade).asSymbol;
+		if(changed.isEmpty, { built.(); action.(); ^this });
+		//the time: the command's, else the strip's own fade time
+		time = (time ?? { Radicles.ownFade(strip) } ? 0).max(0);
+		shape = (shape ?? { chain[\morphShape] } ? \xfade).asSymbol;
 		if([\xfade, \glide, \none].includes(shape).not, {
-			("csmorph: shape is xfade, glide or none, not " ++ shape).warn; ^this });
+			("csload: shape is xfade, glide or none, not " ++ shape).warn; built.(); ^this });
+		if(time == 0, { shape = \none });
 		{
-			var routine = thisThread, restore, oldFade, slotFades = (), cond = Condition(false), wait;
+			var routine = thisThread, restore, held = [], cond = Condition(false), wait, leave;
 			wait = { cond.wait; cond.test = false };
-			//a new morph on the strip stops the one running, and those of its
+			//stages that keep their own fade time: the panner (no load
+			//rebuilds it, and tload glides the pan with its lag, which
+			//crossfades over this fade time before the values move), and
+			//with glide the effects that stay (their lag does the same)
+			leave = [RadUnit.stripKeys(strip)[2]];
+			if(shape == \glide, { leave = leave ++ same.collect{|slot| RadUnit.chainTag(type, num, slot) } });
+			//a new load on the strip stops the one running, and those of its
 			//slots, putting their times back first
 			this.prStopMorph(strip);
 			current.keys.do{|slot| this.prStopMorph(RadUnit.chainTag(type, num, slot)) };
-			oldFade = Radicles.fadeTime;
-			same.do{|slot| slotFades[slot] = Ndef(RadUnit.chainTag(type, num, slot)).fadeTime };
 			if(shape != \none, {
-				Radicles.fadeTime = time;
-				this.globFadeTime;
-				restore = { Radicles.fadeTime = oldFade; this.globFadeTime };
+				this.prStripStageKeys(type, num).do{|key|
+					if(leave.includes(key).not, {
+						held = held.add(key);
+						Radicles.holdFade(key, time);
+					});
+				};
+				restore = {
+					//only the stages still there (one given a fade time
+					//meanwhile, with fade N or fade t 1 4, has nothing held)
+					var keys = this.prStripStageKeys(type, num);
+					held.do{|key|
+						if(keys.includes(key), { Radicles.releaseFade(key) }, { Radicles.forgetHeldFades([key]) });
+					};
+				};
 			}, { restore = {} });
 			morphs = morphs ?? { IdentityDictionary.new };
-			morphs[strip] = (routine: routine, restore: restore);
+			morphs[strip] = (routine: routine, restore: restore, stopped: built);
 			// 1. slots the preset leaves empty fade out and go
 			changed.reverseDo{|slot|
 				if(target[slot].isNil, {
@@ -212,11 +194,12 @@
 					RadUnit.apply(tag, unit, this); //its modulators
 				});
 			};
-			// 3. slots that keep their effect morph as fxmorph does
+			// 3. slots that keep their effect move as fxload does; their fade
+			// time is already the load's, and goes back with the strip's
 			same.do{|slot|
 				var unit = target[slot], tag = RadUnit.chainTag(type, num, slot);
 				if(RadDoc.diff(this.prMorphed(current[slot]), this.prMorphed(unit), 1e-9).notEmpty, {
-					this.morphUnit(tag, unit, time, shape, fadeBack: slotFades[slot]);
+					this.morphUnit(tag, unit, time, shape, fadeBack: time, quiet: quiet);
 				});
 			};
 			// 4. bypass follows the preset
@@ -227,11 +210,11 @@
 				});
 			};
 			server.sync;
+			built.();
 			changed.do{|slot| this.updateFxWin(RadUnit.chainTag(type, num, slot)) };
 			this.refreshFunc;
-			chain[\morphTime] !? {|t| this.setChainMorphTime(strip, t) };
 			if(shape != \none, { time.wait });
-			//done: the mixer's fade time goes back
+			//done: the stages' fade times go back
 			if(morphs !? {|m| m[strip] } !? {|m| m[\routine] === routine } ? false, {
 				restore.value;
 				morphs.removeAt(strip);

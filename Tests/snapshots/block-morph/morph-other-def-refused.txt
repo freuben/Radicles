@@ -1,4 +1,4 @@
->> blkmorph 2 radtest_hi 1
+>> blkload 2 radtest_hi 1
 == radpost ==
 (none)
 == radpostcont ==
