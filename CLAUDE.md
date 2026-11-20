@@ -14,6 +14,24 @@ there; if `docs/` and a draft disagree, ask before building.
 
 ## How we work
 
+- **Two kinds of conversation: ideation and development** (agreed 20 Nov
+  2026, after work was started on ideas Federico was still unsure about).
+  - **Ideation is the default.** Exploring ideas, his suggestions, questions
+    about behaviour: Claude builds nothing (no code, no branches, no PRs).
+    It may read the code to say what an idea would touch or cost.
+  - **Development starts only when he says so** ("build it", "go",
+    "development"), for something whose behaviour is clear. A "yes" to a
+    question about behaviour is a decision to record, not a go-ahead: ask
+    separately whether to build it now.
+  - **Ideation ends in a short note, not code:** what was explored, what he
+    decided, what is still open. When nothing is open it becomes the design
+    note, and that is the handover to development.
+  - **Exploratory branches** (`explore/<idea>`) are for hearing an idea on
+    the dev Mac when that is the only way to decide, and only when he asks
+    for one. They never get a PR and never merge into `dev`. An idea that is
+    kept is rebuilt from `dev` with its note and tests; otherwise the branch
+    is deleted.
+  - Small fixes he asks for directly are development already.
 - **Design before building.** Each step gets a short design note in the
   claude.ai Project with questions for Federico; build only once he has
   answered, then copy the decided note into `docs/design/` (with the code's
