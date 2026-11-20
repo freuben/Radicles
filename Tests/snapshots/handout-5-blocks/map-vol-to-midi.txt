@@ -1,55 +1,55 @@
 >> vol 1 midicc_(19)
 == radpost ==
-MIDIdef.cc('hid1', {arg ...args; {|val| ("Ndef('track1').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},19);
+MIDIdef.cc('hid1', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track1'); ("Ndef('track1').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},19);
 Ndef('track1').lag('volume', 0.01);
 == radpostcont ==
 (none)
 
 >> vol 2 midicc_(23)
 == radpost ==
-MIDIdef.cc('hid2', {arg ...args; {|val| ("Ndef('track2').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},23);
+MIDIdef.cc('hid2', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track2'); ("Ndef('track2').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},23);
 Ndef('track2').lag('volume', 0.01);
 == radpostcont ==
 (none)
 
 >> vol 3 midicc_(27)
 == radpost ==
-MIDIdef.cc('hid3', {arg ...args; {|val| ("Ndef('track3').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},27);
+MIDIdef.cc('hid3', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track3'); ("Ndef('track3').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},27);
 Ndef('track3').lag('volume', 0.01);
 == radpostcont ==
 (none)
 
 >> vol 4 midicc_(31)
 == radpost ==
-MIDIdef.cc('hid4', {arg ...args; {|val| ("Ndef('track4').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},31);
+MIDIdef.cc('hid4', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track4'); ("Ndef('track4').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},31);
 Ndef('track4').lag('volume', 0.01);
 == radpostcont ==
 (none)
 
 >> vol 5 midicc_(49)
 == radpost ==
-MIDIdef.cc('hid5', {arg ...args; {|val| ("Ndef('track5').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},49);
+MIDIdef.cc('hid5', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track5'); ("Ndef('track5').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},49);
 Ndef('track5').lag('volume', 0.01);
 == radpostcont ==
 (none)
 
 >> vol 6 midicc_(53)
 == radpost ==
-MIDIdef.cc('hid6', {arg ...args; {|val| ("Ndef('track6').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},53);
+MIDIdef.cc('hid6', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track6'); ("Ndef('track6').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},53);
 Ndef('track6').lag('volume', 0.01);
 == radpostcont ==
 (none)
 
 >> vol 7 midicc_(57)
 == radpost ==
-MIDIdef.cc('hid7', {arg ...args; {|val| ("Ndef('track7').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},57);
+MIDIdef.cc('hid7', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track7'); ("Ndef('track7').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},57);
 Ndef('track7').lag('volume', 0.01);
 == radpostcont ==
 (none)
 
 >> vol 8 midicc_(61)
 == radpost ==
-MIDIdef.cc('hid8', {arg ...args; {|val| ("Ndef('track8').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},61);
+MIDIdef.cc('hid8', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track8'); ("Ndef('track8').set('volume', " ++ val ++ ")").radpostcont.interpret; }.({|val| val.round(0.1)}.([-90.0, 6.0, 'db'].asSpec.map(args[0].linlin(0, 127, 0, 1.0))) )},61);
 Ndef('track8').lag('volume', 0.01);
 == radpostcont ==
 (none)

@@ -10,7 +10,12 @@ HIDMap : Radicles {
 		defaultVal ?? {defaultVal = keyVals.flop[1][keyVals.flop[0].indexOf(key)];};
 		spec = spec.specFactor(mul, add, min, val, warp);
 		if(action.isNil, {
-			inFunc = ("{|val| (\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
+			//a control on a strip's volume, moved during the strip's whole-track
+			//fade-out, stops that load as a typed vol does. In the function's
+			//own text: getFunc compiles the responder from it.
+			var stop = if(key == \volume and: { RadUnit.stripNames.includes(ndef.key) },
+				{ "RadUnit.volumeSetOnStrip(" ++ ndef.key.cs ++ "); " }, { "" });
+			inFunc = ("{|val| " ++ stop ++ "(\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
 				", \" ++ val ++ \")\").radpostcont.interpret; }").interpret;
 		}, {
 			inFunc = action;
