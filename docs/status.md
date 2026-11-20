@@ -25,6 +25,7 @@ contains.
 | 2 | blocks as units, `blksave` / `blkload` / `blkmorph`, block position, recordings kept with `keep` | done, #75–#84 |
 | 3 | strip values in the document, `cssave` / `csload` / `csmorph` / `csmorphtime` | done, #85–#87 |
 | 4 | track presets `tsave` / `tload` / `tmorph` / `tmorphtime`; presets load the libraries they need; the output to the master and `tload default` | done, #89–#92, #101, #102 |
+| Time | `fade N` reaches everything, own fade times (first PR); loading a preset is a crossfade: `fxload` / `blkload` / `csload` / `tload` take a time and `xfade`, `glide` or `none`, and the `morph` words and own morph times are removed (second PR, [design/time-fade-crossfade-glide.md](design/time-fade-crossfade-glide.md)); lag is on hold | fade part built, 19 Nov |
 | Review | read-only review of code, plans and workflow (18 Nov); the order below follows it | done |
 | Fixes | the bugs the review confirmed, then **release 1** to `master` | next |
 | Tests | automatic runs on GitHub, parallel workers, `doctor` | next, beside the fixes |

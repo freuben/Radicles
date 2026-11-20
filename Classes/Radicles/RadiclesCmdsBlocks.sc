@@ -42,43 +42,19 @@
 			RadUnit.publishPreset(\block, str2, str3, str4);
 		}, "blksave: block definition, preset, library (copies your preset into the library)");
 
-		//blkmorph 1 warmLoop [time [shape]]: moves block 1 to a preset over
-		//time (xfade by default, glide, none); see RadUnitBlockMorph.sc
-		cW.add(\blkmorph, [\str, \num, \str], {|str1, num1, str2|
-			RadUnit.morphBlockPreset(num1.asInteger, str2);
-		}, "blkmorph: block, preset");
-		cW.add(\blkmorph, [\str, \num, \str, \num], {|str1, num1, str2, num2|
-			RadUnit.morphBlockPreset(num1.asInteger, str2, num2);
-		}, "blkmorph: block, preset, time");
-		cW.add(\blkmorph, [\str, \num, \str, \num, \str], {|str1, num1, str2, num2, str3|
-			RadUnit.morphBlockPreset(num1.asInteger, str2, num2, str3);
-		}, "blkmorph: block, preset, time, shape (xfade, glide, none)");
-
-		//blkmorphtime 1 5: block 1's own morph time (blkmorphtime 1 posts it,
-		//blkmorphtime 1 default goes back to the global morphtime)
-		cW.add(\blkmorphtime, [\str, \num], {|str1, num1|
-			RadUnit.postBlockMorphTime(num1.asInteger);
-		}, "blkmorphtime: block (posts it)");
-		cW.add(\blkmorphtime, [\str, \num, \num], {|str1, num1, num2|
-			if(RadUnit.setBlockMorphTime(num1.asInteger, num2), { RadUnit.postBlockMorphTime(num1.asInteger) });
-		}, "blkmorphtime: block, time");
-		cW.add(\blkmorphtime, [\str, \num, \str], {|str1, num1, str2|
-			if(str2 == 'default', {
-				if(RadUnit.setBlockMorphTime(num1.asInteger, nil), { RadUnit.postBlockMorphTime(num1.asInteger) });
-			}, { ("blkmorphtime " ++ num1 ++ ": a time in seconds or default, not " ++ str2).warn });
-		}, "blkmorphtime: block, default");
-
-		cW.add(\blkload, [\str, \num, \str], {|str1, num1, str2|
-			RadUnit.loadBlockPreset(num1.asInteger, str2);
-		}, "blkload: block, preset");
-
-		cW.add(\blkload, [\str, \num, \str, \str], {|str1, num1, str2, str3|
-			if(str3 == 'nobuf', {
-				RadUnit.loadBlockPreset(num1.asInteger, str2, true);
-			}, {
-				("blkload " ++ num1 ++ " " ++ str2 ++ ": unknown option " ++ str3 ++ " (nobuf keeps the block's sound file or table)").warn;
-			});
-		}, "blkload: block, preset, nobuf (keep the block's sound file or table)");
+		//blkload 1 warmLoop [time] [xfade|glide|none] [nobuf]: block 1
+		//crossfades to the preset over its own fade time, or the time typed;
+		//glide: the values glide; none, or a time of 0: at once; nobuf keeps
+		//the block's sound file or table (see RadUnitBlockMorph.sc)
+		Radicles.prLoadExtras(2).do{|extra|
+			cW.add(\blkload, [\str, \num, \str] ++ extra, {|str1, num1, str2 ... rest|
+				var words = Radicles.prLoadWords("blkload", rest, [\nobuf]);
+				if(words.notNil, {
+					RadUnit.loadBlockPreset(num1.asInteger, str2, words[\opts].includes(\nobuf),
+						time: words[\time], shape: words[\shape]);
+				});
+			}, "blkload: block, preset [time] [xfade|glide|none] [nobuf] (nobuf keeps the block's sound file or table)");
+		};
 
 		cW.add(\blkload, [\str], {|str1|
 			RadUnit.allPresets(\block).dopostln;

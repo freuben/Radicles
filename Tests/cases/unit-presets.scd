@@ -146,8 +146,13 @@
 ~radPresetRoundTrip = {|defs|
 	var problems = [];
 	defs.do{|def|
-		var tag = \filterTrack_1_1, specs, setAll, saved, now, diff;
+		var tag = \filterTrack_1_1, specs, setAll, saved, now, diff, waited = 0;
 		Radicles.cW.callFunc("fx t 1 1 " ++ def); 2.wait;
+		//an effect with buffers is in the document only once the buffers of
+		//the one it replaced are freed (after its fade); on a slow machine
+		//that is later than 2 s
+		while({ (((RadDoc.current.at([\track1, \fx]) ? ())[1] ? ())[\def] != def) and: { waited < 10 } },
+			{ 0.1.wait; waited = waited + 0.1 });
 		specs = SpecFile.read(\filter, def, false) ? [];
 		setAll = {|pos|
 			specs.do{|item|
@@ -181,6 +186,36 @@
 		teardown: ~radPresetClean
 	);
 };
+
+// convolution frame sizes (20 Nov 2026): Convolution needs a power of two.
+// The sliders used to move in steps of 512; a load that rebuilt the effect
+// with 3584 stopped the server in the cloud. Now the slider offers 512,
+// 1024, 2048, 4096 and 8192 only...
+~radTest.("convolution-frame-size-slider",
+	setup: ["start 2"],
+	code: {
+		~radFrameSizes = [\cvt1, \cvt2, \cvi1, \cvi2].collect{|def|
+			var item = SpecFile.read(\filter, def, false).detect{|it| it[0] == \frameSize };
+			(0, 0.01 .. 1).collect{|pos| item[2].(item[1].asSpec.map(pos)) }.asSet.asArray.sort };
+	},
+	check: { ~radFrameSizes.every{|sizes| sizes == [512, 1024, 2048, 4096, 8192] } or: { "sizes: " ++ ~radFrameSizes.cs } }
+);
+
+// ...and a typed value that is not one (or an old preset's) is rounded to
+// the nearest inside the effect: the effect is rebuilt with it (fxload
+// crossfades to a new copy) and the server carries on
+~radTest.("convolution-frame-size-typed",
+	setup: ["start 2", "fx t 1 cvt1", "fxset t 1 1 frameSize 3584", "fxset t 1 1 mix 0.5", "fxsave t 1 1 radtest_frame",
+		"fxset t 1 1 mix 0.2"],
+	cmds: [["fxload t 1 1 radtest_frame", 2]],
+	check: {
+		case
+		{ Server.default.serverRunning.not } { "the server stopped" }
+		{ Ndef(\filterTrack_1_1).get(\mix) != 0.5 } { "mix: " ++ Ndef(\filterTrack_1_1).get(\mix) }
+		{ true }
+	},
+	teardown: ~radPresetClean
+);
 
 // the effect window's PRESET menu lists this effect's presets; choosing one
 // loads it into the slot, like fxload (Mac: needs windows)
@@ -229,10 +264,10 @@
 	check: { File.exists(RadUnit.presetPath(\filter, \pch, \default)).not or: { "a default file was written" } }
 );
 
-// fxmorph to default
-~radTest.("preset-default-morph",
+// to default over a typed time
+~radTest.("preset-default-timed",
 	setup: ["start 2", "fx t 1 pch", "fxset t 1 1 pitchRatio 0.5"],
-	cmds: [["fxmorph t 1 1 default 1", 2.5]],
+	cmds: [["fxload t 1 1 default 1", 2.5]],
 	check: { (Ndef(\filterTrack_1_1).get(\pitchRatio) == 1.0 and: { Ndef(\filterTrack_1_1).fadeTime == 0.5 })
 		or: { "pitchRatio " ++ Ndef(\filterTrack_1_1).get(\pitchRatio) } }
 );
@@ -307,7 +342,7 @@
 		Radicles.postCapture = nil;
 		~radPresetDefs.do{|def|
 			var win, canvas, font = Font("Monaco", 8);
-			Radicles.cW.callFunc("fx t 1 1 " ++ def); 1.5.wait;
+			Radicles.cW.callFunc("fx t 1 1 " ++ def); 0.9.wait;
 			Radicles.aZ.filterGUI(\track, 1, 1); 0.5.wait;
 			win = Radicles.aZ.filtersWindow.last;
 			canvas = win.canvas;

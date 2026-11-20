@@ -1,6 +1,0 @@
->> blkload 1 radtest_slow
-== radpost ==
-(none)
-== radpostcont ==
-(none)
-

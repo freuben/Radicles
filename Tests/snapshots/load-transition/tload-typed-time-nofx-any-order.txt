@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+Ndef('track1').fadeTime = 2;
+Ndef('track1').xset('volume', -6);
+Ndef('track1').fadeTime = 0.5;
+== radpostcont ==
+(none)
+

@@ -9,85 +9,44 @@
 		this.prFxModCmds;
 		this.prFxPresetCmds;
 		this.prFxBypassCmds;
-		this.prFxMorphCmds;
 		this.prChannelStripCmds;
 	}
 
-	// fxmorph and morphtime (Document Model, step 1, PR 5). fxmorph takes the
-	// forms of fxload, then an optional time and an optional shape (xfade,
-	// glide, none): fxmorph t 1 2 warm, fxmorph t 1 2 warm 10 glide.
-	// morphtime 5 sets the global morph time; morphtime t 1 2 5 a slot's own
-	// (morphtime t 1 2 default goes back to the global one).
-	*prFxMorphCmds {
-		var tagOf, tagOfMix, morph, timeOf, postTime;
-		tagOf = {|str2, num1, num2|
+	// ---- loading a preset is a transition ("Time in Radicles", 19 Nov 2026) ----
+	// fxload, blkload, csload and tload take, after the preset's name and in
+	// any order: a time in seconds, a shape (xfade, glide or none) and the
+	// options the command already had (nobuf; nosrc, nofx).
+
+	// the type signatures of the words after the preset: up to maxStr words,
+	// with or without one number, the number anywhere among them
+	*prLoadExtras {|maxStr = 1|
+		var list = [];
+		(maxStr + 1).do{|k|
+			var strs = Array.fill(k, { \str });
+			list = list.add(strs);
+			(k + 1).do{|pos| list = list.add(strs.keep(pos) ++ [\num] ++ strs.drop(pos)) };
+		};
+		^list
+	}
+
+	// the words after the preset as (time:, shape:, opts: [...]); nil, with
+	// a warning, when one of them is not a time, a shape or one of options
+	*prLoadWords {|cmd, rest, options|
+		var time, shape, opts = [], bad = [];
+		options = options ? [];
+		(rest ? []).do{|item|
 			case
-			{str2 == 't'} {aZ.findFilterTag(\track, num1, num2)}
-			{str2 == 'b'} {aZ.findFilterTag(\bus, num1, num2)}
-			{str2 == 'm'} {aZ.findFilterTag(\master, 1, num2)};
+			{ item.isNumber } { time = item }
+			{ [\xfade, \glide, \none].includes(item.asSymbol) } { shape = item.asSymbol }
+			{ options.includes(item.asSymbol) } { opts = opts.add(item.asSymbol) }
+			{ bad = bad.add(item) };
 		};
-		tagOfMix = {|num1, num2|
-			var trackArr, thisArr;
-			trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-			if(num1 <= (trackArr.size), {
-				thisArr = trackArr[num1-1];
-				if(thisArr[1].isNil, {thisArr[1] = 1});
-				aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
-			}, {
-				"track not found".warn; nil
-			});
-		};
-		morph = {|tagFunc, preset, time, shape|
-			var tag;
-			if(aZ.notNil, {
-				tag = tagFunc.value;
-				if(tag.notNil, { aZ.morphUnitPreset(tag, preset, time, shape) }, { "No effect in this slot".warn });
-			}, {
-				"could not find assemblage".warn;
-			});
-		};
-		//slot 1 when no slot is given, as in fxload
-		[[], [\num], [\num, \str]].do{|extra|
-			cW.add(\fxmorph, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3, time, shape|
-				morph.({ tagOf.(str2, num1, if(str2 == 'm', num1, 1)) }, str3, time, shape);
-			}, "fxmorph: trackType, trackNum, preset" ++ ["", ", time", ", time, shape"][extra.size]);
-			cW.add(\fxmorph, [\str, \str, \num, \num, \str] ++ extra, {|str1, str2, num1, num2, str3, time, shape|
-				morph.({ tagOf.(str2, num1, num2) }, str3, time, shape);
-			}, "fxmorph: trackType, trackNum, slot, preset" ++ ["", ", time", ", time, shape"][extra.size]);
-			cW.add(\fxmorph, [\str, \num, \str] ++ extra, {|str1, num1, str2, time, shape|
-				morph.({ tagOfMix.(num1, 1) }, str2, time, shape);
-			}, "fxmorph: mixTrackNum, preset" ++ ["", ", time", ", time, shape"][extra.size]);
-			cW.add(\fxmorph, [\str, \num, \num, \str] ++ extra, {|str1, num1, num2, str2, time, shape|
-				morph.({ tagOfMix.(num1, num2) }, str2, time, shape);
-			}, "fxmorph: mixTrackNum, slot, preset" ++ ["", ", time", ", time, shape"][extra.size]);
-		};
-		//morph time
-		postTime = {|tag|
-			var own = aZ.morphTimeOf(tag);
-			(RadDoc.addressString(RadUnit.address(tag)) ++ " morph time: " ++
-				(own ?? { RadUnit.morphTime.asString ++ " (global)" })).postln;
-		};
-		cW.add(\morphtime, [\str], {|str1|
-			("morph time: " ++ RadUnit.morphTime).postln;
-		}, "morphtime: posts the global morph time");
-		cW.add(\morphtime, [\str, \num], {|str1, num1|
-			RadUnit.morphTime = num1.max(0);
-			("morph time: " ++ RadUnit.morphTime).postln;
-		}, "morphtime: sets the global morph time (seconds)");
-		cW.add(\morphtime, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			var tag;
-			if(aZ.notNil, { tag = tagOf.(str2, num1, num2); if(tag.notNil, { postTime.(tag) }) });
-		}, "morphtime: trackType, trackNum, slot (posts it)");
-		cW.add(\morphtime, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
-			var tag;
-			if(aZ.notNil, { tag = tagOf.(str2, num1, num2);
-				if(tag.notNil, { aZ.setMorphTime(tag, num3.max(0)); postTime.(tag) }) });
-		}, "morphtime: trackType, trackNum, slot, time");
-		cW.add(\morphtime, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
-			var tag;
-			if(aZ.notNil, { tag = tagOf.(str2, num1, num2);
-				if(tag.notNil and: { str3 == 'default' }, { aZ.setMorphTime(tag, nil); postTime.(tag) }) });
-		}, "morphtime: trackType, trackNum, slot, default");
+		if(bad.notEmpty, {
+			(cmd ++ ": after the preset, a time in seconds, xfade, glide or none" ++
+				if(options.notEmpty, { ", " ++ options.join(", ") }, { "" }) ++ "; not " ++ bad.join(", ")).warn;
+			^nil
+		});
+		^(time: time, shape: shape, opts: opts)
 	}
 
 	// fxbypass: bypass an effect (Document Model, step 1, PR 4). Without a
@@ -2040,60 +1999,66 @@
 		}, "setfx: filterNum, fxArg");
 
 		//assemblage presets:
-		//fx presets
-		cW.add(\fxload, [\str, \str, \num, \str], {|str1, str2, num1, str3|
-			if(aZ.notNil, {
+		//fx presets. fxload t 1 2 warm [time] [xfade|glide|none]: the effect
+		//crossfades to the preset over its own fade time, or over the time
+		//typed; glide: the values glide; none, or a time of 0: at once
+		Radicles.prLoadExtras(1).do{|extra|
+			var post = " [time] [xfade|glide|none]";
+			//slot 1 when no slot is given (on the master the number is the slot)
+			cW.add(\fxload, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3 ... rest|
+				var words = Radicles.prLoadWords("fxload", rest);
 				case
-				{str2 == 't'} {aZ.loadFxTrackPreset(\track, num1, 1, str3);}
-				{str2 == 'b'} {aZ.loadFxTrackPreset(\bus, num1, 1, str3);}
-				{str2 == 'm'} {aZ.loadFxTrackPreset(\master, 1, num1, str3);};
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxload: trackType, slot, preset");
+				{ words.isNil } { nil }
+				{ aZ.isNil } { "could not find assemblage".warn }
+				{str2 == 't'} {aZ.loadFxTrackPreset(\track, num1, 1, str3, words[\time], words[\shape]);}
+				{str2 == 'b'} {aZ.loadFxTrackPreset(\bus, num1, 1, str3, words[\time], words[\shape]);}
+				{str2 == 'm'} {aZ.loadFxTrackPreset(\master, 1, num1, str3, words[\time], words[\shape]);};
+			}, "fxload: trackType, slot, preset" ++ post);
 
-		cW.add(\fxload, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
-			if(aZ.notNil, {
+			cW.add(\fxload, [\str, \str, \num, \num, \str] ++ extra, {|str1, str2, num1, num2, str3 ... rest|
+				var words = Radicles.prLoadWords("fxload", rest);
 				case
-				{str2 == 't'} {aZ.loadFxTrackPreset(\track, num1, num2, str3);}
-				{str2 == 'b'} {aZ.loadFxTrackPreset(\bus, num1, num2, str3);}
-				{str2 == 'm'} {aZ.loadFxTrackPreset(\master, 1, num2, str3);};
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxload: trackType, trackNum, slot");
+				{ words.isNil } { nil }
+				{ aZ.isNil } { "could not find assemblage".warn }
+				{str2 == 't'} {aZ.loadFxTrackPreset(\track, num1, num2, str3, words[\time], words[\shape]);}
+				{str2 == 'b'} {aZ.loadFxTrackPreset(\bus, num1, num2, str3, words[\time], words[\shape]);}
+				{str2 == 'm'} {aZ.loadFxTrackPreset(\master, 1, num2, str3, words[\time], words[\shape]);};
+			}, "fxload: trackType, trackNum, slot, preset" ++ post);
 
-		cW.add(\fxload, [\str, \num, \str], {|str1, num1, str2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.loadFxTrackPreset(thisArr[0].asSymbol, thisArr[1], 1, str2);
-				}, {
-					"track not found".warn;
-				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxload: mixTrackNum, slot1, preset");
+			cW.add(\fxload, [\str, \num, \str] ++ extra, {|str1, num1, str2 ... rest|
+				var trackArr, thisArr, words = Radicles.prLoadWords("fxload", rest);
+				case
+				{ words.isNil } { nil }
+				{ aZ.isNil } { "could not find assemblage".warn }
+				{
+					trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+					if(num1 <= (trackArr.size), {
+						thisArr = trackArr[num1-1];
+						if(thisArr[1].isNil, {thisArr[1] = 1});
+						aZ.loadFxTrackPreset(thisArr[0].asSymbol, thisArr[1], 1, str2, words[\time], words[\shape]);
+					}, {
+						"track not found".warn;
+					});
+				};
+			}, "fxload: mixTrackNum, preset (slot 1)" ++ post);
 
-		cW.add(\fxload, [\str, \num, \num, \str], {|str1, num1, num2, str2|
-			var trackArr, thisArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				if(num1 <= (trackArr.size), {
-					thisArr = trackArr[num1-1];
-					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.loadFxTrackPreset(thisArr[0].asSymbol, thisArr[1], num2, str2);
-				}, {
-					"track not found".warn;
-				});
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "fxload: mixTrackNum, slot, preset");
+			cW.add(\fxload, [\str, \num, \num, \str] ++ extra, {|str1, num1, num2, str2 ... rest|
+				var trackArr, thisArr, words = Radicles.prLoadWords("fxload", rest);
+				case
+				{ words.isNil } { nil }
+				{ aZ.isNil } { "could not find assemblage".warn }
+				{
+					trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+					if(num1 <= (trackArr.size), {
+						thisArr = trackArr[num1-1];
+						if(thisArr[1].isNil, {thisArr[1] = 1});
+						aZ.loadFxTrackPreset(thisArr[0].asSymbol, thisArr[1], num2, str2, words[\time], words[\shape]);
+					}, {
+						"track not found".warn;
+					});
+				};
+			}, "fxload: mixTrackNum, slot, preset" ++ post);
+		};
 
 		cW.add(\loadfx, [\str, \num, \str], {|str1, num1, str2|
 			var filterTag, filterTagArr;
@@ -2249,7 +2214,7 @@
 
 	// csload, cssave, csfree
 	*prChannelStripCmds {
-		var stripOf, mixOf, save, load, morph, postChainTime, chainTime;
+		var stripOf, mixOf, save, load;
 		cW.add(\lagsfx, [\str, \num, \num], {|str1, num1, num2|
 			var filterTag, filterTagArr;
 			if(aZ.notNil, {
@@ -2265,7 +2230,9 @@
 		}, "save: filterNum, preset");
 
 		//effect-chain presets (Document Model, step 3, PR 2: RadUnitChains.sc).
-		//csload / csload t lists them; cssave t 1 name; csload t 1 name|default;
+		//csload / csload t lists them; cssave t 1 name; csload t 1 name|default
+		//[time] [xfade|glide|none]: the chain crossfades to the preset over
+		//the strip's own fade time, or the time typed (none, or 0: at once);
 		//t 1 can be b 1, m, or a mixer position (csload 3 name)
 		stripOf = {|str2, num1|
 			case
@@ -2282,7 +2249,11 @@
 			}, { "track not found".warn; nil });
 		};
 		save = {|strip, name| strip !? { RadUnit.saveChainPreset(strip[0], strip[1], name, az: aZ) } };
-		load = {|strip, name| strip !? { RadUnit.loadChainPreset(strip[0], strip[1], name, az: aZ) } };
+		load = {|strip, name, rest|
+			var words = Radicles.prLoadWords("csload", rest);
+			if(strip.notNil and: { words.notNil }, {
+				RadUnit.loadChainPreset(strip[0], strip[1], name, az: aZ, time: words[\time], shape: words[\shape]) });
+		};
 
 		cW.add(\csload, [\str], {|str1|
 			RadUnit.postChainPresets;
@@ -2292,17 +2263,20 @@
 			RadUnit.postChainPresets;
 		}, "csload: [trackType] lists chain presets");
 
-		cW.add(\csload, [\str, \str, \str], {|str1, str2, str3|
-			if(aZ.notNil, { load.(stripOf.(str2, 1), str3) }, { "could not find assemblage".warn });
-		}, "csload: [trackType, presetName]");
+		Radicles.prLoadExtras(1).do{|extra|
+			var post = " [time] [xfade|glide|none]";
+			cW.add(\csload, [\str, \str, \str] ++ extra, {|str1, str2, str3 ... rest|
+				if(aZ.notNil, { load.(stripOf.(str2, 1), str3, rest) }, { "could not find assemblage".warn });
+			}, "csload: trackType, presetName" ++ post);
 
-		cW.add(\csload, [\str, \str, \num, \str], {|str1, str2, num1, str3|
-			if(aZ.notNil, { load.(stripOf.(str2, num1), str3) }, { "could not find assemblage".warn });
-		}, "csload: [trackType, trackNum, presetName]");
+			cW.add(\csload, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3 ... rest|
+				if(aZ.notNil, { load.(stripOf.(str2, num1), str3, rest) }, { "could not find assemblage".warn });
+			}, "csload: trackType, trackNum, presetName" ++ post);
 
-		cW.add(\csload, [\str, \num, \str], {|str1, num1, str2|
-			if(aZ.notNil, { load.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
-		}, "csload: mixTrackNum, preset");
+			cW.add(\csload, [\str, \num, \str] ++ extra, {|str1, num1, str2 ... rest|
+				if(aZ.notNil, { load.(mixOf.(num1), str2, rest) }, { "could not find assemblage".warn });
+			}, "csload: mixTrackNum, preset" ++ post);
+		};
 
 		cW.add(\cssave, [\str, \str, \str], {|str1, str2, str3|
 			if(aZ.notNil, { save.(stripOf.(str2, 1), str3) }, { "could not find assemblage".warn });
@@ -2315,55 +2289,6 @@
 		cW.add(\cssave, [\str, \num, \str], {|str1, num1, str2|
 			if(aZ.notNil, { save.(mixOf.(num1), str2) }, { "could not find assemblage".warn });
 		}, "cssave: mixTrackNum, preset");
-
-		//csmorph t 1 warmVox [time] [xfade|glide|none]: the chain morphs to the
-		//preset (step 3, PR 3); csmorph m warmVox ..., csmorph 3 warmVox ...
-		morph = {|strip, name, time, shape|
-			if(aZ.isNil, { "could not find assemblage".warn }, {
-				strip !? { RadUnit.morphChainPreset(strip[0], strip[1], name, time, shape, az: aZ) } });
-		};
-		[[], [\num], [\num, \str]].do{|extra|
-			var post = ["", ", time", ", time, shape"][extra.size];
-			cW.add(\csmorph, [\str, \str, \str] ++ extra, {|str1, str2, str3, time, shape|
-				morph.(stripOf.(str2, 1), str3, time, shape);
-			}, "csmorph: trackType, preset" ++ post);
-			cW.add(\csmorph, [\str, \str, \num, \str] ++ extra, {|str1, str2, num1, str3, time, shape|
-				morph.(stripOf.(str2, num1), str3, time, shape);
-			}, "csmorph: trackType, trackNum, preset" ++ post);
-			cW.add(\csmorph, [\str, \num, \str] ++ extra, {|str1, num1, str2, time, shape|
-				if(aZ.notNil, { morph.(mixOf.(num1), str2, time, shape) }, { "could not find assemblage".warn });
-			}, "csmorph: mixTrackNum, preset" ++ post);
-		};
-		//csmorphtime t 1 5: the strip's chain morph time; csmorphtime t 1 posts
-		//it; csmorphtime t 1 default goes back to the global morphtime
-		postChainTime = {|strip|
-			var name = RadUnit.stripName(strip[0], strip[1]), own = aZ.chainMorphTimeOf(name);
-			(name ++ " chain morph time: " ++ (own ?? { RadUnit.morphTime.asString ++ " (global)" })).postln;
-		};
-		chainTime = {|strip, time|
-			if(aZ.isNil, { "could not find assemblage".warn }, {
-				strip !? {
-					if(time.notNil, {
-						aZ.setChainMorphTime(RadUnit.stripName(strip[0], strip[1]), if(time == \default, nil, { time.max(0) }));
-					});
-					postChainTime.(strip);
-				};
-			});
-		};
-		cW.add(\csmorphtime, [\str, \str], {|str1, str2| chainTime.(stripOf.(str2, 1)) },
-			"csmorphtime: m (posts it)");
-		cW.add(\csmorphtime, [\str, \str, \num], {|str1, str2, num1|
-			if(str2 == 'm', { chainTime.(stripOf.(str2, 1), num1) }, { chainTime.(stripOf.(str2, num1)) });
-		}, "csmorphtime: trackType, trackNum (posts it), or m, time");
-		cW.add(\csmorphtime, [\str, \str, \str], {|str1, str2, str3|
-			if(str3 == 'default', { chainTime.(stripOf.(str2, 1), \default) }, { "csmorphtime: a time or default".warn });
-		}, "csmorphtime: m, default");
-		cW.add(\csmorphtime, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			chainTime.(stripOf.(str2, num1), num2);
-		}, "csmorphtime: trackType, trackNum, time");
-		cW.add(\csmorphtime, [\str, \str, \num, \str], {|str1, str2, num1, str3|
-			if(str3 == 'default', { chainTime.(stripOf.(str2, num1), \default) }, { "csmorphtime: a time or default".warn });
-		}, "csmorphtime: trackType, trackNum, default");
 
 		cW.add(\csfree, [\str, \str], {|str1, str2|
 			if(aZ.notNil, {

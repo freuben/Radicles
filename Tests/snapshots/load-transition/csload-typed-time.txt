@@ -1,0 +1,17 @@
+>> csload t 1 radtest_ltc 2
+== radpost ==
+Ndef('inTrack1').fadeTime = 2;
+Ndef('filterTrack_1_1').fadeTime = 2;
+Ndef('track1').fadeTime = 2;
+Ndef('filterTrack_1_1').xset('pitchRatio', 0.5);
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+Ndef('inTrack1').fadeTime = 0.5;
+Ndef('filterTrack_1_1').fadeTime = 0.5;
+Ndef('track1').fadeTime = 0.5;
+== radpostcont ==
+(none)
+

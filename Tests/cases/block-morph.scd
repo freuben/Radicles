@@ -1,11 +1,11 @@
-// Block morph (Document Model, step 2, PR 4): blkmorph moves a block to one
-// of its presets over time, crossfading by default (decided 3 Nov 2026), and
-// a sound file carries on from where it is.
+// A block preset loaded over time (Document Model, step 2, PR 4; "Time in
+// Radicles", 19 Nov 2026): blkload moves a block to one of its presets over
+// time, crossfading by default (decided 3 Nov 2026), and a sound file
+// carries on from where it is. (These tests were written for blkmorph, which
+// blkload replaced; see also load-transition.scd.)
 
 ~radMorphClean = {
 	(RadUnit.presetRoot +/+ "block/*/radtest_*.scd").pathMatch.do{|path| File.delete(path) };
-	RadUnit.morphTime = 2;
-	RadUnit.clearBlockMorphTimes;
 };
 // run func with the posted code not captured (code that holds where a file
 // is, which differs from run to run)
@@ -17,10 +17,10 @@
 	value
 };
 
-// a crossfade: the fade time is the morph time while it runs, then goes back
+// a crossfade: the fade time is the typed time while it runs, then goes back
 ~radTest.("morph-xfade",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 330"],
-	cmds: [["blkmorph 1 radtest_hi 1", 0.5]],
+	cmds: [["blkload 1 radtest_hi 1", 0.5]],
 	code: { ~radFadeDuring = Ndef(\block1).fadeTime; 1.5.wait },
 	check: {
 		case
@@ -35,7 +35,7 @@
 // glide: a lag while it runs, then the lag goes back
 ~radTest.("morph-glide",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 330"],
-	cmds: [["blkmorph 1 radtest_hi 1 glide", 3]],
+	cmds: [["blkload 1 radtest_hi 1 glide", 3]],
 	check: {
 		var rates = Ndef(\block1).nodeMap.ratesFor([\freq]);
 		case
@@ -49,7 +49,7 @@
 // none: at once
 ~radTest.("morph-none",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 330"],
-	cmds: [["blkmorph 1 radtest_hi 4 none", 0.3]],
+	cmds: [["blkload 1 radtest_hi 4 none", 0.3]],
 	check: { (Ndef(\block1).get(\freq) == 500 and: { Ndef(\block1).fadeTime == 0.5 }) or: {
 		"freq " ++ Ndef(\block1).get(\freq) ++ ", fade " ++ Ndef(\block1).fadeTime } },
 	teardown: ~radMorphClean
@@ -58,24 +58,28 @@
 // default: the definition's own values
 ~radTest.("morph-default",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500"],
-	cmds: [["blkmorph 1 default 0.5", 1.5]],
+	cmds: [["blkload 1 default 0.5", 1.5]],
 	check: { (Ndef(\block1).get(\freq) == 440) or: { "freq " ++ Ndef(\block1).get(\freq) } }
 );
 
-// the global morph time when the command gives none
-~radTest.("morph-global-time",
-	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 330", "morphtime 1.5"],
-	cmds: [["blkmorph 1 radtest_hi", 0.5]],
+// the block's own fade time when the command gives none: nothing is set or
+// put back
+~radTest.("morph-own-fade-time",
+	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 330", "fade blk 1 1.5"],
+	cmds: [["blkload 1 radtest_hi", 0.5]],
 	code: { ~radFadeDuring = Ndef(\block1).fadeTime; 1.5.wait },
-	check: { (~radFadeDuring == 1.5) or: { "fade time during: " ++ ~radFadeDuring } },
+	check: {
+		(~radFadeDuring == 1.5 and: { Ndef(\block1).fadeTime == 1.5 } and: { Ndef(\block1).get(\freq) == 500 })
+		or: { "fade time during: " ++ ~radFadeDuring ++ ", after: " ++ Ndef(\block1).fadeTime ++ ", freq " ++ Ndef(\block1).get(\freq) }
+	},
 	teardown: ~radMorphClean
 );
 
-// a morph interrupted by another: the times go back to what they were first
+// a load interrupted by another: the times go back to what they were first
 ~radTest.("morph-interrupted",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 200",
 		"blksave 1 radtest_lo", "blkset 1 freq 330"],
-	cmds: [["blkmorph 1 radtest_hi 3", 0.5], ["blkmorph 1 radtest_lo 1", 2]],
+	cmds: [["blkload 1 radtest_hi 3", 0.5], ["blkload 1 radtest_lo 1", 2]],
 	check: {
 		(Ndef(\block1).get(\freq) == 200 and: { Ndef(\block1).fadeTime == 0.5 }) or: {
 			"freq " ++ Ndef(\block1).get(\freq) ++ ", fade " ++ Ndef(\block1).fadeTime }
@@ -83,11 +87,11 @@
 	teardown: ~radMorphClean
 );
 
-// a modulator in the preset arrives with the morph
+// a modulator in the preset arrives with the load
 ~radTest.("morph-modulator",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq sin", "modblkset 1 freq [freq, 3]", "blksave 1 radtest_mod",
 		"unmodblk 1 freq", "blkset 1 freq 330"],
-	cmds: [["blkmorph 1 radtest_mod 0.5", 1.5]],
+	cmds: [["blkload 1 radtest_mod 0.5", 1.5]],
 	check: {
 		var mod = RadUnit.readBlock(\block1) !? {|u| u[\mods] } !? {|m| m[\freq] };
 		(mod.notNil and: { mod[\type] == \sin } and: { mod[\args][\freq] == 3 }) or: { "modulator: " ++ mod.cs }
@@ -98,7 +102,7 @@
 // already there: nothing happens
 ~radTest.("morph-already-there",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi"],
-	cmds: [["blkmorph 1 radtest_hi 1", 0.3]],
+	cmds: [["blkload 1 radtest_hi 1", 0.3]],
 	check: { (Ndef(\block1).fadeTime == 0.5) or: { "fade time " ++ Ndef(\block1).fadeTime } },
 	teardown: ~radMorphClean
 );
@@ -110,7 +114,7 @@
 	code: {
 		~radQuiet.({
 			~radBefore = ~radPos.();
-			Radicles.cW.callFunc("blkmorph 1 radtest_fast 1");
+			Radicles.cW.callFunc("blkload 1 radtest_fast 1");
 			3.wait;
 			~radAfter = ~radPos.();
 			~radStart = Ndef(\block1).get(\startPos);
@@ -135,7 +139,7 @@
 	code: {
 		~radQuiet.({
 			~radBefore = ~radPos.();
-			Radicles.cW.callFunc("blkmorph 1 radtest_fast 1 glide");
+			Radicles.cW.callFunc("blkload 1 radtest_fast 1 glide");
 			4.wait;
 			~radAfter = ~radPos.();
 			~radStart = Ndef(\block1).get(\startPos);
@@ -163,7 +167,7 @@
 			clock = { Out.kr(clockBus, Sweep.kr(0, 1)) }.play; 0.2.wait;
 			read = { var cond = Condition(false), v; clockBus.get({|x| v = x; cond.test = true; cond.signal }); cond.wait; v };
 			p1 = ~radPos.(); c1 = read.();
-			Radicles.cW.callFunc("blkmorph 1 radtest_q 1");
+			Radicles.cW.callFunc("blkload 1 radtest_q 1");
 			3.wait;
 			p2 = ~radPos.(); c2 = read.();
 			clock.free; clockBus.free;
@@ -174,82 +178,30 @@
 	teardown: ~radMorphClean
 );
 
-// refused: a preset with another sound file
-~radTest.("morph-other-file-refused",
+// a preset with another sound file: the block plays the preset's file, a
+// crossfade over the typed time (blkmorph refused this), and the block's
+// fade time comes back once the fade has ended
+~radTest.("morph-other-file-crossfades",
 	setup: ["start 2", ["lp 1 drums1", 3], "blksave 1 radtest_drums", ["lp 1 marilyn1", 3]],
-	cmds: [["blkmorph 1 radtest_drums 1", 0.5]],
+	//the wait lets the file load and the block start again before the code
+	//reads the fade time; the fade time comes back about 5.3 s after that
+	cmds: [["blkload 1 radtest_drums 5", 3]],
+	code: { ~radFadeDuring = Ndef(\block1).fadeTime; 5.wait },
 	check: {
 		var unit = RadUnit.readBlock(\block1);
-		(unit[\buffer][\play] == \marilyn1 and: { Ndef(\block1).fadeTime == 0.5 }) or: { "block: " ++ unit.cs }
+		case
+		{ ~radFadeDuring != 5 } { "fade time during: " ++ ~radFadeDuring }
+		{ unit[\buffer][\play] != \drums1 } { "block: " ++ unit.cs }
+		{ Ndef(\block1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\block1).fadeTime }
+		{ true }
 	},
 	teardown: ~radMorphClean
 );
 
-// refused: a preset of another definition, and a pattern
+// refused: a preset of another definition
 ~radTest.("morph-other-def-refused",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blk 2 noise"],
-	cmds: [["blkmorph 2 radtest_hi 1", 0.5]],
+	cmds: [["blkload 2 radtest_hi 1", 0.5]],
 	check: { (RadUnit.readBlock(\block2)[\def] == \noise and: { Ndef(\block2).fadeTime == 0.5 }) or: { "block2 changed" } },
-	teardown: ~radMorphClean
-);
-
-// blkmorphtime (6 Nov 2026): a block's own morph time, between the
-// preset's and the global one
-~radTest.("morphtime-block-own",
-	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 330"],
-	cmds: [["blkmorphtime 1 1", 0.1], ["blkmorph 1 radtest_hi", 0.5]],
-	code: { ~radFadeDuring = Ndef(\block1).fadeTime; 1.5.wait },
-	check: {
-		case
-		{ ~radFadeDuring != 1 } { "fade time during: " ++ ~radFadeDuring }
-		{ Ndef(\block1).get(\freq) != 500 } { "freq " ++ Ndef(\block1).get(\freq) }
-		{ RadDoc.current.at([\blocks, \block1, \morphTime]) != 1 } { "document: " ++ RadDoc.current.at([\blocks, \block1]).cs }
-		{ true }
-	},
-	teardown: ~radMorphClean
-);
-
-// the command's time wins over the block's own
-~radTest.("morphtime-block-command-wins",
-	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 330", "blkmorphtime 1 4"],
-	cmds: [["blkmorph 1 radtest_hi 1", 0.5]],
-	code: { ~radFadeDuring = Ndef(\block1).fadeTime; 1.5.wait },
-	check: { (~radFadeDuring == 1 and: { Ndef(\block1).get(\freq) == 500 }) or: { "fade time during: " ++ ~radFadeDuring } },
-	teardown: ~radMorphClean
-);
-
-// default goes back to the global time; the block's time is posted
-~radTest.("morphtime-block-default",
-	setup: ["start 2", "blk 1 sine", "blkmorphtime 1 3"],
-	cmds: ["blkmorphtime 1", "blkmorphtime 1 default", "blkmorphtime 1"],
-	check: { RadUnit.blockMorphTimeOf(\block1).isNil or: { "still " ++ RadUnit.blockMorphTimeOf(\block1) } },
-	teardown: ~radMorphClean
-);
-
-// another definition in the block: the time is not carried over
-~radTest.("morphtime-block-other-def",
-	setup: ["start 2", "blk 1 sine", "blkmorphtime 1 3"],
-	cmds: [["blk 1 noise", 0.5]],
-	check: { RadUnit.blockMorphTimeOf(\block1).isNil or: { "carried over: " ++ RadUnit.blockMorphTimeOf(\block1) } },
-	teardown: ~radMorphClean
-);
-
-// a preset keeps the block's time, and loading it gives the time back
-~radTest.("morphtime-block-in-preset",
-	setup: ["start 2", "blk 1 sine", "blkmorphtime 1 3", "blksave 1 radtest_slow", "blkmorphtime 1 default"],
-	cmds: [["blkload 1 radtest_slow", 0.5]],
-	check: {
-		case
-		{ RadUnit.blockMorphTimeOf(\block1) != 3 } { "after load: " ++ RadUnit.blockMorphTimeOf(\block1) }
-		{ true }
-	},
-	teardown: ~radMorphClean
-);
-
-// not playing: refused with a warning
-~radTest.("morphtime-block-not-playing",
-	setup: ["start 2"],
-	cmds: ["blkmorphtime 1 3"],
-	check: { RadUnit.blockMorphTimeOf(\block1).isNil },
 	teardown: ~radMorphClean
 );

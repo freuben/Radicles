@@ -1,4 +1,4 @@
-Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
+Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
 	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers, positionBuses, making;
 
@@ -135,9 +135,12 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 				aZ.closeSourceWin(ndefs[blockIndex].key);
 			});
 			this.newStartTicket(ndefs[blockIndex].key); //cancel a start still loading
-			//it fades out over its own fade time (a plain clear cut it: a click)
-			string = (ndefs[blockIndex].cs ++ ".clear(" ++ (ndefs[blockIndex].fadeTime ? 0) ++ ");");
+			RadUnit.prStopBlockMorph(ndefs[blockIndex].key, false); //and a preset load still running
+			//it fades out over its own fade time (a plain clear cut it: a
+			//click), also when a load had set another for a while
+			string = (ndefs[blockIndex].cs ++ ".clear(" ++ Radicles.ownFade(ndefs[blockIndex].key) ++ ");");
 			string.radcode;
+			Radicles.forgetHeldFades([ndefs[blockIndex].key]); //nothing to put back on a block that is gone
 			ndefs.removeAt(blockIndex);
 			blocks.removeAt(blockIndex);
 			liveBlocks.removeAt(blockIndex);
@@ -180,7 +183,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockCount = 1;
 		liveBuffers = nil;
 		this.prFreePositionBuses;
-		RadUnit.clearBlockMorphTimes;
 		RadUnit.syncBlocks; //document (step 2)
 	}
 
@@ -193,7 +195,6 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		blockCount = 1;
 		liveBuffers = nil;
 		this.prFreePositionBuses;
-		RadUnit.clearBlockMorphTimes;
 		RadUnit.syncBlocks; //document (step 2)
 	}
 
@@ -501,9 +502,18 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	}
 
 	*stop {arg block=1, fadeOut;
-		var blockIndex, slotIndex, ndefCS;
+		var blockIndex, slotIndex, ndefCS, ownFade, ndef, token;
 		blockIndex = this.indexOfBlock(block);
 		if(blockIndex.notNil, {
+			ndef = ndefs[blockIndex];
+			//a preset load still running on the block ends here, putting
+			//the block's own fade time and lags back
+			RadUnit.prStopBlockMorph(ndef.key);
+			//a time typed is for this stop only: the block's own fade time
+			//comes back when the fade is over (it used to keep the typed one).
+			//A stop typed during another keeps the first one's own time.
+			stopFades = stopFades ?? { IdentityDictionary.new };
+			ownFade = stopFades[ndef.key] !? {|pending| pending[\own] } ?? { ndef.fadeTime };
 			if(fadeOut.notNil, {
 				ndefCS = (ndefs[blockIndex].cs ++ ".fadeTime = " ++
 					fadeOut ++ ";");
@@ -518,12 +528,26 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 			RadUnit.sync(ndefs[blockIndex].key); //document (step 2)
 			if(aZ.notNil, { aZ.closeSourceWin(ndefs[blockIndex].key); aZ.refreshSourceSlots });
 			if(liveBlocks[blockIndex].notNil, {
-				this.buffree(blockIndex, fadeOut, {
-					liveBlocks[blockIndex] = nil;
-					ndefs[blockIndex].fadeTime = fadeTime;
+				this.buffree(blockIndex, fadeOut, {|entry|
+					//by name, and only if it still is what was stopped: the
+					//block may have moved in the lists or been started again
+					this.indexOfBlock(block) !? {|index|
+						if(ndefs[index] === ndef and: { liveBlocks[index] === entry }, { liveBlocks[index] = nil }) };
 				});
 			});
-			ndefs[blockIndex].fadeTime = fadeOut;
+			if(fadeOut != ownFade, {
+				token = Object.new;
+				stopFades[ndef.key] = (own: ownFade, token: token);
+				{
+					(fadeOut + (server.latency ? 0.2) + 0.1).wait;
+					//the newest stop puts the own time back, unless the block
+					//was given a fade time (fade N, fade blk N) or removed meanwhile
+					if(stopFades !? {|fades| fades[ndef.key] } !? {|pending| pending[\token] === token } ? false, {
+						stopFades.removeAt(ndef.key);
+						if(ndefs.includes(ndef), { ndef.fadeTime = ownFade });
+					});
+				}.fork;
+			});
 		}, {
 			"Block not found".warn;
 		});
@@ -574,19 +598,30 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 		});
 	}
 
+	// a fade time given on purpose (fade N, fade blk N T) stays: a running
+	// blk stop N T no longer puts the old one back
+	*forgetStopFade {arg key;
+		if(key.isNil, { stopFades = nil }, { stopFades !? {|fades| fades.removeAt(key) } });
+	}
+
 	*buffree {arg blockIndex=0, fadeOut, func;
-		var thisBuffer, thisBlock;
-		thisBlock = liveBlocks;
-		thisBuffer = thisBlock[blockIndex][2];
+		var thisBuffer, entry;
+		//what the block was playing when it was stopped: if it has been
+		//started again by the time the fade is over, that is another entry
+		entry = liveBlocks[blockIndex];
+		thisBuffer = entry[2];
 		{
+			var others;
 			//the fade starts one server latency after it is asked for, so it
 			//ends that much later: freeing the buffer at fadeOut cut its tail
 			((fadeOut ? 0) + (server.latency ? 0.2) + 0.1).wait;
 			if(thisBuffer.notNil, {
-				if((thisBlock.flop[2].indicesOfEqual(thisBuffer).size > 1).not, {
-					/*"remove buffer".postln;*/
+				//free it unless something else plays it: another block, or
+				//this block started again with the same file
+				others = (liveBlocks ? []).select{|item|
+					item.notNil and: { item !== entry } and: { item[2] == thisBuffer } };
+				if(others.isEmpty, {
 					server.sync;
-					/*this.nodeTime.wait;*/
 					if(thisBuffer.rank <= 1, {
 						BStore.removeID(thisBuffer);
 					}, {
@@ -594,7 +629,7 @@ Block : Radicles {classvar <blocks, <ndefs, <liveBlocks, <blockCount=1,
 					});
 				});
 			});
-			func.();
+			func.(entry);
 		}.fork;
 	}
 

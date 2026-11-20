@@ -1,4 +1,4 @@
->> csmorph t 1 radtest_cm10 1
+>> csload t 1 radtest_cm10 1
 == radpost ==
 (none)
 == radpostcont ==

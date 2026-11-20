@@ -1,5 +1,5 @@
-// Libraries for chain and track presets (step 4): csload, csmorph, tload and
-// tmorph load the libraries their effects, blocks and wavetables come from,
+// Libraries for chain and track presets (step 4): csload and tload load the
+// libraries their effects, blocks and wavetables come from,
 // keeping those already selected (as imp [Main, RadTestLib] would).
 // Each test makes a small library, RadTestLib, with one effect and one block,
 // and removes it.
@@ -121,8 +121,8 @@
 	teardown: ~radLibClean
 );
 
-// tmorph and csmorph load them too
-~radTest.("morphs-load-library",
+// with a typed time too
+~radTest.("timed-loads-load-library",
 	setup: ["start 3"],
 	code: {
 		~radMakeTestLib.();
@@ -131,15 +131,15 @@
 		~radCmd.("tsave t 1 radtest_libtrack3");
 		~radCmd.("cssave t 1 radtest_libchain");
 		Radicles.selLibs(["Main"]);
-		~radCmd.("tmorph t 2 radtest_libtrack3 1", 4);
+		~radCmd.("tload t 2 radtest_libtrack3 1", 4);
 		~radTmorph = ~radSelected.();
 		Radicles.selLibs(["Main"]);
-		~radCmd.("csmorph t 3 radtest_libchain 1", 4);
+		~radCmd.("csload t 3 radtest_libchain 1", 4);
 	},
 	check: {
 		case
-		{ ~radTmorph.includes("RadTestLib").not } { "tmorph: " ++ ~radTmorph.cs }
-		{ ~radSelected.().includes("RadTestLib").not } { "csmorph: " ++ ~radSelected.().cs }
+		{ ~radTmorph.includes("RadTestLib").not } { "tload: " ++ ~radTmorph.cs }
+		{ ~radSelected.().includes("RadTestLib").not } { "csload: " ++ ~radSelected.().cs }
 		{ (RadUnit.readBlock(\block2) ? ())[\def] != \radtestblk } { "block 2: " ++ RadUnit.readBlock(\block2).cs }
 		{ ~radFxDefs.(\track3) != (1: \radtestgain) } { "track3 fx: " ++ ~radFxDefs.(\track3).cs }
 		{ true }

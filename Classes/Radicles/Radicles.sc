@@ -3,7 +3,7 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 	<bpm, <postDoc, <>lineSize=68, <>oscCode, <>myImprov, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>postCapture, <>colorCritical, <>colorMeter, <>colorWarning,
 	<>colorTrack, <>colorBus, <>colorMaster, <>colorTextField, <>cW, <aZ, <excludeLibs,
-	<>filesPath, <>soundFilePath, <>postWindow, <>postWindowCont, <>oscCodeCont=true, <>beatsFuncArr, traceFunc, <>liveBlockArr, <>modelNum=0, <>codeTime=0, <>codeDev=0;
+	<>filesPath, <>soundFilePath, <>postWindow, <>postWindowCont, <>oscCodeCont=true, <>beatsFuncArr, traceFunc, <>liveBlockArr, <>modelNum=0, <>codeTime=0, <>codeDev=0, heldFades;
 	/*	<>numOutputs = 16, <>numInputs = 16, <>numBuffers = 512, <>numBuses = 1024,
 	<>numControlBuses=16384, <>memorySize=409600, <>sampleRate=41000, */
 
@@ -38,6 +38,105 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 
 	*version {
 		"Version 0.0.4".postln;
+	}
+
+	// ---- fade (design note "Time in Radicles", 19 Nov 2026) ----
+	// fade N: the fade time of everything running and everything made later
+	// (JITLib's own ProxySpace.fadeTime). It overwrites the fade times single
+	// things were given.
+	*setFade {arg secs;
+		secs = secs.max(0);
+		fadeTime = secs;
+		Block.forgetStopFade;
+		this.forgetHeldFades;
+		("Ndef.dictFor(s).fadeTime = " ++ secs ++ ";").radcode;
+	}
+
+	// the Ndefs of one thing, for its own fade time: kind is \t, \b, \m,
+	// \blk or \fx (then type is \t, \b or \m). nil, with a warning, when it
+	// is not there.
+	*fadeKeys {arg kind, num, type, slot;
+		var name, strip, keys, tag;
+		case
+		{ kind == \blk } {
+			keys = Block.ndefOf(num) !? {|ndef| [ndef.key] };
+			if(keys.isNil, { "Block not found".warn });
+		}
+		{ aZ.isNil } { "could not find assemblage".warn }
+		{ kind == \fx } {
+			tag = case
+			{ type == \t } { aZ.findFilterTag(\track, num, slot) }
+			{ type == \b } { aZ.findFilterTag(\bus, num, slot) }
+			{ type == \m } { aZ.findFilterTag(\master, 1, slot) };
+			if(tag.isNil, { "No effect in this slot".warn }, { keys = [tag] });
+		}
+		{ [\t, \b, \m].includes(kind) } {
+			name = case { kind == \t } { "Track" ++ num } { kind == \b } { "Bus" ++ num } { "Master" };
+			strip = case { kind == \t } { "track" ++ num } { kind == \b } { "bus" ++ num } { "master" };
+			if((aZ.mixTrackNames ? []).includes(strip.asSymbol), {
+				keys = [("in" ++ name).asSymbol, strip.asSymbol, ("space" ++ name).asSymbol];
+				//a bus also has the Ndef its sends arrive at
+				if(kind == \b and: { (aZ.busArr ? []).any{|item| item[0] == ("busIn" ++ num).asSymbol } }, {
+					keys = keys.add(("busIn" ++ num).asSymbol) });
+			}, {
+				(name ++ " not found").warn;
+			});
+		}
+		{ "Command not Found".warn };
+		^keys
+	}
+
+	// one thing's own fade time: set (it stays until the next fade N), or
+	// posted when secs is nil
+	*fadeOf {arg secs, kind, num, type, slot;
+		var keys = this.fadeKeys(kind, num, type, slot);
+		if(keys.isNil, { ^nil });
+		if(secs.isNil, {
+			Ndef(keys[if(keys.size > 1, { 1 }, { 0 })]).fadeTime.radpostwarn;
+		}, {
+			if(kind == \blk, { Block.forgetStopFade(keys[0]) });
+			this.forgetHeldFades(keys);
+			keys.do{|key| ("Ndef(" ++ key.cs ++ ").fadeTime = " ++ secs.max(0) ++ ";").radcode };
+		});
+	}
+
+	// ---- a fade time held for one command ----
+	// A load with a typed time (fxload t 1 1 warm 8) sets the fade time of
+	// what it loads onto for as long as it runs, and puts the own one back.
+	// The own time is kept here meanwhile, so that:
+	// - a second load typed while the first runs still finds the thing's own
+	//   fade time, not the first load's typed one (ownFade);
+	// - fade N and fade t 1 4 typed while a load runs stay: they forget what
+	//   was held, and the load then has nothing to put back.
+
+	// the thing's own fade time, also while a load holds another
+	*ownFade {arg key;
+		^(heldFades !? {|held| held[key] }) ?? { Ndef(key).fadeTime } ? 0
+	}
+
+	// set key's fade time to time for a while (posted only when it differs)
+	*holdFade {arg key, time;
+		var now = Ndef(key).fadeTime;
+		if(now != time, {
+			heldFades = heldFades ?? { IdentityDictionary.new };
+			if(heldFades[key].isNil, { heldFades[key] = now });
+			("Ndef(" ++ key.cs ++ ").fadeTime = " ++ time.cs ++ ";").radcode;
+		});
+	}
+
+	// put key's own fade time back, if one is held
+	*releaseFade {arg key;
+		var own = heldFades !? {|held| held.removeAt(key) };
+		if(own.notNil and: { Ndef(key).fadeTime != own }, {
+			("Ndef(" ++ key.cs ++ ").fadeTime = " ++ own.cs ++ ";").radcode;
+		});
+	}
+
+	// the fade times were given on purpose: nothing is put back (all keys
+	// when none are given)
+	*forgetHeldFades {arg keys;
+		if(keys.isNil, { heldFades = nil }, {
+			keys.do{|key| heldFades !? {|held| held.removeAt(key) } } });
 	}
 
 	*document {

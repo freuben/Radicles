@@ -1,8 +1,7 @@
 // Radicles: libraries for chain and track presets (Document Model, step 4).
 // A chain or track preset can hold effects, blocks and wavetables from
-// several libraries (an effect from Main, another from RAVE). csload,
-// csmorph, tload and tmorph first make sure every library they need is
-// loaded, adding the missing ones to those already selected (as imp [Main,
+// several libraries (an effect from Main, another from RAVE). csload and
+// tload first make sure every library they need is loaded, adding the missing ones to those already selected (as imp [Main,
 // RAVE] would) and posting it, so everything in the preset loads. A library
 // is never unloaded by a preset. Which library: the one holding the effect,
 // block or wavetable, found from the library files; when several hold the

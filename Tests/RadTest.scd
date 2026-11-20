@@ -99,6 +99,17 @@
 		};
 		out ++ str.copyToEnd(pos)
 	}.(s);
+	// A load keeps a sound file's place (blkload, tload): it sets startPos to
+	// where the file is, which is measured, then puts it back. A line that
+	// only sets startPos is compared as "measured", not by value.
+	s = {|str|
+		var out = "", pos = 0;
+		str.findRegexp("\\.set\\('startPos', [^,()]*\\);").do{|m|
+			out = out ++ str.copyRange(pos, m[0] - 1) ++ ".set('startPos', <measured>);";
+			pos = m[0] + m[1].size;
+		};
+		out ++ str.copyToEnd(pos)
+	}.(s);
 	// recording file names carry the date and time (27_10_2026_10_50_12)
 	s = {|str|
 		var out = "", pos = 0;

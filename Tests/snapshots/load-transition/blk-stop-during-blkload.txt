@@ -1,0 +1,14 @@
+>> blkload 1 radtest_lt 6
+== radpost ==
+Ndef('block1').fadeTime = 6;
+Ndef('block1').xset('freq', 500);
+== radpostcont ==
+(none)
+
+>> blk stop 1
+== radpost ==
+Ndef('block1').fadeTime = 0.5;
+Ndef('block1').source = nil;
+== radpostcont ==
+(none)
+

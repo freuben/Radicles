@@ -1,0 +1,14 @@
+>> tload t 1 radtest_ltt 1
+== radpost ==
+Ndef('inTrack1').fadeTime = 1;
+Ndef('inTrack1').xset('trim', -3);
+Ndef('track1').fadeTime = 1;
+Ndef('track1').xset('volume', -6);
+Ndef('spaceTrack1').fadeTime = 1;
+Ndef('spaceTrack1').xset('pan', -0.5);
+Ndef('inTrack1').fadeTime = 0.5;
+Ndef('track1').fadeTime = 0.5;
+Ndef('spaceTrack1').fadeTime = 0.5;
+== radpostcont ==
+(none)
+

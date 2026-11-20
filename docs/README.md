@@ -30,6 +30,7 @@ newer drafts.** When the two disagree, ask before building on either.
 | [design/step2-blocks-as-units.md](design/step2-blocks-as-units.md) | Step 2: blocks as units, block presets, `blkmorph`, position |
 | [design/step3-effect-chains.md](design/step3-effect-chains.md) | Step 3: strip values in the document, `cssave` / `csload` / `csmorph` |
 | [design/step4-track-presets.md](design/step4-track-presets.md) | Step 4: `tsave` / `tload` / `tmorph` |
+| [design/time-fade-crossfade-glide.md](design/time-fade-crossfade-glide.md) | Time: `fade`, loading a preset as a crossfade (it replaces the `morph` commands of steps 1–4); lag is on hold |
 
 ## Notes on the copies
 

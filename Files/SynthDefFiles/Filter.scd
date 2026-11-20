@@ -166,26 +166,26 @@ sig = sig * 3;
 	drysig = \in;
 	wetsig= GVerb.ar(\in, 300, 103, 0.43, 0.51, 15, -5, -26, -20, 300,-40.dbamp);
 	(((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol} ], [ 'amp', {arg bus=1->[1,8,{|val| val.round(1)}], adjVol=1->[1,30, {|val| val.round(0.01)-0.01}], lag=0.1->[0,10]; (\in*Amplitude.kr(SoundIn.ar((bus-1).round(1))).lag(lag))*adjVol
-} ], [ 'dl1', {arg delayTime=0->[0,12], decayTime=1->[0,24]; CombL.ar(\in, 12, delayTime, decayTime)} ], [ 'cvt1', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}];
+} ], [ 'dl1', {arg delayTime=0->[0,12], decayTime=1->[0,24]; CombL.ar(\in, 12, delayTime, decayTime)} ], [ 'cvt1', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,\exp,{|val| 2 ** val.log2.round }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}];
 	var signal, input;
 	signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
 	input = \in;
-	(Convolution.ar(input,signal, frameSize,adjVol*0.15)*mix)
-		+(input*mix.linlin(0,1,1,0))} ], [ 'cvt2', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}];
+	(Convolution.ar(input,signal, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
+		+(input*mix.linlin(0,1,1,0))} ], [ 'cvt2', {arg mix=0->[0,1], track=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,\exp,{|val| 2 ** val.log2.round }], adjVol=1->[0,5,{|val| val.round(0.01)-0.01}];
 	var signal, input;
 	signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
 	input = \in;
-	(Convolution.ar(signal,input, frameSize,adjVol*0.15)*mix)
-		+(input*mix.linlin(0,1,1,0))} ], [ 'cvi1', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}];
+	(Convolution.ar(signal,input, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
+		+(input*mix.linlin(0,1,1,0))} ], [ 'cvi1', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,\exp,{|val| 2 ** val.log2.round }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}];
 	var signal, input;
 	signal = SoundIn.ar((soundin+1).round(1));
 	input = \in;
-	(Convolution.ar(input,signal,frameSize,adjVol*0.15)*mix)
-	+(input*mix.linlin(0,1,1,0))} ], [ 'cvi2', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,{|val| val.round(512) }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}];
+	(Convolution.ar(input,signal,(2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
+	+(input*mix.linlin(0,1,1,0))} ], [ 'cvi2', {arg mix=0->[0,1], soundin=1->[1,8,{|val| val.round(1)}], frameSize=1024 -> [512,8192,\exp,{|val| 2 ** val.log2.round }], adjVol=1->[1,30,{|val| val.round(0.01)-0.01}];
 	var signal, input;
 	signal = SoundIn.ar((soundin+1).round(1));
 	input = \in;
-	(Convolution.ar(signal, input, frameSize,adjVol*0.15)*mix)
+	(Convolution.ar(signal, input, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
 	+(input*mix.linlin(0,1,1,0))} ], [ 'mmi', {arg mix=0->[0,1], soundin=1->[1,8, {|val| val.round(1)}], adjVol=1->[1,4];
 var input, inA, chainA, chainB, chain, frameSize=2048;
 	input = \in;

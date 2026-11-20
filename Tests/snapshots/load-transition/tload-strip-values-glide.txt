@@ -1,0 +1,7 @@
+>> <code>
+== radpost ==
+Ndef('track1').set('volume', -6, 'lagTime', 2);
+Ndef('track1').set('lagTime', 0);
+== radpostcont ==
+(none)
+

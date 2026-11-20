@@ -176,22 +176,22 @@ sig = sig * 3;
 	var signal, input;
 	signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
 	input = \in;
-	(Convolution.ar(input,signal, frameSize,adjVol*0.15)*mix)
+	(Convolution.ar(input,signal, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
 		+(input*mix.linlin(0,1,1,0))} ], [ 'cvt2', {arg mix=0, track=1, frameSize=1024 , adjVol=1; 
 	var signal, input;
 	signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
 	input = \in;
-	(Convolution.ar(signal,input, frameSize,adjVol*0.15)*mix)
+	(Convolution.ar(signal,input, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
 		+(input*mix.linlin(0,1,1,0))} ], [ 'cvi1', {arg mix=0, soundin=1, frameSize=1024 , adjVol=1; 
 	var signal, input;
 	signal = SoundIn.ar((soundin+1).round(1));
 	input = \in;
-	(Convolution.ar(input,signal,frameSize,adjVol*0.15)*mix)
+	(Convolution.ar(input,signal,(2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
 	+(input*mix.linlin(0,1,1,0))} ], [ 'cvi2', {arg mix=0, soundin=1, frameSize=1024 , adjVol=1; 
 	var signal, input;
 	signal = SoundIn.ar((soundin+1).round(1));
 	input = \in;
-	(Convolution.ar(signal, input, frameSize,adjVol*0.15)*mix)
+	(Convolution.ar(signal, input, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
 	+(input*mix.linlin(0,1,1,0))} ], [ 'mmi', {arg mix=0, soundin=1, adjVol=1; 
 var input, inA, chainA, chainB, chain, frameSize=2048;
 	input = \in;

@@ -1,11 +1,12 @@
 >> <code>
 == radpost ==
-Ndef('track1').set('volume', -6, 'lagTime', 6);
+Ndef('track1').fadeTime = 6;
+Ndef('track1').xset('volume', -6);
 Ndef('busIn1', {arg vol1 = -inf, lag1 = 0, vol2 = -inf, lag2 = 0; [Ndef.ar('track2', 1)*vol1.dbamp.lag(lag1), Ndef.ar('track1', 1)*vol2.dbamp.lag(lag2); ].sum});
 Ndef('busIn1').set('vol1', -9, 'lag1', 0);
 Ndef('busIn1').set('vol2', -inf);
 Ndef('busIn1').set('vol2', -9, 'lag2', 6);
-Ndef('track1').set('lagTime', 0);
+Ndef('track1').fadeTime = 0.5;
 Ndef('busIn1').set('vol2', -9, 'lag2', 0);
 Ndef('track1').set('volume', 0);
 Ndef('busIn1').nodeMap.set('vol2', nil, 'lag2', nil);

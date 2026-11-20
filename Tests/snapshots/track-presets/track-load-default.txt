@@ -11,12 +11,13 @@ Ndef('spaceTrack1', {arg pan = 0 ;
 });
 Ndef('spaceTrack1').set('pan', 0.5);
 Ndef('inTrack1').set('trim', 0);
-Ndef('track1').set('volume', 0);
+Ndef('track1').set('volume', -inf);
 Ndef('spaceTrack1').set('pan', 0);
 Ndef('track1').set('lagTime', 0);
 Ndef('busIn1').source = nil;
 Ndef('inBus1').source = nil;
 Ndef('track1').set('mute', 0);
+Ndef('track1').set('volume', 0);
 == radpostcont ==
 (none)
 

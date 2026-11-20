@@ -1,0 +1,7 @@
+>> tload t 1 radtest_ltt
+== radpost ==
+Ndef('filterTrack_1_1').xset('pitchRatio', 0.5);
+Ndef('track1').xset('volume', -6);
+== radpostcont ==
+(none)
+

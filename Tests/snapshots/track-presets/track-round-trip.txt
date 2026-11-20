@@ -19,11 +19,7 @@ Ndef('inBus1').source = nil;
 Ndef('busIn1').xset('vol1', -inf);
 Ndef('mod2').clear(0.5);
 Ndef('track1').set('mute', 1);
-~buffer1 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/marilyn1.wav", bufnum: 1);
-Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
-    RadPosition.kr(~position1, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos, 1);
-    PlayBuf.ar(~buffer1.numChannels, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos.linlin(0,1,0, ~buffer1.numFrames), 1)*mul;});
-Ndef('block1').xset('rate', 1, 'startPos', 0, 'trigger', 1, 'mul', 1);
+Ndef('track1').set('mute', 0);
 Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
  ;
@@ -39,12 +35,16 @@ Ndef('filterTrack_1_2').set('delayTime', 0, 'decayTime', 1);
 Ndef('track1', {arg volume=0, lagTime=0, mute=0, solo=1;
                 (Ndef.ar('filterTrack_1_1', 1) * volume.dbamp.lag(lagTime)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
-Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 1, 'solo', 1);
-Ndef('filterTrack_1_2').pause;
-Ndef('inTrack1').set('trim', -2);
-Ndef('track1').set('volume', -6);
-Ndef('spaceTrack1').set('pan', 0.3);
+Ndef('track1').set('volume', 0, 'lagTime', 0, 'mute', 0, 'solo', 1);
+~buffer1 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/marilyn1.wav", bufnum: 1);
+Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+    RadPosition.kr(~position1, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos, 1);
+    PlayBuf.ar(~buffer1.numChannels, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos.linlin(0,1,0, ~buffer1.numFrames), 1)*mul;});
+Ndef('block1').xset('rate', 1, 'startPos', 0, 'trigger', 1, 'mul', 1);
+Ndef('inTrack1').xset('trim', -2);
+Ndef('track1').xset('volume', -6);
 Ndef('inTrack1').lag('trim', 0.5);
+Ndef('spaceTrack1').xset('pan', 0.3);
 Ndef.ar('busIn1', 1);
 Ndef('busIn1').fadeTime = 0.5;
 Ndef('inBus1', {arg trim=0, lagTime=0;
@@ -52,11 +52,12 @@ Ndef('inBus1', {arg trim=0, lagTime=0;
 Ndef('inBus1').set('trim', 0);
 Ndef('busIn1', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track1', 1)*vol1.dbamp.lag(lag1); });
 Ndef('busIn1').set('vol1', -inf);
-Ndef('busIn1').set('vol1', -9);
+Ndef('busIn1').set('vol1', -inf);
+Ndef('busIn1').set('vol1', -9, 'lag1', 0);
 Ndef('mod4', {arg freq=0.1, phase=0, mul=1, add=0;
     SinOsc.ar(freq, phase, mul).range(-90.0, 6.0) + add});
 Ndef('busIn1').xset('vol1', Ndef('mod4'));
-Ndef('track1').set('mute', 0);
+Ndef('filterTrack_1_2').pause;
 == radpostcont ==
 (none)
 

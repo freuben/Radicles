@@ -192,23 +192,30 @@ fxbypass t 1 1 //toggle (fxbypass m 1 for the master)
 fxbypass t 1 1 1 //bypass
 fxbypass t 1 1 0 //back in
 fxbypass 1 1 //multitrack
-//morph an effect to one of its presets over time (crossfade by default)
-fxmorph t 1 1 warm //the slot's or the global morph time
-fxmorph t 1 1 warm 10 //10 seconds
-fxmorph t 1 1 warm 10 glide //each value glides (lag) instead of a crossfade
-morphtime 5 //global morph time (2 by default)
-morphtime t 1 1 8 //this slot's own morph time, saved with its presets
-morphtime t 1 1 default //back to the global one
+//effect presets: loading one is a transition, a crossfade by default
+fxsave t 1 1 warm //track 1, slot 1 -> your presets for that effect
+fxload t 1 1 warm //crossfade to the preset over the effect's own fade time (fade 4, or fade fx t 1 1 4)
+fxload t 1 1 warm 10 //over 10 seconds, for this load only
+fxload t 1 1 warm 10 glide //each value glides (lag) instead of a crossfade
+fxload t 1 1 warm none //at once (the same as a time of 0); time and xfade, glide or none in any order
+fxload t 1 1 default //the effect's own default values
+fxload //all effect presets (fxload pch: those of pch)
 //share a preset with a library: copies your preset raveSetting1 of nnt into RAVE
 fxsave nnt raveSetting1 RAVE
 //effect-chain presets: a strip's effects (values, modulators, bypass) in one file
 cssave t 1 warmVox //track 1's chain -> Settings/Presets/units/chain/warmVox.scd
-csload t 3 warmVox //onto track 3 (any strip: csload b 1 warmVox, csload m warmVox)
+csload t 3 warmVox //onto track 3 (any strip: csload b 1 warmVox, csload m warmVox): a crossfade over track 3's fade time (fade t 3 4)
+csload t 3 warmVox 10 glide //over 10 seconds; values glide in slots that keep their effect (xfade, glide, none)
+csload t 3 warmVox none //at once
 csload t 3 default //an empty chain: removes track 3's effects
 csload //lists chain presets
-csmorph t 3 warmVox //track 3's chain morphs to the preset (the strip's or the global morph time)
-csmorph t 3 warmVox 10 glide //10 seconds; values glide in slots that keep their effect (xfade, glide, none)
-csmorphtime t 3 5 //track 3's own chain morph time, saved with chain presets (csmorphtime t 3 posts it; default: back to morphtime)
+//track presets: a whole strip (source, chain, trim, volume, pan, sends) in one file
+tsave t 1 vox //track 1 -> Settings/Presets/units/track/vox.scd
+tload t 3 vox //onto track 3, every part arriving together over track 3's fade time: sounds crossfade, mixer values glide
+tload t 3 vox 10 glide nosrc //over 10 seconds, values gliding, keeping track 3's source (nofx: its effects); the words in any order
+tload t 3 vox none //at once
+tload t 3 default //a clean strip
+tload //lists track presets
 //getspec
 fxgetspec t 1 1 1
 fxgetspec t 1 1 pitchRatio
@@ -400,17 +407,14 @@ Block.startPosOf(1, 12.5) //the startPos (0-1) that starts block 1's file at 12.
 
 //block presets: values, modulators and the sound file or wavetable (by name)
 blksave 1 warmLoop //block 1's settings, saved for its definition (loop)
-blkload 1 warmLoop //into a block playing the same definition
+blkload 1 warmLoop //into a block playing the same definition: a crossfade over block 1's fade time (fade blk 1 4)
+blkload 1 warmLoop 4 //over 4 seconds, for this load only; a sound file carries on from where it is
+blkload 1 warmLoop 4 glide //glide the values instead (none, or a time of 0: at once)
 blkload 1 warmLoop nobuf //the preset's settings, keeping block 1's sound file, table or recording
 blkload 1 default //the definition's own default values
 blkload //all block presets
 blkload loop //the presets of loop
 blksave loop warmLoop MyLib //share your preset with loop's library
-blkmorph 1 warmLoop //move block 1 to a preset over the morph time (morphtime 5), crossfading
-blkmorph 1 warmLoop 4 //over 4 seconds; a sound file carries on from where it is
-blkmorph 1 warmLoop 4 glide //glide the values instead (none: at once)
-blkmorph 1 default 4 //to the definition's default values
-blkmorphtime 1 5 //block 1's own morph time (blkmorphtime 1 posts it; blkmorphtime 1 default: back to morphtime)
 blksave 1 myTake keep //block 1 plays a recording (@1): keep it as a file in SoundFiles/Play/recordings (rec_<date>_<time>.wav), then save
 blksave 1 myTake keep take1 //the same, as recordings/take1.wav
 

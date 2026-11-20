@@ -8,9 +8,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<>recInputArr, <winDirRec, <muteButArr, <recButArr, <soloButArr, <spaceButArr,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10,
-	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow, <bypassed, <morphTimes, morphs, <chainMorphTimes;
-	//each strip's own track morph time (tmorphtime, step 4)
-	var <trackMorphTimes;
+	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow, <bypassed, morphs;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);
@@ -327,9 +325,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				//where the strip sits now, looked up after the waits above
 				indexTrack = mixTrackNames.indexOf(realTrack);
 
-				("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
-				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
-				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
+				("Ndef(" ++ inTrack.cs ++ ").clear(" ++ Ndef(inTrack).fadeTime ++ ");").radcode;
+				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ Ndef(realTrack).fadeTime ++ ");").radcode;
+				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ Ndef(spaceTrack).fadeTime ++ ");").radcode;
 
 				this.clearModTrackNdefs(trackType, trackNum);
 
@@ -379,9 +377,6 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				}, {
 					busCount = this.updateTrackCount(trackType);
 				});
-				//what was kept under the strip's name
-				trackMorphTimes !? {|times| times.removeAt(realTrack) };
-				chainMorphTimes !? {|times| times.removeAt(realTrack) };
 				RadUnit.syncStrips(this); //document (step 3): the strip is gone
 				//refresh win if open
 				this.mixWinBool({
@@ -887,7 +882,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			thisBusIndLabel = inputs.flop[0].indexOf(oldLabel);
 			if(newLabelArr.isEmpty, {
 				if(clearTrack, {
-					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
+					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ Ndef(oldLabel).fadeTime ++ ");").radcode;
 				}, {
 					("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radcode;
 				});
@@ -907,8 +902,13 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					inputs[thisBusIndLabel][1] = newLabelArr;
 				});
 				//the senders after the one leaving move up a place: so do their values
-				this.prRenumberSends(Ndef(oldLabel), oldLabelArr, newLabelArr);
-				("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radcode;
+				//(not when the bus itself is going: its input is cleared with
+				//its last sender, and rebuilding it just before that asked the
+				//server for a synth whose SynthDef the clear had already freed)
+				if(clearTrack.not, {
+					this.prRenumberSends(Ndef(oldLabel), oldLabelArr, newLabelArr);
+					("Ndef(" ++ oldLabel.cs ++ ", " ++ newLabelArr.busFunc.cs ++ ");").radcode;
+				});
 			});
 			//look the bus input up again: entries may have been removed above
 			spaceInInd = inputs.flop[0].indexOf(spaceBusLabel);
@@ -1067,7 +1067,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		mastOutWin=nil; oiIns=nil; oiOuts=nil; recInputArr=nil; winDirRec=nil; muteButArr=nil;
 		recButArr=nil; soloButArr=nil; spaceButArr=nil; recordingButton=nil; recordingValBut=nil;
 		setOutputMenu=nil; setInputMenu=nil; modSendArr=nil; trackDataArr=nil; trackBufferArr=nil;
-		trackCount=1; busCount=1; winRefresh=false; bypassed=nil; morphTimes=nil; morphs=nil; chainMorphTimes=nil; trackMorphTimes=nil;
+		trackCount=1; busCount=1; winRefresh=false; bypassed=nil; morphs=nil;
 	}
 
 	clearNdefs {arg action;
