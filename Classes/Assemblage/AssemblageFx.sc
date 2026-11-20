@@ -199,7 +199,8 @@
 	removeFilter {arg type=\track, num= 1, slot=1, action, actionBuf;
 		var thisTrack, thisSlot, ndefCS, setArr, thisFilterTag, thisFilterIndex,
 		keyArr, activeMods, modArr, cond;
-		this.globFadeTime;
+		//(it used to put every strip's fade time back to the session's here,
+		//which wiped the fade times single things were given)
 		thisTrack = this.getThisTrack(type, num);
 		if(thisTrack.size > 2, {
 			thisFilterTag = this.findFilterTag(type, num, slot);
@@ -210,7 +211,7 @@
 					this.ndefModClear(thisSlot);
 					this.prClearBypass(thisSlot);
 					this.prClearMorph(thisSlot);
-					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ fadeTime ++ ");";
+					ndefCS = "Ndef(" ++ thisSlot.cs ++ ").clear(" ++ Ndef(thisSlot).fadeTime ++ ");";
 					ndefCS.radcode;
 
 					thisTrack.removeAt(thisFilterIndex);
@@ -260,7 +261,7 @@
 						this.ndefModClear(item[0]);
 						this.prClearBypass(item[0]);
 						this.prClearMorph(item[0]);
-						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ fadeTime ++ ");";
+						ndefCS = "Ndef(" ++ item[0].cs ++ ").clear(" ++ Ndef(item[0]).fadeTime ++ ");";
 						ndefCS.radcode;
 						masterNdefs[setArr[0]].remove(Ndef(item[0]));
 						specs[setArr[0]] = specs[setArr[0]].reject({|it| it[0] == item[0] });

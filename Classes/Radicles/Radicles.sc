@@ -40,6 +40,64 @@ Radicles {classvar <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=n
 		"Version 0.0.4".postln;
 	}
 
+	// ---- fade (design note "Time in Radicles", 19 Nov 2026) ----
+	// fade N: the fade time of everything running and everything made later
+	// (JITLib's own ProxySpace.fadeTime). It overwrites the fade times single
+	// things were given.
+	*setFade {arg secs;
+		secs = secs.max(0);
+		fadeTime = secs;
+		Block.forgetStopFade;
+		("Ndef.dictFor(s).fadeTime = " ++ secs ++ ";").radcode;
+	}
+
+	// the Ndefs of one thing, for its own fade time: kind is \t, \b, \m,
+	// \blk or \fx (then type is \t, \b or \m). nil, with a warning, when it
+	// is not there.
+	*fadeKeys {arg kind, num, type, slot;
+		var name, strip, keys, tag;
+		case
+		{ kind == \blk } {
+			keys = Block.ndefOf(num) !? {|ndef| [ndef.key] };
+			if(keys.isNil, { "Block not found".warn });
+		}
+		{ aZ.isNil } { "could not find assemblage".warn }
+		{ kind == \fx } {
+			tag = case
+			{ type == \t } { aZ.findFilterTag(\track, num, slot) }
+			{ type == \b } { aZ.findFilterTag(\bus, num, slot) }
+			{ type == \m } { aZ.findFilterTag(\master, 1, slot) };
+			if(tag.isNil, { "No effect in this slot".warn }, { keys = [tag] });
+		}
+		{ [\t, \b, \m].includes(kind) } {
+			name = case { kind == \t } { "Track" ++ num } { kind == \b } { "Bus" ++ num } { "Master" };
+			strip = case { kind == \t } { "track" ++ num } { kind == \b } { "bus" ++ num } { "master" };
+			if((aZ.mixTrackNames ? []).includes(strip.asSymbol), {
+				keys = [("in" ++ name).asSymbol, strip.asSymbol, ("space" ++ name).asSymbol];
+				//a bus also has the Ndef its sends arrive at
+				if(kind == \b and: { (aZ.busArr ? []).any{|item| item[0] == ("busIn" ++ num).asSymbol } }, {
+					keys = keys.add(("busIn" ++ num).asSymbol) });
+			}, {
+				(name ++ " not found").warn;
+			});
+		}
+		{ "Command not Found".warn };
+		^keys
+	}
+
+	// one thing's own fade time: set (it stays until the next fade N), or
+	// posted when secs is nil
+	*fadeOf {arg secs, kind, num, type, slot;
+		var keys = this.fadeKeys(kind, num, type, slot);
+		if(keys.isNil, { ^nil });
+		if(secs.isNil, {
+			Ndef(keys[if(keys.size > 1, { 1 }, { 0 })]).fadeTime.radpostwarn;
+		}, {
+			if(kind == \blk, { Block.forgetStopFade(keys[0]) });
+			keys.do{|key| ("Ndef(" ++ key.cs ++ ").fadeTime = " ++ secs.max(0) ++ ";").radcode };
+		});
+	}
+
 	*document {
 		postDoc = Document.new("Radicles: " ++ Date.getDate.asString);
 	}

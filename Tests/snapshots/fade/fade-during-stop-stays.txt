@@ -1,0 +1,13 @@
+>> blk stop 1 2
+== radpost ==
+Ndef('block1').fadeTime = 2;
+Ndef('block1').source = nil;
+== radpostcont ==
+(none)
+
+>> fade 2
+== radpost ==
+Ndef.dictFor(s).fadeTime = 2;
+== radpostcont ==
+(none)
+

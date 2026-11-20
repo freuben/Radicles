@@ -327,9 +327,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				//where the strip sits now, looked up after the waits above
 				indexTrack = mixTrackNames.indexOf(realTrack);
 
-				("Ndef(" ++ inTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
-				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
-				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
+				("Ndef(" ++ inTrack.cs ++ ").clear(" ++ Ndef(inTrack).fadeTime ++ ");").radcode;
+				("Ndef(" ++ realTrack.cs ++ ").clear(" ++ Ndef(realTrack).fadeTime ++ ");").radcode;
+				("Ndef(" ++ spaceTrack.cs ++ ").clear(" ++ Ndef(spaceTrack).fadeTime ++ ");").radcode;
 
 				this.clearModTrackNdefs(trackType, trackNum);
 
@@ -887,7 +887,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			thisBusIndLabel = inputs.flop[0].indexOf(oldLabel);
 			if(newLabelArr.isEmpty, {
 				if(clearTrack, {
-					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ fadeTime ++ ");").radcode;
+					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ Ndef(oldLabel).fadeTime ++ ");").radcode;
 				}, {
 					("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radcode;
 				});
