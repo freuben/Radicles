@@ -13,10 +13,14 @@ HIDMap : Radicles {
 			//a control on a strip's volume, moved during the strip's whole-track
 			//fade-out, stops that load as a typed vol does. In the function's
 			//own text: getFunc compiles the responder from it.
-			var stop = if(key == \volume and: { RadUnit.stripNames.includes(ndef.key) },
-				{ "RadUnit.volumeSetOnStrip(" ++ ndef.key.cs ++ "); " }, { "" });
-			inFunc = ("{|val| " ++ stop ++ "(\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
-				", \" ++ val ++ \")\").radpostcont.interpret; }").interpret;
+			//It moves over the short native time (ctllag), not the strip's own.
+			if(key == \volume and: { RadUnit.stripNames.includes(ndef.key) }, {
+				inFunc = ("{|val| RadUnit.volumeSetOnStrip(" ++ ndef.key.cs ++ "); (\"" ++ ndef.cs
+					++ ".set(\" ++ Radicles.aZ.volumeArgs(" ++ ndef.cs ++ ", val, Radicles.ctlLag) ++ \")\").radpostcont.interpret; }").interpret;
+			}, {
+				inFunc = ("{|val| (\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
+					", \" ++ val ++ \")\").radpostcont.interpret; }").interpret;
+			});
 		}, {
 			inFunc = action;
 		});
@@ -38,7 +42,12 @@ HIDMap : Radicles {
 		hidNodes.do{|item, index| if( item.includes(ndef) and: {item.includes(key)}, //entry holds this Ndef and argument
 			{
 				value ?? {value = hidNodes[index][3]};
-				(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ value.cs ++ ");").radcode;
+				//a strip's volume goes back as a short smooth move
+				if(key == \volume and: { Radicles.aZ.notNil } and: { RadUnit.stripNames.includes(ndef.key) }, {
+					(ndef.cs ++ ".set(" ++ Radicles.aZ.volumeArgs(ndef, value.cs, Assemblage.shortLag) ++ ");").radcode;
+				}, {
+					(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ value.cs ++ ");").radcode;
+				});
 				(this.getHIDType(hidInfoArr[index][2]).split($.)[0] ++ "(" ++ hidNodes[index][0] ++
 					").free;").radcode;
 				hidNodes.removeAt(index);

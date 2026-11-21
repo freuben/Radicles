@@ -19,8 +19,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		RadUnit.syncAll(this); //document (step 1): a new mixer starts with no effects
 		server.waitForBoot{
 			{
-				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
-					(\in * volume.dbamp.lag(lagTime)
+				//the volume moves as a steady fader move (see addTrack)
+				masterSynth = {arg volume=0, lagTime=0.05, mute=0, off=0, ramp=0.05;
+					(\in * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
 						*mute.linlin(0,1,1,0).lag(0.1)
 						*off.linlin(0,1,1,0)
 				)};
@@ -134,8 +135,19 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			trackInSynth = {arg trim=0, lagTime=0;
 				(\in * trim.dbamp.lag(lagTime) )};
 			trackInSpecs = [ ['trim', [-23, 23] ], ['lagTime', [0, 10] ] ];
-			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
-				(\in * volume.dbamp.lag(lagTime)
+			//the volume moves as a steady fader move (mixer ramps, Nov 2026): the
+			//dB value becomes a fader position (the volume spec's scale: amplitude
+			//is the position squared, the bottom is silence), the position moves
+			//evenly over 'ramp' seconds, and is squared again. 'ramp' is the time
+			//of the move under way, sent with the value when it differs
+			//(Assemblage:volumeArgs); 'lagTime' is the strip's own time for typed
+			//values (vollag). The linear VarLag, not its default form or an
+			//EnvGen: those miss a value that arrives one control block after
+			//another and flatten a modulator. The time is never below one
+			//control block (VarLag divides by it), and it must not change on a
+			//running synth without a new value: VarLag then overshoots.
+			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+				(\in * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
 					*mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )} };
 			trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ], ['lagTime', [0, 10] ],
 				['mute', [0, 1] ], ['solo', [0,1] ] ];

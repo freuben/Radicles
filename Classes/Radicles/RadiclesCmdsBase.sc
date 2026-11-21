@@ -407,6 +407,15 @@
 				Radicles.document;
 			}, "open SC document");
 
+			//ctllag: the short time the mixer's faders and knobs and mapped
+			//controls (MIDI, HID, OSC) move a value over; ctllag alone posts it
+			cW.add(\ctllag, [\str], {|str1|
+				Radicles.ctlLag.radpostwarn;
+			}, "ctllag: (posts the time of moves by hand)");
+			cW.add(\ctllag, [\str, \num], {|str1, num1|
+				("Radicles.ctlLag = " ++ num1.max(0) ++ ";").radcode;
+			}, "ctllag: time (moves by the mixer window and mapped controls)");
+
 			cW.add(\fade, [\str], {|str1|
 				Radicles.fadeTime.radpostwarn;
 			}, "fade: fadeTime");

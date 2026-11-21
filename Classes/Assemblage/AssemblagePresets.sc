@@ -561,7 +561,8 @@
 		addFunc, newArr, hasMod2, hasModFunc;
 		addFunc = {arg presetArr;
 			presetArr[1].do{|item, index|
-				item[1].do{|it|
+				//not 'ramp': the time of the strip's last move is not a setting
+				item[1].reject{|it| it[0] == \ramp }.do{|it|
 					if(it[1].isNumber.not, {
 						/*it[1][0].postln;*/
 						if(it[1][0].cs.find("mod").notNil, {

@@ -53,7 +53,8 @@
 			pan: pan[0]);
 		//vollag sets the volume's lagTime; trimlag and panlag set the Ndefs'
 		//own lags (NodeProxy:lag)
-		if((level[0][\lagTime] ? 0) != 0, { lags[\volume] = level[0][\lagTime] });
+		//(the volume's is its typed time, kept when it is not the short default)
+		if((level[0][\lagTime] ? Assemblage.shortLag) != Assemblage.shortLag, { lags[\volume] = level[0][\lagTime] });
 		this.prNdefLag(Ndef(inKey), \trim) !? {|lag| lags[\trim] = lag };
 		if(lags[\trim].isNil and: { (trim[0][\lagTime] ? 0) != 0 }, { lags[\trim] = trim[0][\lagTime] });
 		pan[0].keys.do{|key|

@@ -2,6 +2,7 @@
 == radpost ==
 Ndef('mod2', {arg freq=0.1, phase=0, mul=1, add=0;
     SinOsc.ar(freq, phase, mul).range(-90.0, 6.0) + add});
+Ndef('track2').nodeMap.set('ramp', 0);
 Ndef('track2').xset('volume', Ndef('mod2'));
 Ndef('busIn1', {arg vol1 = -inf, lag1 = 0, vol2 = -inf, lag2 = 0; [Ndef.ar('track1', 1)*vol1.dbamp.lag(lag1), Ndef.ar('track2', 1)*vol2.dbamp.lag(lag2); ].sum});
 Ndef('busIn1').set('vol1', -10, 'lag1', 2);

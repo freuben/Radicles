@@ -659,8 +659,9 @@
 				sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString);
 				//the fader moved during a whole-track fade-out stops that load
 				RadUnit.volumeSetOnStrip(mixTrackNames[index]);
-				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
-					volSpec.map(val.value) ++ ");").radcode(\radpostcont);
+				//the hand is the ramp: the short native time, not the strip's own
+				(mixTrackNdefs[index].cs ++ ".set(" ++ this.volumeArgs(mixTrackNdefs[index],
+					volSpec.map(val.value), Radicles.ctlLag) ++ ");").radcode(\radpostcont);
 		});  };
 
 		setVolSlider = {|index, value|

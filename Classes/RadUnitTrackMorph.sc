@@ -306,7 +306,7 @@
 
 	*prGlideStripValues {|type, num, track, time, restores, subs, az, shape = \glide|
 		var name = this.stripName(type, num), inKey, key, spaceKey, current, curMods, tgtMods, left = [];
-		var pan, panKeys, panDefaults, curLags, tgtLags, trimLag, volMoved = false, xfade = shape != \glide;
+		var pan, panKeys, panDefaults, curLags, tgtLags, trimLag, xfade = shape != \glide;
 		//a crossfade: the stage's fade time is the load's while it runs
 		var hold = {|stage|
 			Radicles.holdFade(stage, time);
@@ -332,7 +332,8 @@
 					restores.add({ ("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ trimLag.cs ++ ");").radcode(\radpostcont) });
 				});
 			});
-		// volume: its lagTime is the load's time, then the preset's volume lag
+		// volume: one steady move over the load's time (the strip's own time,
+		// vollag, is not used by it; the preset's is set below)
 		this.prApplyArgsMods(Ndef(key), (args: (volume: current[\volume]), mods: curMods[\volume] !? {|m| (volume: m) } ? ()),
 			(args: (volume: track[\volume] ? 0), mods: tgtMods[\volume] !? {|m| (volume: m) } ? ()),
 			{|ndef, pairs|
@@ -340,15 +341,12 @@
 					hold.(key);
 					("Ndef(" ++ key.cs ++ ").xset('volume', " ++ pairs[1].cs ++ ");").radcode;
 				}, {
-					volMoved = true;
 					az.setVolume(type, num, pairs[1], time);
-					restores.add({ az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
 				});
 			});
-		//a volume that doesn't change still takes the preset's lag at the end
-		if(volMoved.not and: { (curLags[\volume] ? 0) != (tgtLags[\volume] ? 0) }, {
-			restores.add({ az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
-		});
+		//the preset's own volume time
+		if((curLags[\volume] ? Assemblage.shortLag) != (tgtLags[\volume] ? Assemblage.shortLag), {
+			az.setVolumeLag(type, num, tgtLags[\volume] ? Assemblage.shortLag) });
 		if((curLags[\trim] ? 0) != (tgtLags[\trim] ? 0), { az.setTrimLag(type, num, tgtLags[\trim] ? 0) });
 		// pan: the panner's own lag (NodeProxy:lag rebuilds the panner, so the
 		// values change once the old copy has faded out), then the preset's

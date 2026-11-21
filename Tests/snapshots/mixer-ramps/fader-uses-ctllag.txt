@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('track1').set('volume', -6.04, 'ramp', 0.05);
+
