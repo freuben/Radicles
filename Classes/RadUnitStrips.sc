@@ -55,8 +55,7 @@
 		//own lags (NodeProxy:lag)
 		//(the volume's is its typed time, kept when it is not the short default)
 		if((level[0][\lagTime] ? Assemblage.shortLag) != Assemblage.shortLag, { lags[\volume] = level[0][\lagTime] });
-		this.prNdefLag(Ndef(inKey), \trim) !? {|lag| lags[\trim] = lag };
-		if(lags[\trim].isNil and: { (trim[0][\lagTime] ? 0) != 0 }, { lags[\trim] = trim[0][\lagTime] });
+		if((trim[0][\lagTime] ? Assemblage.shortLag) != Assemblage.shortLag, { lags[\trim] = trim[0][\lagTime] });
 		pan[0].keys.do{|key|
 			this.prNdefLag(Ndef(spaceKey), key) !? {|lag|
 				lags[\pan] = (lags[\pan] ? ()).put(key, lag) } };
@@ -109,7 +108,7 @@
 					lagKey = ("lag" ++ (index + 1)).asSymbol;
 					read = this.readArgs(Ndef(busTag), [volKey, lagKey]);
 					send = (level: read[0][volKey] ? -inf);
-					if((read[0][lagKey] ? 0) != 0, { send[\lag] = read[0][lagKey] });
+					if((read[0][lagKey] ? Assemblage.shortLag) != Assemblage.shortLag, { send[\lag] = read[0][lagKey] });
 					read[1][volKey] !? {|mod| send[\mod] = mod };
 					sends[("bus" ++ busTag.asString.divNumStr[1]).asSymbol] = send;
 				});

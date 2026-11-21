@@ -438,8 +438,8 @@
 			inKnob.centered_(true).srcAction = {|knob| var thisKey, thisSpec;
 				thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 				thisSpec = this.getSpec(thisKey, \trim).asSpec;
-				("Ndef(" ++ thisKey.cs ++ ").set('trim', " ++
-					thisSpec.map(knob.value) ++ ");").radcode(\radpostcont);
+				("Ndef(" ++ thisKey.cs ++ ").set(" ++ this.rampArgs(Ndef(thisKey), \trim,
+					thisSpec.map(knob.value), Radicles.ctlLag) ++ ");").radcode(\radpostcont);
 			};
 			inKnobArr = inKnobArr.add(inKnob);
 
@@ -767,8 +767,9 @@
 				});
 				it.value = thisSpec.unmap( selValue );
 				it.srcAction = {|val|
-					("Ndef(" ++ thisKey.cs ++ ").set(" ++ selArg.cs ++
-						", " ++ thisSpec.map(val.value) ++ ");").radcode(\radpostcont);
+					("Ndef(" ++ thisKey.cs ++ ").set(" ++ this.rampArgs(Ndef(thisKey), selArg,
+						thisSpec.map(val.value), Radicles.ctlLag, Assemblage.rampKey(Ndef(thisKey), selArg) ? \ramp)
+						++ ");").radcode(\radpostcont);
 				};
 			});
 		};

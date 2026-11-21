@@ -52,8 +52,8 @@ Ndef('bus1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
 Ndef('bus2', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('inBus2', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
-Ndef('inMaster', {arg trim=0, lagTime=0;
-                ([Ndef.ar('spaceTrack1', 4), Ndef.ar('spaceTrack2', 4), Ndef.ar('spaceBus1', 4), Ndef.ar('spaceBus2', 4)].sum * trim.dbamp.lag(lagTime) )});
+Ndef('inMaster', {arg trim=0, lagTime=0.05, ramp=0.05;
+                ([Ndef.ar('spaceTrack1', 4), Ndef.ar('spaceTrack2', 4), Ndef.ar('spaceBus1', 4), Ndef.ar('spaceBus2', 4)].sum * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
 Ndef('inMaster').set('trim', 0);
 Ndef('spaceMaster', {arg dirmul=1;
     var  sig;
@@ -78,11 +78,11 @@ Ndef('spaceMaster').play;
 Ndef('block1').fadeTime = 0.5;
 Ndef.ar('block2', 1);
 Ndef('block2').fadeTime = 0.5;
-Ndef('inTrack1', {arg trim=0, lagTime=0;
-                (Ndef.ar('block1', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack1', {arg trim=0, lagTime=0.05, ramp=0.05;
+                (Ndef.ar('block1', 1) * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
 Ndef('inTrack1').set('trim', 0);
-Ndef('inTrack2', {arg trim=0, lagTime=0;
-                (Ndef.ar('block2', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack2', {arg trim=0, lagTime=0.05, ramp=0.05;
+                (Ndef.ar('block2', 1) * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
 Ndef('inTrack2').set('trim', 0);
 == radpostcont ==
 (none)

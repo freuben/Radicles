@@ -1,7 +1,7 @@
 # Mixer moves: ramps, typed time and native time
 
 Status: **decided with Federico on 20 Nov 2026 and being built** in four PRs
-(see "Planned PRs"; the first, volume, comes with this note). Lags on blocks
+(see "Planned PRs": volume is #122, trim and sends follow it). Lags on blocks
 and effects are not covered: that is a separate conversation.
 
 ## The idea
@@ -152,7 +152,10 @@ to be judged by ear.
    `ctllag`; a modulator on the volume sets its time to 0; `glide` in `tload`
    for the volume. The strip's posted function changes, so about 150
    snapshots change by one line.
-2. **Trim and sends:** the same, with `sndlag`.
+2. **Trim and sends:** the same, with `sndlag` (`sndlag t 1 2 4`: track,
+   send slot, time; slot 1 when left out). `trimlag` no longer rebuilds the
+   strip's input. A time typed with `sndset` is for that one move (decision
+   5), so it no longer sticks to the send.
 3. **Pan:** the ramp on every panner control; `panxlag` removed.
 4. **`mixlag`,** the typed time with a value (once its form is decided), and
    what a session keeps.

@@ -383,7 +383,8 @@
 		tgtLags = if(track[\default] == true, { () }, { track[\lags] ? () });
 		if((curLags[\volume] ? Assemblage.shortLag) != (tgtLags[\volume] ? Assemblage.shortLag), {
 			az.setVolumeLag(type, num, tgtLags[\volume] ? Assemblage.shortLag) });
-		if((curLags[\trim] ? 0) != (tgtLags[\trim] ? 0), { az.setTrimLag(type, num, tgtLags[\trim] ? 0) });
+		if((curLags[\trim] ? Assemblage.shortLag) != (tgtLags[\trim] ? Assemblage.shortLag), {
+			az.setTrimLag(type, num, tgtLags[\trim] ? Assemblage.shortLag) });
 		panKeys.do{|k|
 			var cur = (curLags[\pan] ? ())[k] ? 0, tgt = (tgtLags[\pan] ? ())[k] ? 0, keys;
 			if(cur != tgt, {
@@ -451,11 +452,12 @@
 						this.prUnmodSend(type, num, busNum.(bus), sends, az);
 						cur.removeAt(\mod);
 					});
-					if((cur[\lag] ? 0) != (send[\lag] ? 0) or: {
-						send[\mod].isNil and: { RadDoc.diff((v: cur[\level]), (v: send[\level] ? -inf)).notEmpty } }, {
-						az.setSendKnob(type, num, this.prSendSlot(type, num, busNum.(bus), az),
-							send[\level] ? -inf, send[\lag] ? 0);
+					if(send[\mod].isNil and: { RadDoc.diff((v: cur[\level]), (v: send[\level] ? -inf)).notEmpty }, {
+						az.setSendKnob(type, num, this.prSendSlot(type, num, busNum.(bus), az), send[\level] ? -inf);
 					});
+					//the send's own time after its level, as for trim and volume:
+					//the level moves over the time the send has now
+					this.prSendLag(type, num, busNum.(bus), cur, send, az);
 					if(send[\mod].notNil and: { cur[\mod].isNil }, {
 						this.prModSend(type, num, busNum.(bus), keys, send, az);
 					});
@@ -464,6 +466,12 @@
 		};
 		Server.default.sync;
 		^left
+	}
+
+	// a send's own time for typed values (sndlag), when the preset's differs
+	*prSendLag {|type, num, bus, cur, send, az|
+		if((cur[\lag] ? Assemblage.shortLag) != (send[\lag] ? Assemblage.shortLag), {
+			az.setSendVolLag(type, num, bus, send[\lag] ? Assemblage.shortLag) });
 	}
 
 	// take a send's modulator off, the level going to the preset's (or -inf)

@@ -6,7 +6,7 @@ Ndef('track1').set('lagTime', 2);
 
 >> trimlag t 2 0.5
 == radpost ==
-Ndef('inTrack2').lag('trim', 0.5);
+Ndef('inTrack2').set('lagTime', 0.5);
 == radpostcont ==
 (none)
 

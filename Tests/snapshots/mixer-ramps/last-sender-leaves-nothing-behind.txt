@@ -1,0 +1,26 @@
+>> snd t 1 1 0
+== radpost ==
+Ndef('busIn1').source = nil;
+Ndef('busIn1').nodeMap.set('vol1', nil, 'lag1', nil, 'ramp1', nil);
+Ndef('inBus1').source = nil;
+== radpostcont ==
+(none)
+
+>> snd t 2 1 1 -20
+== radpost ==
+Ndef.ar('busIn1', 1);
+Ndef('busIn1').fadeTime = 0.5;
+Ndef('inBus1', {arg trim=0, lagTime=0.05, ramp=0.05;
+                (Ndef.ar('busIn1', 1) * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
+Ndef('inBus1').set('trim', 0);
+Ndef('busIn1', {arg vol1 = -inf, lag1 = 0.05, ramp1 = 0.05; Ndef.ar('track2', 1)*(VarLag.kr((vol1.dbamp / 6.dbamp).sqrt, ramp1.max(ControlDur.ir), warp: \lin).squared * 6.dbamp); });
+Ndef('busIn1').set('vol1', -20);
+== radpostcont ==
+(none)
+
+>> sndset t 2 1 -15
+== radpost ==
+Ndef('busIn1').set('vol1', -15);
+== radpostcont ==
+(none)
+

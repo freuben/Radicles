@@ -145,7 +145,7 @@
 
 // a send's lag and modulator come back
 ~radTest.("track-load-send-lag-and-mod",
-	setup: ["start 2 1", "snd t 1 1 1 -6", "sndset t 1 1 -10 2", "vol t 1 sin", "tsave t 1 radtest_track7"],
+	setup: ["start 2 1", "snd t 1 1 1 -6", "sndlag t 1 1 2", "sndset t 1 1 -10", "vol t 1 sin", "tsave t 1 radtest_track7"],
 	cmds: [["tload t 2 radtest_track7", 8]],
 	check: {
 		var two = ~radStripNow.(\track2);

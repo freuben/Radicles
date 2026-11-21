@@ -2,12 +2,15 @@
 == radpost ==
 Ndef('mod1', {arg freq=0.1, phase=0, mul=1, add=0;
     SinOsc.ar(freq, phase, mul).range(-23.0, 23.0) + add});
+Ndef('inTrack1').nodeMap.set('ramp', 0);
 Ndef('inTrack1').xset('trim', Ndef('mod1'));
 Ndef('mod2', {arg freq=0.1, phase=0, mul=1, add=0;
     SinOsc.ar(freq, phase, mul).range(-23.0, 23.0) + add});
+Ndef('inTrack2').nodeMap.set('ramp', 0);
 Ndef('inTrack2').xset('trim', Ndef('mod2'));
 Ndef('mod3', {arg freq=0.1, phase=0, mul=1, add=0;
     SinOsc.ar(freq, phase, mul).range(-23.0, 23.0) + add});
+Ndef('inTrack3').nodeMap.set('ramp', 0);
 Ndef('inTrack3').xset('trim', Ndef('mod3'));
 == radpostcont ==
 (none)

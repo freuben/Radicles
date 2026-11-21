@@ -15,21 +15,22 @@
 
 // with glide the values glide over the time: the volume as one steady move
 // (its 'ramp' is the load's time; the strip's own time, vollag, is not
-// touched), the trim and sends by their lags, which then come back (without
-// the word they crossfade: load-transition.scd)
+// touched), and the trim and sends the same (without the word they
+// crossfade: load-transition.scd)
 ~radTest.("tmorph-values-glide",
 	setup: ["start 2 1", "vol t 2 -6", "pan t 2 0.5", "trim t 2 3", "snd t 2 1 1 -9",
 		"tsave t 2 radtest_tm1", "vol t 1 -20"],
 	code: {
 		~radCmd.("tload t 1 radtest_tm1 3 glide", 1);
-		~radMid = [Ndef(\track1).get(\ramp), Ndef(\inTrack1).get(\lagTime), ~radStripNow.(\track1)[\sends], Ndef(\track1).get(\lagTime)];
+		~radMid = [Ndef(\track1).get(\ramp), Ndef(\inTrack1).get(\ramp), ~radStripNow.(\track1)[\sends], Ndef(\track1).get(\lagTime),
+			Ndef(\inTrack1).get(\lagTime), Ndef(\busIn1).get(\ramp2)];
 		4.wait;
 		~radEnd = ~radStripNow.(\track1);
 	},
 	check: {
 		case
-		{ ~radMid[0] != 3 or: { ~radMid[1] != 3 } or: { ~radMid[3] != 0.05 } } { "times during the morph: " ++ ~radMid.cs }
-		{ ~radMid[2].isNil or: { ~radMid[2][\bus1][\lag] != 3 } } { "send during the morph: " ++ ~radMid[2].cs }
+		{ ~radMid[0] != 3 or: { ~radMid[1] != 3 } or: { ~radMid[3] != 0.05 } or: { ~radMid[4] != 0.05 } } { "times during the morph: " ++ ~radMid.cs }
+		{ ~radMid[2].isNil or: { ~radMid[2][\bus1][\lag].notNil } or: { ~radMid[5] != 3 } } { "send during the morph: " ++ ~radMid.cs }
 		{ [~radEnd[\volume], ~radEnd[\pan], ~radEnd[\trim]] != [-6, (pan: 0.5), 3] } { "values: " ++ ~radEnd.cs }
 		{ ~radEnd[\lags].notNil } { "lags after: " ++ ~radEnd[\lags].cs }
 		{ ~radEnd[\sends] != (bus1: (level: -9)) } { "sends after: " ++ ~radEnd[\sends].cs }

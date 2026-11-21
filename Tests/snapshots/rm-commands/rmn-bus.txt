@@ -3,13 +3,13 @@
 Ndef('inBus3').clear(0.5);
 Ndef('bus3').clear(0.5);
 Ndef('spaceBus3').clear(0.5);
-Ndef('inMaster').source = {arg trim=0, lagTime=0;
-                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('inMaster').source = {arg trim=0, lagTime=0.05, ramp=0.05;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )}
 Ndef('inBus2').clear(0.5);
 Ndef('bus2').clear(0.5);
 Ndef('spaceBus2').clear(0.5);
-Ndef('inMaster').source = {arg trim=0, lagTime=0;
-                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('inMaster').source = {arg trim=0, lagTime=0.05, ramp=0.05;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )}
 == radpostcont ==
 (none)
 

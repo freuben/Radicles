@@ -6,11 +6,11 @@
 // another, so the usual line is still set('volume', x).
 
 ~radMrCtl = {|key| Radicles.aZ.stripControl(Ndef(\track1), key) };
-// the level of track 1's output, read from the server
-~radMrLevel = {
+// the level of a strip's output (track 1's when none is named), read from the server
+~radMrLevel = {|key = \track1|
 	var bus = Bus.control(Server.default, 1), value, cond = Condition.new, synth;
 	//the RMS over the last 0.1 s (a follower ripples with the sine)
-	synth = { Out.kr(bus, A2K.kr((RunningSum.ar(InFeedback.ar(Ndef(\track1).bus.index, 1).squared, 4800) / 4800).sqrt)) }.play;
+	synth = { Out.kr(bus, A2K.kr((RunningSum.ar(InFeedback.ar(Ndef(key).bus.index, 1).squared, 4800) / 4800).sqrt)) }.play;
 	0.3.wait;
 	bus.get{|v| value = v; cond.unhang };
 	cond.hang;
@@ -164,6 +164,176 @@
 		case
 		{ ~radMrMod.isNaN or: { ~radMrMod.abs == inf } or: { ~radMrMod > 2 } } { "the level with the modulator: " ++ ~radMrMod }
 		{ ~radMrSame.notNil } { "a time was sent with a value the strip already had: " ++ ~radMrSame }
+		{ true }
+	}
+);
+
+// ---- trim and sends (part 2) ----
+// A strip's trim moves evenly in dB over the strip's own time (trimlag); a
+// send's level is a steady fader move over the send's own time (sndlag). A
+// time typed with sndset is for that move only.
+
+~radMrIn = {|key| Radicles.aZ.stripControl(Ndef(\inTrack1), key) };
+~radMrSend = {|key| Ndef(\busIn1).nodeMap.at(key) };
+
+// trimlag is the strip's own time for typed trims, kept as a control of the
+// strip (it used to rebuild the strip's input with Ndef.lag)
+~radTest.("trimlag-is-the-typed-time",
+	setup: ["start 2"],
+	cmds: ["trim t 1 3", "trimlag t 1 2", "trim t 1 -3", "trim t 1 0"],
+	check: {
+		var one = RadUnit.readStrip(\track1);
+		case
+		{ ~radMrIn.(\lagTime) != 2 or: { ~radMrIn.(\ramp) != 2 } } { "lagTime " ++ ~radMrIn.(\lagTime) ++ ", ramp " ++ ~radMrIn.(\ramp) }
+		{ RadUnit.prNdefLag(Ndef(\inTrack1), \trim).notNil } { "the input was given an Ndef lag" }
+		{ (one[\lags] ? ())[\trim] != 2 } { "document: " ++ one[\lags].cs }
+		{ true }
+	}
+);
+
+// the sound: trim 0 to -20 dB over 2 s is even in dB. Half way it is at
+// -10 dB (0.32 of the amplitude); at the end at -20 dB (0.1).
+~radTest.("trim-is-even-in-db",
+	setup: ["start 2", "blk 1 sine"],
+	code: {
+		1.wait;
+		~radMrFull = ~radMrLevel.();
+		Radicles.aZ.setTrim(\track, 1, -20, 2);
+		0.9.wait;
+		~radMrHalf = ~radMrLevel.();
+		1.2.wait;
+		~radMrEnd = ~radMrLevel.() },
+	check: {
+		var half = ~radMrHalf / ~radMrFull.max(0.000001), end = ~radMrEnd / ~radMrFull.max(0.000001);
+		case
+		{ ~radMrFull < 0.001 } { "no sound to measure: " ++ ~radMrFull }
+		{ half < 0.24 or: { half > 0.42 } } { "half way the level is " ++ half.round(0.01) ++ " of full (even in dB: 0.32)" }
+		{ (end - 0.1).abs > 0.02 } { "at the end " ++ end.round(0.01) ++ " of full (-20 dB: 0.1)" }
+		{ ~radMrIn.(\lagTime) != 0.05 } { "the time stuck to the strip: " ++ ~radMrIn.(\lagTime) }
+		{ true }
+	},
+	noWarnings: true
+);
+
+// a time typed with sndset is for that move only: the next plain sndset
+// moves over the send's own time, and no time is kept
+~radTest.("sndset-time-is-one-move",
+	setup: ["start 2 1", ["snd t 1 1 1 -6", 2]],
+	cmds: ["sndset t 1 1 -12 3", "sndset t 1 1 -9"],
+	check: {
+		var send = (RadUnit.readSends(\track1) ? ())[\bus1] ? ();
+		case
+		{ ~radMrSend.(\vol1) != -9 } { "level " ++ ~radMrSend.(\vol1) }
+		{ ~radMrSend.(\ramp1) != 0.05 } { "the next sndset moved over " ++ ~radMrSend.(\ramp1) }
+		{ send[\lag].notNil } { "the time stuck: " ++ send.cs }
+		{ true }
+	}
+);
+
+// sndlag is the send's own time for typed values
+~radTest.("sndlag-is-the-typed-time",
+	setup: ["start 2 1", ["snd t 1 1 1 -6", 2]],
+	cmds: ["sndlag t 1 1 2", "sndset t 1 1 -12", "sndlag t 2 1 5", "sndlag t 1 3 5"],
+	check: {
+		var send = (RadUnit.readSends(\track1) ? ())[\bus1] ? ();
+		case
+		{ ~radMrSend.(\lag1) != 2 or: { ~radMrSend.(\ramp1) != 2 } } { "lag1 " ++ ~radMrSend.(\lag1) ++ ", ramp1 " ++ ~radMrSend.(\ramp1) }
+		{ send[\lag] != 2 } { "document: " ++ send.cs }
+		{ true }
+	}
+);
+
+// the sound: a send from 0 dB to silence over 2 s is a steady fader move,
+// as the volume is (a quarter of the amplitude half way)
+~radTest.("send-is-a-steady-fader-move",
+	setup: ["start 2 1", "blk 1 sine", ["snd t 1 1 1 0", 2]],
+	code: {
+		1.wait;
+		~radMrFull = ~radMrLevel.(\bus1);
+		Radicles.aZ.setSendKnob(\track, 1, 1, -inf, 2);
+		0.9.wait;
+		~radMrHalf = ~radMrLevel.(\bus1);
+		1.2.wait;
+		~radMrEnd = ~radMrLevel.(\bus1) },
+	check: {
+		var half = ~radMrHalf / ~radMrFull.max(0.000001);
+		case
+		{ ~radMrFull < 0.001 } { "no sound to measure: " ++ ~radMrFull }
+		{ half < 0.15 or: { half > 0.4 } } { "half way the level is " ++ half.round(0.01) ++ " of full (a steady fader move: 0.25)" }
+		{ ~radMrEnd > (~radMrFull * 0.01) } { "not silent at the end: " ++ (~radMrEnd / ~radMrFull).round(0.001) }
+		{ true }
+	},
+	noWarnings: true
+);
+
+// mapped controls on a trim and on a send move over the native time,
+// whatever the typed times are
+~radTest.("mapped-trim-and-send-use-ctllag",
+	setup: ["start 2 1", ["snd t 1 1 1 -6", 2], "trimlag t 1 2", "trim t 1 3", "sndlag t 1 1 2", "sndset t 1 1 -12"],
+	code: {
+		HIDMap.map(Ndef('inTrack1'), \trim, \osc, [-20, 20], ['/radtestmrtrim']);
+		HIDMap.map(Ndef('busIn1'), \vol1, \osc, [-60, 0], ['/radtestmrsnd']);
+		0.2.wait;
+		NetAddr.localAddr.sendMsg('/radtestmrtrim', 0.75);
+		NetAddr.localAddr.sendMsg('/radtestmrsnd', 0.5); 0.5.wait },
+	check: {
+		case
+		{ ~radMrIn.(\trim) != 10 } { "trim " ++ ~radMrIn.(\trim) }
+		{ ~radMrIn.(\ramp) != 0.05 } { "the trim moved over " ++ ~radMrIn.(\ramp) }
+		{ ~radMrSend.(\vol1) != -30 } { "send " ++ ~radMrSend.(\vol1) }
+		{ ~radMrSend.(\ramp1) != 0.05 } { "the send moved over " ++ ~radMrSend.(\ramp1) }
+		{ ~radMrIn.(\lagTime) != 2 or: { ~radMrSend.(\lag1) != 2 } } { "a typed time changed: " ++ [~radMrIn.(\lagTime), ~radMrSend.(\lag1)].cs }
+		{ true }
+	},
+	teardown: { OSCdef.freeAll }
+);
+
+// a modulator on a trim or on a send takes that ramp off too
+~radTest.("modulator-takes-trim-and-send-ramps-off",
+	setup: ["start 2 1", ["snd t 1 1 1 -6", 2]],
+	cmds: [["trim t 1 sin", 2], ["sndset t 1 1 sin", 2]],
+	check: { (~radMrIn.(\ramp) == 0 and: { ~radMrSend.(\ramp1) == 0 }) or: { "ramps " ++ [~radMrIn.(\ramp), ~radMrSend.(\ramp1)].cs } }
+);
+
+// when a sender leaves a bus, the senders after it move up a place: their
+// own times and the time of their last move go with them
+~radTest.("send-renumbered-keeps-its-time",
+	setup: ["start 3 1", ["snd t 1 1 1 -6", 2], ["snd t 2 1 1 -12", 2], "sndlag t 2 1 2", "sndset t 2 1 -15"],
+	cmds: [["snd t 1 1 0", 3]],
+	check: {
+		case
+		{ ~radMrSend.(\vol1) != -15 } { "track 2's level is " ++ ~radMrSend.(\vol1) }
+		{ ~radMrSend.(\lag1) != 2 or: { ~radMrSend.(\ramp1) != 2 } } { "lag1 " ++ ~radMrSend.(\lag1) ++ ", ramp1 " ++ ~radMrSend.(\ramp1) }
+		{ ~radMrSend.(\lag2).notNil or: { ~radMrSend.(\ramp2).notNil } } { "the place left over kept " ++ [~radMrSend.(\lag2), ~radMrSend.(\ramp2)].cs }
+		{ true }
+	}
+);
+
+// snd on a send that is already there is a typed move too: over the send's
+// own time, not the time of its last move
+~radTest.("snd-again-uses-the-sends-time",
+	setup: ["start 2 1", ["snd t 1 1 1 -6", 2], ["sndset t 1 1 -12 3", 0.5]],
+	cmds: [["snd t 1 1 1 -9", 2]],
+	check: {
+		case
+		{ ~radMrSend.(\vol1) != -9 } { "level " ++ ~radMrSend.(\vol1) }
+		{ ~radMrSend.(\ramp1) != 0.05 } { "snd moved over " ++ ~radMrSend.(\ramp1) }
+		{ true }
+	}
+);
+
+// when the last sender leaves a bus its level and times go with it: the next
+// sender starts from the defaults
+~radTest.("last-sender-leaves-nothing-behind",
+	setup: ["start 2 1", ["snd t 1 1 1 -6", 2], "sndlag t 1 1 2", "sndset t 1 1 -12"],
+	cmds: [["snd t 1 1 0", 3], ["snd t 2 1 1 -20", 2], "sndset t 2 1 -15"],
+	check: {
+		var send = (RadUnit.readSends(\track2) ? ())[\bus1] ? ();
+		case
+		{ ~radMrSend.(\vol1) != -15 } { "track 2's level is " ++ ~radMrSend.(\vol1) }
+		{ ~radMrSend.(\lag1).notNil and: { ~radMrSend.(\lag1) != 0.05 } } { "track 2 took over track 1's sndlag: " ++ ~radMrSend.(\lag1) }
+		{ ~radMrSend.(\ramp1).notNil and: { ~radMrSend.(\ramp1) != 0.05 } } { "track 2 moved over " ++ ~radMrSend.(\ramp1) }
+		{ send[\lag].notNil } { "document: " ++ send.cs }
 		{ true }
 	}
 );

@@ -1,0 +1,24 @@
+>> trim t 1 3
+== radpost ==
+Ndef('inTrack1').set('trim', 3);
+== radpostcont ==
+(none)
+
+>> trimlag t 1 2
+== radpost ==
+Ndef('inTrack1').set('lagTime', 2);
+== radpostcont ==
+(none)
+
+>> trim t 1 -3
+== radpost ==
+Ndef('inTrack1').set('trim', -3, 'ramp', 2);
+== radpostcont ==
+(none)
+
+>> trim t 1 0
+== radpost ==
+Ndef('inTrack1').set('trim', 0);
+== radpostcont ==
+(none)
+

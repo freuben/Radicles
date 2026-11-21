@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+(none)
+== radpostcont ==
+Ndef('busIn1').set('vol1', -inf, 'ramp1', 2);
+

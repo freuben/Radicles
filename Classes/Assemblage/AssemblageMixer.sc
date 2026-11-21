@@ -184,8 +184,27 @@
 	// Radicles.ctlLag. Not with a value the strip already has: a new time
 	// without a new value makes the ramp overshoot (see addTrack).
 	volumeArgs {arg ndef, value, time;
-		^"'volume', " ++ value ++ if(this.stripControl(ndef, \ramp) != time and: { ndef.nodeMap.at(\volume) != value },
-			{ ", 'ramp', " ++ time }, { "" })
+		^this.rampArgs(ndef, \volume, value, time)
+	}
+
+	// the same for any control that moves by a ramp: a strip's trim (rampKey
+	// 'ramp' on its input) and a send's level (volN with rampN on the bus's
+	// input)
+	rampArgs {arg ndef, key, value, time, rampKey=\ramp;
+		^key.cs ++ ", " ++ value ++ if(this.stripControl(ndef, rampKey) != time and: { ndef.nodeMap.at(key) != value },
+			{ ", " ++ rampKey.cs ++ ", " ++ time }, { "" })
+	}
+
+	// the control that holds the ramp's time for a mixer control, or nil when
+	// the control does not move by a ramp: 'ramp' for a strip's volume and
+	// trim, rampN for a send's volN
+	*rampKey {arg ndef, key;
+		var name = key.asString, rampKey;
+		rampKey = case
+		{ key == \volume or: { key == \trim } } { \ramp }
+		{ name.size > 3 and: { name.beginsWith("vol") } and: { name.drop(3).every(_.isDecDigit) } } {
+			("ramp" ++ name.drop(3)).asSymbol };
+		^if(rampKey.notNil and: { ndef.controlKeys.includes(rampKey) }, { rampKey }, { nil })
 	}
 
 	setVolumeLag {arg trackType=\track, trackNum=1, lag=0;
@@ -208,9 +227,12 @@
 				keyVal.key}.indexOf(trackLb) + 1);
 			selArg = ("vol" ++ getBusInNum).asSymbol;
 			lagArg = ("lag" ++ getBusInNum).asSymbol;
-			thisFunc = {|vol, lag|
-				("Ndef(" ++ thisKey.cs ++ ").set(" ++ selArg.cs ++
-					", " ++ vol ++ ", " ++ lagArg.cs ++ ", " ++ lag ++ ");").radcode(\radpostcont);
+			//over time seconds when one is given (for this move only), else
+			//over the send's own time (sndlag)
+			thisFunc = {|vol, time|
+				("Ndef(" ++ thisKey.cs ++ ").set(" ++ this.rampArgs(Ndef(thisKey), selArg, vol,
+					time ?? { this.stripControl(Ndef(thisKey), lagArg) }, ("ramp" ++ getBusInNum).asSymbol)
+					++ ");").radcode(\radpostcont);
 			};
 		});
 		^thisFunc;
@@ -290,7 +312,7 @@
 	//busNum: the bus the slot sends to, when the caller knows it; otherwise it
 	//is looked up from the slot (it used to take the slot number for the bus
 	//number, so snd t 3 1 3 -12 with the mixer open left the level at -inf)
-	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, lagTime=0, db=true, busNum;
+	setSendKnob {arg trackType=\track, trackNum=1, slotNum=1, val=0, lagTime, db=true, busNum;
 		var trackIndex, value, thisResult, thisKey, thisBusKey;
 		busNum = busNum ?? { this.sendSlotBus(trackType, trackNum, slotNum) } ? slotNum;
 		if(db.not, {
@@ -323,30 +345,26 @@
 		});
 	}
 
+	// a send's own time for typed values (sndlag): lagN on the bus's input
 	setSendVolLag {arg trackType=\track, trackNum=1, busNum=1, lag=0;
-		var ndefCS, synthString, thisArr, thisString, thisKey, thisBusKey;
-		thisBusKey = ("busIn" ++ busNum).asSymbol;
-		synthString = Ndef(thisBusKey).source.cs;
-		if(synthString.find("[").notNil, {
-			thisArr = synthString.copyRange(synthString.find("[")+1, synthString.find("]")-1;);
-			thisArr = thisArr.replace("),", ")%");
-			thisArr = thisArr.split($%);
-			thisString = thisArr.select({|item|
-				item.find((trackType.asString ++ trackNum).asSymbol.cs).notNil;
-			})[0];
-		}, {
-			if(synthString.find((trackType.asString ++ trackNum).asSymbol.cs).notNil, {
-				thisString = 	synthString;
-			});
-		});
-		if(thisString.notNil, {
-			thisString = thisString.replace("; ", "").replace("}", "");
-			thisKey = thisString.copyRange(thisString.find(".lag(")+5, thisString.size-2).asSymbol.cs;
-			ndefCS = ("Ndef(" ++ thisBusKey.cs ++
-				").set(" ++ thisKey ++ ", " ++ lag ++ ");");
-			ndefCS.radcode(\radpostcont);
+		var thisBusKey = ("busIn" ++ busNum).asSymbol, index;
+		index = (busArr ? []).detect{|item| item[0] == thisBusKey } !? {|item| item[1] ? [] }
+		!? {|members| members.indexOf(Ndef((trackType.asString ++ trackNum).asSymbol)) };
+		if(index.notNil, {
+			("Ndef(" ++ thisBusKey.cs ++ ").set(" ++ ("lag" ++ (index + 1)).asSymbol.cs ++ ", " ++ lag ++ ");")
+			.radcode(\radpostcont);
 		}, {
 			"Wrong track or bus".warn;
+		});
+	}
+
+	// the same by send slot, as sndset names a send
+	setSendLag {arg trackType=\track, trackNum=1, slotNum=1, lag=0;
+		var busNum = this.sendSlotBus(trackType, trackNum, slotNum);
+		if(busNum.notNil, {
+			this.setSendVolLag(trackType, trackNum, busNum, lag);
+		}, {
+			"No send in this slot".warn;
 		});
 	}
 
@@ -384,7 +402,7 @@
 		});
 	}
 
-	setTrim {arg trackType=\track, trackNum=1, val=0;
+	setTrim {arg trackType=\track, trackNum=1, val=0, lag;
 		var tag, ndefCS, trackKey, symString;
 		if(trackType == \master, {
 			symString = trackType.asString.capitalise;
@@ -392,7 +410,10 @@
 			symString = trackType.asString.capitalise ++ trackNum;
 		});
 		tag = ("in" ++ symString).asSymbol;
-		ndefCS = "Ndef(" ++ tag.cs ++ ").set('trim', " ++ val ++ ");";
+		//over lag seconds when one is given (for this move only), else over
+		//the strip's own time (trimlag)
+		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++ this.rampArgs(Ndef(tag), \trim, val,
+			lag ?? { this.stripControl(Ndef(tag), \lagTime) }) ++ ");";
 		ndefCS.radcode;
 		this.mixWinBool({
 			if(trackType == \master, {
@@ -412,7 +433,7 @@
 			symString = trackType.asString.capitalise ++ trackNum;
 		});
 		tag = ("in" ++ symString).asSymbol;
-		ndefCS = "Ndef(" ++ tag.cs ++ ").lag('trim', " ++ val ++ ");";
+		ndefCS = "Ndef(" ++ tag.cs ++ ").set('lagTime', " ++ val ++ ");";
 		ndefCS.radcode;
 	}
 

@@ -1,6 +1,12 @@
->> sndset t 1 1 -10 2
+>> sndlag t 1 1 2
 == radpost ==
-Ndef('busIn1').set('vol1', -10, 'lag1', 2);
+Ndef('busIn1').set('lag1', 2);
+== radpostcont ==
+(none)
+
+>> sndset t 1 1 -10
+== radpost ==
+Ndef('busIn1').set('vol1', -10, 'ramp1', 2);
 == radpostcont ==
 (none)
 
@@ -8,6 +14,7 @@ Ndef('busIn1').set('vol1', -10, 'lag1', 2);
 == radpost ==
 Ndef('mod1', {arg freq=0.1, phase=0, mul=1, add=0;
     SinOsc.ar(freq, phase, mul).range(-90.0, 6.0) + add});
+Ndef('busIn1').nodeMap.set('ramp2', 0);
 Ndef('busIn1').xset('vol2', Ndef('mod1'));
 == radpostcont ==
 (none)
