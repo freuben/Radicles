@@ -233,6 +233,29 @@
 		ndefCS.radcode(\radpostcont);
 	}
 
+	// mixlag: the time for typed values of every control of every strip, and
+	// of every send
+	setMixLag {arg lag=0;
+		mixTrackNames.do{|name|
+			var arr = name.asString.divNumStr, type, num;
+			type = arr[0].asSymbol;
+			num = arr[1] ? 1;
+			this.setVolumeLag(type, num, lag);
+			this.setTrimLag(type, num, lag);
+			this.setPanLag(type, num, lag);
+		};
+		(busArr ? []).do{|item|
+			var lags;
+			if(item.notNil and: { item[0].notNil }, {
+				lags = (item[1] ? []).asArray.collect{|member, index|
+					("lag" ++ (index + 1)).asSymbol.cs ++ ", " ++ lag };
+				if(lags.notEmpty, {
+					("Ndef(" ++ item[0].cs ++ ").set(" ++ lags.join(", ") ++ ");").radcode(\radpostcont);
+				});
+			});
+		};
+	}
+
 	sendsFunc {|trackLb, thisKey|
 		var thisSpec, selArg, lagArg, thisNdefVal, thisFunc, thisSpecVal, getBusInNum;
 		if(thisKey.notNil, {

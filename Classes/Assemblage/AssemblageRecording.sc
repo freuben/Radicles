@@ -110,7 +110,7 @@
 		});
 	}
 
-	mapOutFunc {var mastOutArr2, funcSource, hadLimiter;
+	mapOutFunc {var mastOutArr2, funcSource, hadLimiter, kept;
 		{mastOutArr2 = {0!oiOuts} ! oiIns;
 			oiIns.collect{|item| item }.do{|it, ind| mastOutArr2[ind][it] = 1 };
 			if(Ndef(\masterOut).source.isNil, {
@@ -119,9 +119,17 @@
 					//the master's clip2 limiter is slot 1 of spaceMaster (see play);
 					//clear removes it, so put it back if it was there
 					hadLimiter = Ndef(\spaceMaster).objects[1].notNil;
+					//clear also forgets the panner's values (the master's pan and
+					//its times): put them back before the panner is made again
+					kept = Ndef(\spaceMaster).controlKeys.collect{|key|
+						[key, Ndef(\spaceMaster).nodeMap.at(key)] }.select{|pair| pair[1].isNumber };
 					"Ndef('spaceMaster').clear;".radcode;
 					Ndef(\spaceMaster).fadeTime.yield;
 					server.sync;
+					if(kept.notEmpty, {
+						("Ndef('spaceMaster').set(" ++ kept.collect{|pair| pair[0].cs ++ ", " ++ pair[1] }.join(", ")
+							++ ");").radcode;
+					});
 					("Ndef('spaceMaster', " ++ funcSource.cs ++ ");").radcode;
 					if(hadLimiter, {
 						server.sync;

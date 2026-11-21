@@ -1,0 +1,68 @@
+>> mixlag
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> mixlag 2
+== radpost ==
+Radicles.mixLag = 2;
+Ndef('track1').set('lagTime', 2);
+Ndef('inTrack1').set('lagTime', 2);
+Ndef('spaceTrack1').set('panLag', 2);
+Ndef('track2').set('lagTime', 2);
+Ndef('inTrack2').set('lagTime', 2);
+Ndef('spaceTrack2').set('panLag', 2);
+Ndef('bus1').set('lagTime', 2);
+Ndef('inBus1').set('lagTime', 2);
+Ndef('spaceBus1').set('panLag', 2);
+Ndef('master').set('lagTime', 2);
+Ndef('inMaster').set('lagTime', 2);
+Ndef('spaceMaster').set('panLag', 2);
+Ndef('busIn1').set('lag1', 2);
+== radpostcont ==
+(none)
+
+>> mixlag
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> vol t 1 -12
+== radpost ==
+Ndef('track1').set('volume', -12, 'ramp', 2);
+== radpostcont ==
+(none)
+
+>> vollag t 1 0.5
+== radpost ==
+Ndef('track1').set('lagTime', 0.5);
+== radpostcont ==
+(none)
+
+>> vol t 1 0
+== radpost ==
+Ndef('track1').set('volume', 0, 'ramp', 0.5);
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+Radicles.mixLag = 3;
+Ndef('inTrack1').set('lagTime', 3);
+Ndef('spaceTrack1').set('panLag', 3);
+Ndef('inTrack2').set('lagTime', 3);
+Ndef('spaceTrack2').set('panLag', 3);
+Ndef('inBus1').set('lagTime', 3);
+Ndef('spaceBus1').set('panLag', 3);
+Ndef('inMaster').set('lagTime', 3);
+Ndef('spaceMaster').set('panLag', 3);
+== radpostcont ==
+Ndef('track1').set('lagTime', 3);
+Ndef('track2').set('lagTime', 3);
+Ndef('bus1').set('lagTime', 3);
+Ndef('master').set('lagTime', 3);
+Ndef('busIn1').set('lag1', 3);
+Ndef('track1').set('volume', -6, 'ramp', 3);
+

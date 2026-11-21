@@ -192,6 +192,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			ndefCS2 = ("Ndef(" ++ spaceTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
 			ndefCS2.radcode;
 			server.sync;
+			//made after mixlag N: the strip's times for typed values start at N
+			if(Radicles.mixLag != Assemblage.shortLag, {
+				("Ndef(" ++ trackInTag.cs ++ ").set('lagTime', " ++ Radicles.mixLag ++ ");").radcode;
+				("Ndef(" ++ trackTag.cs ++ ").set('lagTime', " ++ Radicles.mixLag ++ ");").radcode;
+				if(spaceSynth.isKindOf(Function), {
+					var names = spaceSynth.def.argNames ? [], lagKeys;
+					lagKeys = names.select{|name| name.asString.endsWith("Lag") and: {
+						Assemblage.timeControl(names, name) } };
+					if(lagKeys.notEmpty, {
+						("Ndef(" ++ spaceTag.cs ++ ").set(" ++ lagKeys.collect{|key|
+							key.cs ++ ", " ++ Radicles.mixLag }.join(", ") ++ ");").radcode;
+					});
+				});
+			});
 			thisTrackInfo = [[trackInTag, trackInSynth], [trackTag, trackSynth],
 				[spaceTag, spaceSynth] ];
 			tracks = tracks.add([[trackInTag, trackInSynth], [trackTag, trackSynth],
@@ -857,7 +871,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	bus {arg trackNum=1, busNum=1, mix=1, trackType=\track, action, setVal=true;
 		var numChan, busTag, ndefCS1, ndefCS2, ndefCS3, funcBus, thisBusArr,
-		busAdd, argIndex, thisBusLabel;
+		busAdd, argIndex, thisBusLabel, added = false;
 		{
 			thisBusLabel = ("inBus" ++ busNum).asSymbol;
 			/*"thisBusLabel ".post; thisBusLabel.postln;*/
@@ -874,7 +888,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				server.sync;
 				this.input(Ndef(busTag), \bus, busNum);
 			});
-			busAdd = {busArr[busNum-1][1] = busArr[busNum-1][1].add(
+			busAdd = {added = true; busArr[busNum-1][1] = busArr[busNum-1][1].add(
 				this.getTrackOutput(trackType, trackNum));};
 			thisBusArr = busArr[busNum-1][1];
 			if(thisBusArr.notNil, {
@@ -899,6 +913,15 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			server.sync;
 			ndefCS2.radcode;
 			server.sync;
+			//a send made after mixlag N: its time for typed values starts at N
+			//(not when a preset or session makes it: its saved time follows)
+			if(added and: { setVal } and: { Radicles.mixLag != Assemblage.shortLag }, {
+				argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));
+				if(argIndex.notNil, {
+					("Ndef(" ++ busTag.cs ++ ").set(" ++ ("lag" ++ (argIndex+1)).asSymbol.cs ++ ", "
+						++ Radicles.mixLag ++ ");").radcode;
+				});
+			});
 			if(setVal, {
 				/*"setVal ".post; setVal.postln;*/
 				argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));

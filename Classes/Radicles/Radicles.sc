@@ -1,4 +1,4 @@
-Radicles {classvar <>ctlLag = 0.05, <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=nil,
+Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedFuncAction, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>oscCode, <>myImprov, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>postCapture, <>colorCritical, <>colorMeter, <>colorWarning,
@@ -50,6 +50,16 @@ Radicles {classvar <>ctlLag = 0.05, <>mainPath, <>libPath, <>nodeTime=0.08, <>se
 		Block.forgetStopFade;
 		this.forgetHeldFades;
 		("Ndef.dictFor(s).fadeTime = " ++ secs ++ ";").radcode;
+	}
+
+	// mixlag N: the time typed values move over, for every mixer control
+	// running and made later (volume, trim, pan, sends). It overwrites the
+	// times single controls were given (vollag, trimlag, panlag, sndlag), as
+	// fade N does for fade times.
+	*setMixLag {arg secs;
+		secs = secs.max(0);
+		("Radicles.mixLag = " ++ secs ++ ";").radcode;
+		aZ !? { aZ.setMixLag(secs) };
 	}
 
 	// the Ndefs of one thing, for its own fade time: kind is \t, \b, \m,
@@ -338,8 +348,11 @@ Radicles {classvar <>ctlLag = 0.05, <>mainPath, <>libPath, <>nodeTime=0.08, <>se
 			//mixerWin is nil until the mixer has been opened
 			cmds = [Radicles.cW.text.string,
 				Radicles.aZ.mixerWin.notNil and: { Radicles.aZ.mixerWin.visible == true }];
+			//the mixer's two times (ctllag, mixlag); the times single controls
+			//were given are among the mixer's values
 			resultArr = [arr3] ++ [aZ.prepWritePreset] ++
-			[[blkArr, blkArrSettings]] ++ [hids] ++ [cmds];
+			[[blkArr, blkArrSettings]] ++ [hids] ++ [cmds] ++
+			[[[\ctlLag, ctlLag], [\mixLag, mixLag]]];
 			/*resultArr.postln;*/
 			PresetFile.write(\radicles, presetName, resultArr, path: 0);
 		});
@@ -361,6 +374,13 @@ Radicles {classvar <>ctlLag = 0.05, <>mainPath, <>libPath, <>nodeTime=0.08, <>se
 			mixView = cmdArr[1];
 			cond = Condition(false);
 			if(aZ.isNil, {
+				//the mixer's two times, before the strips are made (sessions
+				//saved before Nov 2026 have none: they are left as they are)
+				(firstArr[5] ? []).asArray.do{|pair|
+					if(pair.isArray and: { [\ctlLag, \mixLag].includes(pair[0]) } and: { pair[1].isNumber }, {
+						("Radicles." ++ pair[0] ++ " = " ++ pair[1] ++ ";").radcode;
+					});
+				};
 				aZ = Assemblage(assemblageArr[0][0], assemblageArr[1][1],
 					assemblageArr[1], action: {|number, channels|
 						/*[number, channels].postln;*/
