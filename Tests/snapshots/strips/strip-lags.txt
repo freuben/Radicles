@@ -12,7 +12,7 @@ Ndef('inTrack2').set('lagTime', 0.5);
 
 >> panlag t 2 1.5
 == radpost ==
-Ndef('spaceTrack2').lag('pan', 1.5);
+Ndef('spaceTrack2').set('panLag', 1.5);
 == radpostcont ==
 (none)
 

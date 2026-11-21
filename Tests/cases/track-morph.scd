@@ -23,13 +23,14 @@
 	code: {
 		~radCmd.("tload t 1 radtest_tm1 3 glide", 1);
 		~radMid = [Ndef(\track1).get(\ramp), Ndef(\inTrack1).get(\ramp), ~radStripNow.(\track1)[\sends], Ndef(\track1).get(\lagTime),
-			Ndef(\inTrack1).get(\lagTime), Ndef(\busIn1).get(\ramp2)];
+			Ndef(\inTrack1).get(\lagTime), Ndef(\busIn1).get(\ramp2), Ndef(\spaceTrack1).get(\panRamp)];
 		4.wait;
 		~radEnd = ~radStripNow.(\track1);
 	},
 	check: {
 		case
 		{ ~radMid[0] != 3 or: { ~radMid[1] != 3 } or: { ~radMid[3] != 0.05 } or: { ~radMid[4] != 0.05 } } { "times during the morph: " ++ ~radMid.cs }
+		{ ~radMid[6] != 3 } { "pan during the morph moves over " ++ ~radMid[6] }
 		{ ~radMid[2].isNil or: { ~radMid[2][\bus1][\lag].notNil } or: { ~radMid[5] != 3 } } { "send during the morph: " ++ ~radMid.cs }
 		{ [~radEnd[\volume], ~radEnd[\pan], ~radEnd[\trim]] != [-6, (pan: 0.5), 3] } { "values: " ++ ~radEnd.cs }
 		{ ~radEnd[\lags].notNil } { "lags after: " ++ ~radEnd[\lags].cs }

@@ -153,8 +153,8 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					*mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )} };
 			trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ], ['lagTime', [0, 10] ],
 				['mute', [0, 1] ], ['solo', [0,1] ] ];
-			spaceSynth = SynthFile.read(\space, spaceType);
 			spaceSpecs = SpecFile.read(\space, spaceType);
+			spaceSynth = Assemblage.rampSpace(SynthFile.read(\space, spaceType), spaceSpecs);
 
 			case
 			{type == \track} {
@@ -405,6 +405,39 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
+	// A panner from the library with a ramp on each of its controls (mixer
+	// ramps, Nov 2026): every control moves evenly over its own xRamp seconds,
+	// and xLag is its time for typed values (panlag), as 'ramp' and 'lagTime'
+	// are for a strip's volume. The panner's own function is kept whole and
+	// called with the ramped values; its controls keep their places, the
+	// times come after them. Not a control whose spec rounds its value (the
+	// 'split' panner's output number).
+	*rampSpace {arg func, specs;
+		var names, defaults, keys, args, values;
+		if(func.isKindOf(Function).not, { ^func });
+		names = func.def.argNames ? [];
+		defaults = func.def.prototypeFrame ? [];
+		//already wrapped
+		if(names.any{|name| this.timeControl(names, name) }, { ^func });
+		keys = names.select{|name|
+			(specs ? []).detect{|spec| spec[0] == name }.notNil and: {
+				(specs ? []).detect{|spec| spec[0] == name }.any(_.isKindOf(Function)).not } };
+		if(keys.isEmpty, { ^func });
+		args = names.collect{|name, index| name ++ " = " ++ defaults[index].cs }
+		++ keys.collect{|key| key ++ "Lag = " ++ this.shortLag ++ ", " ++ key ++ "Ramp = " ++ this.shortLag };
+		values = names.collect{|name| if(keys.includes(name), {
+			"VarLag.kr(" ++ name ++ ", " ++ name ++ "Ramp.max(ControlDur.ir), warp: \\lin)" }, { name.asString }) };
+		^("{arg " ++ args.join(", ") ++ ";\n\t" ++ func.cs ++ ".value(" ++ values.join(", ") ++ ") }").interpret
+	}
+
+	// true for a panner's time controls (xLag, xRamp, where x is another of
+	// its controls): they are not values of the panner
+	*timeControl {arg keys, key;
+		var name = key.asString;
+		^["Lag", "Ramp"].any{|end| name.endsWith(end) and: {
+			keys.includes(name.drop(end.size.neg).asSymbol) } }
+	}
+
 	ndefPrepare {arg ndef, func;
 		var extraArgs, key, result;
 		extraArgs = ndef.controlKeysValues;
@@ -600,7 +633,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				chanNum = trackInput.numChannels;
 			});
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
-			spaceSynth = SynthFile.read(\space, spaceType);
+			spaceSynth = Assemblage.rampSpace(SynthFile.read(\space, spaceType), SpecFile.read(\space, spaceType));
 			func = spaceSynth.filterFunc(trackInput);
 			this.replaceFunc(trackName, func);
 			//test this

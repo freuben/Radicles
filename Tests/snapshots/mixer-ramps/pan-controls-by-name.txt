@@ -1,0 +1,30 @@
+>> panx t 1 -0.5
+== radpost ==
+Ndef('spaceTrack1').set('panx', -0.5);
+== radpostcont ==
+(none)
+
+>> pany t 1 0.5 3
+== radpost ==
+Ndef('spaceTrack1').set('pany', 0.5, 'panyRamp', 3);
+== radpostcont ==
+(none)
+
+>> panlag t 1 2
+== radpost ==
+Ndef('spaceTrack1').set('panxLag', 2, 'panyLag', 2);
+== radpostcont ==
+(none)
+
+>> panx 1 0.25
+== radpost ==
+Ndef('spaceTrack1').set('panx', 0.25, 'panxRamp', 2);
+== radpostcont ==
+(none)
+
+>> pany t 1 -0.25
+== radpost ==
+Ndef('spaceTrack1').set('pany', -0.25, 'panyRamp', 2);
+== radpostcont ==
+(none)
+

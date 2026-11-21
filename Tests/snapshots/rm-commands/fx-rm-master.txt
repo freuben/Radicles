@@ -9,12 +9,13 @@ Ndef('master', {arg volume=0, lagTime=0.05, mute=0, off=0, ramp=0.05;
                         *off.linlin(0,1,1,0)
                 )});
 Ndef('master').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'off', 0, 'ramp', 0.05);
-Ndef('spaceMaster', {arg pan = 0 ;
+Ndef('spaceMaster', {arg pan = 0, panLag = 0.05, panRamp = 0.05;
+    {arg pan = 0 ;
     var source;
     source = Ndef.ar('master', 2);
     Balance2.ar(source[0], source[1], pan) * 3.dbamp;
-});
-Ndef('spaceMaster').set('pan', 0, 'wet1', 1.0);
+}.value(VarLag.kr(pan, panRamp.max(ControlDur.ir), warp: \lin)) });
+Ndef('spaceMaster').set('pan', 0, 'panLag', 0.05, 'panRamp', 0.05, 'wet1', 1.0);
 == radpostcont ==
 (none)
 

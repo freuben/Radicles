@@ -137,8 +137,7 @@
 			atEnd.do(_.value);
 			if(track[\mute] == 1 and: { current[\mute] != 1 }, { az.setMute(type, num, 1) });
 			if(track[\output] == \none, { this.prSetOutput(type, num, \none, az) });
-			//done: the lags and fade times go back (once the panner's glide,
-			//which starts a fade time later, is over)
+			//done: the times and fade times go back
 			subs.do{|sub| while({ sub.isPlaying }, { 0.05.wait }) };
 			if(this.prTrackMorphs[name] === morph, {
 				restores.do(_.value);
@@ -306,7 +305,7 @@
 
 	*prGlideStripValues {|type, num, track, time, restores, subs, az, shape = \glide|
 		var name = this.stripName(type, num), inKey, key, spaceKey, current, curMods, tgtMods, left = [];
-		var pan, panKeys, panDefaults, curLags, tgtLags, xfade = shape != \glide;
+		var pan, panKeys, panDefaults, curLags, tgtLags, panLags, xfade = shape != \glide;
 		//a crossfade: the stage's fade time is the load's while it runs
 		var hold = {|stage|
 			Radicles.holdFade(stage, time);
@@ -346,8 +345,7 @@
 			az.setVolumeLag(type, num, tgtLags[\volume] ? Assemblage.shortLag) });
 		if((curLags[\trim] ? Assemblage.shortLag) != (tgtLags[\trim] ? Assemblage.shortLag), {
 			az.setTrimLag(type, num, tgtLags[\trim] ? Assemblage.shortLag) });
-		// pan: the panner's own lag (NodeProxy:lag rebuilds the panner, so the
-		// values change once the old copy has faded out), then the preset's
+		// pan
 		panKeys = (current[\pan] ? ()).keys;
 		panDefaults = Ndef(spaceKey).source !? {|func| func.respondsTo(\def).if({ ().putPairs(func.def.keyValuePairsFromArgs) }) } ? ();
 		pan = if(track[\default] == true or: { track[\pan].isNil }, {
@@ -359,29 +357,23 @@
 		this.prApplyArgsMods(Ndef(spaceKey), (args: current[\pan] ? (), mods: curMods[\pan] ? ()),
 			(args: pan, mods: (tgtMods[\pan] ? ()).select{|v, k| panKeys.includes(k) }),
 			{|ndef, pairs|
-				var keys = pairs[0, 2..], ndefKeys = Ndef(spaceKey).getKeysValues.collect(_[0]);
-				var tgtPanLags = tgtLags[\pan] ? ();
+				var keys = pairs[0, 2..], ndefKeys = az.panKeys(type, num);
 				if(xfade, {
 					hold.(spaceKey);
 					("Ndef(" ++ spaceKey.cs ++ ").xset(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
-					//the preset's pan lags, where they differ, once the fade is over
-					restores.add({
-						keys.do{|k| if(((curLags[\pan] ? ())[k] ? 0) != (tgtPanLags[k] ? 0), {
-							az.setPanLag(type, num, tgtPanLags[k] ? 0, ndefKeys.indexOf(k) + 1) }) };
-					});
 				}, {
-				subs.add({
-					("Ndef(" ++ spaceKey.cs ++ ").lag(" ++ keys.collect{|k| [k, time] }.flatten.collect(_.cs).join(", ") ++ ");").radcode;
-					Server.default.sync;
-					Ndef(spaceKey).fadeTime.wait;
-					pairs.pairsDo{|k, v| az.setPan(type, num, v, ndefKeys.indexOf(k) + 1) };
-					time.wait;
-				}.fork(AppClock));
-				restores.add({
-					keys.do{|k| az.setPanLag(type, num, tgtPanLags[k] ? 0, ndefKeys.indexOf(k) + 1) };
-				});
+					//a glide: each control is one move over the load's time; its
+					//own time (panlag) is not used by it
+					pairs.pairsDo{|k, v| az.setPan(type, num, v, ndefKeys.indexOf(k) + 1, time) };
 				});
 			});
+		//the preset's pan times, where they differ (after a crossfade: once it is over)
+		panLags = {
+			var ndefKeys = az.panKeys(type, num);
+			panKeys.do{|k| if(((curLags[\pan] ? ())[k] ? Assemblage.shortLag) != ((tgtLags[\pan] ? ())[k] ? Assemblage.shortLag), {
+				az.setPanLag(type, num, (tgtLags[\pan] ? ())[k] ? Assemblage.shortLag, ndefKeys.indexOf(k) + 1) }) };
+		};
+		if(xfade, { restores.add(panLags) }, { panLags.() });
 		^left
 	}
 

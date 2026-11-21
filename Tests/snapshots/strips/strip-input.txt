@@ -12,9 +12,10 @@ Ndef('track3', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('inMaster').source = {arg trim=0, lagTime=0.05, ramp=0.05;
                 ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceTrack3', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )}
-Ndef('spaceTrack3', {arg pan = 0 ;
+Ndef('spaceTrack3', {arg pan = 0, panLag = 0.05, panRamp = 0.05;
+    {arg pan = 0 ;
     Pan2.ar(Ndef.ar('track3', 1), pan) * 3.dbamp;
-});
+}.value(VarLag.kr(pan, panRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef.ar('block3', 1);
 Ndef('block3').fadeTime = 0.5;
 Ndef('inTrack3', {arg trim=0, lagTime=0.05, ramp=0.05;

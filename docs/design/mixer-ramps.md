@@ -1,7 +1,7 @@
 # Mixer moves: ramps, typed time and native time
 
 Status: **decided with Federico on 20 Nov 2026 and being built** in four PRs
-(see "Planned PRs": volume is #122, trim and sends follow it). Lags on blocks
+(see "Planned PRs": volume is #122, trim and sends #123, pan follows them). Lags on blocks
 and effects are not covered: that is a separate conversation.
 
 ## The idea
@@ -156,7 +156,24 @@ to be judged by ear.
    send slot, time; slot 1 when left out). `trimlag` no longer rebuilds the
    strip's input. A time typed with `sndset` is for that one move (decision
    5), so it no longer sticks to the send.
-3. **Pan:** the ramp on every panner control; `panxlag` removed.
+3. **Pan:** the ramp on every panner control, added when Radicles builds a
+   panner from the library (the panner's own function is wrapped; its
+   controls keep their names and each gets `xLag` and `xRamp`, as in
+   `panLag`, `panRamp`). The commands follow the control's name, with a time
+   for one move at the end: `pan`, `panx`, `pany`, `pan1`, `pan2`, `width`,
+   `orientation`, `elevation`, `elev`, `azimuth`, `azi`, `rho`, `dirmul`.
+   `panlag t 1 4` sets the typed time of all of a strip's pan controls,
+   `panlag t 1 2 4` of its second one. Removed: `panxlag`, `pan t 1 2 0.5`
+   and the old `panx`. Defaults taken in the build:
+   - each name matches only the control of that name (`elev` is not
+     `elevation`: the two panner families use different units);
+   - a value outside the control's range is refused with a warning;
+   - the `split` panner's controls are not ramped (their values are
+     functions of the channel count);
+   - the fixed 0.1 s lag inside the `bfenc` panners is gone, the ramp
+     replaces it;
+   - loading a mixer preset moves volume, trim and pan over the short time,
+     not over the time of each strip's last move.
 4. **`mixlag`,** the typed time with a value (once its form is decided), and
    what a session keeps.
 

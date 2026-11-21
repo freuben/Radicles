@@ -402,7 +402,7 @@
 			};
 			extraArgs = this.prepMixSettings(mixSettings);
 			extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
-				item[1].cs.replace("[", "(").replace("]", ");") ).radcode;
+				this.prPresetRamps(item[0], item[1]).cs.replace("[", "(").replace("]", ");") ).radcode;
 			server.sync;
 			//solo is not an Ndef value (it stays 1); it is restored from soloStates below
 			if(item[1].includes(\mute), {
@@ -493,7 +493,7 @@
 
 			extraArgs = this.prepMixSettings(mixSettings);
 			extraArgs.do({|item, index| ("Ndef(" ++ item[0].cs ++ ").set" ++
-				item[1].cs.replace("[", "(").replace("]", ");") ).radcode;
+				this.prPresetRamps(item[0], item[1]).cs.replace("[", "(").replace("]", ");") ).radcode;
 			server.sync;
 			//solo is not an Ndef value (it stays 1); it is restored from soloStates below
 			if(item[1].includes(\mute), {
@@ -562,7 +562,8 @@
 		addFunc = {arg presetArr;
 			presetArr[1].do{|item, index|
 				//not 'ramp' (or a send's rampN): the time of the last move is not a setting
-				item[1].reject{|it| "^ramp[0-9]*$".matchRegexp(it[0].asString) }.do{|it|
+				item[1].reject{|it| "^ramp[0-9]*$".matchRegexp(it[0].asString) or: {
+					it[0].asString.endsWith("Ramp") and: { Assemblage.timeControl(item[1].collect(_[0]), it[0]) } } }.do{|it|
 					if(it[1].isNumber.not, {
 						/*it[1][0].postln;*/
 						if(it[1][0].cs.find("mod").notNil, {
@@ -604,6 +605,19 @@
 		});
 		dataArr = [extraArgs, hasMod2];
 		^dataArr;
+	}
+
+	// a preset's values are a short smooth move: where a control's last move
+	// had another time (a long typed move, or 0 under a modulator), the short
+	// one is sent with the values
+	prPresetRamps {arg ndefKey, pairs;
+		var ramps = [];
+		pairs.pairsDo{|key, value|
+			Assemblage.rampKey(Ndef(ndefKey), key) !? {|rampKey|
+				if(value.isNumber and: { ramps.includes(rampKey).not } and: {
+					this.stripControl(Ndef(ndefKey), rampKey) != Assemblage.shortLag }, {
+					ramps = ramps ++ [rampKey, Assemblage.shortLag] }) } };
+		^pairs ++ ramps
 	}
 
 	prepMixSettings {arg arr;
