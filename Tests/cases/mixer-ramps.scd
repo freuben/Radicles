@@ -495,6 +495,37 @@
 	}
 );
 
+// the commonest timed move, typed: to silence over a time (-inf is a value
+// like any other), and the next plain vol is short again
+~radTest.("vol-to-silence-with-a-time",
+	setup: ["start 2", "blk 1 sine"],
+	code: {
+		1.wait;
+		~radMrFull = ~radMrLevel.();
+		Radicles.cW.callFunc("vol t 1 -inf 2");
+		//as in volume-is-a-steady-fader-move: read 1 s into the move
+		0.9.wait;
+		~radMrHalf = ~radMrLevel.();
+		1.2.wait;
+		~radMrEnd = ~radMrLevel.();
+		~radMrRampThen = ~radMrCtl.(\ramp);
+		Radicles.cW.callFunc("vol t 1 0"); 0.3.wait;
+		~radMrBack = ~radMrLevel.() },
+	check: {
+		var half = ~radMrHalf / ~radMrFull.max(0.000001);
+		case
+		{ ~radMrFull < 0.001 } { "no sound to measure: " ++ ~radMrFull }
+		{ ~radMrRampThen != 2 } { "the move's time was " ++ ~radMrRampThen }
+		{ half < 0.15 or: { half > 0.4 } } { "half way the level is " ++ half.round(0.01) ++ " of full (a steady fader move: 0.25)" }
+		{ ~radMrEnd > (~radMrFull * 0.01) } { "not silent at the end: " ++ (~radMrEnd / ~radMrFull).round(0.001) }
+		{ (~radMrBack / ~radMrFull - 1).abs > 0.1 } { "did not come back at once: " ++ (~radMrBack / ~radMrFull).round(0.01) }
+		{ ~radMrCtl.(\volume) != 0 or: { ~radMrCtl.(\ramp) != 0.05 } } { "after vol t 1 0: " ++ [~radMrCtl.(\volume), ~radMrCtl.(\ramp)].cs }
+		{ ~radMrCtl.(\lagTime) != 0.05 } { "the volume's own time changed: " ++ ~radMrCtl.(\lagTime) }
+		{ true }
+	},
+	noWarnings: true
+);
+
 // the master has no number: the number after the value is its time
 ~radTest.("master-value-and-time",
 	setup: ["start 2"],
