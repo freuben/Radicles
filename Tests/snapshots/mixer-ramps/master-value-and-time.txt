@@ -1,0 +1,24 @@
+>> vol m -12 4
+== radpost ==
+Ndef('master').set('volume', -12, 'ramp', 4);
+== radpostcont ==
+(none)
+
+>> trim m -3 2
+== radpost ==
+Ndef('inMaster').set('trim', -3, 'ramp', 2);
+== radpostcont ==
+(none)
+
+>> pan m 0.5 3
+== radpost ==
+Ndef('spaceMaster').set('pan', 0.5, 'panRamp', 3);
+== radpostcont ==
+(none)
+
+>> vol m 0
+== radpost ==
+Ndef('master').set('volume', 0, 'ramp', 0.05);
+== radpostcont ==
+(none)
+

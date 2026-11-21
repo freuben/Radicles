@@ -393,12 +393,14 @@
 
 	// vol, pan, trim and their lags, by track, range or list
 	*prVolPanTrimCmds {
+		this.prMixTimeCmds;
+		//(the master has no number: vol m -12 4 is a value and its time)
 		cW.add(\vol, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {aZ.setVolume(\track, num1, num2);}
 				{str2 == 'b'} {aZ.setVolume(\bus, num1, num2);}
-				{str2 == 'm'} {aZ.setVolume(\master, num1, num2);}
+				{str2 == 'm'} {aZ.setVolume(\master, 1, num1, num2.max(0));}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -422,7 +424,7 @@
 				case
 				{str2 == 't'} {aZ.setPan(\track, num1, num2);}
 				{str2 == 'b'} {aZ.setPan(\bus, num1, num2);}
-				{str2 == 'm'} {aZ.setPan(\master, num1, num2);}
+				{str2 == 'm'} {aZ.setPan(\master, 1, num1, 1, num2.max(0));}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -446,7 +448,7 @@
 				case
 				{str2 == 't'} {aZ.setTrim(\track, num1, num2);}
 				{str2 == 'b'} {aZ.setTrim(\bus, num1, num2);}
-				{str2 == 'm'} {aZ.setTrim(\master, num1, num2);}
+				{str2 == 'm'} {aZ.setTrim(\master, 1, num1, num2.max(0));}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -2816,6 +2818,41 @@
 			aZ.mixTrackNames[num-1] !? {|name|
 				var arr = name.asString.divNumStr;
 				[arr[0].asSymbol, arr[1] ? 1] } }.reject(_.isNil)
+	}
+
+	// vol and trim with a time typed after the value, for that one move:
+	// vol t 1 -12 4, trim 1-3 -3 2 (pan's are with its named controls below);
+	// and mixlag, the time of typed values for the whole mixer
+	*prMixTimeCmds {
+		[\vol, \trim].do{|name|
+			var set = {|targets, val, time|
+				if(aZ.notNil, {
+					targets.value.do{|target|
+						if(name == \vol, {
+							aZ.setVolume(target[0], target[1], val, time.max(0));
+						}, {
+							aZ.setTrim(target[0], target[1], val, time.max(0));
+						});
+					};
+				}, {
+					"could not find assemblage".warn;
+				});
+			};
+			[\num, \dash, \arr].do{|which|
+				cW.add(name, [\str, \str, which, \num, \num], {|str1, str2, nums, val, time|
+					set.({ this.prTypeTargets(str2, nums) }, val, time) },
+				name ++ ": [trackType, trackNum, val, time]");
+				cW.add(name, [\str, which, \num, \num], {|str1, nums, val, time|
+					set.({ this.prMixTargets(nums) }, val, time) },
+				name ++ ": [mixTrackNum, val, time]");
+			};
+		};
+		cW.add(\mixlag, [\str], {|str1|
+			Radicles.mixLag.radpostwarn;
+		}, "mixlag: (posts the time of typed mixer values)");
+		cW.add(\mixlag, [\str, \num], {|str1, num1|
+			Radicles.setMixLag(num1);
+		}, "mixlag: time (typed values: every mixer control running and made later)");
 	}
 
 	// pan commands by the control's name, each with a time for that one move

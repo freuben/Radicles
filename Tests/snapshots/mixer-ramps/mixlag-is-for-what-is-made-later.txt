@@ -1,0 +1,50 @@
+>> t add 1
+== radpost ==
+Ndef.ar('inTrack3', 1);
+Ndef('inTrack3').fadeTime = 0.5;
+Ndef('inTrack3').set('trim', 0);
+Ndef.ar('track3', 1);
+Ndef('track3').fadeTime = 0.5;
+Ndef.ar('spaceTrack3', 2);
+Ndef('spaceTrack3').fadeTime = 0.5;
+Ndef('inTrack3').set('lagTime', 2);
+Ndef('track3').set('lagTime', 2);
+Ndef('spaceTrack3').set('panLag', 2);
+Ndef('track3', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('inTrack3', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
+                    *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
+Ndef('track3').set('lagTime', 2);
+Ndef('inMaster').source = {arg trim=0, lagTime=0.05, ramp=0.05;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceTrack3', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )}
+Ndef('spaceTrack3', {arg pan = 0, panLag = 0.05, panRamp = 0.05;
+    {arg pan = 0 ;
+    Pan2.ar(Ndef.ar('track3', 1), pan) * 3.dbamp;
+}.value(VarLag.kr(pan, panRamp.max(ControlDur.ir), warp: \lin)) });
+Ndef('spaceTrack3').set('panLag', 2);
+Ndef.ar('block3', 1);
+Ndef('block3').fadeTime = 0.5;
+Ndef('inTrack3', {arg trim=0, lagTime=0.05, ramp=0.05;
+                (Ndef.ar('block3', 1) * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
+Ndef('inTrack3').set('trim', 0, 'lagTime', 2);
+== radpostcont ==
+(none)
+
+>> snd t 3 1 1 -6
+== radpost ==
+Ndef.ar('busIn1', 1);
+Ndef('busIn1').fadeTime = 0.5;
+Ndef('inBus1', {arg trim=0, lagTime=0.05, ramp=0.05;
+                (Ndef.ar('busIn1', 1) * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
+Ndef('inBus1').set('trim', 0, 'lagTime', 2);
+Ndef('busIn1', {arg vol1 = -inf, lag1 = 0.05, ramp1 = 0.05; Ndef.ar('track3', 1)*(VarLag.kr((vol1.dbamp / 6.dbamp).sqrt, ramp1.max(ControlDur.ir), warp: \lin).squared * 6.dbamp); });
+Ndef('busIn1').set('lag1', 2);
+Ndef('busIn1').set('vol1', -6, 'ramp1', 2);
+== radpostcont ==
+(none)
+
+>> vol t 3 -12
+== radpost ==
+Ndef('track3').set('volume', -12, 'ramp', 2);
+== radpostcont ==
+(none)
+

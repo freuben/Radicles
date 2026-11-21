@@ -11,6 +11,9 @@
 	var bus = Bus.control(Server.default, 1), value, cond = Condition.new, synth;
 	//the RMS over the last 0.1 s (a follower ripples with the sine)
 	synth = { Out.kr(bus, A2K.kr((RunningSum.ar(InFeedback.ar(Ndef(key).bus.index + chan, 1).squared, 4800) / 4800).sqrt)) }.play;
+	//the meter must be running before its 0.3 s: on a slow machine it was
+	//not, and the level read 0
+	Server.default.sync;
 	0.3.wait;
 	bus.get{|v| value = v; cond.unhang };
 	cond.hang;
@@ -470,4 +473,81 @@
 	check: {
 		(~radMrPan.(\panLag).isNil and: { ~radMrPan.(\panRamp).isNil }) or: {
 			"times: " ++ [~radMrPan.(\panLag), ~radMrPan.(\panRamp)].cs } }
+);
+
+// ---- part 4: a time typed after vol and trim, and mixlag ----
+
+// a time typed after the value is for that one move: the strip's own time
+// (vollag, trimlag) is not changed, and the next plain value uses it again
+~radTest.("vol-and-trim-time-is-one-move",
+	setup: ["start 2"],
+	cmds: ["vol t 1 -12 3", "vol t 1 0", "vol 2 -6 2", "vol t 1-2 -20 1", "vol [1,2] -10 4",
+		"trim t 1 -3 2", "trim t 1 0", "trim 2 3 1.5"],
+	check: {
+		case
+		{ ~radMrCtl.(\volume) != -10 or: { ~radMrCtl.(\ramp) != 4 } } { "track 1: " ++ [~radMrCtl.(\volume), ~radMrCtl.(\ramp)].cs }
+		{ ~radMrCtl.(\lagTime) != 0.05 } { "the volume's own time changed: " ++ ~radMrCtl.(\lagTime) }
+		{ Ndef(\track2).nodeMap.at(\volume) != -10 } { "track 2: " ++ Ndef(\track2).nodeMap.at(\volume) }
+		{ ~radMrIn.(\trim) != 0 or: { ~radMrIn.(\ramp) != 0.05 } } { "trim: " ++ [~radMrIn.(\trim), ~radMrIn.(\ramp)].cs }
+		{ ~radMrIn.(\lagTime) != 0.05 } { "the trim's own time changed: " ++ ~radMrIn.(\lagTime) }
+		{ Ndef(\inTrack2).nodeMap.at(\ramp) != 1.5 } { "track 2's trim moved over " ++ Ndef(\inTrack2).nodeMap.at(\ramp) }
+		{ true }
+	}
+);
+
+// the master has no number: the number after the value is its time
+~radTest.("master-value-and-time",
+	setup: ["start 2"],
+	cmds: ["vol m -12 4", "trim m -3 2", "pan m 0.5 3", "vol m 0"],
+	check: {
+		case
+		{ Ndef(\master).nodeMap.at(\volume) != 0 or: { Ndef(\master).nodeMap.at(\ramp) != 0.05 } } {
+			"master: " ++ [Ndef(\master).nodeMap.at(\volume), Ndef(\master).nodeMap.at(\ramp)].cs }
+		{ Ndef(\inMaster).nodeMap.at(\trim) != -3 or: { Ndef(\inMaster).nodeMap.at(\ramp) != 2 } } {
+			"trim: " ++ [Ndef(\inMaster).nodeMap.at(\trim), Ndef(\inMaster).nodeMap.at(\ramp)].cs }
+		{ ~radMrPan.(\pan, \spaceMaster) != 0.5 or: { ~radMrPan.(\panRamp, \spaceMaster) != 3 } } {
+			"pan: " ++ [~radMrPan.(\pan, \spaceMaster), ~radMrPan.(\panRamp, \spaceMaster)].cs }
+		{ true }
+	}
+);
+
+// mixlag N is the time of typed values for every control of every strip and
+// every send; a lag typed afterwards changes one again, and a later mixlag
+// overwrites it (the rule of fade N). mixlag alone posts it.
+~radTest.("mixlag-sets-every-typed-time",
+	setup: ["start 2 1", ["snd t 1 1 1 -6", 2]],
+	cmds: ["mixlag", "mixlag 2", "mixlag", "vol t 1 -12", "vollag t 1 0.5", "vol t 1 0"],
+	code: {
+		~radMrOne = [~radMrCtl.(\lagTime), ~radMrCtl.(\ramp), ~radMrIn.(\lagTime), ~radMrPan.(\panLag), ~radMrSend.(\lag1),
+			Ndef(\master).nodeMap.at(\lagTime), Ndef(\inBus1).nodeMap.at(\lagTime), Ndef(\spaceMaster).nodeMap.at(\panLag)];
+		Radicles.setMixLag(3);
+		Radicles.aZ.setVolume(\track, 1, -6);
+		0.2.wait },
+	check: {
+		case
+		{ ~radMrOne != [0.5, 0.5, 2, 2, 2, 2, 2, 2] } { "after mixlag 2 and vollag 0.5: " ++ ~radMrOne.cs }
+		{ Radicles.mixLag != 3 } { "mixLag " ++ Radicles.mixLag }
+		{ ~radMrCtl.(\lagTime) != 3 or: { ~radMrCtl.(\ramp) != 3 } } { "a later mixlag did not overwrite: " ++ [~radMrCtl.(\lagTime), ~radMrCtl.(\ramp)].cs }
+		{ ~radMrSend.(\lag1) != 3 } { "the send's time: " ++ ~radMrSend.(\lag1) }
+		{ true }
+	},
+	teardown: { Radicles.mixLag = 0.05 }
+);
+
+// what is made after mixlag N starts with N: a new mixer, a track added to
+// it, and a new send
+~radTest.("mixlag-is-for-what-is-made-later",
+	setup: ["mixlag 2", "start 2 1"],
+	cmds: [["t add 1", 3], ["snd t 3 1 1 -6", 2], "vol t 3 -12"],
+	check: {
+		var times = [~radMrCtl.(\lagTime), ~radMrIn.(\lagTime), ~radMrPan.(\panLag), ~radMrPan.(\panLag, \spaceMaster),
+			Ndef(\track3).nodeMap.at(\lagTime), Ndef(\inTrack3).nodeMap.at(\lagTime), ~radMrPan.(\panLag, \spaceTrack3),
+			~radMrSend.(\lag1), Ndef(\track3).nodeMap.at(\ramp)];
+		var doc = RadUnit.readStrip(\track3);
+		case
+		{ times != (2 ! 9) } { "times: " ++ times.cs }
+		{ (doc[\lags] ? ())[\volume] != 2 } { "document: " ++ doc[\lags].cs }
+		{ true }
+	},
+	teardown: { Radicles.mixLag = 0.05 }
 );

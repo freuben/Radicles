@@ -19,6 +19,7 @@ Ndef('inMaster').source = {arg trim=0, lagTime=0.05, ramp=0.05;
 Ndef('inMaster').source = {arg trim=0, lagTime=0.05, ramp=0.05;
                 ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 0, Ndef.ar('spaceBus1', 2) * 0].sum * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )}
 Ndef('spaceMaster').clear;
+Ndef('spaceMaster').set('pan', 0, 'panLag', 0.05, 'wet1', 1.0);
 Ndef('spaceMaster', {arg pan = 0, panLag = 0.05, panRamp = 0.05;
     {arg pan = 0 ;
     var source;

@@ -1,7 +1,7 @@
 # Mixer moves: ramps, typed time and native time
 
 Status: **decided with Federico on 20 Nov 2026 and being built** in four PRs
-(see "Planned PRs": volume is #122, trim and sends #123, pan follows them). Lags on blocks
+(see "Planned PRs"). Lags on blocks
 and effects are not covered: that is a separate conversation.
 
 ## The idea
@@ -174,8 +174,23 @@ to be judged by ear.
      replaces it;
    - loading a mixer preset moves volume, trim and pan over the short time,
      not over the time of each strip's last move.
-4. **`mixlag`,** the typed time with a value (once its form is decided), and
-   what a session keeps.
+4. **`mixlag`, a time after `vol` and `trim`, and what a session keeps.**
+   - `mixlag N` sets the typed time of every control of every strip and of
+     every send, and of everything made later (a new mixer, an added track,
+     a new send), as `fade N` does for fade times. `mixlag` alone posts it.
+     `vollag`, `trimlag`, `panlag` and `sndlag` typed afterwards change one
+     control again; a later `mixlag` overwrites them.
+   - `vol t 1 -12 4`, `vol 1 -12 4`, `vol t 1-3 -12 4`, `vol [1,3] -12 4`,
+     and the same for `trim`. The master has no number, so `vol m -12 4`,
+     `trim m -3 2` and `pan m 0.5 3` are a value and its time (Federico,
+     21 Nov: keep it; `vol m 1 -12` no longer works as `vol m -12`). There is no
+     timed form for "all tracks" (`vol t -12 4` already means track -12).
+   - A session (`save`, `load`) keeps `mixlag` and `ctllag`; the times of
+     single controls were already among the mixer's values. Sessions saved
+     before this have neither, and loading one leaves both as they are.
+   - A track preset keeps a control's typed time when it is not 50 ms, and
+     brings back exactly that: loading a preset without one gives 50 ms,
+     whatever `mixlag` is.
 
 ## Known consequences
 

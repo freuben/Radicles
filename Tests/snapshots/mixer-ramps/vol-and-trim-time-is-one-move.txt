@@ -1,0 +1,50 @@
+>> vol t 1 -12 3
+== radpost ==
+Ndef('track1').set('volume', -12, 'ramp', 3);
+== radpostcont ==
+(none)
+
+>> vol t 1 0
+== radpost ==
+Ndef('track1').set('volume', 0, 'ramp', 0.05);
+== radpostcont ==
+(none)
+
+>> vol 2 -6 2
+== radpost ==
+Ndef('track2').set('volume', -6, 'ramp', 2);
+== radpostcont ==
+(none)
+
+>> vol t 1-2 -20 1
+== radpost ==
+Ndef('track1').set('volume', -20, 'ramp', 1);
+Ndef('track2').set('volume', -20, 'ramp', 1);
+== radpostcont ==
+(none)
+
+>> vol [1,2] -10 4
+== radpost ==
+Ndef('track1').set('volume', -10, 'ramp', 4);
+Ndef('track2').set('volume', -10, 'ramp', 4);
+== radpostcont ==
+(none)
+
+>> trim t 1 -3 2
+== radpost ==
+Ndef('inTrack1').set('trim', -3, 'ramp', 2);
+== radpostcont ==
+(none)
+
+>> trim t 1 0
+== radpost ==
+Ndef('inTrack1').set('trim', 0, 'ramp', 0.05);
+== radpostcont ==
+(none)
+
+>> trim 2 3 1.5
+== radpost ==
+Ndef('inTrack2').set('trim', 3, 'ramp', 1.5);
+== radpostcont ==
+(none)
+
