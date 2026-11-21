@@ -1,0 +1,10 @@
+>> <code>
+== radpost ==
+OSCdef('hid1', {arg ...args; {|val| ("Ndef('spaceTrack1').set(" ++ Radicles.aZ.rampArgs(Ndef('spaceTrack1'), 'pan', val, Radicles.ctlLag, 'panRamp') ++ ")").radpostcont.interpret; }.([-1.0, 1.0].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestmrpan');
+Ndef('mod1', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(-1.0, 1.0) + add});
+Ndef('spaceTrack2').nodeMap.set('panRamp', 0);
+Ndef('spaceTrack2').xset('pan', Ndef('mod1'));
+== radpostcont ==
+Ndef('spaceTrack1').set('pan', 0.5, 'panRamp', 0.05)
+

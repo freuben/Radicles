@@ -2,8 +2,8 @@
 == radpost ==
 Ndef.ar('block1', 1);
 Ndef('block1').fadeTime = 0.5;
-Ndef('inTrack1', {arg trim=0, lagTime=0;
-                (Ndef.ar('block1', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inTrack1', {arg trim=0, lagTime=0.05, ramp=0.05;
+                (Ndef.ar('block1', 1) * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
 Ndef('inTrack1').set('trim', 0);
 Ndef('block1', {arg mul=0.5;
     WhiteNoise.ar(mul);

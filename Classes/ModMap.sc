@@ -21,6 +21,17 @@ ModMap : Radicles {
 		});
 		spec = spec.specFactor(mul, add, min, val, warp);
 		modMap = this.getFile(type, spec, extraArgs, func);
+		//a strip's volume moves by a ramp, which would dull a modulator: its
+		//time is 0 while one is mapped (the next move sets it again)
+		//In the node map only, so the copy made by the xset below starts with
+		//it and the one fading out finishes its move (a time changed on a
+		//running ramp makes it overshoot).
+		//(the same for a strip's trim and a send's level)
+		Assemblage.rampKey(ndef, key) !? {|rampKey|
+			if(ndef.nodeMap.at(rampKey) != 0, {
+				(ndef.cs ++ ".nodeMap.set(" ++ rampKey.cs ++ ", 0);").radcode;
+			});
+		};
 		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radcode;
 		modNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
 			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radcode;

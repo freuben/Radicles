@@ -393,12 +393,14 @@
 
 	// vol, pan, trim and their lags, by track, range or list
 	*prVolPanTrimCmds {
+		this.prMixTimeCmds;
+		//(the master has no number: vol m -12 4 is a value and its time)
 		cW.add(\vol, [\str, \str, \num, \num], {|str1, str2, num1, num2|
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {aZ.setVolume(\track, num1, num2);}
 				{str2 == 'b'} {aZ.setVolume(\bus, num1, num2);}
-				{str2 == 'm'} {aZ.setVolume(\master, num1, num2);}
+				{str2 == 'm'} {aZ.setVolume(\master, 1, num1, num2.max(0));}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -422,7 +424,7 @@
 				case
 				{str2 == 't'} {aZ.setPan(\track, num1, num2);}
 				{str2 == 'b'} {aZ.setPan(\bus, num1, num2);}
-				{str2 == 'm'} {aZ.setPan(\master, num1, num2);}
+				{str2 == 'm'} {aZ.setPan(\master, 1, num1, 1, num2.max(0));}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -446,7 +448,7 @@
 				case
 				{str2 == 't'} {aZ.setTrim(\track, num1, num2);}
 				{str2 == 'b'} {aZ.setTrim(\bus, num1, num2);}
-				{str2 == 'm'} {aZ.setTrim(\master, num1, num2);}
+				{str2 == 'm'} {aZ.setTrim(\master, 1, num1, num2.max(0));}
 				;
 			}, {
 				"could not find assemblage".warn;
@@ -1569,6 +1571,60 @@
 				"could not find assemblage".warn;
 			});
 		}, "sndset: [mixTrackNum, slotNum, busNum, val]");
+
+		// sndlag: a send's own time for typed values (as vollag is the volume's).
+		// A send is named as sndset names it: by its slot on the strip.
+		cW.add(\sndlag, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.setSendLag(\track, num1, 1, num2);}
+				{str2 == 'b'} {aZ.setSendLag(\bus, num1, 1, num2);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "sndlag: [trackType, trackNum, time]");
+
+		cW.add(\sndlag, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.setSendLag(\track, num1, num2, num3);}
+				{str2 == 'b'} {aZ.setSendLag(\bus, num1, num2, num3);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "sndlag: [trackType, trackNum, slotNum, time]");
+
+		cW.add(\sndlag, [\str, \num, \num], {|str1, num1, num2|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 < (trackArr.size-1), {
+					thisArr = trackArr[num1-1];
+					aZ.setSendLag(thisArr[0].asSymbol, thisArr[1], 1, num2);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "sndlag: [mixTrackNum, time]");
+
+		cW.add(\sndlag, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 < (trackArr.size-1), {
+					thisArr = trackArr[num1-1];
+					aZ.setSendLag(thisArr[0].asSymbol, thisArr[1], num2, num3);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "sndlag: [mixTrackNum, slotNum, time]");
 
 		cW.add(\sndset, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			var modArgs, modifier;
@@ -2750,21 +2806,98 @@
 		}, "trim: [trackType, val]");
 	}
 
-	// multichannel pan, panx and their modulation
-	*prPanCmds {
-		//space pan
-		cW.add(\pan, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {aZ.setPan(\track, num1, num3, num2);}
-				{str2 == 'b'} {aZ.setPan(\bus, num1, num3, num2);}
-				{str2 == 'm'} {aZ.setPan(\master, num1, num3, num2);}
-				;
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "pan: [trackType, trackNum, val]");
+	// the strips a command names: by type ('t', 'b', 'm') and number(s), or
+	// by number(s) in the mixer
+	*prTypeTargets {|letter, which|
+		var type = (t: \track, b: \bus, m: \master)[letter.asSymbol];
+		^if(type.isNil, { [] }, { which.asArray.collect{|num| [type, num] } })
+	}
 
+	*prMixTargets {|which|
+		^which.asArray.collect{|num|
+			aZ.mixTrackNames[num-1] !? {|name|
+				var arr = name.asString.divNumStr;
+				[arr[0].asSymbol, arr[1] ? 1] } }.reject(_.isNil)
+	}
+
+	// vol and trim with a time typed after the value, for that one move:
+	// vol t 1 -12 4, trim 1-3 -3 2 (pan's are with its named controls below);
+	// and mixlag, the time of typed values for the whole mixer
+	*prMixTimeCmds {
+		[\vol, \trim].do{|name|
+			var set = {|targets, val, time|
+				if(aZ.notNil, {
+					targets.value.do{|target|
+						if(name == \vol, {
+							aZ.setVolume(target[0], target[1], val, time.max(0));
+						}, {
+							aZ.setTrim(target[0], target[1], val, time.max(0));
+						});
+					};
+				}, {
+					"could not find assemblage".warn;
+				});
+			};
+			[\num, \dash, \arr].do{|which|
+				cW.add(name, [\str, \str, which, \num, \num], {|str1, str2, nums, val, time|
+					set.({ this.prTypeTargets(str2, nums) }, val, time) },
+				name ++ ": [trackType, trackNum, val, time]");
+				cW.add(name, [\str, which, \num, \num], {|str1, nums, val, time|
+					set.({ this.prMixTargets(nums) }, val, time) },
+				name ++ ": [mixTrackNum, val, time]");
+			};
+		};
+		cW.add(\mixlag, [\str], {|str1|
+			Radicles.mixLag.radpostwarn;
+		}, "mixlag: (posts the time of typed mixer values)");
+		cW.add(\mixlag, [\str, \num], {|str1, num1|
+			Radicles.setMixLag(num1);
+		}, "mixlag: time (typed values: every mixer control running and made later)");
+	}
+
+	// pan commands by the control's name, each with a time for that one move
+	// when one is typed after the value: panx t 1 -0.5, panx t 1 -0.5 4.
+	// pan itself is the panner's first control (its forms without a time are
+	// with vol's above).
+	*prPanNameCmds {
+		[\pan, \panx, \pany, \pan1, \pan2, \width, \orientation, \elevation, \elev,
+			\azimuth, \azi, \rho, \dirmul].do{|name|
+			var set = {|targets, val, time|
+				if(aZ.notNil, {
+					targets.value.do{|target|
+						if(name == \pan, {
+							aZ.setPan(target[0], target[1], val, 1, time);
+						}, {
+							aZ.setPanKey(target[0], target[1], name, val, time);
+						});
+					};
+				}, {
+					"could not find assemblage".warn;
+				});
+			};
+			[\num, \dash, \arr].do{|which|
+				cW.add(name, [\str, \str, which, \num, \num], {|str1, str2, nums, val, time|
+					set.({ this.prTypeTargets(str2, nums) }, val, time) },
+				name ++ ": [trackType, trackNum, val, time]");
+				cW.add(name, [\str, which, \num, \num], {|str1, nums, val, time|
+					set.({ this.prMixTargets(nums) }, val, time) },
+				name ++ ": [mixTrackNum, val, time]");
+				if(name != \pan, {
+					cW.add(name, [\str, \str, which, \num], {|str1, str2, nums, val|
+						set.({ this.prTypeTargets(str2, nums) }, val) },
+					name ++ ": [trackType, trackNum, val]");
+					cW.add(name, [\str, which, \num], {|str1, nums, val|
+						set.({ this.prMixTargets(nums) }, val) },
+					name ++ ": [mixTrackNum, val]");
+				});
+			};
+		};
+	}
+
+	// multichannel pan (a control by its number) and pan modulation
+	*prPanCmds {
+		this.prPanNameCmds;
+		//space pan
 		cW.add(\panlag, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
 			if(aZ.notNil, {
 				case
@@ -2775,17 +2908,7 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "panlag: [trackType, trackNum, val]");
-
-		cW.add(\pan, [\str, \num, \num, \num], {|str, num1, num2, num3|
-			var trackArr;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
-				aZ.setPan(trackArr[0], trackArr[1], num3, num2);
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "pan: masterTrackNum, value");
+		}, "panlag: [trackType, trackNum, panNum, val]");
 
 		cW.add(\panlag, [\str, \num, \num, \num], {|str, num1, num2, num3|
 			var trackArr;
@@ -2795,21 +2918,8 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "panlag: masterTrackNum, value");
+		}, "panlag: [mixTrackNum, panNum, val]");
 
-		cW.add(\pan, [\str, \str, \dash, \num, \num], {|str1, str2, dash, num1, num2|
-			if(aZ.notNil, {
-				dash.do{|index|
-					case
-					{str2 == 't'} {aZ.setPan(\track, index, num2, num1);}
-					{str2 == 'b'} {aZ.setPan(\bus, index, num2, num1);}
-					{str2 == 'm'} {aZ.setPan(\master, index, num2, num1);}
-					;
-				};
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "pan: [trackType, trackNum, val]");
 		cW.add(\panlag, [\str, \str, \dash, \num, \num], {|str1, str2, dash, num1, num2|
 			if(aZ.notNil, {
 				dash.do{|index|
@@ -2822,19 +2932,7 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "panlag: [trackType, trackNum, val]");
-
-		cW.add(\pan, [\str, \dash, \num, \num], {|str, dash, num1, num2|
-			var trackArr;
-			if(aZ.notNil, {
-				dash.do{|item|
-					trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-					aZ.setPan(trackArr[0], trackArr[1], num2, num1);
-				}
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "pan: masterTrackNum, value");
+		}, "panlag: [trackType, trackNum, panNum, val]");
 
 		cW.add(\panlag, [\str, \dash, \num, \num], {|str, dash, num1, num2|
 			var trackArr;
@@ -2846,21 +2944,7 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "panlag: masterTrackNum, value");
-
-		cW.add(\pan, [\str, \str, \arr, \num, \num], {|str1, str2, arr, num1, num2|
-			if(aZ.notNil, {
-				arr.do{|index|
-					case
-					{str2 == 't'} {aZ.setPan(\track, index, num2, num1);}
-					{str2 == 'b'} {aZ.setPan(\bus, index, num2, num1);}
-					{str2 == 'm'} {aZ.setPan(\master, index, num2, num1);}
-					;
-				};
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "pan: [trackType, trackNum, val]");
+		}, "panlag: [mixTrackNum, panNum, val]");
 
 		cW.add(\panlag, [\str, \str, \arr, \num, \num], {|str1, str2, arr, num1, num2|
 			if(aZ.notNil, {
@@ -2874,19 +2958,7 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "panlag: [trackType, trackNum, val]");
-
-		cW.add(\pan, [\str, \arr, \num, \num], {|str, arr, num1, num2|
-			var trackArr;
-			if(aZ.notNil, {
-				arr.do{|item|
-					trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-					aZ.setPan(trackArr[0], trackArr[1], num2, num1);
-				}
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "pan: masterTrackNum, value");
+		}, "panlag: [trackType, trackNum, panNum, val]");
 
 		cW.add(\panlag, [\str, \arr, \num, \num], {|str, arr, num1, num2|
 			var trackArr;
@@ -2898,70 +2970,8 @@
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "panlag: masterTrackNum, value");
+		}, "panlag: [mixTrackNum, panNum, val]");
 
-		cW.add(\panx, [\str, \str, \num, \num], {|str1, str2, num1,  num2|
-			var trackArr, string;
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {
-					string = "track";
-				}
-				{str2 == 'b'} {
-					string = "bus";
-				}
-				{str2 == 'm'} {
-					string = "master";
-				}
-				;
-				trackArr = aZ.mixTrackNames.select{|item| item.asString.contains(string) };
-				trackArr = trackArr.collect{|item| item.asString.divNumStr};
-				trackArr.do{|item|
-					aZ.setPan(item[0].asSymbol, item[1], num2, num1);
-				}
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "pan: [trackType, val]");
-
-		cW.add(\panxlag, [\str, \str, \num, \num], {|str1, str2, num1, num2|
-			var trackArr, string;
-			if(aZ.notNil, {
-				case
-				{str2 == 't'} {
-					string = "track";
-				}
-				{str2 == 'b'} {
-					string = "bus";
-				}
-				{str2 == 'm'} {
-					string = "master";
-				}
-				;
-				trackArr = aZ.mixTrackNames.select{|item| item.asString.contains(string) };
-				trackArr = trackArr.collect{|item| item.asString.divNumStr};
-				trackArr.do{|item|
-					aZ.setPanLag(item[0].asSymbol, item[1], num2, num1);
-				}
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "panlag: [trackType, val]");
-
-		cW.add(\panxlag, [\str, \num, \num], {|str1, num1, num2|
-			var trackArr, string;
-			if(aZ.notNil, {
-				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
-				trackArr.do{|item| if(item[1].isNil, {item[1] = 1}) };
-				trackArr.do{|item|
-					aZ.setPanLag(item[0].asSymbol, item[1], num2, num1);
-				}
-			}, {
-				"could not find assemblage".warn;
-			});
-		}, "panlag: val");
-
-		//space mods
 		cW.add(\pan, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
 			var modArgs, modifier, keyValues;
 			if(aZ.notNil, {
@@ -2969,13 +2979,13 @@
 				if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
 				case
 				{str2 == 't'} {
-					keyValues = Ndef(("spaceTrack" ++ num1).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\track, num1)[num2-1];
 					aZ.modMix(\track, num1, keyValues, modArgs[0], modArgs[1], modifier: modifier)}
 				{str2 == 'b'} {
-					keyValues = Ndef(("spaceBus" ++ num1).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\bus, num1)[num2-1];
 					aZ.modMix(\bus, num1, keyValues, modArgs[0], modArgs[1], modifier: modifier)}
 				{str2 == 'm'} {
-					keyValues = Ndef(("spaceMaster").asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\master, 1)[num2-1];
 					aZ.modMix(\master, num1, keyValues, modArgs[0], modArgs[1], modifier: modifier)}
 				;
 			}, {
@@ -2987,8 +2997,7 @@
 			var trackArr, modArgs, modifier, keyValues;
 			if(aZ.notNil, {
 				trackArr = aZ.mixTrackNames[num1-1].asString.divNumStr;
-				keyValues = Ndef(("space" ++ trackArr[0].asString.capitalise ++
-					trackArr[1]).asSymbol).getKeysValues[num2-1][0];
+				keyValues = aZ.panKeys(trackArr[0].asSymbol, trackArr[1])[num2-1];
 				modArgs = str2.asString.radStringMod;
 				if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
 				aZ.modMix(trackArr[0], trackArr[1], keyValues, modArgs[0], modArgs[1], modifier: modifier)
@@ -3006,13 +3015,13 @@
 		{
 		case
 		{str2 == 't'} {
-		keyValues = Ndef(("spaceTrack" ++ item).asSymbol).getKeysValues[num1-1][0];
+		keyValues = aZ.panKeys(\track, item)[num1-1];
 		aZ.modMix(\track, item, keyValues, modArgs[0], modArgs[1], modifier: modifier)}
 		{str2 == 'b'} {
-		keyValues = Ndef(("spaceBus" ++ item).asSymbol).getKeysValues[num1-1][0];
+		keyValues = aZ.panKeys(\bus, item)[num1-1];
 		aZ.modMix(\bus, item, keyValues, modArgs[0], modArgs[1], modifier: modifier)}
 		{str2 == 'm'} {
-		keyValues = Ndef(("spaceMaster").asSymbol).getKeysValues[num1-1][0];
+		keyValues = aZ.panKeys(\master, 1)[num1-1];
 		aZ.modMix(\master, item, keyValues, modArgs[0], modArgs[1], modifier: modifier)}
 		;
 		}.defer;
@@ -3027,8 +3036,7 @@
 		if(aZ.notNil, {
 		dash.do{|item|
 		trackArr = aZ.mixTrackNames[item-1].asString.divNumStr;
-		keyValues = Ndef(("space" ++ trackArr[0].asString.capitalise ++
-		trackArr[1]).asSymbol.postln).getKeysValues[num1-1][0];
+		keyValues = aZ.panKeys(trackArr[0].asSymbol, trackArr[1])[num1-1];
 		modArgs = str2.asString.radStringMod;
 		if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
 		{aZ.modMix(trackArr[0], trackArr[1], keyValues, modArgs[0], modArgs[1],
@@ -3044,13 +3052,13 @@
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {
-					keyValues = Ndef(("spaceTrack" ++ num1).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\track, num1)[num2-1];
 					aZ.getMixMod(\track, num1, keyValues).radpostwarn;}
 				{str2 == 'b'} {
-					keyValues = Ndef(("spaceBus" ++ num1).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\bus, num1)[num2-1];
 					aZ.getMixMod(\bus, num1, keyValues).radpostwarn;}
 				{str2 == 'm'} {
-					keyValues = Ndef(("spaceMaster").asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\master, 1)[num2-1];
 					aZ.getMixMod(\master, num1, keyValues).radpostwarn;};
 			}, {
 				"could not find assemblage".warn;
@@ -3064,8 +3072,7 @@
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					keyValues = Ndef(("space" ++ thisArr[0].capitalise ++
-						thisArr[1]).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(thisArr[0].asSymbol, thisArr[1])[num2-1];
 					aZ.getMixMod(thisArr[0].asSymbol, thisArr[1], keyValues).radpostwarn;
 				}, {
 					"track not found".warn;
@@ -3080,13 +3087,13 @@
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {
-					keyValues = Ndef(("spaceTrack" ++ 1).asSymbol).getKeysValues[num1-1][0];
+					keyValues = aZ.panKeys(\track, 1)[num1-1];
 					aZ.setMixMod(\track, 1, keyValues, arr1);}
 				{str2 == 'b'} {
-					keyValues = Ndef(("spaceBus" ++ 1).asSymbol).getKeysValues[num1-1][0];
+					keyValues = aZ.panKeys(\bus, 1)[num1-1];
 					aZ.setMixMod(\bus, 1, keyValues, arr1);}
 				{str2 == 'm'} {
-					keyValues = Ndef(("spaceMaster").asSymbol).getKeysValues[num1-1][0];
+					keyValues = aZ.panKeys(\master, 1)[num1-1];
 					aZ.setMixMod(\master, 1, keyValues, arr1);};
 			}, {
 				"could not find assemblage".warn;
@@ -3098,13 +3105,13 @@
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {
-					keyValues = Ndef(("spaceTrack" ++ 1).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\track, 1)[num2-1];
 					aZ.setMixMod(\track, num1, keyValues, arr1);}
 				{str2 == 'b'} {
-					keyValues = Ndef(("spaceBus" ++ 1).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\bus, 1)[num2-1];
 					aZ.setMixMod(\bus, num1, keyValues, arr1);}
 				{str2 == 'm'} {
-					keyValues = Ndef(("spaceMaster").asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\master, 1)[num2-1];
 					aZ.setMixMod(\master, 1, keyValues, arr1);};
 			}, {
 				"could not find assemblage".warn;
@@ -3118,8 +3125,7 @@
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					keyValues = Ndef(("space" ++ thisArr[0].capitalise ++
-						thisArr[1]).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(thisArr[0].asSymbol, thisArr[1])[num2-1];
 					aZ.setMixMod(thisArr[0].asSymbol, thisArr[1], keyValues, arr1);
 				}, {
 					"track not found".warn;
@@ -3135,13 +3141,13 @@
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {
-					keyValues = Ndef(("spaceTrack" ++ 1).asSymbol).getKeysValues[num1-1][0];
+					keyValues = aZ.panKeys(\track, 1)[num1-1];
 					aZ.unmodMix(\track, keyValues, \pan).radpostwarn;}
 				{str2 == 'b'} {
-					keyValues = Ndef(("spaceBus" ++ 1).asSymbol).getKeysValues[num1-1][0];
+					keyValues = aZ.panKeys(\bus, 1)[num1-1];
 					aZ.unmodMix(\bus, 1, keyValues).radpostwarn;}
 				{str2 == 'm'} {
-					keyValues = Ndef(("spaceMaster").asSymbol).getKeysValues[num1-1][0];
+					keyValues = aZ.panKeys(\master, 1)[num1-1];
 					aZ.unmodMix(\master, 1, keyValues).radpostwarn;};
 			}, {
 				"could not find assemblage".warn;
@@ -3153,13 +3159,13 @@
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {
-					keyValues = Ndef(("spaceTrack" ++ num1).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\track, num1)[num2-1];
 					aZ.unmodMix(\track, num1, keyValues).radpostwarn;}
 				{str2 == 'b'} {
-					keyValues = Ndef(("spaceBus" ++ num1).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\bus, num1)[num2-1];
 					aZ.unmodMix(\bus, num1, keyValues).radpostwarn;}
 				{str2 == 'm'} {
-					keyValues = Ndef(("spaceMaster").asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(\master, 1)[num2-1];
 					aZ.unmodMix(\master, num1, keyValues).radpostwarn;};
 			}, {
 				"could not find assemblage".warn;
@@ -3173,8 +3179,7 @@
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					keyValues = Ndef(("space" ++ thisArr[0].capitalise ++
-						thisArr[1]).asSymbol).getKeysValues[num2-1][0];
+					keyValues = aZ.panKeys(thisArr[0].asSymbol, thisArr[1])[num2-1];
 					aZ.unmodMix(thisArr[0].asSymbol, thisArr[1], keyValues).radpostwarn;
 				}, {
 					"track not found".warn;

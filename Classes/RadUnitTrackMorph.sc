@@ -44,18 +44,24 @@
 		});
 	}
 
-	// vol typed for a strip while its whole-track fade-out is on its way: the
-	// performer has changed their mind. The load stops and the track stays
-	// as it is, its source and effects on (Federico, 20 Nov 2026). Before,
-	// the level came back and the track was emptied anyway when the time was
-	// up, while it sounded. Called by Assemblage:setVolume (every vol
-	// command) before it sets the value. Not during a fade-in or a
-	// part-by-part load: there the new volume is one more value. Not by the
-	// mixer's fader or a MIDI control, which set the Ndef themselves: with
-	// those the load goes on (open question in the PR). A modulator on the
-	// volume, removed when the fade-out began, does not come back.
-	*volumeSetDuringLoad {|type, num|
-		var name = this.stripName(type, num), morph = this.prTrackMorphs[name];
+	// the volume set by the performer on a strip while its whole-track
+	// fade-out is on its way: they have changed their mind. The load stops
+	// and the track stays as it is, its source and effects on (Federico, 20
+	// Nov 2026). Before, the level came back and the track was emptied anyway
+	// when the time was up, while it sounded. Called before the value is
+	// set, by every way a performer sets a volume: Assemblage:setVolume (the
+	// vol commands), the mixer's fader, and a MIDI, HID or OSC control mapped
+	// to the volume (HIDMap). Not during a fade-in or a part-by-part load:
+	// there the new volume is one more value. A modulator on the volume,
+	// removed when the fade-out began, does not come back.
+	*volumeSetDuringLoad {|type, num| this.volumeSetOnStrip(this.stripName(type, num)) }
+
+	// the same by the strip's name, which is also its Ndef's key (any other
+	// name has no load running, so nothing happens)
+	*volumeSetOnStrip {|name|
+		var morph;
+		name = name.asSymbol;
+		morph = this.prTrackMorphs[name];
 		if(morph.notNil and: { morph[\silentAt].notNil }, {
 			this.prStopTrackMorph(name);
 			("tload stopped: " ++ name ++ " stays as it is").postln;
@@ -131,8 +137,7 @@
 			atEnd.do(_.value);
 			if(track[\mute] == 1 and: { current[\mute] != 1 }, { az.setMute(type, num, 1) });
 			if(track[\output] == \none, { this.prSetOutput(type, num, \none, az) });
-			//done: the lags and fade times go back (once the panner's glide,
-			//which starts a fade time later, is over)
+			//done: the times and fade times go back
 			subs.do{|sub| while({ sub.isPlaying }, { 0.05.wait }) };
 			if(this.prTrackMorphs[name] === morph, {
 				restores.do(_.value);
@@ -300,7 +305,7 @@
 
 	*prGlideStripValues {|type, num, track, time, restores, subs, az, shape = \glide|
 		var name = this.stripName(type, num), inKey, key, spaceKey, current, curMods, tgtMods, left = [];
-		var pan, panKeys, panDefaults, curLags, tgtLags, trimLag, volMoved = false, xfade = shape != \glide;
+		var pan, panKeys, panDefaults, curLags, tgtLags, panLags, xfade = shape != \glide;
 		//a crossfade: the stage's fade time is the load's while it runs
 		var hold = {|stage|
 			Radicles.holdFade(stage, time);
@@ -312,8 +317,7 @@
 		tgtMods = if(track[\default] == true, { () }, { track[\mods] ? () });
 		curLags = current[\lags] ? ();
 		tgtLags = if(track[\default] == true, { () }, { track[\lags] ? () });
-		// trim: its lagTime is the load's time, then goes back
-		trimLag = Ndef(inKey).get(\lagTime) ? 0;
+		// trim: a glide is one move over the load's time
 		this.prApplyArgsMods(Ndef(inKey), (args: (trim: current[\trim]), mods: curMods[\trim] !? {|m| (trim: m) } ? ()),
 			(args: (trim: track[\trim] ? 0), mods: tgtMods[\trim] !? {|m| (trim: m) } ? ()),
 			{|ndef, pairs|
@@ -321,12 +325,11 @@
 					hold.(inKey);
 					("Ndef(" ++ inKey.cs ++ ").xset('trim', " ++ pairs[1].cs ++ ");").radcode;
 				}, {
-					("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ time.cs ++ ");").radcode(\radpostcont);
-					az.setTrim(type, num, pairs[1]);
-					restores.add({ ("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ trimLag.cs ++ ");").radcode(\radpostcont) });
+					az.setTrim(type, num, pairs[1], time);
 				});
 			});
-		// volume: its lagTime is the load's time, then the preset's volume lag
+		// volume: one steady move over the load's time (the strip's own time,
+		// vollag, is not used by it; the preset's is set below)
 		this.prApplyArgsMods(Ndef(key), (args: (volume: current[\volume]), mods: curMods[\volume] !? {|m| (volume: m) } ? ()),
 			(args: (volume: track[\volume] ? 0), mods: tgtMods[\volume] !? {|m| (volume: m) } ? ()),
 			{|ndef, pairs|
@@ -334,18 +337,15 @@
 					hold.(key);
 					("Ndef(" ++ key.cs ++ ").xset('volume', " ++ pairs[1].cs ++ ");").radcode;
 				}, {
-					volMoved = true;
 					az.setVolume(type, num, pairs[1], time);
-					restores.add({ az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
 				});
 			});
-		//a volume that doesn't change still takes the preset's lag at the end
-		if(volMoved.not and: { (curLags[\volume] ? 0) != (tgtLags[\volume] ? 0) }, {
-			restores.add({ az.setVolumeLag(type, num, tgtLags[\volume] ? 0) });
-		});
-		if((curLags[\trim] ? 0) != (tgtLags[\trim] ? 0), { az.setTrimLag(type, num, tgtLags[\trim] ? 0) });
-		// pan: the panner's own lag (NodeProxy:lag rebuilds the panner, so the
-		// values change once the old copy has faded out), then the preset's
+		//the preset's own volume time
+		if((curLags[\volume] ? Assemblage.shortLag) != (tgtLags[\volume] ? Assemblage.shortLag), {
+			az.setVolumeLag(type, num, tgtLags[\volume] ? Assemblage.shortLag) });
+		if((curLags[\trim] ? Assemblage.shortLag) != (tgtLags[\trim] ? Assemblage.shortLag), {
+			az.setTrimLag(type, num, tgtLags[\trim] ? Assemblage.shortLag) });
+		// pan
 		panKeys = (current[\pan] ? ()).keys;
 		panDefaults = Ndef(spaceKey).source !? {|func| func.respondsTo(\def).if({ ().putPairs(func.def.keyValuePairsFromArgs) }) } ? ();
 		pan = if(track[\default] == true or: { track[\pan].isNil }, {
@@ -357,29 +357,23 @@
 		this.prApplyArgsMods(Ndef(spaceKey), (args: current[\pan] ? (), mods: curMods[\pan] ? ()),
 			(args: pan, mods: (tgtMods[\pan] ? ()).select{|v, k| panKeys.includes(k) }),
 			{|ndef, pairs|
-				var keys = pairs[0, 2..], ndefKeys = Ndef(spaceKey).getKeysValues.collect(_[0]);
-				var tgtPanLags = tgtLags[\pan] ? ();
+				var keys = pairs[0, 2..], ndefKeys = az.panKeys(type, num);
 				if(xfade, {
 					hold.(spaceKey);
 					("Ndef(" ++ spaceKey.cs ++ ").xset(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
-					//the preset's pan lags, where they differ, once the fade is over
-					restores.add({
-						keys.do{|k| if(((curLags[\pan] ? ())[k] ? 0) != (tgtPanLags[k] ? 0), {
-							az.setPanLag(type, num, tgtPanLags[k] ? 0, ndefKeys.indexOf(k) + 1) }) };
-					});
 				}, {
-				subs.add({
-					("Ndef(" ++ spaceKey.cs ++ ").lag(" ++ keys.collect{|k| [k, time] }.flatten.collect(_.cs).join(", ") ++ ");").radcode;
-					Server.default.sync;
-					Ndef(spaceKey).fadeTime.wait;
-					pairs.pairsDo{|k, v| az.setPan(type, num, v, ndefKeys.indexOf(k) + 1) };
-					time.wait;
-				}.fork(AppClock));
-				restores.add({
-					keys.do{|k| az.setPanLag(type, num, tgtPanLags[k] ? 0, ndefKeys.indexOf(k) + 1) };
-				});
+					//a glide: each control is one move over the load's time; its
+					//own time (panlag) is not used by it
+					pairs.pairsDo{|k, v| az.setPan(type, num, v, ndefKeys.indexOf(k) + 1, time) };
 				});
 			});
+		//the preset's pan times, where they differ (after a crossfade: once it is over)
+		panLags = {
+			var ndefKeys = az.panKeys(type, num);
+			panKeys.do{|k| if(((curLags[\pan] ? ())[k] ? Assemblage.shortLag) != ((tgtLags[\pan] ? ())[k] ? Assemblage.shortLag), {
+				az.setPanLag(type, num, (tgtLags[\pan] ? ())[k] ? Assemblage.shortLag, ndefKeys.indexOf(k) + 1) }) };
+		};
+		if(xfade, { restores.add(panLags) }, { panLags.() });
 		^left
 	}
 
@@ -420,20 +414,17 @@
 						this.prUnmodSend(type, num, busNum.(bus), sends, az);
 						cur.removeAt(\mod);
 					});
+					this.prSendLag(type, num, busNum.(bus), cur, send, az);
 					if(send[\mod].isNil, {
+						//one move over the load's time; the send's own time is not touched
 						az.setSendKnob(type, num, this.prSendSlot(type, num, busNum.(bus), az), send[\level] ? -inf, time);
-						restores.add({
-							this.prSendSlot(type, num, busNum.(bus), az) !? {|slot|
-								az.setSendKnob(type, num, slot, send[\level] ? -inf, send[\lag] ? 0) };
-						});
 					}, {
 						//a modulated send: the level under the modulator is set
 						//at once (it is what comes back when the modulator goes)
 						if(cur[\mod].isNil, {
-							if((cur[\lag] ? 0) != (send[\lag] ? 0) or: {
-								RadDoc.diff((v: cur[\level]), (v: send[\level] ? -inf)).notEmpty }, {
+							if(RadDoc.diff((v: cur[\level]), (v: send[\level] ? -inf)).notEmpty, {
 								az.setSendKnob(type, num, this.prSendSlot(type, num, busNum.(bus), az),
-									send[\level] ? -inf, send[\lag] ? 0);
+									send[\level] ? -inf, 0);
 							});
 							this.prModSend(type, num, busNum.(bus), keys, send, az);
 						});

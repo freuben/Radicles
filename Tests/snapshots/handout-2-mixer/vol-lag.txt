@@ -6,7 +6,7 @@ Ndef('track1').set('lagTime', 10);
 
 >> vol 1 -inf
 == radpost ==
-Ndef('track1').set('volume', -inf);
+Ndef('track1').set('volume', -inf, 'ramp', 10);
 == radpostcont ==
 (none)
 
@@ -24,7 +24,7 @@ Ndef('track1').set('lagTime', 0);
 
 >> vol 1 -inf
 == radpost ==
-Ndef('track1').set('volume', -inf);
+Ndef('track1').set('volume', -inf, 'ramp', 0);
 == radpostcont ==
 (none)
 

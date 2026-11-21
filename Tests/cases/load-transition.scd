@@ -246,7 +246,7 @@
 	check: {
 		var one = ~radLtStripNow.(\track1);
 		case
-		{ ~radLtMid != [2, 0] } { "track1's fade time and volume lag during the load: " ++ ~radLtMid }
+		{ ~radLtMid != [2, 0.05] } { "track1's fade time and volume lag during the load: " ++ ~radLtMid }
 		{ Ndef(\track1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\track1).fadeTime }
 		{ ~radLtRatio.() != 2 } { "nofx: pitchRatio " ++ ~radLtRatio.() }
 		{ one[\volume] != -6 or: { one[\lags].notNil } } { "track1: " ++ one.cs }
@@ -490,12 +490,12 @@
 	teardown: ~radLtClean
 );
 
-// with glide they glide as before: a lag over the time, then it goes back
+// with glide the volume glides: one steady move over the time (its 'ramp')
 ~radTest.("tload-strip-values-glide",
 	setup: ["start 2", "vol t 2 -6", "tsave t 2 radtest_ltt"],
 	code: {
 		Radicles.cW.callFunc("tload t 1 radtest_ltt 2 glide"); 0.8.wait;
-		~radLtMid = [Ndef(\track1).fadeTime, Ndef(\track1).get(\lagTime) ? 0]; 3.wait },
+		~radLtMid = [Ndef(\track1).fadeTime, Ndef(\track1).get(\ramp) ? 0]; 3.wait },
 	check: {
 		var one = ~radLtStripNow.(\track1);
 		case
@@ -653,6 +653,64 @@
 		{ Ndef(\track1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\track1).fadeTime }
 		{ true }
 	},
+	teardown: ~radLtClean
+);
+
+// a control mapped to the volume (MIDI, HID or OSC; OSC here, which needs no
+// device) moved during the fade-out stops the load as a typed vol does
+// (Federico, 20 Nov 2026)
+~radTest.("mapped-volume-during-fade-out-stops-load",
+	setup: ~radLtWhole,
+	code: {
+		HIDMap.map(Ndef('track1'), \volume, \osc, [-60, 0], ['/radtestltvol']);
+		0.2.wait;
+		Radicles.cW.callFunc("tload t 1 default 3"); 1.wait;
+		NetAddr.localAddr.sendMsg('/radtestltvol', 0.85); 4.wait },
+	check: {
+		var one = ~radLtStripNow.(\track1);
+		case
+		{ ~radLtFx1.().not or: { Ndef(\block1).source.isNil } } { "the effect or the block went" }
+		{ (one[\volume] - -9).abs > 0.01 } { "track1: " ++ one.cs }
+		{ Ndef(\track1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\track1).fadeTime }
+		{ true }
+	},
+	teardown: { OSCdef.freeAll; ~radLtClean.() }
+);
+
+// a control mapped to something that is not a strip's volume posts the same
+// code as before
+~radTest.("mapped-control-not-a-strip-volume",
+	setup: ~radLtWhole,
+	code: {
+		~radLtMap = HIDMap.map(Ndef('track1'), \mute, \osc, [0, 1], ['/radtestltmute'])[1];
+		0.2.wait },
+	check: { ~radLtMap.contains("volumeSetOnStrip").not or: { ~radLtMap } },
+	teardown: { OSCdef.freeAll; ~radLtClean.() }
+);
+
+// the mixer's fader moved during the fade-out stops the load too (Mac only:
+// needs the window). During the fade the track's fader is the one at the
+// bottom: its volume reads -inf from the start.
+~radLtAllViews = {|view| [view] ++ (view.children ? []).collect{|child| ~radLtAllViews.(child) }.flat };
+~radTest.("fader-during-fade-out-stops-load",
+	setup: ~radLtWhole ++ [["mix", 1]],
+	code: {
+		var fader;
+		Radicles.cW.callFunc("tload t 1 default 3"); 1.wait;
+		fader = ~radLtAllViews.(Radicles.aZ.mixerWin.canvas).detect{|v| v.isKindOf(Slider) and: { v.value == 0 } };
+		~radLtFader = fader.notNil;
+		fader !? { fader.valueAction = 0.5 };
+		4.wait },
+	check: {
+		var one = ~radLtStripNow.(\track1);
+		case
+		{ ~radLtFader.not } { "no fader at the bottom during the fade" }
+		{ ~radLtFx1.().not or: { Ndef(\block1).source.isNil } } { "the effect or the block went" }
+		{ one[\volume] == -inf } { "track1: " ++ one.cs }
+		{ Ndef(\track1).fadeTime != 0.5 } { "fade time after: " ++ Ndef(\track1).fadeTime }
+		{ true }
+	},
+	gui: true,
 	teardown: ~radLtClean
 );
 

@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+OSCdef('hid1', {arg ...args; {|val| ("Ndef('inTrack1').set(" ++ Radicles.aZ.rampArgs(Ndef('inTrack1'), 'trim', val, Radicles.ctlLag, 'ramp') ++ ")").radpostcont.interpret; }.([-20.0, 20.0].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestmrtrim');
+OSCdef('hid2', {arg ...args; {|val| ("Ndef('busIn1').set(" ++ Radicles.aZ.rampArgs(Ndef('busIn1'), 'vol1', val, Radicles.ctlLag, 'ramp1') ++ ")").radpostcont.interpret; }.([-60.0, 0.0].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestmrsnd');
+== radpostcont ==
+Ndef('inTrack1').set('trim', 10.0, 'ramp', 0.05)
+Ndef('busIn1').set('vol1', -30.0, 'ramp1', 0.05)
+

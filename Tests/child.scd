@@ -4,7 +4,7 @@
 // you have running in the IDE.
 (
 var args, caseName, testName, mode, resultFile, test, blocks, current, lastPost;
-var quietWait, runCmd, finish, headless, docCheck, docProblem;
+var quietWait, runCmd, finish, headless, docCheck, docProblem, serverWasUp;
 
 args = thisProcess.argv;
 #caseName, testName, mode, resultFile = args;
@@ -110,6 +110,7 @@ if(test.notNil, {
 		// command typed before it is ready fails (seen with start 2, Oct 2026)
 		test[\setup].do{|entry| runCmd.(entry, 3.0) };
 		if(s.serverRunning, { s.volume = -90 });
+		serverWasUp = s.serverRunning;
 		"RADTEST:BEGIN".postln;
 		blocks = [];
 		test[\cmds].do{|entry|
@@ -133,6 +134,14 @@ if(test.notNil, {
 
 		result = try { test[\check].value ? true } {|e| "check raised: " ++ e.errorString };
 		if(result == true and: { docProblem.notNil }, { result = docProblem });
+		// a server that stops during the test: say so first. Everything that
+		// waits for the server then waits for ever, and what the check or the
+		// document report is only what follows from that (seen in the cloud,
+		// Nov 2026). serverMayExit: true for a test that stops it on purpose.
+		if(serverWasUp and: { s.serverRunning.not } and: { test[\serverMayExit] != true }, {
+			result = "the server exited during the test" ++
+			if(result == true, { "" }, { " (then: " ++ result ++ ")" });
+		});
 		"RADTEST:CHECKED".postln;
 		try { test[\teardown].value } {};
 		userLib.do{|saved|

@@ -1,7 +1,7 @@
 >> snd t 1 1 0
 == radpost ==
-Ndef('busIn1').nodeMap.set('vol1', -12, 'lag1', 0, 'vol2', -20, 'lag2', 2, 'vol3', nil, 'lag3', nil);
-Ndef('busIn1', {arg vol1 = -inf, lag1 = 0, vol2 = -inf, lag2 = 0; [Ndef.ar('track2', 1)*vol1.dbamp.lag(lag1), Ndef.ar('track3', 1)*vol2.dbamp.lag(lag2); ].sum});
+Ndef('busIn1').nodeMap.set('vol1', -12, 'lag1', 0.05, 'ramp1', 0.05, 'vol2', -20, 'lag2', 2, 'ramp2', nil, 'vol3', nil, 'lag3', nil);
+Ndef('busIn1', {arg vol1 = -inf, lag1 = 0.05, ramp1 = 0.05, vol2 = -inf, lag2 = 0.05, ramp2 = 0.05; [Ndef.ar('track2', 1)*(VarLag.kr((vol1.dbamp / 6.dbamp).sqrt, ramp1.max(ControlDur.ir), warp: \lin).squared * 6.dbamp), Ndef.ar('track3', 1)*(VarLag.kr((vol2.dbamp / 6.dbamp).sqrt, ramp2.max(ControlDur.ir), warp: \lin).squared * 6.dbamp); ].sum});
 == radpostcont ==
 (none)
 
