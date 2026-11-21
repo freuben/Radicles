@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+OSCdef('hid1', {arg ...args; {|val| ("Ndef('track1').set('mute', " ++ val ++ ")").radpostcont.interpret; }.([0.0, 1.0].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestltmute');
+== radpostcont ==
+(none)
+

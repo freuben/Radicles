@@ -60,7 +60,8 @@
 	}
 );
 
-// vollag sets the volume's lagTime; trimlag and panlag set the Ndef's own lag
+// vollag and trimlag set the strip's own time for typed values (lagTime on
+// the strip and on its input); panlag the same for the panner's controls
 ~radTest.("strip-lags",
 	setup: ["start 2"],
 	cmds: ["vollag t 1 2", "trimlag t 2 0.5", "panlag t 2 1.5"],
@@ -189,10 +190,10 @@
 	}
 );
 
-// a send's lag and its modulator, by what it is
+// a send's own time (sndlag) and its modulator, by what it is
 ~radTest.("strip-send-lag-and-mod",
 	setup: ["start 2 1", "snd t 1 1 1 -6", "snd t 2 1 1 -6"],
-	cmds: ["sndset t 1 1 -10 2", "sndset t 2 1 sin"],
+	cmds: ["sndlag t 1 1 2", "sndset t 1 1 -10", "sndset t 2 1 sin"],
 	check: {
 		var one = ~radStripValues.(\track1)[\sends], two = ~radStripValues.(\track2)[\sends];
 		case
@@ -216,7 +217,7 @@
 // send leaves the other's level as it was (it took the removed send's level:
 // the bus input's controls are named by position, vol1, vol2; review, 18 Nov 2026)
 ~radTest.("strip-send-removed-keeps-other-level",
-	setup: ["start 3 1", "snd t 1 1 1 -6", "snd t 2 1 1 -12", "snd t 3 1 1 -20", "sndset t 3 1 -20 2"],
+	setup: ["start 3 1", "snd t 1 1 1 -6", "snd t 2 1 1 -12", "snd t 3 1 1 -20", "sndlag t 3 1 2"],
 	cmds: [["snd t 1 1 0", 3]],
 	check: {
 		var got = [\track1, \track2, \track3].collect{|name| ~radStripValues.(name)[\sends] };

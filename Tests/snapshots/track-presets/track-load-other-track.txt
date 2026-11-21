@@ -1,6 +1,6 @@
 >> tload t 2 radtest_track2
 == radpost ==
-Ndef('track2').set('volume', -inf, 'lagTime', 0.1);
+Ndef('track2').set('volume', -inf, 'ramp', 0.1);
 Ndef('block2', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
 Ndef('block2').xset('freq', 330, 'phase', 0, 'mul', 0.4);
 Ndef.ar('filterTrack_2_1', 1);
@@ -11,15 +11,15 @@ Ndef('filterTrack_2_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersi
         PitchShift.ar(Ndef.ar('inTrack2', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
  });
 Ndef('filterTrack_2_1').set('pitchDispertion', 0.0, 'pitchRatio', 0.5, 'winSize', 0.02, 'timeDispersion', 0.0001);
-Ndef('track2', {arg volume=0, lagTime=0, mute=0, solo=1;
-                (Ndef.ar('filterTrack_2_1', 1) * volume.dbamp.lag(lagTime)
+Ndef('track2', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+                (Ndef.ar('filterTrack_2_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
-Ndef('track2').set('volume', -inf, 'lagTime', 0.1, 'mute', 0, 'solo', 1);
+Ndef('track2').set('volume', -inf, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.1);
 Ndef('inTrack2').set('trim', 3);
 Ndef('spaceTrack2').set('pan', -0.3);
 Ndef('track2').set('lagTime', 2);
-Ndef('busIn1', {arg vol1 = -inf, lag1 = 0, vol2 = -inf, lag2 = 0; [Ndef.ar('track1', 1)*vol1.dbamp.lag(lag1), Ndef.ar('track2', 1)*vol2.dbamp.lag(lag2); ].sum});
-Ndef('busIn1').set('vol1', -9, 'lag1', 0);
+Ndef('busIn1', {arg vol1 = -inf, lag1 = 0.05, ramp1 = 0.05, vol2 = -inf, lag2 = 0.05, ramp2 = 0.05; [Ndef.ar('track1', 1)*(VarLag.kr((vol1.dbamp / 6.dbamp).sqrt, ramp1.max(ControlDur.ir), warp: \lin).squared * 6.dbamp), Ndef.ar('track2', 1)*(VarLag.kr((vol2.dbamp / 6.dbamp).sqrt, ramp2.max(ControlDur.ir), warp: \lin).squared * 6.dbamp); ].sum});
+Ndef('busIn1').set('vol1', -9, 'lag1', 0.05, 'ramp1', 0.05);
 Ndef('busIn1').set('vol2', -9);
 Ndef('track2').xset('volume', -6);
 == radpostcont ==

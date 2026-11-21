@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+Ndef('spaceTrack1').set('pan', 1, 'panRamp', 2);
+Ndef('spaceTrack1').set('pan', -1, 'panRamp', 0);
+Ndef('spaceTrack1').set('pan', 1, 'panRamp', 2);
+== radpostcont ==
+(none)
+

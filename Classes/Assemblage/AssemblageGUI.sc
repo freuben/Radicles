@@ -154,6 +154,9 @@
 			//panning knob(s)/slider2D(s)
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			panKeyValues = Ndef(panKey).getKeysValues.reject({|item| item.asString.contains("wet") });
+			//not the panner's time controls (panLag, panRamp, ...)
+			panKeyValues = panKeyValues.reject({|item|
+				Assemblage.timeControl(panKeyValues.collect(_[0]), item[0]) });
 			knobSize = 30 * (1.2 - (0.2* panKeyValues.size ) );
 			knobTextSize = 24 * (1.2 - (0.2* panKeyValues.size ) );
 			if(panKeyValues.flop[0].includes(\dirmul).not, {
@@ -438,8 +441,8 @@
 			inKnob.centered_(true).srcAction = {|knob| var thisKey, thisSpec;
 				thisKey = ("in" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 				thisSpec = this.getSpec(thisKey, \trim).asSpec;
-				("Ndef(" ++ thisKey.cs ++ ").set('trim', " ++
-					thisSpec.map(knob.value) ++ ");").radcode(\radpostcont);
+				("Ndef(" ++ thisKey.cs ++ ").set(" ++ this.rampArgs(Ndef(thisKey), \trim,
+					thisSpec.map(knob.value), Radicles.ctlLag) ++ ");").radcode(\radpostcont);
 			};
 			inKnobArr = inKnobArr.add(inKnob);
 
@@ -627,8 +630,10 @@
 							var newPanVal;
 						newPanVal = panSpec[ind][1].asSpec.map(val.value);
 						panKnobTextArr[index][ind].string_(newPanVal.round(0.1).asString);
-							("Ndef(" ++ panKey.cs ++ ").set(" ++ getKeyValues[ind][0].cs ++ ", "
-								++ newPanVal ++ ");").radcode(\radpostcont);
+							//a hand on the knob: over the native time (ctllag)
+							("Ndef(" ++ panKey.cs ++ ").set(" ++ (Assemblage.rampKey(Ndef(panKey), getKeyValues[ind][0]) !? {|rampKey|
+								this.rampArgs(Ndef(panKey), getKeyValues[ind][0], newPanVal, Radicles.ctlLag, rampKey) }
+							?? { getKeyValues[ind][0].cs ++ ", " ++ newPanVal }) ++ ");").radcode(\radpostcont);
 						};
 					};
 			});
@@ -657,8 +662,11 @@
 				volSpec.unmap( volValue );
 			).srcAction_({|val|
 				sliderTextArr[index].string_(volSpec.map(val.value).round(0.1).asString);
-				(mixTrackNdefs[index].cs ++ ".set('volume', " ++
-					volSpec.map(val.value) ++ ");").radcode(\radpostcont);
+				//the fader moved during a whole-track fade-out stops that load
+				RadUnit.volumeSetOnStrip(mixTrackNames[index]);
+				//the hand is the ramp: the short native time, not the strip's own
+				(mixTrackNdefs[index].cs ++ ".set(" ++ this.volumeArgs(mixTrackNdefs[index],
+					volSpec.map(val.value), Radicles.ctlLag) ++ ");").radcode(\radpostcont);
 		});  };
 
 		setVolSlider = {|index, value|
@@ -764,8 +772,9 @@
 				});
 				it.value = thisSpec.unmap( selValue );
 				it.srcAction = {|val|
-					("Ndef(" ++ thisKey.cs ++ ").set(" ++ selArg.cs ++
-						", " ++ thisSpec.map(val.value) ++ ");").radcode(\radpostcont);
+					("Ndef(" ++ thisKey.cs ++ ").set(" ++ this.rampArgs(Ndef(thisKey), selArg,
+						thisSpec.map(val.value), Radicles.ctlLag, Assemblage.rampKey(Ndef(thisKey), selArg) ? \ramp)
+						++ ");").radcode(\radpostcont);
 				};
 			});
 		};

@@ -28,10 +28,13 @@
 // anyOrder: true = compare each command's posted code in any order (sorted
 //   before snapshotting), for commands that run at the same time, such as
 //   "(lp 1 & lp 2 & fx 1 pch)", whose posts race.
+// serverMayExit: true = the test stops the server on purpose. Otherwise a
+//   server that was running after setup and is not at the check fails the
+//   test with "the server exited during the test".
 // known: a String naming a reported problem (e.g. "issue #39"). The test still
 //   runs, but a failure is listed as KNOWN instead of FAIL, and a pass is
 //   flagged so the marker can be removed.
-~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note, cloud = true, docCheck = true, anyOrder = false|
+~radTest = {|name, setup, cmds, check, gui = false, code, teardown, noWarnings = false, known, note, cloud = true, docCheck = true, anyOrder = false, serverMayExit = false|
 	~radTests = ~radTests.add((
 		name: name.asString,
 		caseFile: ~radTestCurrentCase,
@@ -44,6 +47,7 @@
 		noWarnings: noWarnings,
 		docCheck: docCheck,
 		anyOrder: anyOrder,
+		serverMayExit: serverMayExit,
 		known: known,
 		note: note
 	));

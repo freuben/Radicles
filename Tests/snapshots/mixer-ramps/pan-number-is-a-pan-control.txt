@@ -1,0 +1,12 @@
+>> pan t 1 2 sin
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> panlag t 1 2 4
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

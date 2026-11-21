@@ -19,8 +19,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		RadUnit.syncAll(this); //document (step 1): a new mixer starts with no effects
 		server.waitForBoot{
 			{
-				masterSynth = {arg volume=0, lagTime=0, mute=0, off=0;
-					(\in * volume.dbamp.lag(lagTime)
+				//the volume moves as a steady fader move (see addTrack)
+				masterSynth = {arg volume=0, lagTime=0.05, mute=0, off=0, ramp=0.05;
+					(\in * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
 						*mute.linlin(0,1,1,0).lag(0.1)
 						*off.linlin(0,1,1,0)
 				)};
@@ -131,16 +132,29 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(chanNum > 2, {
 			if(type == \master, {spaceType = \dir;});
 			});
-			trackInSynth = {arg trim=0, lagTime=0;
-				(\in * trim.dbamp.lag(lagTime) )};
+			//the trim moves evenly in dB over 'ramp' seconds; 'lagTime' is the
+			//strip's own time for typed values (trimlag). See the volume below.
+			trackInSynth = {arg trim=0, lagTime=0.05, ramp=0.05;
+				(\in * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )};
 			trackInSpecs = [ ['trim', [-23, 23] ], ['lagTime', [0, 10] ] ];
-			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0, mute=0, solo=1;
-				(\in * volume.dbamp.lag(lagTime)
+			//the volume moves as a steady fader move (mixer ramps, Nov 2026): the
+			//dB value becomes a fader position (the volume spec's scale: amplitude
+			//is the position squared, the bottom is silence), the position moves
+			//evenly over 'ramp' seconds, and is squared again. 'ramp' is the time
+			//of the move under way, sent with the value when it differs
+			//(Assemblage:volumeArgs); 'lagTime' is the strip's own time for typed
+			//values (vollag). The linear VarLag, not its default form or an
+			//EnvGen: those miss a value that arrives one control block after
+			//another and flatten a modulator. The time is never below one
+			//control block (VarLag divides by it), and it must not change on a
+			//running synth without a new value: VarLag then overshoots.
+			trackSynth ?? {trackSynth = {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
+				(\in * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
 					*mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )} };
 			trackSpecs = [ ['volume', [-inf, 6, \db, 0, -inf, " dB" ] ], ['lagTime', [0, 10] ],
 				['mute', [0, 1] ], ['solo', [0,1] ] ];
-			spaceSynth = SynthFile.read(\space, spaceType);
 			spaceSpecs = SpecFile.read(\space, spaceType);
+			spaceSynth = Assemblage.rampSpace(SynthFile.read(\space, spaceType), spaceSpecs);
 
 			case
 			{type == \track} {
@@ -178,6 +192,20 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			ndefCS2 = ("Ndef(" ++ spaceTag.cs ++ ").fadeTime = " ++ fadeTime.cs ++ ";");
 			ndefCS2.radcode;
 			server.sync;
+			//made after mixlag N: the strip's times for typed values start at N
+			if(Radicles.mixLag != Assemblage.shortLag, {
+				("Ndef(" ++ trackInTag.cs ++ ").set('lagTime', " ++ Radicles.mixLag ++ ");").radcode;
+				("Ndef(" ++ trackTag.cs ++ ").set('lagTime', " ++ Radicles.mixLag ++ ");").radcode;
+				if(spaceSynth.isKindOf(Function), {
+					var names = spaceSynth.def.argNames ? [], lagKeys;
+					lagKeys = names.select{|name| name.asString.endsWith("Lag") and: {
+						Assemblage.timeControl(names, name) } };
+					if(lagKeys.notEmpty, {
+						("Ndef(" ++ spaceTag.cs ++ ").set(" ++ lagKeys.collect{|key|
+							key.cs ++ ", " ++ Radicles.mixLag }.join(", ") ++ ");").radcode;
+					});
+				});
+			});
 			thisTrackInfo = [[trackInTag, trackInSynth], [trackTag, trackSynth],
 				[spaceTag, spaceSynth] ];
 			tracks = tracks.add([[trackInTag, trackInSynth], [trackTag, trackSynth],
@@ -391,6 +419,39 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		});
 	}
 
+	// A panner from the library with a ramp on each of its controls (mixer
+	// ramps, Nov 2026): every control moves evenly over its own xRamp seconds,
+	// and xLag is its time for typed values (panlag), as 'ramp' and 'lagTime'
+	// are for a strip's volume. The panner's own function is kept whole and
+	// called with the ramped values; its controls keep their places, the
+	// times come after them. Not a control whose spec rounds its value (the
+	// 'split' panner's output number).
+	*rampSpace {arg func, specs;
+		var names, defaults, keys, args, values;
+		if(func.isKindOf(Function).not, { ^func });
+		names = func.def.argNames ? [];
+		defaults = func.def.prototypeFrame ? [];
+		//already wrapped
+		if(names.any{|name| this.timeControl(names, name) }, { ^func });
+		keys = names.select{|name|
+			(specs ? []).detect{|spec| spec[0] == name }.notNil and: {
+				(specs ? []).detect{|spec| spec[0] == name }.any(_.isKindOf(Function)).not } };
+		if(keys.isEmpty, { ^func });
+		args = names.collect{|name, index| name ++ " = " ++ defaults[index].cs }
+		++ keys.collect{|key| key ++ "Lag = " ++ this.shortLag ++ ", " ++ key ++ "Ramp = " ++ this.shortLag };
+		values = names.collect{|name| if(keys.includes(name), {
+			"VarLag.kr(" ++ name ++ ", " ++ name ++ "Ramp.max(ControlDur.ir), warp: \\lin)" }, { name.asString }) };
+		^("{arg " ++ args.join(", ") ++ ";\n\t" ++ func.cs ++ ".value(" ++ values.join(", ") ++ ") }").interpret
+	}
+
+	// true for a panner's time controls (xLag, xRamp, where x is another of
+	// its controls): they are not values of the panner
+	*timeControl {arg keys, key;
+		var name = key.asString;
+		^["Lag", "Ramp"].any{|end| name.endsWith(end) and: {
+			keys.includes(name.drop(end.size.neg).asSymbol) } }
+	}
+
 	ndefPrepare {arg ndef, func;
 		var extraArgs, key, result;
 		extraArgs = ndef.controlKeysValues;
@@ -586,7 +647,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				chanNum = trackInput.numChannels;
 			});
 			spaceType ?? {spaceType = this.findSpaceType(chanNum);};
-			spaceSynth = SynthFile.read(\space, spaceType);
+			spaceSynth = Assemblage.rampSpace(SynthFile.read(\space, spaceType), SpecFile.read(\space, spaceType));
 			func = spaceSynth.filterFunc(trackInput);
 			this.replaceFunc(trackName, func);
 			//test this
@@ -810,7 +871,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 
 	bus {arg trackNum=1, busNum=1, mix=1, trackType=\track, action, setVal=true;
 		var numChan, busTag, ndefCS1, ndefCS2, ndefCS3, funcBus, thisBusArr,
-		busAdd, argIndex, thisBusLabel;
+		busAdd, argIndex, thisBusLabel, added = false;
 		{
 			thisBusLabel = ("inBus" ++ busNum).asSymbol;
 			/*"thisBusLabel ".post; thisBusLabel.postln;*/
@@ -827,7 +888,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 				server.sync;
 				this.input(Ndef(busTag), \bus, busNum);
 			});
-			busAdd = {busArr[busNum-1][1] = busArr[busNum-1][1].add(
+			busAdd = {added = true; busArr[busNum-1][1] = busArr[busNum-1][1].add(
 				this.getTrackOutput(trackType, trackNum));};
 			thisBusArr = busArr[busNum-1][1];
 			if(thisBusArr.notNil, {
@@ -852,11 +913,23 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			server.sync;
 			ndefCS2.radcode;
 			server.sync;
+			//a send made after mixlag N: its time for typed values starts at N
+			//(not when a preset or session makes it: its saved time follows)
+			if(added and: { setVal } and: { Radicles.mixLag != Assemblage.shortLag }, {
+				argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));
+				if(argIndex.notNil, {
+					("Ndef(" ++ busTag.cs ++ ").set(" ++ ("lag" ++ (argIndex+1)).asSymbol.cs ++ ", "
+						++ Radicles.mixLag ++ ");").radcode;
+				});
+			});
 			if(setVal, {
 				/*"setVal ".post; setVal.postln;*/
 				argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));
-				ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set('vol" ++ (argIndex+1)
-				++ "', " ++ mix ++ ");";
+				//a typed move: over the send's own time (sndlag), not the last move's
+				ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set(" ++ this.rampArgs(Ndef(busTag),
+					("vol" ++ (argIndex+1)).asSymbol, mix,
+					this.stripControl(Ndef(busTag), ("lag" ++ (argIndex+1)).asSymbol),
+					("ramp" ++ (argIndex+1)).asSymbol) ++ ");";
 				ndefCS3.radcode;
 			});
 			action.();
@@ -885,6 +958,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ Ndef(oldLabel).fadeTime ++ ");").radcode;
 				}, {
 					("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radcode;
+					//the last sender's level and times go with it: the next
+					//sender to this bus starts from the defaults
+					[\vol1, \lag1, \ramp1].select{|key| Ndef(oldLabel).nodeMap[key].notNil } !? {|keys|
+						if(keys.notEmpty, {
+							("Ndef(" ++ oldLabel.cs ++ ").nodeMap.set(" ++
+								keys.collect{|key| key.cs ++ ", nil" }.join(", ") ++ ");").radcode;
+						});
+					};
 				});
 				busArr[newBusInd] = nil!2;
 				inputs.removeAt(thisBusIndLabel);
@@ -927,7 +1008,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	// A bus input's controls are named by the sender's place: vol1, lag1,
-	// vol2, lag2, ... When a sender leaves, the senders after it move up a
+	// ramp1, vol2, lag2, ramp2, ... When a sender leaves, the senders after it move up a
 	// place, so their levels, lags and modulators have to move with them before
 	// the input is rebuilt. They did not: track 2's send took the level track
 	// 1's send had (18 Nov 2026). The values are moved in the Ndef's node map
@@ -936,7 +1017,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	// the defaults.
 	prRenumberSends {arg ndef, oldArr, newArr;
 		var map = ndef.nodeMap, sets = [], moved = IdentityDictionary.new;
-		var keysAt = {|index| [("vol" ++ (index + 1)).asSymbol, ("lag" ++ (index + 1)).asSymbol] };
+		var keysAt = {|index| ["vol", "lag", "ramp"].collect{|key| (key ++ (index + 1)).asSymbol } };
 		newArr.do{|sender, newIndex|
 			var oldIndex = oldArr.indexOf(sender);
 			if(oldIndex.notNil and: { oldIndex != newIndex }, {

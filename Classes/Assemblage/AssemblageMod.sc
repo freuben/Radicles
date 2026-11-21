@@ -125,7 +125,8 @@
 		{(modArg == \vol).or(modArg == \volume)} {
 			ndefKey = (typeKey ++ trackNum); modArg = \volume;
 			if(modifier == \hid, {
-				func = {|val| val.round(0.1)}; lag = 0.01;
+				//no lag on the control: the strip's ramp smooths it (ctllag)
+				func = {|val| val.round(0.1)};
 			});
 		}
 		{modArg == \trim} {ndefKey = (\in ++ typeKey.capitalise ++ trackNum);};

@@ -6,10 +6,10 @@ Ndef('block2').clear(0.5);
 Ndef('inTrack2').clear(0.5);
 Ndef('track2').clear(0.5);
 Ndef('spaceTrack2').clear(0.5);
-Ndef('inMaster').source = {arg trim=0, lagTime=0;
-                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
+Ndef('inMaster').source = {arg trim=0, lagTime=0.05, ramp=0.05;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceBus1', 2) * 1].sum * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )}
 Ndef('busIn1').nodeMap.set('vol2', nil);
-Ndef('busIn1', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track1', 1)*vol1.dbamp.lag(lag1); });
+Ndef('busIn1', {arg vol1 = -inf, lag1 = 0.05, ramp1 = 0.05; Ndef.ar('track1', 1)*(VarLag.kr((vol1.dbamp / 6.dbamp).sqrt, ramp1.max(ControlDur.ir), warp: \lin).squared * 6.dbamp); });
 == radpostcont ==
 (none)
 

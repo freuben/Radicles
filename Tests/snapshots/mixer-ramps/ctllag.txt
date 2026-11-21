@@ -1,0 +1,24 @@
+>> ctllag
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> ctllag 0.02
+== radpost ==
+Radicles.ctlLag = 0.02;
+== radpostcont ==
+(none)
+
+>> ctllag
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+OSCdef('hid1', {arg ...args; {|val| RadUnit.volumeSetOnStrip('track1'); ("Ndef('track1').set(" ++ Radicles.aZ.volumeArgs(Ndef('track1'), val, Radicles.ctlLag) ++ ")").radpostcont.interpret; }.([-60.0, 0.0].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestmrctl');
+== radpostcont ==
+Ndef('track1').set('volume', -30.0, 'ramp', 0.02)
+

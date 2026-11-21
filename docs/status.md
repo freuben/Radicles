@@ -1,6 +1,6 @@
 # Where the work stands
 
-18 Nov 2026 (after #102 and the review). The longer working log is the claude.ai Project doc
+21 Nov 2026 (after the mixer ramps, #122–#125). The longer working log is the claude.ai Project doc
 `claude/start-here.md`; this page is the short version.
 
 ## How we work
@@ -25,7 +25,7 @@ contains.
 | 2 | blocks as units, `blksave` / `blkload` / `blkmorph`, block position, recordings kept with `keep` | done, #75–#84 |
 | 3 | strip values in the document, `cssave` / `csload` / `csmorph` / `csmorphtime` | done, #85–#87 |
 | 4 | track presets `tsave` / `tload` / `tmorph` / `tmorphtime`; presets load the libraries they need; the output to the master and `tload default` | done, #89–#92, #101, #102 |
-| Time | `fade N` reaches everything, own fade times (first PR); loading a preset is a crossfade: `fxload` / `blkload` / `csload` / `tload` take a time and `xfade`, `glide` or `none`, and the `morph` words and own morph times are removed (second PR, [design/time-fade-crossfade-glide.md](design/time-fade-crossfade-glide.md)); lag is on hold | fade part built, 19 Nov |
+| Time | `fade N` reaches everything, own fade times (first PR); loading a preset is a crossfade: `fxload` / `blkload` / `csload` / `tload` take a time and `xfade`, `glide` or `none`, and the `morph` words and own morph times are removed (second PR, [design/time-fade-crossfade-glide.md](design/time-fade-crossfade-glide.md)); the mixer's moves are ramps: volume, trim, sends and pan move as steady moves with a typed time per control (`vollag`, `trimlag`, `sndlag`, `panlag`, all at once with `mixlag`) and a native time for the window, MIDI, HID and OSC (`ctllag`) ([design/mixer-ramps.md](design/mixer-ramps.md)); lags on blocks and effects are still to discuss | fades built 19–20 Nov (#112–#118); mixer ramps built 21 Nov (#121–#125) |
 | Review | read-only review of code, plans and workflow (18 Nov); the order below follows it | done |
 | Fixes | the bugs the review confirmed, then **release 1** to `master` | next |
 | Tests | automatic runs on GitHub, parallel workers, `doctor` | next, beside the fixes |
@@ -34,7 +34,7 @@ contains.
 | 6 | sessions, with autosave and rebuild after a crash | then |
 | 8, 7, 5c, 5d | points (after sessions); scenes, session morph, undo; the windows as observers; the protocol, network and browser UI | later; order decided when sessions are done |
 
-`master` is at #66 (1 Nov); everything from step 1 on is only on `dev` until release 1.
+`master` is at `v0.3.0` (20 Nov, #119): steps 1 to 4 and the fades. The mixer ramps are on `dev` until the next release.
 
 ## Decided along the way that later steps must keep
 

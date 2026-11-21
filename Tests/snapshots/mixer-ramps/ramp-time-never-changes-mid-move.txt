@@ -1,0 +1,13 @@
+>> <code>
+== radpost ==
+Ndef('track1').set('volume', -20, 'ramp', 4);
+Ndef('mod1', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(-90.0, 6.0) + add});
+Ndef('track1').nodeMap.set('ramp', 0);
+Ndef('track1').xset('volume', Ndef('mod1'));
+Ndef('track2').set('volume', -20);
+Ndef('track2').set('lagTime', 0);
+Ndef('track2').set('volume', -20);
+== radpostcont ==
+(none)
+
