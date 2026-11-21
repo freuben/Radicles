@@ -1,12 +1,14 @@
 >> tload t 2 radtest_track6
 == radpost ==
-Ndef('inMaster').source = {arg trim=0, lagTime=0;
-                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * trim.dbamp.lag(lagTime) )}
-Ndef('busIn2').set('vol1', -inf, 'lag1', 0.5);
-Ndef('busIn1').set('vol1', -inf, 'lag1', 0.5);
+Ndef('inMaster').source = {arg trim=0, lagTime=0.05, ramp=0.05;
+                ([Ndef.ar('spaceTrack1', 2) * 1, Ndef.ar('spaceTrack2', 2) * 1, Ndef.ar('spaceBus1', 2) * 1, Ndef.ar('spaceBus2', 2) * 1].sum * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )}
+Ndef('busIn2').set('vol1', -inf, 'ramp1', 0.5);
+Ndef('busIn1').set('vol1', -inf, 'ramp1', 0.5);
 Ndef('busIn2').source = nil;
+Ndef('busIn2').nodeMap.set('vol1', nil, 'ramp1', nil);
 Ndef('inBus2').source = nil;
 Ndef('busIn1').source = nil;
+Ndef('busIn1').nodeMap.set('vol1', nil, 'ramp1', nil);
 Ndef('inBus1').source = nil;
 == radpostcont ==
 (none)

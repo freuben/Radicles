@@ -1,7 +1,8 @@
 >> <code>
 == radpost ==
-Ndef('busIn1').set('vol1', -inf, 'lag1', 2);
+Ndef('busIn1').set('vol1', -inf, 'ramp1', 2);
 Ndef('busIn1').source = nil;
+Ndef('busIn1').nodeMap.set('vol1', nil, 'ramp1', nil);
 Ndef('inBus1').source = nil;
 == radpostcont ==
 (none)

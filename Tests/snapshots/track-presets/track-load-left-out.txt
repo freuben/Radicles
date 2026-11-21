@@ -3,10 +3,10 @@
 Ndef('spaceTrack1').set('pan', 0.2);
 Ndef.ar('busIn1', 1);
 Ndef('busIn1').fadeTime = 0.5;
-Ndef('inBus1', {arg trim=0, lagTime=0;
-                (Ndef.ar('busIn1', 1) * trim.dbamp.lag(lagTime) )});
+Ndef('inBus1', {arg trim=0, lagTime=0.05, ramp=0.05;
+                (Ndef.ar('busIn1', 1) * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
 Ndef('inBus1').set('trim', 0);
-Ndef('busIn1', {arg vol1 = -inf, lag1 = 0; Ndef.ar('track1', 1)*vol1.dbamp.lag(lag1); });
+Ndef('busIn1', {arg vol1 = -inf, lag1 = 0.05, ramp1 = 0.05; Ndef.ar('track1', 1)*(VarLag.kr((vol1.dbamp / 6.dbamp).sqrt, ramp1.max(ControlDur.ir), warp: \lin).squared * 6.dbamp); });
 Ndef('busIn1').set('vol1', -6);
 == radpostcont ==
 Ndef('track1').set('volume', -4);

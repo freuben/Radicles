@@ -1,0 +1,24 @@
+>> sndlag t 1 1 2
+== radpost ==
+Ndef('busIn1').set('lag1', 2);
+== radpostcont ==
+(none)
+
+>> sndset t 1 1 -12
+== radpost ==
+Ndef('busIn1').set('vol1', -12, 'ramp1', 2);
+== radpostcont ==
+(none)
+
+>> sndlag t 2 1 5
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> sndlag t 1 3 5
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

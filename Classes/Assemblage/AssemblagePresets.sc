@@ -561,8 +561,8 @@
 		addFunc, newArr, hasMod2, hasModFunc;
 		addFunc = {arg presetArr;
 			presetArr[1].do{|item, index|
-				//not 'ramp': the time of the strip's last move is not a setting
-				item[1].reject{|it| it[0] == \ramp }.do{|it|
+				//not 'ramp' (or a send's rampN): the time of the last move is not a setting
+				item[1].reject{|it| "^ramp[0-9]*$".matchRegexp(it[0].asString) }.do{|it|
 					if(it[1].isNumber.not, {
 						/*it[1][0].postln;*/
 						if(it[1][0].cs.find("mod").notNil, {
@@ -700,7 +700,9 @@
 		});
 		if(this.getBusInLabels.notNil, {
 			busSettings = [busArr, busArr.flop[0].collect({|item|
-				if(item.notNil, {Ndef(item).controlKeysValues}); });];
+				//not rampN: the time of a send's last move is not a setting
+				if(item.notNil, {Ndef(item).controlKeysValues.clump(2).reject{|pair|
+					"^ramp[0-9]+$".matchRegexp(pair[0].asString) }.flatten(1)}); });];
 		});
 		ioSettings = [recStates, recInputArr, mastOutArr, soloStates.copy]; //4th item: solo states
 		^[mixDataArr, dataArr2, busSettings, outputSettings, ioSettings];

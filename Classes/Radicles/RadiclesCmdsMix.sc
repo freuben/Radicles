@@ -1570,6 +1570,60 @@
 			});
 		}, "sndset: [mixTrackNum, slotNum, busNum, val]");
 
+		// sndlag: a send's own time for typed values (as vollag is the volume's).
+		// A send is named as sndset names it: by its slot on the strip.
+		cW.add(\sndlag, [\str, \str, \num, \num], {|str1, str2, num1, num2|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.setSendLag(\track, num1, 1, num2);}
+				{str2 == 'b'} {aZ.setSendLag(\bus, num1, 1, num2);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "sndlag: [trackType, trackNum, time]");
+
+		cW.add(\sndlag, [\str, \str, \num, \num, \num], {|str1, str2, num1, num2, num3|
+			if(aZ.notNil, {
+				case
+				{str2 == 't'} {aZ.setSendLag(\track, num1, num2, num3);}
+				{str2 == 'b'} {aZ.setSendLag(\bus, num1, num2, num3);}
+				;
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "sndlag: [trackType, trackNum, slotNum, time]");
+
+		cW.add(\sndlag, [\str, \num, \num], {|str1, num1, num2|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 < (trackArr.size-1), {
+					thisArr = trackArr[num1-1];
+					aZ.setSendLag(thisArr[0].asSymbol, thisArr[1], 1, num2);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "sndlag: [mixTrackNum, time]");
+
+		cW.add(\sndlag, [\str, \num, \num, \num], {|str1, num1, num2, num3|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num1 < (trackArr.size-1), {
+					thisArr = trackArr[num1-1];
+					aZ.setSendLag(thisArr[0].asSymbol, thisArr[1], num2, num3);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		}, "sndlag: [mixTrackNum, slotNum, time]");
+
 		cW.add(\sndset, [\str, \str, \num, \str], {|str1, str2, num1, str3|
 			var modArgs, modifier;
 			if(aZ.notNil, {

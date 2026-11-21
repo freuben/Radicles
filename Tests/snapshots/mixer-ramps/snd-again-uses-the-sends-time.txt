@@ -1,0 +1,8 @@
+>> snd t 1 1 1 -9
+== radpost ==
+Ndef('busIn1', {arg vol1 = -inf, lag1 = 0.05, ramp1 = 0.05; Ndef.ar('track1', 1)*(VarLag.kr((vol1.dbamp / 6.dbamp).sqrt, ramp1.max(ControlDur.ir), warp: \lin).squared * 6.dbamp); });
+Ndef('busIn1').set('vol1', -12, 'lag1', 0.05, 'ramp1', 3);
+Ndef('busIn1').set('vol1', -9, 'ramp1', 0.05);
+== radpostcont ==
+(none)
+

@@ -1,30 +1,30 @@
 >> sndset t 1 0
 == radpost ==
-Ndef('busIn1').set('vol1', 0, 'lag1', 0);
+Ndef('busIn1').set('vol1', 0);
 == radpostcont ==
 (none)
 
 >> sndset t 1 1 0
 == radpost ==
-Ndef('busIn1').set('vol1', 0, 'lag1', 0);
+Ndef('busIn1').set('vol1', 0);
 == radpostcont ==
 (none)
 
 >> sndset t 1 1 0 1
 == radpost ==
-Ndef('busIn1').set('vol1', 0, 'lag1', 1);
+Ndef('busIn1').set('vol1', 0);
 == radpostcont ==
 (none)
 
 >> sndset 2 2 -10
 == radpost ==
-Ndef('busIn2').set('vol1', -10, 'lag1', 0);
+Ndef('busIn2').set('vol1', -10);
 == radpostcont ==
 (none)
 
 >> sndset 2 2 -10 1
 == radpost ==
-Ndef('busIn2').set('vol1', -10, 'lag1', 1);
+Ndef('busIn2').set('vol1', -10);
 == radpostcont ==
 (none)
 

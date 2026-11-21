@@ -1,0 +1,6 @@
+>> <code>
+== radpost ==
+Ndef('inTrack1').set('trim', -20, 'ramp', 2);
+== radpostcont ==
+(none)
+

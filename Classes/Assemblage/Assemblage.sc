@@ -132,8 +132,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(chanNum > 2, {
 			if(type == \master, {spaceType = \dir;});
 			});
-			trackInSynth = {arg trim=0, lagTime=0;
-				(\in * trim.dbamp.lag(lagTime) )};
+			//the trim moves evenly in dB over 'ramp' seconds; 'lagTime' is the
+			//strip's own time for typed values (trimlag). See the volume below.
+			trackInSynth = {arg trim=0, lagTime=0.05, ramp=0.05;
+				(\in * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )};
 			trackInSpecs = [ ['trim', [-23, 23] ], ['lagTime', [0, 10] ] ];
 			//the volume moves as a steady fader move (mixer ramps, Nov 2026): the
 			//dB value becomes a fader position (the volume spec's scale: amplitude
@@ -867,8 +869,11 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			if(setVal, {
 				/*"setVal ".post; setVal.postln;*/
 				argIndex = busArr[busNum-1][1].indexOf(Ndef((trackType.asString ++ trackNum).asSymbol));
-				ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set('vol" ++ (argIndex+1)
-				++ "', " ++ mix ++ ");";
+				//a typed move: over the send's own time (sndlag), not the last move's
+				ndefCS3 = "Ndef(" ++ busTag.cs ++ ").set(" ++ this.rampArgs(Ndef(busTag),
+					("vol" ++ (argIndex+1)).asSymbol, mix,
+					this.stripControl(Ndef(busTag), ("lag" ++ (argIndex+1)).asSymbol),
+					("ramp" ++ (argIndex+1)).asSymbol) ++ ");";
 				ndefCS3.radcode;
 			});
 			action.();
@@ -897,6 +902,14 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 					("Ndef(" ++ oldLabel.cs ++ ").clear(" ++ Ndef(oldLabel).fadeTime ++ ");").radcode;
 				}, {
 					("Ndef(" ++ oldLabel.cs ++ ").source = nil;").radcode;
+					//the last sender's level and times go with it: the next
+					//sender to this bus starts from the defaults
+					[\vol1, \lag1, \ramp1].select{|key| Ndef(oldLabel).nodeMap[key].notNil } !? {|keys|
+						if(keys.notEmpty, {
+							("Ndef(" ++ oldLabel.cs ++ ").nodeMap.set(" ++
+								keys.collect{|key| key.cs ++ ", nil" }.join(", ") ++ ");").radcode;
+						});
+					};
 				});
 				busArr[newBusInd] = nil!2;
 				inputs.removeAt(thisBusIndLabel);
@@ -939,7 +952,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	}
 
 	// A bus input's controls are named by the sender's place: vol1, lag1,
-	// vol2, lag2, ... When a sender leaves, the senders after it move up a
+	// ramp1, vol2, lag2, ramp2, ... When a sender leaves, the senders after it move up a
 	// place, so their levels, lags and modulators have to move with them before
 	// the input is rebuilt. They did not: track 2's send took the level track
 	// 1's send had (18 Nov 2026). The values are moved in the Ndef's node map
@@ -948,7 +961,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	// the defaults.
 	prRenumberSends {arg ndef, oldArr, newArr;
 		var map = ndef.nodeMap, sets = [], moved = IdentityDictionary.new;
-		var keysAt = {|index| [("vol" ++ (index + 1)).asSymbol, ("lag" ++ (index + 1)).asSymbol] };
+		var keysAt = {|index| ["vol", "lag", "ramp"].collect{|key| (key ++ (index + 1)).asSymbol } };
 		newArr.do{|sender, newIndex|
 			var oldIndex = oldArr.indexOf(sender);
 			if(oldIndex.notNil and: { oldIndex != newIndex }, {

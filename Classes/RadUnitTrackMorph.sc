@@ -306,7 +306,7 @@
 
 	*prGlideStripValues {|type, num, track, time, restores, subs, az, shape = \glide|
 		var name = this.stripName(type, num), inKey, key, spaceKey, current, curMods, tgtMods, left = [];
-		var pan, panKeys, panDefaults, curLags, tgtLags, trimLag, xfade = shape != \glide;
+		var pan, panKeys, panDefaults, curLags, tgtLags, xfade = shape != \glide;
 		//a crossfade: the stage's fade time is the load's while it runs
 		var hold = {|stage|
 			Radicles.holdFade(stage, time);
@@ -318,8 +318,7 @@
 		tgtMods = if(track[\default] == true, { () }, { track[\mods] ? () });
 		curLags = current[\lags] ? ();
 		tgtLags = if(track[\default] == true, { () }, { track[\lags] ? () });
-		// trim: its lagTime is the load's time, then goes back
-		trimLag = Ndef(inKey).get(\lagTime) ? 0;
+		// trim: a glide is one move over the load's time
 		this.prApplyArgsMods(Ndef(inKey), (args: (trim: current[\trim]), mods: curMods[\trim] !? {|m| (trim: m) } ? ()),
 			(args: (trim: track[\trim] ? 0), mods: tgtMods[\trim] !? {|m| (trim: m) } ? ()),
 			{|ndef, pairs|
@@ -327,9 +326,7 @@
 					hold.(inKey);
 					("Ndef(" ++ inKey.cs ++ ").xset('trim', " ++ pairs[1].cs ++ ");").radcode;
 				}, {
-					("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ time.cs ++ ");").radcode(\radpostcont);
-					az.setTrim(type, num, pairs[1]);
-					restores.add({ ("Ndef(" ++ inKey.cs ++ ").set('lagTime', " ++ trimLag.cs ++ ");").radcode(\radpostcont) });
+					az.setTrim(type, num, pairs[1], time);
 				});
 			});
 		// volume: one steady move over the load's time (the strip's own time,
@@ -347,7 +344,8 @@
 		//the preset's own volume time
 		if((curLags[\volume] ? Assemblage.shortLag) != (tgtLags[\volume] ? Assemblage.shortLag), {
 			az.setVolumeLag(type, num, tgtLags[\volume] ? Assemblage.shortLag) });
-		if((curLags[\trim] ? 0) != (tgtLags[\trim] ? 0), { az.setTrimLag(type, num, tgtLags[\trim] ? 0) });
+		if((curLags[\trim] ? Assemblage.shortLag) != (tgtLags[\trim] ? Assemblage.shortLag), {
+			az.setTrimLag(type, num, tgtLags[\trim] ? Assemblage.shortLag) });
 		// pan: the panner's own lag (NodeProxy:lag rebuilds the panner, so the
 		// values change once the old copy has faded out), then the preset's
 		panKeys = (current[\pan] ? ()).keys;
@@ -424,20 +422,17 @@
 						this.prUnmodSend(type, num, busNum.(bus), sends, az);
 						cur.removeAt(\mod);
 					});
+					this.prSendLag(type, num, busNum.(bus), cur, send, az);
 					if(send[\mod].isNil, {
+						//one move over the load's time; the send's own time is not touched
 						az.setSendKnob(type, num, this.prSendSlot(type, num, busNum.(bus), az), send[\level] ? -inf, time);
-						restores.add({
-							this.prSendSlot(type, num, busNum.(bus), az) !? {|slot|
-								az.setSendKnob(type, num, slot, send[\level] ? -inf, send[\lag] ? 0) };
-						});
 					}, {
 						//a modulated send: the level under the modulator is set
 						//at once (it is what comes back when the modulator goes)
 						if(cur[\mod].isNil, {
-							if((cur[\lag] ? 0) != (send[\lag] ? 0) or: {
-								RadDoc.diff((v: cur[\level]), (v: send[\level] ? -inf)).notEmpty }, {
+							if(RadDoc.diff((v: cur[\level]), (v: send[\level] ? -inf)).notEmpty, {
 								az.setSendKnob(type, num, this.prSendSlot(type, num, busNum.(bus), az),
-									send[\level] ? -inf, send[\lag] ? 0);
+									send[\level] ? -inf, 0);
 							});
 							this.prModSend(type, num, busNum.(bus), keys, send, az);
 						});

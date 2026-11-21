@@ -20,12 +20,17 @@
 			brak1 = ""; brak2 = "";
 		});
 		args = "{arg ";
-		this.do{|item, index| args = args ++ "vol" ++ (index+1).asString ++ " = -inf, " ++ "lag" ++ (index+1).asString ++ " = 0, " };
+		//each sender's level moves as a steady fader move, like a strip's
+		//volume (Assemblage:addTrack): volN is the level, rampN the time of
+		//the move under way, lagN the send's own time for typed values (sndlag)
+		this.do{|item, index| var n = (index+1).asString;
+			args = args ++ "vol" ++ n ++ " = -inf, lag" ++ n ++ " = 0.05, ramp" ++ n ++ " = 0.05, " };
 		args = args.replaceAt(";", args.size-2);
 		args = args ++ brak1;
 		this.do{|item, index|
 			args = args ++ ("Ndef.ar(" ++ item.key.cs ++ ", " ++
-				item.numChannels ++ ")*vol" ++  (index+1).asString ++ ".dbamp.lag(lag" ++ (index+1).asString ++ "), ";);
+				item.numChannels ++ ")*(VarLag.kr((vol" ++ (index+1).asString ++ ".dbamp / 6.dbamp).sqrt, ramp" ++ (index+1).asString
+				++ ".max(ControlDur.ir), warp: \\lin).squared * 6.dbamp), ";);
 		};
 		args = args.replaceAt(";", args.size-2);
 		args= args ++ brak2 ++ "};"

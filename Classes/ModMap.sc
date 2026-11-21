@@ -26,9 +26,12 @@ ModMap : Radicles {
 		//In the node map only, so the copy made by the xset below starts with
 		//it and the one fading out finishes its move (a time changed on a
 		//running ramp makes it overshoot).
-		if(key == \volume and: { ndef.controlKeys.includes(\ramp) } and: { ndef.nodeMap.at(\ramp) != 0 }, {
-			(ndef.cs ++ ".nodeMap.set('ramp', 0);").radcode;
-		});
+		//(the same for a strip's trim and a send's level)
+		Assemblage.rampKey(ndef, key) !? {|rampKey|
+			if(ndef.nodeMap.at(rampKey) != 0, {
+				(ndef.cs ++ ".nodeMap.set(" ++ rampKey.cs ++ ", 0);").radcode;
+			});
+		};
 		(ndef.cs ++ ".xset(" ++ key.cs ++ ", " ++ modMap.cs ++ ");").radcode;
 		modNodes.do{|item, index| if( [item[1], item[2]] == [ndef, key], {
 			(item[0].cs ++ ".clear(" ++ fadeTime.cs ++ ");").radcode;

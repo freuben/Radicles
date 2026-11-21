@@ -1,0 +1,18 @@
+>> trim t 1 sin
+== radpost ==
+Ndef('mod1', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(-23.0, 23.0) + add});
+Ndef('inTrack1').nodeMap.set('ramp', 0);
+Ndef('inTrack1').xset('trim', Ndef('mod1'));
+== radpostcont ==
+(none)
+
+>> sndset t 1 1 sin
+== radpost ==
+Ndef('mod2', {arg freq=0.1, phase=0, mul=1, add=0;
+    SinOsc.ar(freq, phase, mul).range(-90.0, 6.0) + add});
+Ndef('busIn1').nodeMap.set('ramp1', 0);
+Ndef('busIn1').xset('vol1', Ndef('mod2'));
+== radpostcont ==
+(none)
+
