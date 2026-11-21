@@ -182,7 +182,8 @@ to be judged by ear.
      control again; a later `mixlag` overwrites them.
    - `vol t 1 -12 4`, `vol 1 -12 4`, `vol t 1-3 -12 4`, `vol [1,3] -12 4`,
      and the same for `trim`. The master has no number, so `vol m -12 4`,
-     `trim m -3 2` and `pan m 0.5 3` are a value and its time. There is no
+     `trim m -3 2` and `pan m 0.5 3` are a value and its time (Federico,
+     21 Nov: keep it; `vol m 1 -12` no longer works as `vol m -12`). There is no
      timed form for "all tracks" (`vol t -12 4` already means track -12).
    - A session (`save`, `load`) keeps `mixlag` and `ctllag`; the times of
      single controls were already among the mixer's values. Sessions saved

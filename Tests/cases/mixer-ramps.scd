@@ -11,6 +11,9 @@
 	var bus = Bus.control(Server.default, 1), value, cond = Condition.new, synth;
 	//the RMS over the last 0.1 s (a follower ripples with the sine)
 	synth = { Out.kr(bus, A2K.kr((RunningSum.ar(InFeedback.ar(Ndef(key).bus.index + chan, 1).squared, 4800) / 4800).sqrt)) }.play;
+	//the meter must be running before its 0.3 s: on a slow machine it was
+	//not, and the level read 0
+	Server.default.sync;
 	0.3.wait;
 	bus.get{|v| value = v; cond.unhang };
 	cond.hang;
