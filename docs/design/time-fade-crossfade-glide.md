@@ -87,7 +87,7 @@ Five kinds of time, set in different places:
 | Each Ndef's own `fadeTime` | copied from the session fade when made | `blk stop 1 8`, morphs (for their duration) | that Ndef |
 | Global morph time (`RadUnit.morphTime`) | 2 | `morphtime N` | `fxmorph`, `blkmorph`, `csmorph`, `tmorph` |
 | Own morph times | none | `morphtime t 1 2 5`, `blkmorphtime`, `csmorphtime`, `tmorphtime`, or inside a preset | one slot, block, chain or strip |
-| Lags | 0 | `vollag`, `panlag`, `panxlag`, `trimlag`, a time after `sndset`; `fxlag`, `fxlagn`, `fxlags`, `lagfx`, `lagsfx`, `blklag`, `blklagn`, `ndeflag` | one strip value or one parameter |
+| Lags | 0 | `vollag`, `panlag`, `trimlag`, `sndlag`, a time after a value; `fxlag`, `fxlagn`, `fxlags`, `lagfx`, `lagsfx`, `blklag`, `blklagn`, `ndeflag` | one strip value or one parameter |
 
 A morph picks its time from four places in order: the command, the preset,
 the slot's own, the global one. It picks its shape (`xfade`, `glide`, `none`)
@@ -273,7 +273,7 @@ parameters that must not glide. The note gets its last section from that.
 | `fxmorph`, `blkmorph`, `csmorph`, `tmorph` | removed |
 | `morphtime`, `blkmorphtime`, `csmorphtime`, `tmorphtime`, a morph time inside a preset | removed; a preset file that has one is still read, the time is ignored |
 | a preset's `morphShape` | kept |
-| `vollag`, `panlag`, `panxlag`, `trimlag` per strip | removed; `mixlag N` for the whole mixer |
+| `vollag`, `panlag`, `trimlag` per strip | kept per control, with `sndlag`; `panxlag` removed; `mixlag N` sets them all (see `mixer-ramps.md`, which replaces this row) |
 | `sndset t 1 1 -12` at once | the same; `sndset t 1 1 -12 4` glides once |
 | `blk stop 1 8` leaves block 1 with an 8 s fade | the 8 s is for that stop only; `fade blk 1 8` to keep it |
 | `fxlag`, `blklag` (one parameter) | kept |

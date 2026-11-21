@@ -46,19 +46,22 @@
 		level = this.readArgs(Ndef(key), [\volume, \lagTime, \mute]);
 		//the panner's own arguments; wet* are the master's limiter slots
 		pan = this.readArgs(Ndef(spaceKey), nil);
-		pan = pan.collect{|dict| dict.reject{|v, k| k.asString.beginsWith("wet") } };
+		//(nor its time controls: panLag, panRamp, ...)
+		pan = pan.collect{|dict| dict.reject{|v, k| k.asString.beginsWith("wet") or: {
+			Assemblage.timeControl(Ndef(spaceKey).controlKeys, k) } } };
 		unit = (kind: \strip, channels: Ndef(inKey).numChannels,
 			space: (az.space ? []).detect{|item| item[0] == spaceKey } !? {|item| item[1] },
 			trim: trim[0][\trim] ? 0, volume: level[0][\volume] ? 0, mute: level[0][\mute] ? 0,
 			pan: pan[0]);
-		//vollag sets the volume's lagTime; trimlag and panlag set the Ndefs'
-		//own lags (NodeProxy:lag)
+		//the times for typed values: vollag and trimlag set lagTime on the strip
+		//and on its input, panlag sets xLag for each of the panner's controls
 		//(the volume's is its typed time, kept when it is not the short default)
 		if((level[0][\lagTime] ? Assemblage.shortLag) != Assemblage.shortLag, { lags[\volume] = level[0][\lagTime] });
 		if((trim[0][\lagTime] ? Assemblage.shortLag) != Assemblage.shortLag, { lags[\trim] = trim[0][\lagTime] });
 		pan[0].keys.do{|key|
-			this.prNdefLag(Ndef(spaceKey), key) !? {|lag|
-				lags[\pan] = (lags[\pan] ? ()).put(key, lag) } };
+			Assemblage.lagKey(Ndef(spaceKey), key) !? {|lagKey|
+				var lag = Ndef(spaceKey).nodeMap.at(lagKey) ? Assemblage.shortLag;
+				if(lag != Assemblage.shortLag, { lags[\pan] = (lags[\pan] ? ()).put(key, lag) }) } };
 		if(lags.notEmpty, { unit[\lags] = lags });
 		trim[1][\trim] !? {|mod| mods[\trim] = mod };
 		level[1][\volume] !? {|mod| mods[\volume] = mod };
@@ -115,12 +118,6 @@
 			});
 		};
 		^if(sends.isEmpty, { nil }, { sends })
-	}
-
-	// the lag set on an Ndef's argument with NodeProxy:lag, or nil when none
-	*prNdefLag {|ndef, key|
-		var lag = ndef.nodeMap !? {|map| map.ratesFor([key]) } !? {|rates| rates[0] };
-		^if(lag.isNumber and: { lag != 0 }, { lag }, { nil })
 	}
 
 	// copy a fresh strip's values into a document's strip unit (in place)

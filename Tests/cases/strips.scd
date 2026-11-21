@@ -61,7 +61,7 @@
 );
 
 // vollag and trimlag set the strip's own time for typed values (lagTime on
-// the strip and on its input); panlag sets the Ndef's own lag
+// the strip and on its input); panlag the same for the panner's controls
 ~radTest.("strip-lags",
 	setup: ["start 2"],
 	cmds: ["vollag t 1 2", "trimlag t 2 0.5", "panlag t 2 1.5"],

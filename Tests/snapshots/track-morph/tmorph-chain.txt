@@ -15,10 +15,11 @@ Ndef('track2', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_2_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track2').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.05);
-Ndef('spaceTrack2', {arg pan = 0 ;
+Ndef('spaceTrack2', {arg pan = 0, panLag = 0.05, panRamp = 0.05;
+    {arg pan = 0 ;
     Pan2.ar(Ndef.ar('track2', 1), pan) * 3.dbamp;
-});
-Ndef('spaceTrack2').set('pan', 0);
+}.value(VarLag.kr(pan, panRamp.max(ControlDur.ir), warp: \lin)) });
+Ndef('spaceTrack2').set('pan', 0, 'panLag', 0.05, 'panRamp', 0.05);
 Ndef('filterTrack_2_1').xset('pitchRatio', 0.5);
 Ndef('inTrack2').fadeTime = 0.5;
 Ndef('filterTrack_2_1').fadeTime = 0.5;

@@ -203,8 +203,22 @@
 		rampKey = case
 		{ key == \volume or: { key == \trim } } { \ramp }
 		{ name.size > 3 and: { name.beginsWith("vol") } and: { name.drop(3).every(_.isDecDigit) } } {
-			("ramp" ++ name.drop(3)).asSymbol };
+			("ramp" ++ name.drop(3)).asSymbol }
+		//a panner's control x: xRamp
+		{ ndef.key.asString.beginsWith("space") } { (name ++ "Ramp").asSymbol };
 		^if(rampKey.notNil and: { ndef.controlKeys.includes(rampKey) }, { rampKey }, { nil })
+	}
+
+	// the control that holds the time for typed values of a mixer control
+	// (vollag, trimlag, sndlag, panlag), or nil
+	*lagKey {arg ndef, key;
+		var name = key.asString, lagKey;
+		lagKey = case
+		{ key == \volume or: { key == \trim } } { \lagTime }
+		{ name.size > 3 and: { name.beginsWith("vol") } and: { name.drop(3).every(_.isDecDigit) } } {
+			("lag" ++ name.drop(3)).asSymbol }
+		{ ndef.key.asString.beginsWith("space") } { (name ++ "Lag").asSymbol };
+		^if(lagKey.notNil and: { ndef.controlKeys.includes(lagKey) }, { lagKey }, { nil })
 	}
 
 	setVolumeLag {arg trackType=\track, trackNum=1, lag=0;
@@ -368,37 +382,71 @@
 		});
 	}
 
-	setPanLag {arg trackType=\track, trackNum=1, lag=0, panNum=1;
-		var tag, ndefCS, symString, getKeys;
-		if(trackType == \master, {
-			symString = trackType.asString.capitalise;
-		}, {
-			symString = trackType.asString.capitalise ++ trackNum;
-		});
-		tag = ("space" ++ symString).asSymbol;
-		getKeys = Ndef(tag).getKeysValues;
-		ndefCS = "Ndef(" ++ tag.cs ++ ").lag(" ++getKeys[panNum-1][0].cs ++ ", " ++ lag ++ ");";
-		ndefCS.radcode;
+	spaceTag {arg trackType=\track, trackNum=1;
+		^("space" ++ if(trackType.asSymbol == \master, { "Master" },
+			{ trackType.asString.capitalise ++ trackNum })).asSymbol
 	}
 
-	setPan {arg trackType=\track, trackNum=1, val=0, panNum=1;
-		var tag, ndefCS, trackKey, symString, getKeys;
-		if(trackType == \master, {
-			symString = trackType.asString.capitalise;
+	// the panner's own controls, in their places (not its time controls)
+	panKeys {arg trackType=\track, trackNum=1;
+		var keys = Ndef(this.spaceTag(trackType, trackNum)).getKeysValues.collect(_[0]);
+		^keys.reject{|key| Assemblage.timeControl(keys, key) }
+	}
+
+	// panlag: the time for typed values of every control of the panner, or
+	// of the one numbered panNum
+	setPanLag {arg trackType=\track, trackNum=1, lag=0, panNum;
+		var tag = this.spaceTag(trackType, trackNum), keys, lagKeys;
+		keys = this.panKeys(trackType, trackNum);
+		if(panNum.notNil, { keys = [keys[panNum-1]].reject(_.isNil) });
+		lagKeys = keys.collect{|key| Assemblage.lagKey(Ndef(tag), key) }.reject(_.isNil);
+		if(lagKeys.isEmpty, {
+			//a panner with no timed control (split) is passed over, unless
+			//one control was asked for
+			if(panNum.notNil, { "No pan control number % to give a time to".format(panNum).warn });
 		}, {
-			symString = trackType.asString.capitalise ++ trackNum;
+			("Ndef(" ++ tag.cs ++ ").set(" ++ lagKeys.collect{|key| key.cs ++ ", " ++ lag }.join(", ") ++ ");").radcode;
 		});
-		tag = ("space" ++ symString).asSymbol;
-		getKeys = Ndef(tag).getKeysValues;
-		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++getKeys[panNum-1][0].cs ++ ", " ++ val ++ ");";
+	}
+
+	// a typed pan value: a steady move over lag seconds when one is given
+	// (for this move only), else over the control's own time (panlag)
+	setPan {arg trackType=\track, trackNum=1, val=0, panNum=1, lag;
+		var tag = this.spaceTag(trackType, trackNum), ndefCS, trackKey, key, rampKey, spec;
+		key = this.panKeys(trackType, trackNum)[panNum-1];
+		if(key.isNil, { ^"No pan control number %".format(panNum).warn });
+		//a value outside the control's range is not set (pan t 1 2 0.5 used
+		//to mean control number 2: it now means the value 2 over 0.5 s)
+		spec = this.getSpec(tag, key) !? {|it| it.asSpec };
+		if(spec.notNil and: { val.isNumber } and: {
+			val < min(spec.clipLo, spec.clipHi) or: { val > max(spec.clipLo, spec.clipHi) } }, {
+			^"% is outside %'s range (% to %)".format(val, key, spec.clipLo, spec.clipHi).warn });
+		rampKey = Assemblage.rampKey(Ndef(tag), key);
+		ndefCS = "Ndef(" ++ tag.cs ++ ").set(" ++ if(rampKey.notNil, {
+			this.rampArgs(Ndef(tag), key, val,
+				lag ?? { this.stripControl(Ndef(tag), Assemblage.lagKey(Ndef(tag), key)) }, rampKey)
+		}, { key.cs ++ ", " ++ val }) ++ ");";
 		ndefCS.radcode;
 		this.mixWinBool({
-			if(trackType == \master, {
-				trackKey = trackType.asSymbol;
+			if(trackType.asSymbol == \master, {
+				trackKey = \master;
 			}, {
 				trackKey = (trackType ++ trackNum).asSymbol;
 			});
 			setPanKnob.(mixTrackNames.indexOfEqual(trackKey), val, panNum-1);
+		});
+	}
+
+	// a pan control by its name (panx, width, elevation, ...)
+	setPanKey {arg trackType=\track, trackNum=1, name, val=0, lag;
+		var keys = this.panKeys(trackType, trackNum), index;
+		index = keys.indexOf(name);
+		if(index.isNil, {
+			("% has no pan control called %".format(
+				if(trackType.asSymbol == \master, { "master" }, { trackType.asString ++ trackNum }),
+				name)).warn;
+		}, {
+			this.setPan(trackType, trackNum, val, index + 1, lag);
 		});
 	}
 

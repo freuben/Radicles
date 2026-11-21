@@ -376,9 +376,10 @@
 		this.prApplyArgsMods(Ndef(spaceKey), (args: current[\pan] ? (), mods: curMods[\pan] ? ()),
 			(args: pan, mods: (tgtMods[\pan] ? ()).select{|v, k| panKeys.includes(k) }),
 			{|ndef, pairs|
-				var keys = Ndef(spaceKey).getKeysValues.collect(_[0]);
+				var keys = az.panKeys(type, num);
 				pairs.pairsDo{|k, v| az.setPan(type, num, v, keys.indexOf(k) + 1) } });
-		// lags: those the preset has, and 0 for those it hasn't
+		// the times for typed values: those the preset has, and the short
+		// default for those it hasn't
 		curLags = current[\lags] ? ();
 		tgtLags = if(track[\default] == true, { () }, { track[\lags] ? () });
 		if((curLags[\volume] ? Assemblage.shortLag) != (tgtLags[\volume] ? Assemblage.shortLag), {
@@ -386,9 +387,9 @@
 		if((curLags[\trim] ? Assemblage.shortLag) != (tgtLags[\trim] ? Assemblage.shortLag), {
 			az.setTrimLag(type, num, tgtLags[\trim] ? Assemblage.shortLag) });
 		panKeys.do{|k|
-			var cur = (curLags[\pan] ? ())[k] ? 0, tgt = (tgtLags[\pan] ? ())[k] ? 0, keys;
+			var cur = (curLags[\pan] ? ())[k] ? Assemblage.shortLag, tgt = (tgtLags[\pan] ? ())[k] ? Assemblage.shortLag, keys;
 			if(cur != tgt, {
-				keys = Ndef(spaceKey).getKeysValues.collect(_[0]);
+				keys = az.panKeys(type, num);
 				az.setPanLag(type, num, tgt, keys.indexOf(k) + 1);
 			});
 		};

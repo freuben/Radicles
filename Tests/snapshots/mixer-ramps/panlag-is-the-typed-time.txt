@@ -1,0 +1,12 @@
+>> panlag t 1 2
+== radpost ==
+Ndef('spaceTrack1').set('panLag', 2);
+== radpostcont ==
+(none)
+
+>> pan t 1 -0.5
+== radpost ==
+Ndef('spaceTrack1').set('pan', -0.5, 'panRamp', 2);
+== radpostcont ==
+(none)
+

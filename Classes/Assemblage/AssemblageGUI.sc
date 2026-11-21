@@ -154,6 +154,9 @@
 			//panning knob(s)/slider2D(s)
 			panKey = ("space" ++ mixTrackNames[index].asString.capitalise).asSymbol;
 			panKeyValues = Ndef(panKey).getKeysValues.reject({|item| item.asString.contains("wet") });
+			//not the panner's time controls (panLag, panRamp, ...)
+			panKeyValues = panKeyValues.reject({|item|
+				Assemblage.timeControl(panKeyValues.collect(_[0]), item[0]) });
 			knobSize = 30 * (1.2 - (0.2* panKeyValues.size ) );
 			knobTextSize = 24 * (1.2 - (0.2* panKeyValues.size ) );
 			if(panKeyValues.flop[0].includes(\dirmul).not, {
@@ -627,8 +630,10 @@
 							var newPanVal;
 						newPanVal = panSpec[ind][1].asSpec.map(val.value);
 						panKnobTextArr[index][ind].string_(newPanVal.round(0.1).asString);
-							("Ndef(" ++ panKey.cs ++ ").set(" ++ getKeyValues[ind][0].cs ++ ", "
-								++ newPanVal ++ ");").radcode(\radpostcont);
+							//a hand on the knob: over the native time (ctllag)
+							("Ndef(" ++ panKey.cs ++ ").set(" ++ (Assemblage.rampKey(Ndef(panKey), getKeyValues[ind][0]) !? {|rampKey|
+								this.rampArgs(Ndef(panKey), getKeyValues[ind][0], newPanVal, Radicles.ctlLag, rampKey) }
+							?? { getKeyValues[ind][0].cs ++ ", " ++ newPanVal }) ++ ");").radcode(\radpostcont);
 						};
 					};
 			});

@@ -7,10 +7,10 @@
 
 ~radMrCtl = {|key| Radicles.aZ.stripControl(Ndef(\track1), key) };
 // the level of a strip's output (track 1's when none is named), read from the server
-~radMrLevel = {|key = \track1|
+~radMrLevel = {|key = \track1, chan = 0|
 	var bus = Bus.control(Server.default, 1), value, cond = Condition.new, synth;
 	//the RMS over the last 0.1 s (a follower ripples with the sine)
-	synth = { Out.kr(bus, A2K.kr((RunningSum.ar(InFeedback.ar(Ndef(key).bus.index, 1).squared, 4800) / 4800).sqrt)) }.play;
+	synth = { Out.kr(bus, A2K.kr((RunningSum.ar(InFeedback.ar(Ndef(key).bus.index + chan, 1).squared, 4800) / 4800).sqrt)) }.play;
 	0.3.wait;
 	bus.get{|v| value = v; cond.unhang };
 	cond.hang;
@@ -185,7 +185,7 @@
 		var one = RadUnit.readStrip(\track1);
 		case
 		{ ~radMrIn.(\lagTime) != 2 or: { ~radMrIn.(\ramp) != 2 } } { "lagTime " ++ ~radMrIn.(\lagTime) ++ ", ramp " ++ ~radMrIn.(\ramp) }
-		{ RadUnit.prNdefLag(Ndef(\inTrack1), \trim).notNil } { "the input was given an Ndef lag" }
+		{ (Ndef(\inTrack1).nodeMap.ratesFor([\trim]) ? [nil])[0].isNumber } { "the input was given an Ndef lag" }
 		{ (one[\lags] ? ())[\trim] != 2 } { "document: " ++ one[\lags].cs }
 		{ true }
 	}
@@ -336,4 +336,138 @@
 		{ send[\lag].notNil } { "document: " ++ send.cs }
 		{ true }
 	}
+);
+
+// ---- pan (part 3): every control of a panner moves evenly in position ----
+
+~radMrPan = {|key, ndef = \spaceTrack1| Ndef(ndef).nodeMap.at(key) };
+
+// a typed pan posts what it always did, and the document has no pan times
+// and none of the panner's time controls
+~radTest.("pan-posts-as-before",
+	setup: ["start 2"],
+	cmds: ["pan t 1 -0.5", "pan t 1 0.3"],
+	check: {
+		var one = RadUnit.readStrip(\track1);
+		case
+		{ one[\pan] != (pan: 0.3) } { "pan in the document: " ++ one[\pan].cs }
+		{ one[\lags].notNil } { "lags in the document: " ++ one[\lags].cs }
+		{ true }
+	}
+);
+
+// panlag is the time for typed values of the panner's controls
+~radTest.("panlag-is-the-typed-time",
+	setup: ["start 2"],
+	cmds: ["panlag t 1 2", "pan t 1 -0.5"],
+	check: {
+		var one = RadUnit.readStrip(\track1);
+		case
+		{ ~radMrPan.(\panLag) != 2 or: { ~radMrPan.(\panRamp) != 2 } } { "panLag " ++ ~radMrPan.(\panLag) ++ ", panRamp " ++ ~radMrPan.(\panRamp) }
+		{ one[\lags] != (pan: (pan: 2)) } { "document: " ++ one[\lags].cs }
+		{ ~radMrPan.(\panLag, \spaceTrack2).notNil } { "track 2 got a time too: " ++ ~radMrPan.(\panLag, \spaceTrack2) }
+		{ true }
+	}
+);
+
+// a time typed after the value is for that move only (pan t 1 2 0.5 used to
+// mean the panner's second control)
+~radTest.("pan-time-is-one-move",
+	setup: ["start 2"],
+	cmds: ["pan t 1 -0.5 3", "pan t 1 0.5", "pan 2 0.25 3"],
+	check: {
+		var one = RadUnit.readStrip(\track1);
+		case
+		{ ~radMrPan.(\pan) != 0.5 } { "pan " ++ ~radMrPan.(\pan) }
+		{ ~radMrPan.(\panRamp) != 0.05 } { "the next pan moved over " ++ ~radMrPan.(\panRamp) }
+		{ one[\lags].notNil } { "the time stuck: " ++ one[\lags].cs }
+		{ ~radMrPan.(\pan, \spaceTrack2) != 0.25 or: { ~radMrPan.(\panRamp, \spaceTrack2) != 3 } } {
+			"track 2 by its number in the mixer: " ++ [~radMrPan.(\pan, \spaceTrack2), ~radMrPan.(\panRamp, \spaceTrack2)].cs }
+		{ true }
+	}
+);
+
+// the sound: from hard left to hard right over 2 s, half way the sound is
+// in the middle (a lag would be nearly at the right by then)
+~radTest.("pan-is-even-in-position",
+	setup: ["start 2", "blk 1 sine", ["pan t 1 -1", 1]],
+	code: {
+		Radicles.aZ.setPan(\track, 1, 1, 1, 2);
+		0.75.wait;
+		~radMrLeft = ~radMrLevel.(\spaceTrack1, 0);
+		Radicles.aZ.setPan(\track, 1, -1, 1, 0); 0.3.wait;
+		Radicles.aZ.setPan(\track, 1, 1, 1, 2);
+		0.75.wait;
+		~radMrRight = ~radMrLevel.(\spaceTrack1, 1);
+		1.5.wait;
+		~radMrEnd = ~radMrLevel.(\spaceTrack1, 0) },
+	check: {
+		var ratio = ~radMrLeft / ~radMrRight.max(0.000001);
+		case
+		{ ~radMrRight < 0.001 } { "no sound to measure: " ++ ~radMrRight }
+		{ ratio < 0.6 or: { ratio > 1.6 } } { "half way, left is " ++ ratio.round(0.01) ++ " of right (in the middle: 1)" }
+		{ ~radMrEnd > (~radMrRight * 0.05) } { "not hard right at the end: left is " ++ (~radMrEnd / ~radMrRight).round(0.001) ++ " of the middle's right" }
+		{ true }
+	},
+	noWarnings: true
+);
+
+// a four-channel system: the panner's controls by their names, each with its
+// own time for one move; panlag is the time of them all
+~radTest.("pan-controls-by-name",
+	setup: ["start 1 1 4"],
+	cmds: ["panx t 1 -0.5", "pany t 1 0.5 3", "panlag t 1 2", "panx 1 0.25", "pany t 1 -0.25"],
+	check: {
+		var one = RadUnit.readStrip(\track1);
+		case
+		{ one[\pan] != (panx: 0.25, pany: -0.25) } { "pan in the document: " ++ one[\pan].cs }
+		{ ~radMrPan.(\panxRamp) != 2 or: { ~radMrPan.(\panyRamp) != 2 } } { "moved over " ++ [~radMrPan.(\panxRamp), ~radMrPan.(\panyRamp)].cs }
+		{ one[\lags] != (pan: (panx: 2, pany: 2)) } { "document: " ++ one[\lags].cs }
+		{ true }
+	}
+);
+
+// a name the strip's panner does not have says so and changes nothing
+~radTest.("pan-control-not-there",
+	setup: ["start 2"],
+	cmds: ["width t 1 3", "panx t 1 0.5"],
+	check: { RadUnit.readStrip(\track1)[\pan] == (pan: 0) or: { "pan: " ++ RadUnit.readStrip(\track1)[\pan].cs } }
+);
+
+// a mapped control on a pan moves over the native time; a modulator takes
+// the ramp off
+~radTest.("mapped-and-modulated-pan",
+	setup: ["start 2", "panlag t 1 2", "pan t 1 -0.5", "panlag t 2 2", "pan t 2 -0.5"],
+	code: {
+		HIDMap.map(Ndef('spaceTrack1'), \pan, \osc, [-1, 1], ['/radtestmrpan']);
+		0.2.wait;
+		NetAddr.localAddr.sendMsg('/radtestmrpan', 0.75); 0.5.wait;
+		Radicles.cW.callFunc("pan t 2 sin"); 2.wait },
+	check: {
+		case
+		{ ~radMrPan.(\pan) != 0.5 } { "pan " ++ ~radMrPan.(\pan) }
+		{ ~radMrPan.(\panRamp) != 0.05 } { "the pan moved over " ++ ~radMrPan.(\panRamp) }
+		{ ~radMrPan.(\panLag) != 2 } { "the typed time changed: " ++ ~radMrPan.(\panLag) }
+		{ ~radMrPan.(\panRamp, \spaceTrack2) != 0 } { "the modulated pan's ramp is " ++ ~radMrPan.(\panRamp, \spaceTrack2) }
+		{ true }
+	},
+	teardown: { OSCdef.freeAll }
+);
+
+// a value outside the control's range is not set, and says so (pan t 1 2 0.5
+// used to mean the panner's second control)
+~radTest.("pan-outside-its-range",
+	setup: ["start 2", "pan t 1 0.3"],
+	cmds: ["pan t 1 2 0.5"],
+	check: { ~radMrPan.(\pan) == 0.3 or: { "pan " ++ ~radMrPan.(\pan) } }
+);
+
+// a pan control by its number is one of the panner's own controls, never one
+// of its times
+~radTest.("pan-number-is-a-pan-control",
+	setup: ["start 2"],
+	cmds: [["pan t 1 2 sin", 2], "panlag t 1 2 4"],
+	check: {
+		(~radMrPan.(\panLag).isNil and: { ~radMrPan.(\panRamp).isNil }) or: {
+			"times: " ++ [~radMrPan.(\panLag), ~radMrPan.(\panRamp)].cs } }
 );
