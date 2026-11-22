@@ -1324,8 +1324,9 @@
 							thisResult = thisSpec.map(fxKnob.value);
 						});
 						fxKnobText.string = thisResult.asString.copyRange(0, 7);
-						("Ndef(" ++ ndefKey.cs ++ ").set(" ++ item.cs ++ ", "
-							++ thisResult ++ ");").radcode(\radpostcont);
+						//(a parameter that is on moves over the native time)
+						Assemblage.unitSetCode(ndefKey, [item, thisResult],
+							Assemblage.unitNativeTime(Ndef(ndefKey), item)).radcode(\radpostcont);
 					};
 					thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
 					fxKnob.value = thisResult;

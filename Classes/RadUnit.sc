@@ -87,6 +87,7 @@ RadUnit {
 		argsMods = this.readArgs(Ndef(tag), argNames);
 		unit = (kind: \filter, def: name, args: argsMods[0]);
 		if(argsMods[1].notEmpty, { unit[\mods] = argsMods[1] });
+		this.readLags(Ndef(tag)) !? {|lags| unit[\lags] = lags };
 		extra = (az.trackDataArr ? []).detect{|item| item[0] == tag };
 		if(extra.notNil and: { extra[1].notNil }, { unit[\data] = this.dataForm(extra[1]) });
 		extra = (az.trackBufferArr ? []).detect{|item| item[0] == tag };
@@ -110,6 +111,7 @@ RadUnit {
 		argsMods = this.readArgs(Ndef(tag), argNames);
 		unit = (kind: \block, def: entry[1], args: argsMods[0]);
 		if(argsMods[1].notEmpty, { unit[\mods] = argsMods[1] });
+		this.readLags(Ndef(tag)) !? {|lags| unit[\lags] = lags };
 		if(entry[3].notNil, { unit[\data] = this.plain(entry[3]) });
 		buffer = Block.bufferFormOf(tag);
 		if(buffer.notNil, { unit[\buffer] = buffer });
@@ -122,14 +124,25 @@ RadUnit {
 		.collect(_[0]).select{|tag| Ndef(tag).source.isKindOf(Function) }
 	}
 
+	// the times for typed values of a unit's parameters that are on (fxlag,
+	// blklag), by parameter, or nil when none is
+	*readLags {|ndef|
+		var lags = ();
+		Assemblage.lagParams(ndef).do{|key|
+			var lag = Assemblage.unitLag(ndef, key);
+			if(lag > 0, { lags[key] = lag }) };
+		^if(lags.notEmpty, { lags }, { nil })
+	}
+
 	// [args, mods] of an Ndef: only the arguments in argNames (all if nil);
 	// a modulated argument keeps the value it returns to in args, and its
 	// modulator, described by what it is, in mods
 	*readArgs {|ndef, argNames|
-		var args = (), mods = (), entry;
+		var args = (), mods = (), entry, keys = ndef.controlKeys;
 		ndef.getKeysValues.do{|pair|
 			var key = pair[0], value = pair[1];
-			if(argNames.isNil or: { argNames.includes(key) }, {
+			//(a unit's time controls, xLag and xRamp, are not its values)
+			if((argNames.isNil or: { argNames.includes(key) }) and: { Assemblage.timeControl(keys, key).not }, {
 				if(value.isKindOf(NodeProxy), {
 					entry = (ModMap.modNodes ? []).detect{|item|
 						(item[0] == value) and: { item[1] == ndef } and: { item[2] == key } };

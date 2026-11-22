@@ -81,7 +81,7 @@
 					//fade out before the values change
 					server.sync;
 					ndef.fadeTime.wait;
-					("Ndef(" ++ ndef.key.cs ++ ").set(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
+					Assemblage.unitSetCode(ndef.key, pairs, 0).radcode;
 				};
 			}
 			{ restore = {} };

@@ -18,6 +18,13 @@ HIDMap : Radicles {
 				inFunc = ("{|val| RadUnit.volumeSetOnStrip(" ++ ndef.key.cs ++ "); (\"" ++ ndef.cs
 					++ ".set(\" ++ Radicles.aZ.volumeArgs(" ++ ndef.cs ++ ", val, Radicles.ctlLag) ++ \")\").radpostcont.interpret; }").interpret;
 			}, {
+				//an effect's or a block's parameter that can travel moves over
+				//the native time when it is on, at once when it is off
+				if(Assemblage.lagParams(ndef).includes(key), {
+					inFunc = ("{|val| Assemblage.unitSetCode(" ++ ndef.key.cs ++ ", [" ++ key.cs
+						++ ", val], Assemblage.unitNativeTime(" ++ ndef.cs ++ ", " ++ key.cs
+						++ ")).drop(-1).radpostcont.interpret; }").interpret;
+				}, {
 				//a strip's trim and a send's level move by a ramp too
 				if(Assemblage.rampKey(ndef, key).notNil, {
 					inFunc = ("{|val| (\"" ++ ndef.cs ++ ".set(\" ++ Radicles.aZ.rampArgs(" ++ ndef.cs ++ ", " ++ key.cs
@@ -25,6 +32,7 @@ HIDMap : Radicles {
 				}, {
 					inFunc = ("{|val| (\"" ++ ndef.cs ++ ".set(" ++ key.cs ++
 						", \" ++ val ++ \")\").radpostcont.interpret; }").interpret;
+				});
 				});
 			});
 		}, {
@@ -52,11 +60,15 @@ HIDMap : Radicles {
 				if(key == \volume and: { Radicles.aZ.notNil } and: { RadUnit.stripNames.includes(ndef.key) }, {
 					(ndef.cs ++ ".set(" ++ Radicles.aZ.volumeArgs(ndef, value, Assemblage.shortLag) ++ ");").radcode;
 				}, {
+					if(Assemblage.lagParams(ndef).includes(key), {
+						Assemblage.unitSetCode(ndef.key, [key, value], 0).radcode;
+					}, {
 					if(Radicles.aZ.notNil and: { Assemblage.rampKey(ndef, key).notNil }, {
 						(ndef.cs ++ ".set(" ++ Radicles.aZ.rampArgs(ndef, key, value, Assemblage.shortLag,
 							Assemblage.rampKey(ndef, key)) ++ ");").radcode;
 					}, {
 						(ndef.cs ++ ".set(" ++ key.cs ++ ", " ++ value.cs ++ ");").radcode;
+					});
 					});
 				});
 				(this.getHIDType(hidInfoArr[index][2]).split($.)[0] ++ "(" ++ hidNodes[index][0] ++

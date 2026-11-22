@@ -339,8 +339,112 @@
 		}, "fxl: list the active effects (fx rml N removes number N)");
 	}
 
+	// The times an effect's parameters travel over (docs/design/
+	// lags-blocks-effects.md). A parameter that can travel is made with its
+	// ramp off; these switch it on and give it a time, with nothing rebuilt.
+	//   fxlag               posts the effects' lag time
+	//   fxlag 4             the effects' lag time: every parameter that is on
+	//   fxlag t 1 2 on      every parameter of track 1's effect 2 that can
+	//   fxlag t 1 2 off     travel, on (with the effects' lag time) or off
+	//   fxlag t 1 2 4       its parameters that are on: 4 s
+	//   fxlag t 1 2 freq 4  one parameter (by name or number; with the others)
+	//   fxlag t 1 2 exc [freq,amp]   those off; inc: only those on
+	//   fxlags t 1 2 [4,1,0,2]       times by position
+	//   fxset t 1 2 freq 800 4       a value, and the time of that one move
+	// The master has no number (fxlag m 1 on), and a mixer position can stand
+	// for the strip (fxlag 1 2 on).
+	*prFxLagCmds {
+		var strip = {|num, func|
+			var trackArr, thisArr;
+			if(aZ.notNil, {
+				trackArr = aZ.mixTrackNames.collect{|item| item.asString.divNumStr};
+				if(num <= (trackArr.size), {
+					thisArr = trackArr[num-1];
+					if(thisArr[1].isNil, {thisArr[1] = 1});
+					func.(thisArr[0].asSymbol, thisArr[1]);
+				}, {
+					"track not found".warn;
+				});
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
+		var typed = {|str, num, func|
+			if(aZ.notNil, {
+				case
+				{str == 't'} { func.(\track, num) }
+				{str == 'b'} { func.(\bus, num) }
+				{str == 'm'} { func.(\master, 1) }
+				{ ("track type t, b or m, not " ++ str).warn };
+			}, {
+				"could not find assemblage".warn;
+			});
+		};
+		cW.add(\fxlag, [\str], {|str1|
+			Radicles.fxLag.radpostwarn;
+		}, "fxlag: (posts the effects' lag time)");
+		cW.add(\fxlag, [\str, \num], {|str1, num1|
+			if(aZ.notNil, { aZ.setFxLag(num1) }, { ("Radicles.fxLag = " ++ num1.max(0) ++ ";").radcode });
+		}, "fxlag: time (every effect parameter that is on, and what is switched on later)");
+		//on, off
+		cW.add(\fxlag, [\str, \str, \num, \num, \str], {|str1, str2, num1, num2, str3|
+			typed.(str2, num1, {|type, num| aZ.fxTrackLagMode(type, num, num2, str3.asSymbol) });
+		}, "fxlag: trackType, trackNum, slot, on|off");
+		cW.add(\fxlag, [\str, \str, \num, \str], {|str1, str2, num1, str3|
+			if(str2 == 'm', { typed.(str2, 1, {|type, num| aZ.fxTrackLagMode(type, num, num1, str3.asSymbol) }) }, {
+				"fxlag: track, slot, on|off (fxlag t 1 2 on)".warn });
+		}, "fxlag: m, slot, on|off");
+		cW.add(\fxlag, [\str, \num, \num, \str], {|str1, num1, num2, str2|
+			strip.(num1, {|type, num| aZ.fxTrackLagMode(type, num, num2, str2.asSymbol) });
+		}, "fxlag: mixTrackNum, slot, on|off");
+		//exc, inc
+		cW.add(\fxlag, [\str, \str, \num, \num, \str, \arr], {|str1, str2, num1, num2, str3, arr1|
+			typed.(str2, num1, {|type, num| aZ.fxTrackLagMode(type, num, num2, str3.asSymbol, arr1) });
+		}, "fxlag: trackType, trackNum, slot, exc|inc, [parameters]");
+		cW.add(\fxlag, [\str, \str, \num, \str, \arr], {|str1, str2, num1, str3, arr1|
+			if(str2 == 'm', { typed.(str2, 1, {|type, num| aZ.fxTrackLagMode(type, num, num1, str3.asSymbol, arr1) }) }, {
+				"fxlag: track, slot, exc|inc, [parameters] (fxlag t 1 2 exc [freq])".warn });
+		}, "fxlag: m, slot, exc|inc, [parameters]");
+		cW.add(\fxlag, [\str, \num, \num, \str, \arr], {|str1, num1, num2, str2, arr1|
+			strip.(num1, {|type, num| aZ.fxTrackLagMode(type, num, num2, str2.asSymbol, arr1) });
+		}, "fxlag: mixTrackNum, slot, exc|inc, [parameters]");
+		//times by position
+		cW.add(\fxlags, [\str, \str, \num, \num, \arr], {|str1, str2, num1, num2, arr1|
+			typed.(str2, num1, {|type, num| aZ.fxTrackLags(type, num, num2, arr1) });
+		}, "fxlags: trackType, trackNum, slot, [times by position]");
+		cW.add(\fxlags, [\str, \str, \num, \arr], {|str1, str2, num1, arr1|
+			if(str2 == 'm', { typed.(str2, 1, {|type, num| aZ.fxTrackLags(type, num, num1, arr1) }) }, {
+				"fxlags: track, slot, [times] (fxlags t 1 2 [4,1])".warn });
+		}, "fxlags: m, slot, [times by position]");
+		cW.add(\fxlags, [\str, \num, \num, \arr], {|str1, num1, num2, arr1|
+			strip.(num1, {|type, num| aZ.fxTrackLags(type, num, num2, arr1) });
+		}, "fxlags: mixTrackNum, slot, [times by position]");
+		//a value and the time of that one move
+		cW.add(\fxset, [\str, \str, \num, \num, \num, \num, \num], {|str1, str2, num1, num2, num3, num4, num5|
+			typed.(str2, num1, {|type, num|
+				if(type == \master, { "fxset m: slot, parameter, value, time (fxset m 1 mix 0.3 4)".warn }, {
+					aZ.setFxArgTrack(type, num, num2, num3, num4, time: num5.max(0)) }) });
+		}, "fxset: trackType, trackNum, slot, fxArg, val, time");
+		cW.add(\fxset, [\str, \str, \num, \num, \str, \num, \num], {|str1, str2, num1, num2, str3, num3, num4|
+			typed.(str2, num1, {|type, num|
+				if(type == \master, { "fxset m: slot, parameter, value, time (fxset m 1 mix 0.3 4)".warn }, {
+					aZ.setFxArgTrack(type, num, num2, str3, num3, time: num4.max(0)) }) });
+		}, "fxset: trackType, trackNum, slot, fxArg, val, time");
+		cW.add(\fxset, [\str, \str, \num, \str, \num, \num], {|str1, str2, num1, str3, num2, num3|
+			if(str2 == 'm', { typed.(str2, 1, {|type, num| aZ.setFxArgTrack(type, num, num1, str3, num2, time: num3.max(0)) }) }, {
+				"fxset: track, slot, parameter, value, time (fxset t 1 2 freq 800 4)".warn });
+		}, "fxset: m, slot, fxArg, val, time");
+		cW.add(\fxset, [\str, \num, \num, \num, \num, \num], {|str1, num1, num2, num3, num4, num5|
+			strip.(num1, {|type, num| aZ.setFxArgTrack(type, num, num2, num3, num4, time: num5.max(0)) });
+		}, "fxset: mixTrackNum, slot, fxArg, val, time");
+		cW.add(\fxset, [\str, \num, \num, \str, \num, \num], {|str1, num1, num2, str2, num3, num4|
+			strip.(num1, {|type, num| aZ.setFxArgTrack(type, num, num2, str2, num3, time: num4.max(0)) });
+		}, "fxset: mixTrackNum, slot, fxArg, val, time");
+	}
+
 	// fxset, fxlag, setfx, fxsetn, fxlagn, lagfx
 	*prFxSetCmds {
+		this.prFxLagCmds;
 		cW.add(\fxset, [\str, \str, \num], {|str1, str2, num1|
 			if(aZ.notNil, {
 				case
@@ -384,17 +488,8 @@
 				case
 				{str2 == 't'} {aZ.lagFxArgTrack(\track, num1, num2);}
 				{str2 == 'b'} {aZ.lagFxArgTrack(\bus, num1, num2);}
-				{str2 == 'm'} {aZ.fxTrackWarn(\master, 1, num1, {|item|
-					getKey = item;
-					controlKeys = Ndef(getKey).controlKeys;
-					ratesFor = Ndef(getKey).nodeMap.ratesFor(
-						controlKeys);
-					if(ratesFor.notNil, {
-						[controlKeys[num2-1],
-							ratesFor[num2-1]].radpostwarn;
-					});
-				});
-				};
+				//fxlag m 1 4: the master's effect 1, its parameters that are on
+				{str2 == 'm'} {aZ.fxTrackLagMode(\master, 1, num1, num2.max(0));};
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -421,27 +516,9 @@
 			var getKey, controlKeys, ratesFor;
 			if(aZ.notNil, {
 				case
-				{str2 == 't'} {aZ.fxTrackWarn(\track, num1, num2, {|item|
-					getKey = item;
-					controlKeys = Ndef(getKey).controlKeys;
-					ratesFor = Ndef(getKey).nodeMap.ratesFor(
-						controlKeys);
-					if(ratesFor.notNil, {
-						[controlKeys[num3-1],
-							ratesFor[num3-1]].radpostwarn;
-					});
-
-				});}
-				{str2 == 'b'} {aZ.fxTrackWarn(\bus, num1, num2, {|item|
-					getKey = item;
-					controlKeys = Ndef(getKey).controlKeys;
-					ratesFor = Ndef(getKey).nodeMap.ratesFor(
-						controlKeys);
-					if(ratesFor.notNil, {
-						[controlKeys[num3-1],
-							ratesFor[num3-1]].radpostwarn;
-					});
-				});}
+				//fxlag t 1 2 4: the parameters of track 1's effect 2 that are on
+				{str2 == 't'} {aZ.fxTrackLagMode(\track, num1, num2, num3.max(0));}
+				{str2 == 'b'} {aZ.fxTrackLagMode(\bus, num1, num2, num3.max(0));}
 				{str2 == 'm'} {
 					aZ.lagFxArgTrack(\master, 1, num1, num2, num3);
 				};
@@ -575,23 +652,14 @@
 				if(num1 <= (trackArr.size), {
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
-					aZ.fxTrackWarn(thisArr[0].asSymbol, thisArr[1], num2, {|item|
-						getKey = item;
-						controlKeys = Ndef(getKey).controlKeys;
-						ratesFor = Ndef(getKey).nodeMap.ratesFor(
-							controlKeys);
-						if(ratesFor.notNil, {
-							[controlKeys[num3-1],
-								ratesFor[num3-1]].radpostwarn;
-						});
-					});
+					aZ.fxTrackLagMode(thisArr[0].asSymbol, thisArr[1], num2, num3.max(0));
 				}, {
 					"track not found".warn;
 				});
 			}, {
 				"could not find assemblage".warn;
 			});
-		}, "fxlag: mixTrackNum, filter");
+		}, "fxlag: mixTrackNum, slot, time (its parameters that are on)");
 
 		cW.add(\fxset, [\str, \num, \num, \num, \num], {|str1, num1, num2, num3, num4|
 			var trackArr, thisArr;
@@ -840,12 +908,10 @@
 			var getKey, controlKeys, ratesFor;
 			if(aZ.notNil, {
 				getKey = aZ.filters[num1-1][0];
-				controlKeys = Ndef(getKey).controlKeys;
-				ratesFor = Ndef(getKey).nodeMap.ratesFor(
-					controlKeys);
-				if(ratesFor.notNil, {
+				controlKeys = Assemblage.paramKeys(Ndef(getKey));
+				if(controlKeys[num2-1].notNil, {
 					[controlKeys[num2-1],
-						ratesFor[num2-1]].radpostwarn;
+						Assemblage.unitLag(Ndef(getKey), controlKeys[num2-1])].radpostwarn;
 				});
 			}, {
 				"could not find assemblage".warn;

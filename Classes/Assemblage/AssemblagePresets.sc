@@ -4,7 +4,11 @@
 + Assemblage {
 	rawFxPreset {arg ndefKey, filter=true;
 		var mods, keyValues, arr, arr2, arr3, rawWrite, thisKey;
-		Ndef(ndefKey).getKeysValues.do{|item|
+		//(not an effect's time controls that are off, nor the time of its
+		//last move)
+		Ndef(ndefKey).getKeysValues.reject{|item|
+			Assemblage.timeControl(Ndef(ndefKey).controlKeys, item[0]) and: {
+				item[1] == 0 or: { item[0].asString.endsWith("Ramp") } } }.do{|item|
 			var modArr;
 			if(item[1].cs.find("Ndef").notNil, {
 				modArr = ModMap.modInfoArr.detect({|it| it[0] == item[1].key });

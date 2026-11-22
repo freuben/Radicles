@@ -205,7 +205,9 @@
 		{ name.size > 3 and: { name.beginsWith("vol") } and: { name.drop(3).every(_.isDecDigit) } } {
 			("ramp" ++ name.drop(3)).asSymbol }
 		//a panner's control x: xRamp
-		{ ndef.key.asString.beginsWith("space") } { (name ++ "Ramp").asSymbol };
+		{ ndef.key.asString.beginsWith("space") } { (name ++ "Ramp").asSymbol }
+		//an effect's or a block's parameter that can travel
+		{ Assemblage.lagParams(ndef).includes(key) } { (name ++ "Ramp").asSymbol };
 		^if(rampKey.notNil and: { ndef.controlKeys.includes(rampKey) }, { rampKey }, { nil })
 	}
 
