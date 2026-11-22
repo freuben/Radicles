@@ -1,6 +1,6 @@
 # Where the work stands
 
-21 Nov 2026 (after the mixer ramps, #122–#125). The longer working log is the claude.ai Project doc
+22 Nov 2026 (after release `v0.4.0`, the mixer ramps). The longer working log is the claude.ai Project doc
 `claude/start-here.md`; this page is the short version.
 
 ## How we work
@@ -10,8 +10,11 @@
 - Implementation and testing: Claude Code on whichever Mac Federico is using
   (folder = `Quark("Radicles").localPath`), following `CLAUDE.md`. Very long
   test runs can go to a cloud session.
-- PRs into `dev`; Federico merges; `master` only moves when Federico merges
-  `dev`.
+- PRs into `dev`; Federico merges (Claude merges tests, refactors and docs
+  that change no snapshot); `master` only moves when Federico merges `dev`,
+  and each release is tagged on both repos.
+- Ideation and development are two kinds of conversation (20 Nov): nothing
+  is built until Federico says so.
 
 ## Document Model: steps
 
@@ -27,14 +30,15 @@ contains.
 | 4 | track presets `tsave` / `tload` / `tmorph` / `tmorphtime`; presets load the libraries they need; the output to the master and `tload default` | done, #89–#92, #101, #102 |
 | Time | `fade N` reaches everything, own fade times (first PR); loading a preset is a crossfade: `fxload` / `blkload` / `csload` / `tload` take a time and `xfade`, `glide` or `none`, and the `morph` words and own morph times are removed (second PR, [design/time-fade-crossfade-glide.md](design/time-fade-crossfade-glide.md)); the mixer's moves are ramps: volume, trim, sends and pan move as steady moves with a typed time per control (`vollag`, `trimlag`, `sndlag`, `panlag`, all at once with `mixlag`) and a native time for the window, MIDI, HID and OSC (`ctllag`) ([design/mixer-ramps.md](design/mixer-ramps.md)); lags on blocks and effects are still to discuss | fades built 19–20 Nov (#112–#118); mixer ramps built 21 Nov (#121–#125) |
 | Review | read-only review of code, plans and workflow (18 Nov); the order below follows it | done |
-| Fixes | the bugs the review confirmed, then **release 1** to `master` | next |
-| Tests | automatic runs on GitHub, parallel workers, `doctor` | next, beside the fixes |
-| 5a | one structural command at a time; timeouts; errors reach the performer | then |
+| Fixes | the bugs the review confirmed (names with a dash, ranges with a modulator, send levels, block numbers, track and bus removal), and removing spelled `rm` | done, #105–#110; **release 1** is `v0.2.0` (19 Nov, #111) |
+| Tests | automatic runs on GitHub for every PR, in four parallel parts (about 45 minutes); a server that exits during a test is reported as that | done, #104, #116; `doctor` not built |
+| 5a | one structural command at a time; timeouts; errors reach the performer | next; no design note yet |
 | 5b | structure by name (one record per strip), as far as sessions need | then |
 | 6 | sessions, with autosave and rebuild after a crash | then |
 | 8, 7, 5c, 5d | points (after sessions); scenes, session morph, undo; the windows as observers; the protocol, network and browser UI | later; order decided when sessions are done |
 
-`master` is at `v0.3.0` (20 Nov, #119): steps 1 to 4 and the fades. The mixer ramps are on `dev` until the next release.
+Releases: `v0.2.0` (19 Nov, #111: steps 1 to 4, `rm`, the removal fixes), `v0.3.0` (20 Nov, #119: the fades, loads as crossfades), `v0.4.0` (21 Nov, #127: the mixer ramps). `master` is at `v0.4.0`; `dev` has nothing a performer would notice beyond it.
+
 
 ## Decided along the way that later steps must keep
 
@@ -55,16 +59,24 @@ contains.
   (Memory, settled 17 Nov: claude.ai memory is a bonus for Project chats and
   is never relied on; anything that must be remembered goes in `CLAUDE.md`,
   `docs/` or the Project's start-here doc.)
+- Lags on blocks and effects: the last open part of the Time step, next in
+  ideation. The proposal on hold is in
+  [design/time-fade-crossfade-glide.md](design/time-fade-crossfade-glide.md).
+- The native time's default (`ctllag`, 50 ms): to be judged by ear in
+  rehearsal; 20 ms is the other candidate.
 - Design notes for 5a, then sessions.
+- The review report (`docs/reviews/2026-11-review.md`) is not committed
+  until Federico has read it.
 - Whether the `Plane` classes stay as stubs until the points design note.
-- The version number for release 1 (the terms of reference say tags start at
-  0.1.0; `Radicles.quark` says 0.0.4).
+- `Radicles.quark` still says version 0.0.4; the tags are at `v0.4.0`.
 - Issues #42 (points and planes), #43 (installation guide link), #44
   (channel modes), #45 (sharing and replaying code logs).
 
 ## Test suite
 
-518 tests. The last full Mac run (18 Nov, 516 tests, on #101) took about
-2 h 20: 500 pass, 13 known, 3 fail (two from the Mac's audio device at
-44.1 kHz instead of 48, one intermittent). The cloud run skips about 40
-GUI-only tests.
+About 650 tests in 42 cases. Every PR runs the full suite on GitHub: about
+600 run there (the last run, on #125: 587 pass, 15 known) and 45 that need
+windows are skipped; those run on the dev Mac. The last full Mac run was on
+18 Nov (#101, about 2 h 20); since then the Mac runs the cases a change
+touches. Two tests fail when the Mac's audio device is at 44.1 kHz instead
+of 48.
