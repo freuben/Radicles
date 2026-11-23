@@ -317,3 +317,54 @@
 	},
 	teardown: { File.delete(RadUnit.presetPath(\block, \sine, \radtest_ul_blk)) }
 );
+
+// Scopes (decision 6). lag N is the whole session: the mixer's time, and
+// the effect and block parameters that are on; a parameter that is off stays
+// off. It becomes the three times.
+~radUlMix = {|tag| Ndef(tag).nodeMap.at(\lagTime) };
+~radTest.("lag-n-is-the-whole-session",
+	setup: ["start 2 1", ["blk 1 sine", 2], "fx t 1 lpf", "fxlag t 1 1 freq 2", "blklag 1 freq 2"],
+	cmds: ["lag", "lag 3", "lag"],
+	check: {
+		case
+		{ [Radicles.mixLag, Radicles.fxLag, Radicles.blkLag] != [3, 3, 3] } {
+			"the three times: " ++ [Radicles.mixLag, Radicles.fxLag, Radicles.blkLag].cs }
+		{ ~radUlMix.(\track1) != 3 } { "track 1's volume time: " ++ ~radUlMix.(\track1) }
+		{ ~radUlMix.(\master) != 3 } { "the master's volume time: " ++ ~radUlMix.(\master) }
+		{ ~radUlLag.(\freq) != 3 } { "the effect's freq: " ++ ~radUlLag.(\freq) }
+		{ ~radUlLag.(\lag) != 0 } { "the effect's lag is on: " ++ ~radUlLag.(\lag) }
+		{ ~radUlBlkLag.(\freq) != 3 } { "the block's freq: " ++ ~radUlBlkLag.(\freq) }
+		{ ~radUlBlkLag.(\mul) != 0 } { "the block's mul is on: " ++ ~radUlBlkLag.(\mul) }
+		{ true }
+	},
+	teardown: { Radicles.mixLag = 0.05; Radicles.fxLag = 0.5; Radicles.blkLag = 0.5 },
+	noWarnings: true
+);
+
+// tlag is one strip: its volume, trim, pan and sends, the parameters that
+// are on in its effects and in the block that feeds it. The other track, its
+// effect and its block keep their times.
+~radTest.("tlag-is-one-strip",
+	setup: ["start 2 1", ["blk 1 sine", 2], ["blk 2 sine", 2], "fx t 1 lpf", "fx t 2 lpf",
+		"fxlag t 1 1 on", "fxlag t 2 1 on", "fxlag t 1 1 exc [lag]", "blklag 1 on", "blklag 2 on",
+		["snd t 1 1 1 -6", 2]],
+	cmds: ["tlag t 1 4", "tlag m 2", "tlag 3 1", "tlag t 9 1"],
+	check: {
+		var send = (RadUnit.readSends(\track1) ? ())[\bus1] ? ();
+		case
+		{ ~radUlMix.(\track1) != 4 } { "track 1's volume time: " ++ ~radUlMix.(\track1) }
+		{ ~radUlMix.(\inTrack1) != 4 } { "track 1's trim time: " ++ ~radUlMix.(\inTrack1) }
+		{ Ndef(\spaceTrack1).nodeMap.at(\panLag) != 4 } { "track 1's pan time: " ++ Ndef(\spaceTrack1).nodeMap.at(\panLag) }
+		{ send[\lag] != 4 } { "track 1's send time: " ++ send[\lag] }
+		{ ~radUlLag.(\freq) != 4 } { "its effect's freq: " ++ ~radUlLag.(\freq) }
+		{ ~radUlLag.(\lag) != 0 } { "its effect's lag (excluded) is on: " ++ ~radUlLag.(\lag) }
+		{ ~radUlBlkLag.(\freq) != 4 } { "its block's freq: " ++ ~radUlBlkLag.(\freq) }
+		{ (~radUlMix.(\track2) ? 0.05) != 0.05 } { "track 2's volume time: " ++ ~radUlMix.(\track2) }
+		{ ~radUlLag.(\freq, \filterTrack_2_1) != 0.5 } { "track 2's effect: " ++ ~radUlLag.(\freq, \filterTrack_2_1) }
+		{ Assemblage.unitLag(Ndef(\block2), \freq) != 0.5 } { "block 2's freq: " ++ Assemblage.unitLag(Ndef(\block2), \freq) }
+		{ ~radUlMix.(\master) != 2 } { "the master's volume time: " ++ ~radUlMix.(\master) }
+		{ ~radUlMix.(\bus1) != 1 } { "bus 1's volume time (tlag 3): " ++ ~radUlMix.(\bus1) }
+		{ true }
+	}
+);
+

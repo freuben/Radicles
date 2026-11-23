@@ -155,22 +155,30 @@ File.mkdir(~radAuditDir);
 			or: { "spaceMaster has no limiter after load (rebuilt by mapOutFunc without it)" }
 	});
 
-// 14. The mixer's times: mixlag and ctllag, and the times single controls
+// 14. The session's times: mixlag, ctllag, fxlag and blklag, and the times single controls
 // were given (vollag, trimlag, panlag, sndlag). The load test puts the two
 // mixer-wide times back to their defaults first, so the session must bring
 // them.
 ~radTest.("times-save",
 	setup: ["mixlag 1", "start 2 1", ["snd t 1 1 1 -6", 2], "vollag t 1 2", "trimlag t 2 3",
-		"panlag t 1 1.5", "sndlag t 1 4", "ctllag 0.02", "pan m 0.25 0.05",
+		"panlag t 1 1.5", "sndlag t 1 4", "ctllag 0.02", "fxlag 2", "blklag 3", "pan m 0.25 0.05",
 		//(a last move of the send over the short time: the time of a control's last
 		//move is not kept, and is the short time after a load)
 		["sndset t 1 1 -9 0.05", 1], ["save radaudit_times", 2]],
 	check: { ~radAuditSaved = true; ~radFpSave.("times") },
 	teardown: {
-		Radicles.ctlLag = 0.05; Radicles.mixLag = 0.05;
+		Radicles.ctlLag = 0.05; Radicles.mixLag = 0.05; Radicles.fxLag = 0.5; Radicles.blkLag = 0.5;
 		if(~radAuditSaved != true, {
 			try { PresetFile.remove(\radicles, \radaudit_times, false, path: 0, post: false) } }) });
 ~radTest.("times-load",
 	setup: [["load radaudit_times run", 15]],
-	check: { ~radFpCompare.("times") },
-	teardown: { Radicles.ctlLag = 0.05; Radicles.mixLag = 0.05 });
+	check: {
+		var same = ~radFpCompare.("times");
+		case
+		{ same != true } { same }
+		//(the effects' and the blocks' lag times: fxlag N, blklag N)
+		{ Radicles.fxLag != 2 } { "fxlag after the load: " ++ Radicles.fxLag }
+		{ Radicles.blkLag != 3 } { "blklag after the load: " ++ Radicles.blkLag }
+		{ true }
+	},
+	teardown: { Radicles.ctlLag = 0.05; Radicles.mixLag = 0.05; Radicles.fxLag = 0.5; Radicles.blkLag = 0.5 });
