@@ -287,3 +287,33 @@
 	noWarnings: true,
 	teardown: { Radicles.blkLag = 0.5 }
 );
+
+// the same block played again keeps its times; another block on the number
+// starts off, after a stop too
+~radTest.("another-block-on-the-number-starts-off",
+	setup: ["start 2", "blk 1 sine", "blklag 1 on"],
+	cmds: [["st 1", 2], ["blk 1 sine", 2]],
+	code: {
+		~radUlBlkSame = ~radUlBlkLag.(\freq);
+		Radicles.cW.callFunc("st 1"); 2.wait;
+		Radicles.cW.callFunc("blk 1 blip"); 2.wait },
+	check: {
+		case
+		{ ~radUlBlkSame != 0.5 } { "the same block again: " ++ ~radUlBlkSame }
+		{ (~radUlBlkLag.(\freq) ? 0) != 0 } { "blip's freq is on: " ++ ~radUlBlkLag.(\freq) }
+		{ true }
+	}
+);
+
+// a block preset keeps which parameters are on, also when nothing else differs
+~radTest.("blkload-brings-lags",
+	setup: ["start 2", "blk 1 sine", "blklag 1 freq 3", ["blksave 1 radtest_ul_blk", 1], "blklag 1 off"],
+	cmds: [["blkload 1 radtest_ul_blk none", 1.5]],
+	check: {
+		case
+		{ ~radUlBlkLag.(\freq) != 3 } { "freq's time after the load: " ++ ~radUlBlkLag.(\freq) }
+		{ ~radUlBlkLag.(\mul) != 0 } { "mul is on: " ++ ~radUlBlkLag.(\mul) }
+		{ true }
+	},
+	teardown: { File.delete(RadUnit.presetPath(\block, \sine, \radtest_ul_blk)) }
+);

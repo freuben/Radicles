@@ -1,0 +1,28 @@
+>> st 1
+== radpost ==
+Ndef('block1').source = nil;
+== radpostcont ==
+(none)
+
+>> blk 1 sine
+== radpost ==
+Ndef('block1', {arg freq = 440, phase = 0, mul = 0.4, freqLag = 0, freqRamp = 0, phaseLag = 0, phaseRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(phaseRamp > 0, [phase, VarLag.kr(phase, phaseRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+Ndef('block1').source = nil;
+Ndef('block1', {arg freq = 10, mul = 0.5, freq2 = 1200, freqLag = 0, freqRamp = 0, mulLag = 0, mulRamp = 0, freq2Lag = 0, freq2Ramp = 0;
+    {arg freq=10 , mul=0.5, freq2 = 1200 ;
+    Decay.ar(Impulse.ar(freq), 0.25, LFCub.ar(freq2, 0, 0.1)) *mul;
+}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq, freqRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(freq2Ramp > 0, [freq2, VarLag.kr(freq2.max(1e-9).log, freq2Ramp.max(ControlDur.ir), warp: \lin).exp])) });
+Ndef('block1').nodeMap.set('freqLag', 0, 'phaseLag', 0, 'mulLag', 0);
+== radpostcont ==
+(none)
+

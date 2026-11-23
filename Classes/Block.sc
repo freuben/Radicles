@@ -1,4 +1,4 @@
-Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=1,
+Block : Radicles {classvar stopFades, <lastDefs, <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
 	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers, positionBuses, making;
 
@@ -429,8 +429,6 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 						//number does not inherit which parameters were on
 						if(blockFunc.isKindOf(Function), {
 							blockFunc = Assemblage.rampUnit(blockFunc, SpecFile.read(\block, blockName, false));
-							Assemblage.unitTimesReset(ndefs[blockIndex].key, liveBlocks[blockIndex].notNil and: {
-								liveBlocks[blockIndex][1] != blockName });
 						});
 						if(blockFunc.notNil, {
 						ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
@@ -475,6 +473,16 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 						if(this.isCurrentStart(startKey, ticket), {
 							//replace out with cs string using presetToNdef
 							if(blockFunc.notNil, {
+								//(the block last played on this number is remembered: after
+								//a stop nothing else says what the node map's times were for)
+								if(blockFunc.isKindOf(Function), {
+									var names = blockFunc.def.argNames ? [], last = (lastDefs ? ())[startKey];
+									if(last.notNil, {
+										Assemblage.unitTimesReset(startKey, last[0] != blockName, last[1]) });
+									lastDefs = (lastDefs ?? { IdentityDictionary.new }).put(startKey, [blockName,
+										names.select{|name| names.includes((name ++ "Lag").asSymbol)
+											and: { names.includes((name ++ "Ramp").asSymbol) } }]);
+								});
 								ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
 								liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
 								//document (step 2): the buffer by what it is, then the unit
@@ -673,6 +681,10 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 		var blockIndex;
 		blockIndex = this.indexOfBlock(block);
 		if(blockIndex.notNil, {
+			//(a parameter by name or by number)
+			argArr = argArr.asArray.clump(2).collect{|pair|
+				[Assemblage.unitParamNames(ndefs[blockIndex].key, [pair[0]])[0], pair[1]] }
+			.reject{|pair| pair[0].isNil }.flatten(1);
 			Assemblage.unitLagSet(ndefs[blockIndex].key, argArr);
 		}, {
 			"Block not found".warn;

@@ -31,9 +31,9 @@ Ndef('block1', {arg key = 0, oct = 1, phase = 0, mul = 0.4, lag = nil, octLag = 
     ]);
     Mix.ar(SinOsc.ar([chord[0].lag(lag), chord[1].lag(lag), chord[2].(lag)],phase,mul/3));
     }.value(key,
-        VarLag.kr(oct, octRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(phase, phaseRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin),
+        Select.kr(octRamp > 0, [oct, VarLag.kr(oct, octRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(phaseRamp > 0, [phase, VarLag.kr(phase, phaseRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)]),
         lag) });
 == radpostcont ==
 (none)

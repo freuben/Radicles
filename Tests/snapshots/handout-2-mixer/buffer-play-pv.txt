@@ -6,11 +6,11 @@ Ndef('block1', {arg rate = 1, offset = 0, numFrames = 0.6, winType = 0, mul = 1,
     localbuf = LocalBuf.new(numFrames.linexp(0,1,32,32768), ~buffer0.numChannels);
         chain = PV_PlayBuf(localbuf, ~buffer0.bufnum, rate, offset.linlin(0,1,0, ~buffer0.numFrames),
  1);
-    IFFT(chain, winType)*mul}.value(VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(offset, offsetRamp.max(ControlDur.ir), warp: \lin),
+    IFFT(chain, winType)*mul}.value(Select.kr(rateRamp > 0, [rate, VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(offsetRamp > 0, [offset, VarLag.kr(offset, offsetRamp.max(ControlDur.ir), warp: \lin)]),
         numFrames,
         winType,
-        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
 == radpostcont ==
 (none)
 
@@ -22,11 +22,11 @@ Ndef('block2', {arg rate = 1, offset = 0, numFrames = 0.6, winType = 0, mul = 1,
     localbuf = LocalBuf.new(numFrames.linexp(0,1,32,32768), ~buffer0.numChannels);
         chain = PV_PlayBuf(localbuf, ~buffer0.bufnum, rate, offset.linlin(0,1,0, ~buffer0.numFrames),
  0);
-    IFFT(chain, winType)*mul}.value(VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(offset, offsetRamp.max(ControlDur.ir), warp: \lin),
+    IFFT(chain, winType)*mul}.value(Select.kr(rateRamp > 0, [rate, VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(offsetRamp > 0, [offset, VarLag.kr(offset, offsetRamp.max(ControlDur.ir), warp: \lin)]),
         numFrames,
         winType,
-        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
 == radpostcont ==
 (none)
 
@@ -38,11 +38,11 @@ Ndef('block1', {arg rate = 1, offset = 0, numFrames = 0.6, winType = 0, mul = 1,
     localbuf = LocalBuf.new(numFrames.linexp(0,1,32,32768), ~buffer0.numChannels);
         chain = PV_PlayBuf(localbuf, ~buffer0.bufnum, rate, offset.linlin(0,1,0, ~buffer0.numFrames),
  1);
-    IFFT(chain, winType)*mul}.value(VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(offset, offsetRamp.max(ControlDur.ir), warp: \lin),
+    IFFT(chain, winType)*mul}.value(Select.kr(rateRamp > 0, [rate, VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(offsetRamp > 0, [offset, VarLag.kr(offset, offsetRamp.max(ControlDur.ir), warp: \lin)]),
         numFrames,
         winType,
-        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('block1').xset('rate', 0.5);
 == radpostcont ==
 (none)
@@ -55,11 +55,11 @@ Ndef('block2', {arg rate = 1, offset = 0, numFrames = 0.6, winType = 0, mul = 1,
     localbuf = LocalBuf.new(numFrames.linexp(0,1,32,32768), ~buffer0.numChannels);
         chain = PV_PlayBuf(localbuf, ~buffer0.bufnum, rate, offset.linlin(0,1,0, ~buffer0.numFrames),
  0);
-    IFFT(chain, winType)*mul}.value(VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(offset, offsetRamp.max(ControlDur.ir), warp: \lin),
+    IFFT(chain, winType)*mul}.value(Select.kr(rateRamp > 0, [rate, VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(offsetRamp > 0, [offset, VarLag.kr(offset, offsetRamp.max(ControlDur.ir), warp: \lin)]),
         numFrames,
         winType,
-        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('block2').xset('rate', 2);
 == radpostcont ==
 (none)

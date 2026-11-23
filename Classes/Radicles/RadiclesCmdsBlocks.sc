@@ -241,8 +241,10 @@
 		cW.add(\blkset, [\str, \num, \num, \num, \num], {|str1, num1, num2, num3, num4|
 			var thisIndex, thisKey;
 			thisIndex = Block.indexOfBlock(num1);
-			thisKey = Assemblage.paramKeys(Block.ndefs[thisIndex])[num2-1];
-			Block.set(num1, [thisKey, num3], time: num4.max(0));
+			if(thisIndex.isNil, { "Block not found".warn }, {
+				thisKey = Assemblage.paramKeys(Block.ndefs[thisIndex])[num2-1];
+				Block.set(num1, [thisKey, num3], time: num4.max(0));
+			});
 		}, "blkset: blk, arg, val, time");
 		cW.add(\blkset, [\str, \num, \str, \num, \num], {|str1, num1, str2, num3, num4|
 			Block.set(num1, [str2, num3], time: num4.max(0));

@@ -515,9 +515,10 @@
 
 	// puts the times of a unit's moves back to none in its node map (and,
 	// with lagsToo, its parameters' own times: off), before it is made again
-	*unitTimesReset {arg ndefKey, lagsToo=false;
+	// (keys: the parameters to put back, when the unit is no longer there to say)
+	*unitTimesReset {arg ndefKey, lagsToo=false, keys;
 		var ndef = Ndef(ndefKey), args = [];
-		Assemblage.lagParams(ndef).do{|key|
+		(keys ?? { Assemblage.lagParams(ndef) }).do{|key|
 			[(key ++ "Ramp").asSymbol] ++ if(lagsToo, { [(key ++ "Lag").asSymbol] }, { [] }) do: {|time|
 				if((ndef.nodeMap.at(time) ? 0) != 0, { args = args ++ [time, 0] }) } };
 		if(args.notEmpty, {

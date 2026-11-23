@@ -4,8 +4,8 @@
 Ndef('block1', {arg loop = 1, mul = 1, rate = 1, mulLag = 0, mulRamp = 0, rateLag = 0, rateRamp = 0;
     {arg loop=1 , mul=1 , rate=1 ;
     VDiskIn.ar(~buffer0.numChannels, ~buffer0, rate * 44100 / SampleRate.ir, loop)*mul;}.value(loop,
-        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(rateRamp > 0, [rate, VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin)])) });
 == radpostcont ==
 (none)
 
