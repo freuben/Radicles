@@ -6,10 +6,10 @@ Ndef('filterTrack_3_1', {arg mix = 0, room = 0, damp = 0.0, lag = 0.0, adjVol = 
     {arg mix=0, room=0, damp=0.0, lag=0.0, adjVol=1;
     var sig;
     sig = Ndef.ar('inTrack3', 2);
-    FreeVerb2.ar(sig[0], sig[1], mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(room, roomRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(damp, dampRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin),
+    FreeVerb2.ar(sig[0], sig[1], mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(roomRamp > 0, [room, VarLag.kr(room, roomRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(dampRamp > 0, [damp, VarLag.kr(damp, dampRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)]),
         adjVol) });
 Ndef('track3', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_3_1', 2) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)

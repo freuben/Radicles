@@ -503,7 +503,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 			lo = range[0].dbamp; hi = range[1].dbamp;
 			"Select.kr(" ++ name ++ "Ramp > 0, [" ++ name ++ ", (VarLag.kr(((" ++ name ++ ".dbamp - " ++ lo ++ ") / "
 			++ (hi - lo) ++ ").max(0).sqrt, " ++ time ++ ", warp: \\lin).squared * " ++ (hi - lo) ++ " + " ++ lo ++ ").ampdb])" }
-		{ "VarLag.kr(" ++ name ++ ", " ++ time ++ ", warp: \\lin)" }
+		//(the same way out as the others: with no time the value is passed
+		//as it is, in the same control period; a ramp arrives one late, which
+		//a trigger set with it would miss)
+		{ "Select.kr(" ++ name ++ "Ramp > 0, [" ++ name ++ ", VarLag.kr(" ++ name ++ ", " ++ time ++ ", warp: \\lin)])" }
 	}
 
 	// a unit's own parameters, in their places (not its time controls)
@@ -518,6 +521,10 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		//(a panner's time controls are the mixer's: panlag)
 		if(ndef.key.asString.beginsWith("space"), { ^[] });
 		keys = ndef.controlKeys;
+		//(only what the unit's function has: the node map can still hold the
+		//controls of an earlier unit in this place)
+		if(ndef.source.isKindOf(Function), {
+			keys = keys.select{|key| (ndef.source.def.argNames ? []).includes(key) } });
 		^keys.select{|key| keys.includes((key ++ "Lag").asSymbol) and: { keys.includes((key ++ "Ramp").asSymbol) } }
 	}
 

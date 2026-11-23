@@ -13,12 +13,12 @@ sig = DelayC.ar(input, 7.0, modulators);
 sig = sig.sum;
 sig = sig * 3;
 ((sig*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)))
-}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(depth, depthRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(predelay, predelayRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(speed, speedRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(ph_diff, ph_diffRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)) });
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(depthRamp > 0, [depth, VarLag.kr(depth, depthRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(predelayRamp > 0, [predelay, VarLag.kr(predelay, predelayRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(speedRamp > 0, [speed, VarLag.kr(speed, speedRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(ph_diffRamp > 0, [ph_diff, VarLag.kr(ph_diff, ph_diffRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagTimeRamp > 0, [lagTime, VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
