@@ -74,17 +74,18 @@
 	teardown: ~radLtClean
 );
 
-// glide, the words in any order: a lag over the typed time, one set, the lag
-// goes back; the fade time is not touched
+// glide, the words in any order: one move over the typed time on the
+// value's own ramp (the time of the move stays in the node map after it);
+// the fade time is not touched
 ~radTest.("fxload-glide-words-any-order",
 	setup: ~radLtFx,
 	cmds: [["fxload t 1 1 radtest_lt glide 1", 1.2]],
-	code: { ~radLtMid = [~radLtLag.(\filterTrack_1_1, \pitchRatio), Ndef(\filterTrack_1_1).fadeTime]; 2.5.wait },
+	code: { ~radLtMid = [Ndef(\filterTrack_1_1).nodeMap.at(\pitchRatioRamp), Ndef(\filterTrack_1_1).fadeTime]; 2.5.wait },
 	check: {
 		case
-		{ ~radLtMid != [1, 0.5] } { "lag and fade time during the load: " ++ ~radLtMid.cs }
+		{ ~radLtMid != [1, 0.5] } { "the time of the move and the fade time during the load: " ++ ~radLtMid.cs }
 		{ ~radLtRatio.() != 0.5 } { "pitchRatio " ++ ~radLtRatio.() }
-		{ ~radLtLag.(\filterTrack_1_1, \pitchRatio).notNil } { "lag after: " ++ ~radLtLag.(\filterTrack_1_1, \pitchRatio).cs }
+		{ ~radLtLag.(\filterTrack_1_1, \pitchRatio).notNil } { "a NodeProxy lag after: " ++ ~radLtLag.(\filterTrack_1_1, \pitchRatio).cs }
 		{ true }
 	},
 	teardown: ~radLtClean
@@ -438,8 +439,8 @@
 	teardown: ~radLtClean
 );
 
-// glide in a chain load: the values start moving after the effect's own
-// fade time, not after the load's time (they arrived at twice the time)
+// glide in a chain load: the values start moving at once, not after the
+// load's time (they once arrived at twice the time)
 ~radTest.("csload-glide-starts-at-once",
 	setup: ~radLtChain,
 	code: { Radicles.cW.callFunc("csload t 1 radtest_ltc 3 glide"); 1.5.wait; ~radLtMid = ~radLtRatio.(); 3.5.wait },

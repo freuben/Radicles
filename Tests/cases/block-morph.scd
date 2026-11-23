@@ -32,7 +32,7 @@
 	teardown: ~radMorphClean
 );
 
-// glide: a lag while it runs, then the lag goes back
+// glide: one move over the time on the value's own ramp; no NodeProxy lag
 ~radTest.("morph-glide",
 	setup: ["start 2", "blk 1 sine", "blkset 1 freq 500", "blksave 1 radtest_hi", "blkset 1 freq 330"],
 	cmds: [["blkload 1 radtest_hi 1 glide", 3]],
@@ -133,7 +133,7 @@
 	teardown: ~radMorphClean
 );
 
-// ...and through a glide (the lag rebuilds the block, twice)
+// ...and through a glide (nothing is rebuilt: the file plays on)
 ~radTest.("morph-sound-file-glide-keeps-place",
 	setup: ["start 2", ["lp 1 marilyn1", 3], "blkset 1 rate 1.5", "blksave 1 radtest_fast", "blkset 1 rate 1"],
 	code: {
