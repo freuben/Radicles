@@ -2,7 +2,8 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg mix=0 , depth=0.1 , predelay=0.08 , speed=0.05 , ph_diff=0.5 , lagTime=0.1 ;
+Ndef('filterTrack_1_1', {arg mix = 0, depth = 0.1, predelay = 0.08, speed = 0.05, ph_diff = 0.5, lagTime = 0.1, mixLag = 0, mixRamp = 0, depthLag = 0, depthRamp = 0, predelayLag = 0, predelayRamp = 0, speedLag = 0, speedRamp = 0, ph_diffLag = 0, ph_diffRamp = 0, lagTimeLag = 0, lagTimeRamp = 0;
+    {arg mix=0 , depth=0.1 , predelay=0.08 , speed=0.05 , ph_diff=0.5 , lagTime=0.1 ;
 var input, sig, modulators, numDelays;
 numDelays = 12;
 input = Ndef.ar('inTrack1', 1) * numDelays.reciprocal;
@@ -12,7 +13,12 @@ sig = DelayC.ar(input, 2.0, modulators);
 sig = sig.sum;
 sig = sig * 3;
 ((sig*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)))
-});
+}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(depth, depthRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(predelay, predelayRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(speed, speedRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(ph_diff, ph_diffRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

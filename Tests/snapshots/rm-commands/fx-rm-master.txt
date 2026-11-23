@@ -1,7 +1,9 @@
 >> fx rm m 1
 == radpost ==
 Ndef('filterMaster_1_1').clear(0.5);
-Ndef('filterMaster_1_2', {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('inMaster', 2), 12, delayTime, decayTime)});
+Ndef('filterMaster_1_2', {arg delayTime = 0, decayTime = 1, delayTimeLag = 0, delayTimeRamp = 0, decayTimeLag = 0, decayTimeRamp = 0;
+    {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('inMaster', 2), 12, delayTime, decayTime)}.value(VarLag.kr(delayTime, delayTimeRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(decayTime, decayTimeRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('filterMaster_1_2').set('delayTime', 0, 'decayTime', 1);
 Ndef('master', {arg volume=0, lagTime=0.05, mute=0, off=0, ramp=0.05;
                     (Ndef.ar('filterMaster_1_2', 2) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)

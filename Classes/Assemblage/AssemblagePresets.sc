@@ -163,7 +163,9 @@
 		//already there: nothing to do
 		current = RadUnit.read(ndefKey, this);
 		if(current.notNil and: {
-			RadDoc.diff(this.prMorphed(current), this.prMorphed(unit), 1e-9).isEmpty }, {
+			RadDoc.diff(this.prMorphed(current), this.prMorphed(unit), 1e-9).isEmpty } and: {
+			//(a preset that says which parameters are on brings that too)
+			unit[\lags].isNil or: { RadDoc.diff((l: current[\lags] ? ()), (l: unit[\lags]), 1e-9).isEmpty } }, {
 			action.(); ^true
 		});
 		//the time: the command's, else the effect's own fade time

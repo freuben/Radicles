@@ -5,7 +5,9 @@ Ndef('filterTrack_1_1').fadeTime = 1;
 Ndef('filterTrack_1_2').fadeTime = 1;
 Ndef('track1').fadeTime = 1;
 Ndef('filterTrack_1_2').clear(1);
-Ndef('filterTrack_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inTrack1', 1), freq.lag(lag));});
+Ndef('filterTrack_1_1', {arg freq = 20000, lag = 0.1, freqLag = 0, freqRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inTrack1', 1), freq.lag(lag));}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('filterTrack_1_1').set('freq', 20000, 'lag', 0.1);
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
@@ -18,9 +20,13 @@ Ndef('spaceTrack1', {arg pan = 0, panLag = 0.05, panRamp = 0.05;
 Ndef('spaceTrack1').set('pan', 0, 'panLag', 0.05, 'panRamp', 0.05);
 Ndef.ar('filterTrack_1_3', 1);
 Ndef('filterTrack_1_3').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inTrack1', 1), freq.lag(lag));});
+Ndef('filterTrack_1_1', {arg freq = 20000, lag = 0.1, freqLag = 0, freqRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inTrack1', 1), freq.lag(lag));}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('filterTrack_1_1').set('freq', 20000, 'lag', 0.1);
-Ndef('filterTrack_1_3', {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('filterTrack_1_1', 1), 12, delayTime, decayTime)});
+Ndef('filterTrack_1_3', {arg delayTime = 0, decayTime = 1, delayTimeLag = 0, delayTimeRamp = 0, decayTimeLag = 0, decayTimeRamp = 0;
+    {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('filterTrack_1_1', 1), 12, delayTime, decayTime)}.value(VarLag.kr(delayTime, delayTimeRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(decayTime, decayTimeRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('filterTrack_1_3').set('delayTime', 0, 'decayTime', 1);
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_3', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)

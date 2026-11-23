@@ -1,0 +1,24 @@
+>> fxset t 1 1 freq 800
+== radpost ==
+Ndef('filterTrack_1_1').set('freq', 800);
+== radpostcont ==
+(none)
+
+>> fxset t 1 1 1 600
+== radpost ==
+Ndef('filterTrack_1_1').set('freq', 600);
+== radpostcont ==
+(none)
+
+>> fxset t 1 1 [freq, 500]
+== radpost ==
+Ndef('filterTrack_1_1').set('freq', 500);
+== radpostcont ==
+(none)
+
+>> fxgetlag t 1 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

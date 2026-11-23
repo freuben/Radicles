@@ -79,9 +79,18 @@ used and must not change how library files are written.
 
 ## Planned PRs (Model: Fable for all; each gets a second look)
 
-1. **Effects:** the ramp built in and off; `fxlag` on, off, per effect, per
-   parameter, `exc`, `inc`, lists; `fxset` with a time; `fxgetlag`; the
-   window's sliders and mapped controls; modulators.
+1. **Effects** (built): the ramp built in and off (`Assemblage.rampUnit`,
+   added when an effect is made; times are the controls `xLag` and `xRamp`
+   after the effect's own); `fxlag` on, off, per effect, per parameter,
+   `exc`, `inc`; `fxlag N` (it came into this part because "on" needs it;
+   a session keeps it from part 3); `fxset` with a time; `fxgetlag`; the
+   window's sliders and mapped controls; modulators; presets keep which
+   parameters are on. Defaults taken:
+   - a list by position is `fxlags t 1 2 [4,1,0,2]`; `fxlag t 1 2 [...]`
+     keeps its pairs (number or name, then time), as it read them before;
+   - a preset saved with no lags leaves the effect's times alone;
+   - sliders and mapped controls use `ctllag` only on a parameter that is on;
+   - a dB spec moves by the fader's law, as the mixer's volume does.
 2. **Blocks:** the same with `blklag`, `blkset`, `blkgetlag`.
 3. **Scopes:** `fxlag N`, `blklag N`, `tlag`, `lag N`; what a session keeps.
 4. **Loads:** `glide` follows the rule; values that cannot travel jump at

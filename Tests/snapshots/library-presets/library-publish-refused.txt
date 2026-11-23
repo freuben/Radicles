@@ -2,7 +2,8 @@
 == radpost ==
 Ndef.ar('filterTrack_2_1', 1);
 Ndef('filterTrack_2_1').fadeTime = 0.5;
-Ndef('filterTrack_2_1', {arg gain = 1; Ndef.ar('inTrack2', 1) * gain});
+Ndef('filterTrack_2_1', {arg gain = 1, gainLag = 0, gainRamp = 0;
+    {arg gain = 1; Ndef.ar('inTrack2', 1) * gain}.value(VarLag.kr(gain, gainRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('track2', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_2_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

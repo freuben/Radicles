@@ -12,7 +12,7 @@
 
 >> fxlagn t 1 2 10
 == radpost ==
-Ndef('filterTrack_1_2').lag('delayTime', 10, 'decayTime', 10);
+Ndef('filterTrack_1_2').set('delayTimeLag', 10, 'decayTimeLag', 10);
 == radpostcont ==
 (none)
 

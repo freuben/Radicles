@@ -2,11 +2,18 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg mix = 1 , thresh= -1 , ratio=10 , attack=0.002 , release=0.002, gain=0 , outLevel=0 ;
+Ndef('filterTrack_1_1', {arg mix = 1, thresh = -1, ratio = 10, attack = 0.002, release = 0.002, gain = 0, outLevel = 0, mixLag = 0, mixRamp = 0, threshLag = 0, threshRamp = 0, attackLag = 0, attackRamp = 0, releaseLag = 0, releaseRamp = 0, gainLag = 0, gainRamp = 0, outLevelLag = 0, outLevelRamp = 0;
+    {arg mix = 1 , thresh= -1 , ratio=10 , attack=0.002 , release=0.002, gain=0 , outLevel=0 ;
     var sig;
 sig = Compander.ar(Ndef.ar('inTrack1', 1)*gain.dbamp, thresh: thresh.dbamp, slopeBelow: 1, slopeAbove: 1/ratio, clampTime: attack, relaxTime: release)*outLevel.dbamp;
     ((sig*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)))
-});
+}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(thresh, threshRamp.max(ControlDur.ir), warp: \lin),
+        ratio,
+        VarLag.kr(attack, attackRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(release, releaseRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(gain, gainRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(outLevel, outLevelRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
