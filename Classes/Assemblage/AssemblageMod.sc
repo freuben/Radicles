@@ -63,10 +63,11 @@
 		if(argIn.isNumber, {
 			index = argIn-1;
 		}, {
-			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
+			index = Assemblage.paramKeys(Ndef(ndefKey)).indexOf(argIn)
 		});
 		if(index.notNil, {
-			keyValues = Ndef(ndefKey).getKeysValues[index];
+			keyValues = Ndef(ndefKey).getKeysValues.select{|pair|
+				Assemblage.paramKeys(Ndef(ndefKey)).includes(pair[0]) }[index];
 			if(ndefKey.cs.find("busIn").isNil, {
 				spec = [];
 				specs.do{|item| spec = (item ++ spec) };
@@ -154,7 +155,7 @@
 					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
 			}, {
-				Ndef(ndefKey).controlKeys.postln;
+				Assemblage.paramKeys(Ndef(ndefKey)).postln;
 			});
 		});
 	}
@@ -170,7 +171,7 @@
 					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
 			}, {
-				Ndef(ndefKey).controlKeys.postln;
+				Assemblage.paramKeys(Ndef(ndefKey)).postln;
 			});
 		});
 	}
@@ -227,7 +228,7 @@
 	modArgNum {arg ndefKey, modArg;
 		var index;
 		if(modArg.isNil or: {modArg.isInteger}, {^modArg});
-		index = Ndef(ndefKey).controlKeys.indexOf(modArg.asSymbol);
+		index = Assemblage.paramKeys(Ndef(ndefKey)).indexOf(modArg.asSymbol);
 		if(index.isNil, {
 			("argument not found: " ++ modArg).warn;
 			^nil;
@@ -238,7 +239,7 @@
 	unmodFunc {arg ndefKey, modArg;
 		var modifier;
 		if(modArg.isInteger, {
-			modArg = Ndef(ndefKey).controlKeys[modArg-1];
+			modArg = Assemblage.paramKeys(Ndef(ndefKey))[modArg-1];
 		});
 		//a match needs the same entry to hold both this Ndef and this argument
 		if(ModMap.modNodes.notNil and: {
@@ -314,7 +315,7 @@
 						{modifier == \mod} {
 							value ?? {
 								value = ModMap.modNodes.select({|item|
-									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Assemblage.paramKeys(Ndef(ndefKey))[modArg-1]);
 								})[0].last;
 							};
 							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
@@ -322,7 +323,7 @@
 						{modifier == \hid} {
 							value ?? {
 								value = HIDMap.hidNodes.select({|item|
-									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Assemblage.paramKeys(Ndef(ndefKey))[modArg-1]);
 								})[0].last;
 							};
 							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
@@ -350,7 +351,7 @@
 							value ?? {
 								value = ModMap.modNodes.select({|item|
 									(item[1] == Ndef(ndefKey) ).and(item[2] ==
-										Ndef(ndefKey).controlKeys[modArg-1]);
+										Assemblage.paramKeys(Ndef(ndefKey))[modArg-1]);
 								})[0].last;
 							};
 							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
@@ -359,7 +360,7 @@
 							value ?? {
 								value = HIDMap.hidNodes.select({|item|
 									(item[1] == Ndef(ndefKey) ).and(item[2] ==
-										Ndef(ndefKey).controlKeys[modArg-1]);
+										Assemblage.paramKeys(Ndef(ndefKey))[modArg-1]);
 								})[0].last;
 							};
 							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);

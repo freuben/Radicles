@@ -51,7 +51,7 @@ HIDMap : Radicles {
 	*unmap {arg ndef, key, value;
 		var indexNodes, thisArr, num;
 		if(key.isInteger, {
-			key = ndef.controlKeys[key];
+			key = Assemblage.paramKeys(ndef)[key];
 		});
 		hidNodes.do{|item, index| if( item.includes(ndef) and: {item.includes(key)}, //entry holds this Ndef and argument
 			{

@@ -52,7 +52,7 @@ ModMap : Radicles {
 		var indexNodes, thisArr, num;
 
 		if(key.isInteger, {
-			key = ndef.controlKeys[key];
+			key = Assemblage.paramKeys(ndef)[key];
 		});
 		modNodes.do{|item, index| if( item.includes(ndef) and: {item.includes(key)}, //entry holds this Ndef and argument
 			{

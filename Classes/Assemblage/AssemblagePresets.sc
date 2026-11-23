@@ -165,7 +165,7 @@
 		if(current.notNil and: {
 			RadDoc.diff(this.prMorphed(current), this.prMorphed(unit), 1e-9).isEmpty } and: {
 			//(a preset that says which parameters are on brings that too)
-			unit[\lags].isNil or: { RadDoc.diff((l: current[\lags] ? ()), (l: unit[\lags]), 1e-9).isEmpty } }, {
+			this.prLagsDiffer(current, unit).not }, {
 			action.(); ^true
 		});
 		//the time: the command's, else the effect's own fade time
@@ -241,6 +241,8 @@
 				filterArgs = newArr[0];
 				newFilterNdef ?? {newFilterNdef = filterArgs[0]};
 				if([filterArgs[2], filterArgs[3]].detect({|item| item.notNil }).isNil, {
+					//(at once, whatever time the parameters' last moves had)
+					Assemblage.unitStillCode(newFilterNdef) !? {|code| code.radcode };
 					("Ndef(" ++ newFilterNdef.cs ++ ").set" ++
 						filterArgs[1].cs.replace("[", "(").replace("]", ")")++ ";").radcode;
 					server.sync;

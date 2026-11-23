@@ -36,6 +36,10 @@
 			if(wasBypassed, { this.prClearBypass(filterTag) });
 			//a load still running on the effect it replaces stops
 			if(replacing, { this.prClearMorph(filterTag) });
+			//the times of the effect that was here: the time of its last move
+			//never reaches the new copy (its values would glide in), and
+			//another effect does not inherit which parameters were on
+			Assemblage.unitTimesReset(filterTag, replacing);
 			ndefArr = this.getThisTrack(type, num);
 			ndefSpace = ndefArr.last;
 			ndefArr = ndefArr.copyRange(0, ndefArr.size-2);
@@ -444,7 +448,7 @@
 		keys = Assemblage.paramKeys(Ndef(filterTag));
 		case
 		{type == \args} { result = keys; }
-		{type == \vals} { result = Ndef(filterTag).getKeysValues.select{|pair| keys.includes(pair[0]) }.flat;}
+		{type == \vals} { result = Ndef(filterTag).getKeysValues.select{|pair| keys.includes(pair[0]) }.flatten(1);}
 		{type == \pairs} { result = Ndef(filterTag).getKeysValues.select{|pair| keys.includes(pair[0]) };}
 		{type == \lags} {
 			result = Assemblage.lagParams(Ndef(filterTag)).collect{|key|
@@ -497,7 +501,7 @@
 			if(can.includes(key) and: { time.isNumber }, {
 				args = args ++ [(key ++ "Lag").asSymbol, time.max(0)];
 			}, {
-				cannot = cannot.add(key);
+				if(time != 0, { cannot = cannot.add(key) });
 			});
 		};
 		if(cannot.notEmpty, {
@@ -507,6 +511,28 @@
 			("Ndef(" ++ ndefKey.cs ++ ").set(" ++ args.collect(_.cs).join(", ") ++ ");").radcode;
 			RadUnit.sync(ndefKey); //document: which parameters are on
 		});
+	}
+
+	// puts the times of a unit's moves back to none in its node map (and,
+	// with lagsToo, its parameters' own times: off), before it is made again
+	*unitTimesReset {arg ndefKey, lagsToo=false;
+		var ndef = Ndef(ndefKey), args = [];
+		Assemblage.lagParams(ndef).do{|key|
+			[(key ++ "Ramp").asSymbol] ++ if(lagsToo, { [(key ++ "Lag").asSymbol] }, { [] }) do: {|time|
+				if((ndef.nodeMap.at(time) ? 0) != 0, { args = args ++ [time, 0] }) } };
+		if(args.notEmpty, {
+			("Ndef(" ++ ndefKey.cs ++ ").nodeMap.set(" ++ args.collect(_.cs).join(", ") ++ ");").radcode;
+		});
+	}
+
+	// the code that ends the moves under way on a running unit (values set
+	// after it arrive at once), or nil when there is none
+	*unitStillCode {arg ndefKey;
+		var ndef = Ndef(ndefKey), args = [];
+		Assemblage.lagParams(ndef).do{|key|
+			var rampKey = (key ++ "Ramp").asSymbol;
+			if((ndef.nodeMap.at(rampKey) ? 0) != 0, { args = args ++ [rampKey, 0] }) };
+		^if(args.notEmpty, { "Ndef(" ++ ndefKey.cs ++ ").set(" ++ args.collect(_.cs).join(", ") ++ ");" }, { nil })
 	}
 
 	// names for a list of parameters given by name or by number (1 is the
@@ -532,6 +558,8 @@
 		{ mode.isNumber } {
 			if(on.isEmpty, { "none of its parameters is on (on turns them on)".warn }, {
 				Assemblage.unitLagSet(ndefKey, on.collect{|key| [key, mode] }.flat) }) }
+		{ (mode == \exc or: { mode == \inc }) and: { list.asArray.isEmpty } } {
+			("fxlag " ++ mode ++ ": which parameters? (" ++ mode ++ " [freq, 2])").warn }
 		{ mode == \exc } {
 			names = Assemblage.unitParamNames(ndefKey, list);
 			Assemblage.unitLagSet(ndefKey, names.collect{|key| [key, 0] }.flat) }
@@ -572,6 +600,7 @@
 	// over the one given (for this move only)
 	*unitSetCode {arg ndefKey, pairs, time, bracketStyle=false;
 		var ndef = Ndef(ndefKey), ramps = [], body;
+		if(Radicles.aZ.notNil and: { Radicles.aZ.isBypassed(ndefKey) }, { time = 0 });
 		pairs.pairsDo{|key, value|
 			var rampKey = (key ++ "Ramp").asSymbol, move;
 			if((time ? 0) > 0 and: { Assemblage.lagParams(ndef).includes(key).not }, {

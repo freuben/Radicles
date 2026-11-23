@@ -222,6 +222,8 @@ RadUnit {
 
 	*prRefreshValues {|unit, fresh|
 		unit[\args] = fresh[\args];
+		//(which parameters are on, and their times, are values too)
+		if(fresh[\lags].notNil, { unit[\lags] = fresh[\lags] }, { unit.removeAt(\lags) });
 		(unit[\mods] ? ()).keysValuesDo{|key, mod|
 			var freshMod = (fresh[\mods] ? ())[key];
 			if(freshMod.notNil and: { mod.isKindOf(Dictionary) } and: { freshMod[\args].notNil }, {

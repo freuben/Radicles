@@ -34,6 +34,13 @@
 		});
 	}
 
+	// does a preset say which parameters are on, and differently from now?
+	// (one saved with none leaves the unit's times as they are)
+	prLagsDiffer {arg current, unit;
+		^unit.notNil and: { current.notNil } and: { unit[\lags].notNil } and: {
+			RadDoc.diff((l: current[\lags] ? ()), (l: unit[\lags]), 1e-9).notEmpty }
+	}
+
 	// the part of a unit a load changes
 	prMorphed {arg unit;
 		^(args: unit[\args], mods: unit[\mods], data: unit[\data], buffer: unit[\buffer])
@@ -134,7 +141,7 @@
 			var cur = current[slot], tgt = target[slot];
 			cur.isNil or: { tgt.isNil } or: { cur[\def] != tgt[\def] } or: {
 				(cur[\bypass] == true) != (tgt[\bypass] == true) } or: {
-				RadDoc.diff(this.prMorphed(cur), this.prMorphed(tgt), 1e-9).notEmpty } };
+				RadDoc.diff(this.prMorphed(cur), this.prMorphed(tgt), 1e-9).notEmpty or: { this.prLagsDiffer(cur, tgt) } } };
 		if(changed.isEmpty, { built.(); action.(); ^this });
 		//the time: the command's, else the strip's own fade time
 		time = (time ?? { Radicles.ownFade(strip) } ? 0).max(0);
@@ -198,7 +205,8 @@
 			// time is already the load's, and goes back with the strip's
 			same.do{|slot|
 				var unit = target[slot], tag = RadUnit.chainTag(type, num, slot);
-				if(RadDoc.diff(this.prMorphed(current[slot]), this.prMorphed(unit), 1e-9).notEmpty, {
+				if(RadDoc.diff(this.prMorphed(current[slot]), this.prMorphed(unit), 1e-9).notEmpty
+					or: { this.prLagsDiffer(current[slot], unit) }, {
 					this.morphUnit(tag, unit, time, shape, fadeBack: time, quiet: quiet);
 				});
 			};

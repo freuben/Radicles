@@ -473,6 +473,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		values = names.collect{|name| if(keys.includes(name), {
 			this.rampCode(name, (specs.detect{|spec| spec.isArray and: { spec[0] == name } })[1]) }, { name.asString }) };
 		^("{arg " ++ args.join(", ") ++ ";\n\t" ++ func.cs ++ ".value(" ++ values.join(",\n\t\t") ++ ") }").interpret
+		?? { "the ramps could not be added to this function; it is used as it is".warn; func }
 	}
 
 	// true for a library spec ([name, [min, max, scale, step ...], function])

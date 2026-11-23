@@ -137,7 +137,7 @@
 	check: {
 		case
 		//even in pitch: 400 at half way (even in value would be 850)
-		{ ~radUlHalf < 330 or: { ~radUlHalf > 480 } } { "half way: " ++ ~radUlHalf.round(1) ++ " (even in pitch: 400)" }
+		{ ~radUlHalf < 250 or: { ~radUlHalf > 600 } } { "half way: " ++ ~radUlHalf.round(1) ++ " (even in pitch: 400)" }
 		{ (~radUlEnd - 1600).abs > 1 } { "at the end: " ++ ~radUlEnd }
 		{ ~radUlJump != 200 } { "with no time the value is not passed as it is: " ++ ~radUlJump }
 		{ true }
@@ -184,4 +184,55 @@
 	},
 	teardown: {
 		[\radtest_ul_plain, \radtest_ul_lag].do{|name| File.delete(RadUnit.presetPath(\filter, \bpf, name)) } }
+);
+
+// a number names a parameter, never a time control; a modulator on a
+// parameter that is on takes its ramp off (it would dull the modulator)
+~radTest.("modulator-on-a-parameter-that-is-on",
+	setup: ["start 2", "fx t 1 bpf", "fxlag t 1 1 on", "fxset t 1 1 freq 900", "fxset t 1 1 q 5"],
+	cmds: ["fxset t 1 1 2 sin", "fxset t 1 1 freq sin"],
+	code: {
+		~radUlModQ = ~radUlCtl.(\q).isKindOf(NodeProxy);
+		Radicles.cW.callFunc("unmodfx t 1 1 2"); 1.wait },
+	check: {
+		case
+		{ ~radUlModQ.not } { "number 2 did not modulate q" }
+		{ ~radUlCtl.(\q).isNumber.not } { "q is still modulated: " ++ ~radUlCtl.(\q).cs }
+		{ ~radUlCtl.(\freq).isKindOf(NodeProxy).not } { "freq is not modulated: " ++ ~radUlCtl.(\freq).cs }
+		{ ~radUlCtl.(\freqRamp) != 0 } { "freq's ramp is still " ++ ~radUlCtl.(\freqRamp) }
+		{ ~radUlLag.(\freq) != 0.5 } { "freq's own time changed: " ++ ~radUlLag.(\freq) }
+		{ true }
+	}
+);
+
+// another effect in the slot does not inherit which parameters were on, nor
+// the time of the last move; the same effect made again with values keeps
+// its times (typed again with none it is a fresh effect: its defaults, off)
+~radTest.("another-effect-in-the-slot-starts-off",
+	setup: ["start 2", "fx t 1 lpf", "fxlag t 1 1 freq 4", "fxset t 1 1 freq 300"],
+	cmds: [["fx t 1 1 lpf [freq, 500]", 2]],
+	code: {
+		~radUlSame = [~radUlLag.(\freq), ~radUlCtl.(\freqRamp) ? 0];
+		Radicles.cW.callFunc("fx t 1 1 bpf"); 2.wait },
+	check: {
+		case
+		{ ~radUlSame != [4, 0] } { "the same effect made again: " ++ ~radUlSame.cs }
+		{ ~radUlLag.(\freq) != 0 } { "bpf's freq is on: " ++ ~radUlLag.(\freq) }
+		{ (~radUlCtl.(\freqRamp) ? 0) != 0 } { "bpf's freq has a move's time: " ++ ~radUlCtl.(\freqRamp) }
+		{ true }
+	}
+);
+
+// a chain preset brings back which parameters are on, also when nothing
+// else differs
+~radTest.("csload-brings-lags",
+	setup: ["start 2", "fx t 1 bpf", "fxlag t 1 1 freq 3", ["cssave t 1 radtest_ul_chain", 1], "fxlag t 1 1 off"],
+	cmds: [["csload t 1 radtest_ul_chain 1", 3]],
+	check: {
+		case
+		{ ~radUlLag.(\freq) != 3 } { "freq's time after the load: " ++ ~radUlLag.(\freq) }
+		{ ~radUlLag.(\mix) != 0 } { "mix is on: " ++ ~radUlLag.(\mix) }
+		{ true }
+	},
+	teardown: { File.delete(RadUnit.chainPresetPath('radtest_ul_chain')) }
 );

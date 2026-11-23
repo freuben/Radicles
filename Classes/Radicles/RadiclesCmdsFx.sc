@@ -473,7 +473,7 @@
 				{str2 == 't'} {aZ.setFxArgTrack(\track, num1, num2);}
 				{str2 == 'b'} {aZ.setFxArgTrack(\bus, num1, num2);}
 				{str2 == 'm'} {aZ.fxTrackWarn(\master, 1, num1, {|item|
-					Ndef(item).getKeysValues[num2-1].radpostwarn;
+					aZ.getFilterKeys(item, \pairs)[num2-1].radpostwarn;
 
 				});
 				};
@@ -499,10 +499,10 @@
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} {aZ.fxTrackWarn(\track, num1, num2, {|item|
-					Ndef(item).getKeysValues[num3-1].radpostwarn;
+					aZ.getFilterKeys(item, \pairs)[num3-1].radpostwarn;
 				});}
 				{str2 == 'b'} {aZ.fxTrackWarn(\bus, num1, num2, {|item|
-					Ndef(item).getKeysValues[num3-1].radpostwarn;
+					aZ.getFilterKeys(item, \pairs)[num3-1].radpostwarn;
 				});}
 				{str2 == 'm'} {
 					aZ.setFxArgTrack(\master, 1, num1, num2, num3);
@@ -555,7 +555,7 @@
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} { aZ.setFxArgTrack(\track, num1, num2, str3, num3);}
-				{str2 == 'b'} { aZ.setFxArgTrack(\track, num1, num2, str3, num3);}
+				{str2 == 'b'} { aZ.setFxArgTrack(\bus, num1, num2, str3, num3);}
 				{str2 == 'm'} {aZ.setFxArgTrack(\master, 1, num2, str3, num3);}
 				;
 			}, {
@@ -567,7 +567,7 @@
 			if(aZ.notNil, {
 				case
 				{str2 == 't'} { aZ.lagFxArgTrack(\track, num1, num2, str3, num3);}
-				{str2 == 'b'} { aZ.lagFxArgTrack(\track, num1, num2, str3, num3);}
+				{str2 == 'b'} { aZ.lagFxArgTrack(\bus, num1, num2, str3, num3);}
 				{str2 == 'm'} {aZ.lagFxArgTrack(\master, 1, num2, str3, num3);}
 				;
 			}, {
@@ -635,7 +635,7 @@
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
 					aZ.fxTrackWarn(thisArr[0].asSymbol, thisArr[1], num2, {|item|
-						Ndef(item).getKeysValues[num3-1].radpostwarn;
+						aZ.getFilterKeys(item, \pairs)[num3-1].radpostwarn;
 					});
 				}, {
 					"track not found".warn;
@@ -898,7 +898,7 @@
 
 		cW.add(\setfx, [\str, \num, \num], {|str1, num1, num2|
 			if(aZ.notNil, {
-				Ndef(aZ.filters[num1-1][0]).getKeysValues[num2-1].radpostwarn;
+				aZ.getFilterKeys(aZ.filters[num1-1][0], \pairs)[num2-1].radpostwarn;
 			}, {
 				"could not find assemblage".warn;
 			});
@@ -1035,7 +1035,7 @@
 				{str2 == 'm'} {
 					filterTag = aZ.findFilterTag(\master, num1, 1);
 					if(filterTag.notNil, {
-						index = Ndef(filterTag).controlKeys.indexOf(str3);
+						index = Assemblage.paramKeys(Ndef(filterTag)).indexOf(str3);
 						result = aZ.getFilterKeys(filterTag, \pairs)[index][1];
 						if(result.cs.contains("Ndef"), {
 							result.key.postln;
@@ -1087,7 +1087,7 @@
 				{str2 == 't'} {
 					filterTag = aZ.findFilterTag(\track, num1, num2);
 					if(filterTag.notNil, {
-						index = Ndef(filterTag).controlKeys.indexOf(str3);
+						index = Assemblage.paramKeys(Ndef(filterTag)).indexOf(str3);
 						result = aZ.getFilterKeys(filterTag, \pairs)[index][1];
 						if(result.cs.contains("Ndef"), {
 							result.key.postln;
@@ -1099,7 +1099,7 @@
 				{str2 == 'b'} {
 					filterTag = aZ.findFilterTag(\bus, num1, num2);
 					if(filterTag.notNil, {
-						index = Ndef(filterTag).controlKeys.indexOf(str3);
+						index = Assemblage.paramKeys(Ndef(filterTag)).indexOf(str3);
 						result = aZ.getFilterKeys(filterTag, \pairs)[index-1][1];
 						if(result.cs.contains("Ndef"), {
 							result.key.postln;
@@ -1232,7 +1232,7 @@
 					if(thisArr[1].isNil, {thisArr[1] = 1});
 					filterTag = aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
 					if(filterTag.notNil, {
-						index = Ndef(filterTag).controlKeys.indexOf(str2);
+						index = Assemblage.paramKeys(Ndef(filterTag)).indexOf(str2);
 						result = aZ.getFilterKeys(filterTag, \pairs)[index][1];
 						if(result.cs.contains("Ndef"), {
 							result.key.postln;
@@ -1320,7 +1320,7 @@
 			if(aZ.notNil, {
 				filterTag = aZ.filters[num1-1][0];
 				if(filterTag.notNil, {
-					index = Ndef(filterTag).controlKeys.indexOf(str2);
+					index = Assemblage.paramKeys(Ndef(filterTag)).indexOf(str2);
 					result = aZ.getFilterKeys(filterTag, \pairs)[index][1];
 					if(result.cs.contains("Ndef"), {
 						result.key.postln;
@@ -1351,7 +1351,7 @@
 				case
 				{str2 == 'm'} {
 					filterTag = aZ.findFilterTag(\master, 1, num1);
-					thisArg = Ndef(filterTag).controlKeys[num2-1];
+					thisArg = Assemblage.paramKeys(Ndef(filterTag))[num2-1];
 					aZ.getSpec(filterTag, thisArg).radpostwarn;
 				};
 			}, {
@@ -1380,7 +1380,7 @@
 				{str2 == 'b'} {trackType = \bus}
 				{str2 == 'm'} {trackType = \master};
 				filterTag = aZ.findFilterTag(trackType, num1, num2);
-				thisArg = Ndef(filterTag).controlKeys[num3-1];
+				thisArg = Assemblage.paramKeys(Ndef(filterTag))[num3-1];
 				aZ.getSpec(filterTag, thisArg).radpostwarn;
 			}, {
 				"could not find assemblage".warn;
@@ -1409,7 +1409,7 @@
 					thisArr = trackArr[num1-1];
 					if(thisArr[1].isNil, {thisArr[1] = 1});
 					filterTag = aZ.findFilterTag(thisArr[0].asSymbol, thisArr[1], num2);
-					thisArg = Ndef(filterTag).controlKeys[num3-1];
+					thisArg = Assemblage.paramKeys(Ndef(filterTag))[num3-1];
 					aZ.getSpec(filterTag, thisArg).radpostwarn;
 				}, {
 					"track not found".warn;
@@ -1440,7 +1440,7 @@
 			var filterTag, thisArg;
 			if(aZ.notNil, {
 				filterTag = aZ.filters[num1-1][0];
-				thisArg = Ndef(filterTag).controlKeys[num2-1];
+				thisArg = Assemblage.paramKeys(Ndef(filterTag))[num2-1];
 				aZ.getSpec(filterTag, thisArg).radpostwarn;
 			}, {
 				"could not find assemblage".warn;
