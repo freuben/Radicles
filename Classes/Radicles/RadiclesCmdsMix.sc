@@ -2860,7 +2860,7 @@
 			("mixlag " ++ Radicles.mixLag ++ ", fxlag " ++ Radicles.fxLag ++ ", blklag " ++ Radicles.blkLag).radpostwarn;
 		}, "lag: (posts the times of typed values: mixer, effects, blocks)");
 		cW.add(\lag, [\str, \num], {|str1, num1|
-			Radicles.setLag(num1);
+			Radicles.setAllLag(num1);
 		}, "lag: time (typed values in the whole session: the mixer, and the effect and block parameters that are on)");
 		[\num, \dash, \arr].do{|which|
 			cW.add(\tlag, [\str, \str, which, \num], {|str1, str2, nums, time|
@@ -2871,7 +2871,8 @@
 			"tlag: [mixTrackNum, time]");
 		};
 		cW.add(\tlag, [\str, \str, \num], {|str1, str2, time|
-			this.prTrackLag(if(str2.asSymbol == \m, { [[\master, 1]] }, { [] }), time) },
+			if(str2.asSymbol == \m, { this.prTrackLag([[\master, 1]], time) }, {
+				("tlag " ++ str2 ++ " needs a number: tlag " ++ str2 ++ " 1 " ++ time).warn }) },
 		"tlag: [m, time]");
 	}
 

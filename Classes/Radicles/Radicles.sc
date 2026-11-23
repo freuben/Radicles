@@ -66,7 +66,7 @@ Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>fxLag = 0.5, <>blkLag = 0
 	// mixlag), and every effect and block parameter that is on (as fxlag and
 	// blklag); it becomes the three times, for what is made or switched on
 	// later.
-	*setLag {arg secs;
+	*setAllLag {arg secs;
 		secs = secs.max(0);
 		this.setMixLag(secs);
 		if(aZ.notNil, { aZ.setFxLag(secs) }, { ("Radicles.fxLag = " ++ secs ++ ";").radcode });
@@ -385,7 +385,7 @@ Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>fxLag = 0.5, <>blkLag = 0
 			mixView = cmdArr[1];
 			cond = Condition(false);
 			if(aZ.isNil, {
-				//the mixer's two times, before the strips are made (sessions
+				//the session's times, before the strips are made (sessions
 				//saved before Nov 2026 have none: they are left as they are)
 				(firstArr[5] ? []).asArray.do{|pair|
 					if(pair.isArray and: { [\ctlLag, \mixLag, \fxLag, \blkLag].includes(pair[0]) } and: { pair[1].isNumber }, {

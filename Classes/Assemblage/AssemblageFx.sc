@@ -609,8 +609,8 @@
 		this.setVolumeLag(trackType, trackNum, lag);
 		this.setTrimLag(trackType, trackNum, lag);
 		this.setPanLag(trackType, trackNum, lag);
-		(RadUnit.readSends(name, this) ? ()).keys.asArray.sort.do{|bus|
-			this.setSendVolLag(trackType, trackNum, bus.asString.divNumStr[1], lag) };
+		(RadUnit.readSends(name, this) ? ()).keys.asArray.collect{|bus| bus.asString.divNumStr[1] }.sort.do{|bus|
+			this.setSendVolLag(trackType, trackNum, bus, lag) };
 		(filters ? []).do{|item|
 			if(this.filterTagOnStrip(item[0], trackType, trackNum), { Assemblage.unitLagOn(item[0], lag) }) };
 		(RadUnit.readInput(name, this) ? []).do{|key|
