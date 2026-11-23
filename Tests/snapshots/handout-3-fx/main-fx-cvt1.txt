@@ -2,7 +2,7 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0;
+Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
     {arg mix=0, track=1, frameSize=1024 , adjVol=1;
     var signal, input;
     signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
@@ -11,7 +11,7 @@ Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, m
         +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         track,
         frameSize,
-        adjVol) });
+        Assemblage.specRamp(adjVol, adjVolRamp, [0, 5], {|val| val.round(0.01)-0.01})) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

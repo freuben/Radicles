@@ -57,13 +57,13 @@ var freeze, chain, input, frameSize=2048;
         Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)]),
         Select.kr(lagTimeRamp > 0, [lagTime, VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('thresh', 0.74, 'adjVol', 2.11, 'lagTime', 0.148);
-Ndef('filterTrack_1_1', {arg thresh = 0, adjVol = 1, adjVolLag = 0, adjVolRamp = 0;
+Ndef('filterTrack_1_1', {arg thresh = 0, adjVol = 1, threshLag = 0, threshRamp = 0, adjVolLag = 0, adjVolRamp = 0;
     {arg thresh=0, adjVol=1;
 var chain, frameSize=2048, input;
     input = Ndef.ar('inTrack1', 1);
 chain = FFT(LocalBuf(frameSize, input.numChannels), input);
 chain = PV_MagAbove(chain, thresh);
-(adjVol * IFFT(chain));}.value(thresh,
+(adjVol * IFFT(chain));}.value(Assemblage.specRamp(thresh, threshRamp, [0.01, 50.01, 'exp'], {|val| val-0.01}),
         Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('adjVol', 1.48, 'thresh', 0.22);
 Ndef('filterTrack_1_1', {arg mix = 0, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;

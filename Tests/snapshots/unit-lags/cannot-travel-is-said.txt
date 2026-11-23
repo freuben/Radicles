@@ -1,4 +1,4 @@
->> fxlag t 1 1 pitchRatio 2
+>> fxlag t 1 1 freeze 2
 == radpost ==
 (none)
 == radpostcont ==
@@ -6,13 +6,13 @@
 
 >> fxlag t 1 1 on
 == radpost ==
-Ndef('filterTrack_1_1').set('winSizeLag', 0.5);
+Ndef('filterTrack_1_1').set('adjVolLag', 0.5);
 == radpostcont ==
 (none)
 
->> fxset t 1 1 pitchRatio 2 3
+>> fxset t 1 1 freeze 1 3
 == radpost ==
-Ndef('filterTrack_1_1').set('pitchRatio', 2);
+Ndef('filterTrack_1_1').set('freeze', 1);
 == radpostcont ==
 (none)
 

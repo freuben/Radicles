@@ -505,7 +505,7 @@
 			});
 		};
 		if(cannot.notEmpty, {
-			("cannot travel (no spec, a stepped spec, or a spec with a function): " ++ cannot.join(", ")).warn;
+			("cannot travel (no spec, or a spec with real steps): " ++ cannot.join(", ")).warn;
 		});
 		if(args.notEmpty, {
 			("Ndef(" ++ ndefKey.cs ++ ").set(" ++ args.collect(_.cs).join(", ") ++ ");").radcode;
@@ -626,7 +626,7 @@
 		pairs.pairsDo{|key, value|
 			var rampKey = (key ++ "Ramp").asSymbol, move;
 			if((time ? 0) > 0 and: { Assemblage.lagParams(ndef).includes(key).not }, {
-				(key ++ " cannot travel (no spec, a stepped spec, or a spec with a function): set at once").warn });
+				(key ++ " cannot travel (no spec, or a spec with real steps): set at once").warn });
 			if(Assemblage.lagParams(ndef).includes(key), {
 				move = time ? Assemblage.unitLag(ndef, key);
 				if((ndef.nodeMap.at(rampKey) ? 0) != move and: { ndef.nodeMap.at(key) != value }, {

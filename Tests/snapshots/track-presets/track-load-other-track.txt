@@ -8,14 +8,14 @@ Ndef('block2', {arg freq = 440, phase = 0, mul = 0.4, freqLag = 0, freqRamp = 0,
 Ndef('block2').xset('freq', 330, 'phase', 0, 'mul', 0.4);
 Ndef.ar('filterTrack_2_1', 1);
 Ndef('filterTrack_2_1').fadeTime = 0.5;
-Ndef('filterTrack_2_1', {arg pitchRatio = 1.0, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, winSizeLag = 0, winSizeRamp = 0;
+Ndef('filterTrack_2_1', {arg pitchRatio = 1.0, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, pitchRatioLag = 0, pitchRatioRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, winSizeLag = 0, winSizeRamp = 0;
     {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
  ;
         PitchShift.ar(Ndef.ar('inTrack2', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
- }.value(pitchRatio,
-        pitchDispertion,
-        timeDispersion,
+ }.value(Assemblage.specRamp(pitchRatio, pitchRatioRamp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
         Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_2_1').set('pitchDispertion', 0.0, 'pitchRatio', 0.5, 'winSize', 0.02, 'timeDispersion', 0.0001);
 Ndef('track2', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
