@@ -2,14 +2,25 @@
 == radpost ==
 ~position1 = Bus.control(s, 1);
 ~buffer0 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/marilyn1.wav", bufnum: 0);
-Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+Ndef('block1', {arg rate = 1, trigger = 1, startPos = 0, mul = 1, rateLag = 0, rateRamp = 0, startPosLag = 0, startPosRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
     RadPosition.kr(~position1, ~buffer0, rate * BufRateScale.kr(~buffer0), trigger, startPos, 0);
-    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate * BufRateScale.kr(~buffer0), trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 0)*mul;});
-Ndef('block1', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate * BufRateScale.kr(~buffer0), trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 0)*mul;}.value(VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin),
+        trigger,
+        VarLag.kr(startPos, startPosRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
+Ndef('block1', {arg freq = 440, phase = 0, mul = 0.4, freqLag = 0, freqRamp = 0, phaseLag = 0, phaseRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        VarLag.kr(phase, phaseRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
 //File already allocated as: ~buffer0
-Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+Ndef('block1', {arg rate = 1, trigger = 1, startPos = 0, mul = 1, rateLag = 0, rateRamp = 0, startPosLag = 0, startPosRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
     RadPosition.kr(~position1, ~buffer0, rate * BufRateScale.kr(~buffer0), trigger, startPos, 0);
-    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate * BufRateScale.kr(~buffer0), trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 0)*mul;});
+    PlayBuf.ar(~buffer0.numChannels, ~buffer0, rate * BufRateScale.kr(~buffer0), trigger, startPos.linlin(0,1,0, ~buffer0.numFrames), 0)*mul;}.value(VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin),
+        trigger,
+        VarLag.kr(startPos, startPosRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
 == radpostcont ==
 (none)
 

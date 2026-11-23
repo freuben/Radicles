@@ -1,8 +1,9 @@
 >> blk 2 noise
 == radpost ==
-Ndef('block2', {arg mul=0.5;
+Ndef('block2', {arg mul = 0.5, mulLag = 0, mulRamp = 0;
+    {arg mul=0.5;
     WhiteNoise.ar(mul);
-});
+}.value(VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
 == radpostcont ==
 (none)
 

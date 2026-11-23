@@ -1,8 +1,9 @@
 >> <code>
 == radpost ==
-Ndef('block1', {arg freq = 200 ;
+Ndef('block1', {arg freq = 200, freqLag = 0, freqRamp = 0;
+    {arg freq = 200 ;
             SinOsc.ar(freq);
-        });
+        }.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp])) });
 == radpostcont ==
 (none)
 

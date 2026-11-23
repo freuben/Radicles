@@ -1,6 +1,9 @@
 >> <code>
 == radpost ==
-Ndef('block1', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+Ndef('block1', {arg freq = 440, phase = 0, mul = 0.4, freqLag = 0, freqRamp = 0, phaseLag = 0, phaseRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        VarLag.kr(phase, phaseRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
 ~buffer0.free;
 ~buffer0 = nil;
 Ndef('filterTrack_1_1', {arg freq = 20000, lag = 0.1, freqLag = 0, freqRamp = 0, lagLag = 0, lagRamp = 0;
@@ -48,9 +51,13 @@ Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.05);
 ~buffer1 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/0/marilyn1.wav", bufnum: 1);
-Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+Ndef('block1', {arg rate = 1, trigger = 1, startPos = 0, mul = 1, rateLag = 0, rateRamp = 0, startPosLag = 0, startPosRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
     RadPosition.kr(~position1, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos, 1);
-    PlayBuf.ar(~buffer1.numChannels, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos.linlin(0,1,0, ~buffer1.numFrames), 1)*mul;});
+    PlayBuf.ar(~buffer1.numChannels, ~buffer1, rate * BufRateScale.kr(~buffer1), trigger, startPos.linlin(0,1,0, ~buffer1.numFrames), 1)*mul;}.value(VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin),
+        trigger,
+        VarLag.kr(startPos, startPosRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('block1').xset('rate', 1, 'startPos', 0, 'trigger', 1, 'mul', 1);
 Ndef('inTrack1').xset('trim', -2);
 Ndef('track1').xset('volume', -6);

@@ -1714,6 +1714,8 @@
 				//block in this slot stay in the Ndef's node map
 				argNames = Ndef(ndefKey).objects.first !? {|obj|
 					obj.controlNames.collect(_.name) } ? [];
+				//(not its time controls)
+				argNames = argNames.reject{|name| Assemblage.timeControl(argNames, name) };
 				pairs = Ndef(ndefKey).getKeysValues.select({|pair| argNames.includes(pair[0]) });
 				if(pairs.isEmpty, {
 					(ndefKey.asString ++ ": " ++ blockName ++ " has no arguments").warn;

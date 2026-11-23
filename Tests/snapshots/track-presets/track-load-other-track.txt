@@ -1,7 +1,10 @@
 >> tload t 2 radtest_track2
 == radpost ==
 Ndef('track2').set('volume', -inf, 'ramp', 0.1);
-Ndef('block2', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+Ndef('block2', {arg freq = 440, phase = 0, mul = 0.4, freqLag = 0, freqRamp = 0, phaseLag = 0, phaseRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        VarLag.kr(phase, phaseRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('block2').xset('freq', 330, 'phase', 0, 'mul', 0.4);
 Ndef.ar('filterTrack_2_1', 1);
 Ndef('filterTrack_2_1').fadeTime = 0.5;

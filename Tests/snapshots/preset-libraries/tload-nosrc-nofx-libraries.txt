@@ -1,6 +1,8 @@
 >> <code>
 == radpost ==
-Ndef('block1', {arg freq = 220, mul = 0.1; SinOsc.ar(freq, 0, mul)});
+Ndef('block1', {arg freq = 220, mul = 0.1, freqLag = 0, freqRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg freq = 220, mul = 0.1; SinOsc.ar(freq, 0, mul)}.value(VarLag.kr(freq, freqRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
 Ndef('filterTrack_1_1', {arg gain = 1, gainLag = 0, gainRamp = 0;

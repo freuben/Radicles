@@ -559,7 +559,7 @@
 			if(on.isEmpty, { "none of its parameters is on (on turns them on)".warn }, {
 				Assemblage.unitLagSet(ndefKey, on.collect{|key| [key, mode] }.flat) }) }
 		{ (mode == \exc or: { mode == \inc }) and: { list.asArray.isEmpty } } {
-			("fxlag " ++ mode ++ ": which parameters? (" ++ mode ++ " [freq, 2])").warn }
+			(mode ++ ": which parameters? (" ++ mode ++ " [freq, 2])").warn }
 		{ mode == \exc } {
 			names = Assemblage.unitParamNames(ndefKey, list);
 			Assemblage.unitLagSet(ndefKey, names.collect{|key| [key, 0] }.flat) }
@@ -568,7 +568,7 @@
 			Assemblage.unitLagSet(ndefKey, (names.collect{|key|
 				[key, if((Assemblage.unitLag(ndef, key) ? 0) > 0, { Assemblage.unitLag(ndef, key) }, { globalTime })] }
 			++ can.reject{|key| names.includes(key) }.select{|key| on.includes(key) }.collect{|key| [key, 0] }).flat) }
-		{ ("fxlag: on, off, exc or inc, not " ++ mode).warn };
+		{ ("on, off, exc or inc, not " ++ mode).warn };
 	}
 
 	fxTrackLagMode {arg trackType, trackNum, trackSlot, mode, list;

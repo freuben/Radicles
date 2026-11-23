@@ -1,9 +1,13 @@
 >> blkload 1 radtest_k
 == radpost ==
 ~buffer2 = Buffer.read(s, "<RadiclesFiles>/SoundFiles/Play/recordings/radtest_take.wav", bufnum: 2);
-Ndef('block1', {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
+Ndef('block1', {arg rate = 1, trigger = 1, startPos = 0, mul = 1, rateLag = 0, rateRamp = 0, startPosLag = 0, startPosRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg rate=1 , trigger=1 , startPos=0 , mul=1 ;
     RadPosition.kr(~position1, ~buffer2, rate * BufRateScale.kr(~buffer2), trigger, startPos, 1);
-    PlayBuf.ar(~buffer2.numChannels, ~buffer2, rate * BufRateScale.kr(~buffer2), trigger, startPos.linlin(0,1,0, ~buffer2.numFrames), 1)*mul;});
+    PlayBuf.ar(~buffer2.numChannels, ~buffer2, rate * BufRateScale.kr(~buffer2), trigger, startPos.linlin(0,1,0, ~buffer2.numFrames), 1)*mul;}.value(VarLag.kr(rate, rateRamp.max(ControlDur.ir), warp: \lin),
+        trigger,
+        VarLag.kr(startPos, startPosRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('block1').xset('rate', 1, 'startPos', 0, 'trigger', 1, 'mul', 1);
 == radpostcont ==
 (none)

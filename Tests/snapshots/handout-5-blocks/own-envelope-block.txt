@@ -1,10 +1,16 @@
 >> <code>
 == radpost ==
-Ndef('block1', {arg freq = 200 ,
+Ndef('block1', {arg freq = 200, trig = 1, attack = 0.01, decay = 0.3, sustain = 0.5, release = 1, freqLag = 0, freqRamp = 0, attackLag = 0, attackRamp = 0, decayLag = 0, decayRamp = 0, sustainLag = 0, sustainRamp = 0, releaseLag = 0, releaseRamp = 0;
+    {arg freq = 200 ,
             trig = 1 , attack = 0.01 ,
             decay = 0.3 , sustain = 0.5 , release = 1 ;
             SinOsc.ar(freq) * Env.adsr(attack, decay, sustain, release).kr(gate: trig);
-        });
+        }.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        trig,
+        VarLag.kr(attack, attackRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(decay, decayRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(sustain, sustainRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(release, releaseRamp.max(ControlDur.ir), warp: \lin)) });
 Ndef('block1').set('trig', 0);
 Ndef('block1').set('trig', 1);
 == radpostcont ==

@@ -1,6 +1,7 @@
 >> blk 1 sinekey [key, 18, oct, 0.5]
 == radpost ==
-Ndef('block1', {arg key=0 , oct=1 , phase=0 , mul=0.4 , lag = 0.01 => [0,0.1];
+Ndef('block1', {arg key = 0, oct = 1, phase = 0, mul = 0.4, lag = nil, octLag = 0, octRamp = 0, phaseLag = 0, phaseRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg key=0 , oct=1 , phase=0 , mul=0.4 , lag = 0.01 => [0,0.1];
     var chord;
     chord = Select.kr(key, [
         ([60, 64, 67]+0).midicps*oct,
@@ -29,7 +30,11 @@ Ndef('block1', {arg key=0 , oct=1 , phase=0 , mul=0.4 , lag = 0.01 => [0,0.1];
         ([60, 63, 67]+11).midicps*oct,
     ]);
     Mix.ar(SinOsc.ar([chord[0].lag(lag), chord[1].lag(lag), chord[2].(lag)],phase,mul/3));
-    });
+    }.value(key,
+        VarLag.kr(oct, octRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(phase, phaseRamp.max(ControlDur.ir), warp: \lin),
+        VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin),
+        lag) });
 Ndef('block1').xset('key', 18, 'oct', 0.5);
 == radpostcont ==
 (none)
