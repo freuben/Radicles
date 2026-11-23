@@ -16,7 +16,7 @@ Ndef('filterTrack_1_1', {arg mix = 1.0, mixLag = 0, mixRamp = 0;
     input = Ndef.ar('inTrack1', 1) * Line.kr(0,1,0.1);
     output = [PartConv.ar(input, 2048, ~buffer1),PartConv.ar(input, 2048, ~buffer3)]/2;
     (output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
-}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)) });
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
@@ -35,7 +35,7 @@ Ndef('filterTrack_1_1', {arg mix = 1.0, mixLag = 0, mixRamp = 0;
     input = Ndef.ar('inTrack1', 1) * Line.kr(0,1,0.1);
     output = [PartConv.ar(input, 2048, ~buffer5),PartConv.ar(input, 2048, ~buffer7)]/2;
     (output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
-}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)) });
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').set('mix', 1.0);
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
@@ -59,7 +59,7 @@ Ndef('filterTrack_1_1', {arg mix = 1.0, mixLag = 0, mixRamp = 0;
     input = Ndef.ar('inTrack1', 1) * Line.kr(0,1,0.1);
     output = [PartConv.ar(input, 2048, ~buffer9),PartConv.ar(input, 2048, ~buffer11)]/2;
     (output*mix.max(0).min(1)) + (input*mix.linlin(0,1,1,0));
-}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)) });
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').set('mix', 1.0);
 ~buffer5.free;
 ~buffer5 = nil;

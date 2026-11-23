@@ -11,7 +11,7 @@ chainA = FFT(LocalBuf(frameSize, input.numChannels), input);
 chainB = FFT(LocalBuf(frameSize, inA.numChannels), inA);
 chain = PV_MagMul(chainA, chainB);
 (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         track,
         adjVol) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;

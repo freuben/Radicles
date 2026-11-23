@@ -9,9 +9,9 @@ var freeze, chain, input, frameSize=2048;
     chain = FFT(LocalBuf(frameSize, input.numChannels), input);
     freeze = Onsets.kr(chain, thresh).lag(lagTime);
     chain = PV_MagFreeze(chain, freeze);
-    (adjVol * IFFT(chain));}.value(VarLag.kr(thresh, threshRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)) });
+    (adjVol * IFFT(chain));}.value(Select.kr(threshRamp > 0, [thresh, VarLag.kr(thresh, threshRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagTimeRamp > 0, [lagTime, VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

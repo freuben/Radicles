@@ -22,14 +22,14 @@ Ndef('filterTrack_1_1', {arg freq1 = 30, freq2 = 80, freq3 = 200, freq4 = 500, f
         Select.kr(freq6Ramp > 0, [freq6, VarLag.kr(freq6.max(1e-9).log, freq6Ramp.max(ControlDur.ir), warp: \lin).exp]),
         Select.kr(freq7Ramp > 0, [freq7, VarLag.kr(freq7.max(1e-9).log, freq7Ramp.max(ControlDur.ir), warp: \lin).exp]),
         Select.kr(freq8Ramp > 0, [freq8, VarLag.kr(freq8.max(1e-9).log, freq8Ramp.max(ControlDur.ir), warp: \lin).exp]),
-        VarLag.kr(gain1, gain1Ramp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(gain2, gain2Ramp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(gain3, gain3Ramp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(gain4, gain4Ramp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(gain5, gain5Ramp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(gain6, gain6Ramp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(gain7, gain7Ramp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(gain8, gain8Ramp.max(ControlDur.ir), warp: \lin),
+        Select.kr(gain1Ramp > 0, [gain1, VarLag.kr(gain1, gain1Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(gain2Ramp > 0, [gain2, VarLag.kr(gain2, gain2Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(gain3Ramp > 0, [gain3, VarLag.kr(gain3, gain3Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(gain4Ramp > 0, [gain4, VarLag.kr(gain4, gain4Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(gain5Ramp > 0, [gain5, VarLag.kr(gain5, gain5Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(gain6Ramp > 0, [gain6, VarLag.kr(gain6, gain6Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(gain7Ramp > 0, [gain7, VarLag.kr(gain7, gain7Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(gain8Ramp > 0, [gain8, VarLag.kr(gain8, gain8Ramp.max(ControlDur.ir), warp: \lin)]),
         Select.kr(q1Ramp > 0, [q1, VarLag.kr(q1.max(1e-9).log, q1Ramp.max(ControlDur.ir), warp: \lin).exp]),
         Select.kr(q2Ramp > 0, [q2, VarLag.kr(q2.max(1e-9).log, q2Ramp.max(ControlDur.ir), warp: \lin).exp]),
         Select.kr(q3Ramp > 0, [q3, VarLag.kr(q3.max(1e-9).log, q3Ramp.max(ControlDur.ir), warp: \lin).exp]),
@@ -46,9 +46,9 @@ Ndef('filterTrack_1_1', {arg freq1 = 30, freq2 = 80, freq3 = 200, freq4 = 500, f
         on6,
         on7,
         on8,
-        VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)]),
         Select.kr(masterGainRamp > 0, [masterGain, (VarLag.kr(((masterGain.dbamp - 0.0) / 2.0).max(0).sqrt, masterGainRamp.max(ControlDur.ir), warp: \lin).squared * 2.0 + 0.0).ampdb]),
-        VarLag.kr(lagOn, lagOnRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(lagOnRamp > 0, [lagOn, VarLag.kr(lagOn, lagOnRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

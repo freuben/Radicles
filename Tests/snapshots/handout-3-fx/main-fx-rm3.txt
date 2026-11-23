@@ -8,10 +8,10 @@ var signal, freq, hasFreq, amp;
 # freq, hasFreq = Pitch.kr(Ndef.ar('inTrack1', 1), ampThreshold: 0.0, median: 7);
 amp = Amplitude.kr(Ndef.ar('inTrack1', 1), 0.05, 0.05);
 signal = Ndef.ar('inTrack1', 1)*SinOsc.ar(freq.lag(lagTime),0,sinamp*amp);
-adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(sinamp, sinampRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)) });
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(sinampRamp > 0, [sinamp, VarLag.kr(sinamp, sinampRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagTimeRamp > 0, [lagTime, VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

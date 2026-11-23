@@ -10,7 +10,7 @@ Ndef('filterBus_1_1', {arg pitchRatio = 1.0, pitchDispertion = 0.0, timeDispersi
  }.value(pitchRatio,
         pitchDispertion,
         timeDispersion,
-        VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterBus_1_1').set('pitchDispertion', 0.0, 'pitchRatio', 1.0, 'winSize', 0.02, 'timeDispersion', 0.0001);
 Ndef('bus1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterBus_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
@@ -36,7 +36,7 @@ Ndef('filterMaster_1_1', {arg pitchRatio = 1.0, pitchDispertion = 0.0, timeDispe
  }.value(pitchRatio,
         pitchDispertion,
         timeDispersion,
-        VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterMaster_1_1').set('pitchDispertion', 0.0, 'pitchRatio', 1.0, 'winSize', 0.02, 'timeDispersion', 0.0001);
 Ndef('master', {arg volume=0, lagTime=0.05, mute=0, off=0, ramp=0.05;
                     (Ndef.ar('filterMaster_1_1', 2) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)

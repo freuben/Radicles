@@ -11,8 +11,8 @@ Ndef('filterTrack_1_1', {arg mix = 0, adjVol = 1, mixLag = 0, mixRamp = 0, adjVo
     magsphases = magsphases.collect(_.sqrt);
     chain = PackFFT(chain, 1024, magsphases);
     (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
-        VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)) });
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
@@ -24,7 +24,7 @@ Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, frameSize = 1024, adjVol = 1,
     signal = SoundIn.ar((soundin+1).round(1));
     input = Ndef.ar('inTrack1', 1);
     (Convolution.ar(input,signal,(2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
-    +(input*mix.linlin(0,1,1,0))}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+    +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         soundin,
         frameSize,
         adjVol) });
@@ -35,7 +35,7 @@ Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, frameSize = 1024, adjVol = 1,
     signal = SoundIn.ar((soundin+1).round(1));
     input = Ndef.ar('inTrack1', 1);
     (Convolution.ar(signal, input, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
-    +(input*mix.linlin(0,1,1,0))}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+    +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         soundin,
         frameSize,
         adjVol) });
@@ -46,7 +46,7 @@ Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, m
     signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
     input = Ndef.ar('inTrack1', 1);
     (Convolution.ar(input,signal, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
-        +(input*mix.linlin(0,1,1,0))}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+        +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         track,
         frameSize,
         adjVol) });
@@ -57,7 +57,7 @@ Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, m
     signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
     input = Ndef.ar('inTrack1', 1);
     (Convolution.ar(signal,input, (2 ** frameSize.clip(512, 8192).log2.round),adjVol*0.15)*mix)
-        +(input*mix.linlin(0,1,1,0))}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+        +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         track,
         frameSize,
         adjVol) });
@@ -71,9 +71,9 @@ chainA = FFT(LocalBuf(frameSize), input);
 chainB = FFT(LocalBuf(frameSize), inA);
 chain = PV_MagMul(chainA, chainB);
 Mix.new(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         soundin,
-        VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('mix', 0.37, 'adjVol', 2.11, 'soundin', 4.0);
 Ndef('filterTrack_1_1', {arg mix = 0, track = 1, adjVol = 1, mixLag = 0, mixRamp = 0;
     {arg mix=0, track=1, adjVol=1;
@@ -84,7 +84,7 @@ chainA = FFT(LocalBuf(frameSize, input.numChannels), input);
 chainB = FFT(LocalBuf(frameSize, inA.numChannels), inA);
 chain = PV_MagMul(chainA, chainB);
 (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-}.value(VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin),
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         track,
         adjVol) });
 Ndef('filterTrack_1_1').xset('track', 4.0, 'adjVol', 1.84, 'mix', 0.37);

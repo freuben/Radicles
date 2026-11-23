@@ -3,9 +3,9 @@
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
 Ndef('filterTrack_1_1', {arg drive = 1, adjVol = 1, lag = 0.1, driveLag = 0, driveRamp = 0, lagLag = 0, lagRamp = 0;
-    {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).softclip * (lagdr.sqrt/lagdr))*adjVol}.value(VarLag.kr(drive, driveRamp.max(ControlDur.ir), warp: \lin),
+    {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).softclip * (lagdr.sqrt/lagdr))*adjVol}.value(Select.kr(driveRamp > 0, [drive, VarLag.kr(drive, driveRamp.max(ControlDur.ir), warp: \lin)]),
         adjVol,
-        VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)) });
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
