@@ -2,16 +2,21 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg centerpitch=440, bus=0, adjvol=4, pitchDispertion=0.0,
- timeDispersion=0.0001,
-    lag=0.1, winSize=0.02;
+Ndef('filterTrack_1_1', {arg centerpitch = 440, bus = 1, adjvol = 4, pitchDispertion = 0.0, timeDispersion = 0.0001, lag = 0.1, winSize = 0.02, centerpitchLag = 0, centerpitchRamp = 0, adjvolLag = 0, adjvolRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, lagLag = 0, lagRamp = 0, winSizeLag = 0, winSizeRamp = 0;
+    {arg centerpitch=440 , bus=1 , adjvol=4 ,
+    pitchDispertion=0.0 ,
+    timeDispersion=0.0001 , lag=0.1 , winSize=0.02 ;
     var freq, hasFreq, input, amp;
-    input = SoundIn.ar(bus.round(1));
+    input = SoundIn.ar((bus.round(1) - 1).max(0));
     amp = Amplitude.kr(input, 0.05, 0.05);
     # freq, hasFreq = Pitch.kr(input, ampThreshold: 0.0, median: 7);
-    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (freq/centerpitch).lag(lag), pitchDispertion,
-
-        timeDispersion)*(amp*adjvol) });
+    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (freq/centerpitch).lag(lag), pitchDispertion, timeDispersion)*(amp*adjvol) }.value(Select.kr(centerpitchRamp > 0, [centerpitch, VarLag.kr(centerpitch.max(1e-9).log, centerpitchRamp.max(ControlDur.ir), warp: \lin).exp]),
+        bus,
+        Select.kr(adjvolRamp > 0, [adjvol, VarLag.kr(adjvol, adjvolRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

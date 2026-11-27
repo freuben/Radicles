@@ -2,10 +2,12 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg freq=3 , decayTime=0.025 ;
+Ndef('filterTrack_1_1', {arg freq = 3, decayTime = 0.025, freqLag = 0, freqRamp = 0, decayTimeLag = 0, decayTimeRamp = 0;
+    {arg freq=3 , decayTime=0.025 ;
     var trig;
     trig = Decay.kr(Dust.kr(freq), decayTime);
-    Gate.ar(Ndef.ar('inTrack1', 1), trig)});
+    Gate.ar(Ndef.ar('inTrack1', 1), trig)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(decayTimeRamp > 0, [decayTime, VarLag.kr(decayTime.max(1e-9).log, decayTimeRamp.max(ControlDur.ir), warp: \lin).exp])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

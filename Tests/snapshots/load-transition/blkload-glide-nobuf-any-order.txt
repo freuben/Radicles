@@ -1,8 +1,6 @@
 >> blkload 1 radtest_lt nobuf 1 glide
 == radpost ==
-Ndef('block1').lag('freq', 1);
-Ndef('block1').set('freq', 500);
-Ndef('block1').lag('freq', nil);
+Ndef('block1').set('freq', 500, 'freqRamp', 1);
 == radpostcont ==
 (none)
 

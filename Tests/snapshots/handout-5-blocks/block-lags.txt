@@ -1,12 +1,12 @@
 >> blklag 1 oct 4
 == radpost ==
-Ndef('block1').lag('oct', 4);
+Ndef('block1').set('octLag', 4);
 == radpostcont ==
 (none)
 
 >> blkset 1 oct 0.5
 == radpost ==
-Ndef('block1').set('oct', 0.5);
+Ndef('block1').set('oct', 0.5, 'octRamp', 4);
 == radpostcont ==
 (none)
 
@@ -18,14 +18,13 @@ Ndef('block1').set('oct', 2);
 
 >> blklagn 1 [oct, 3, mul, 4]
 == radpost ==
-Ndef('block1').lag('oct', 3);
-Ndef('block1').lag('mul', 4);
+Ndef('block1').set('octLag', 3, 'mulLag', 4);
 == radpostcont ==
 (none)
 
 >> blksetn 1 [oct, 2, mul, 0.8]
 == radpost ==
-Ndef('block1').set('oct', 2, 'mul', 0.8);
+Ndef('block1').set('oct', 2, 'mul', 0.8, 'mulRamp', 4);
 == radpostcont ==
 (none)
 

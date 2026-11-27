@@ -1324,8 +1324,9 @@
 							thisResult = thisSpec.map(fxKnob.value);
 						});
 						fxKnobText.string = thisResult.asString.copyRange(0, 7);
-						("Ndef(" ++ ndefKey.cs ++ ").set(" ++ item.cs ++ ", "
-							++ thisResult ++ ");").radcode(\radpostcont);
+						//(a parameter that is on moves over the native time)
+						Assemblage.unitSetCode(ndefKey, [item, thisResult],
+							Assemblage.unitNativeTime(Ndef(ndefKey), item)).radcode(\radpostcont);
 					};
 					thisResult = Radicles.specUnmap(defaultArgArr[index], thisSpec, thisFunc);
 					fxKnob.value = thisResult;
@@ -1713,6 +1714,8 @@
 				//block in this slot stay in the Ndef's node map
 				argNames = Ndef(ndefKey).objects.first !? {|obj|
 					obj.controlNames.collect(_.name) } ? [];
+				//(not its time controls)
+				argNames = argNames.reject{|name| Assemblage.timeControl(argNames, name) };
 				pairs = Ndef(ndefKey).getKeysValues.select({|pair| argNames.includes(pair[0]) });
 				if(pairs.isEmpty, {
 					(ndefKey.asString ++ ": " ++ blockName ++ " has no arguments").warn;

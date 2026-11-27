@@ -2,8 +2,11 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg decayTime=0.5 , freq=10 , lag=5.0 ;
-    CombL.ar(Ndef.ar('inTrack1', 1) * (LFNoise0.ar(freq.lag(lag)) > 0), 0.2, 0.2, decayTime);});
+Ndef('filterTrack_1_1', {arg decayTime = 0.5, freq = 10, lag = 5.0, decayTimeLag = 0, decayTimeRamp = 0, freqLag = 0, freqRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg decayTime=0.5 , freq=10 , lag=5.0 ;
+    CombL.ar(Ndef.ar('inTrack1', 1) * (LFNoise0.ar(freq.lag(lag)) > 0), 0.2, 0.2, decayTime);}.value(Select.kr(decayTimeRamp > 0, [decayTime, VarLag.kr(decayTime, decayTimeRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

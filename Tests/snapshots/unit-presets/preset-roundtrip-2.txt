@@ -2,94 +2,155 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg mix=0.5, adjVol=1;
+Ndef('filterTrack_1_1', {arg mix = 0.5, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg mix=0.5, adjVol=1;
     var drysig, wetsig;
     drysig = Ndef.ar('inTrack1', 1);
     wetsig= GVerb.ar(Ndef.ar('inTrack1', 1), 300, 103, 0.43, 0.51, 15, -5, -26, -20, 300,-40.dbamp);
-    (((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol});
+    (((drysig/2) * mix.linlin(0,1,1,0)) + (wetsig * mix))*0.95*adjVol}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(adjVol, adjVolRamp, [0.2, 2.0], {|val| val.round(0.01)-0.01})) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.05);
 Ndef('filterTrack_1_1').xset('adjVol', 0.86, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix=0, room=0, damp=0.0, lag=0.0, adjVol=1;
-    FreeVerb.ar(Ndef.ar('inTrack1', 1), mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol});
+Ndef('filterTrack_1_1', {arg mix = 0, room = 0, damp = 0.0, lag = 0.0, adjVol = 1, mixLag = 0, mixRamp = 0, roomLag = 0, roomRamp = 0, dampLag = 0, dampRamp = 0, lagLag = 0, lagRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg mix=0, room=0, damp=0.0, lag=0.0, adjVol=1;
+    FreeVerb.ar(Ndef.ar('inTrack1', 1), mix.lag(lag), room.lag(lag), damp.lag(lag))*adjVol}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(roomRamp > 0, [room, VarLag.kr(room, roomRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(dampRamp > 0, [damp, VarLag.kr(damp, dampRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(adjVol, adjVolRamp, [0.2, 2.0], {|val| val.round(0.01)-0.01})) });
 Ndef('filterTrack_1_1').xset('mix', 0.37, 'lag', 5.55, 'adjVol', 0.86, 'room', 0.37, 'damp', 0.37);
-Ndef('filterTrack_1_1', {arg pitchRatio1=1.0, pitchRatio2=1.0,
- pitchRatio3=1.0,
- pitchRatio4=1.0, vol1=1.0, vol2=1.0,
-    vol3=1.0, vol4=1.0, pitchDispertion1=0.0, pitchDispertion2=0.0, pitchDispertion3=0.0,
-    pitchDispertion4=0.0, timeDispersion1=0.0001, timeDispersion2=0.0001,
-    timeDispersion3=0.0001, timeDispersion4=0.0001, lag1=0.1, lag2=0.1, lag3=0.1,
- lag4=0.1,
-    winSize1=0.02, winSize2=0.02, winSize3=0.02, winSize4=0.02;
+Ndef('filterTrack_1_1', {arg pitchRatio1 = 1.0, pitchRatio2 = 1.0, pitchRatio3 = 1.0, pitchRatio4 = 1.0, vol1 = 1.0, vol2 = 1.0, vol3 = 1.0, vol4 = 1.0, pitchDispertion1 = 0.0, pitchDispertion2 = 0.0, pitchDispertion3 = 0.0, pitchDispertion4 = 0.0, timeDispersion1 = 0.0001, timeDispersion2 = 0.0001, timeDispersion3 = 0.0001, timeDispersion4 = 0.0001, lag1 = 0.1, lag2 = 0.1, lag3 = 0.1, lag4 = 0.1, winSize1 = 0.02, winSize2 = 0.02, winSize3 = 0.02, winSize4 = 0.02, pitchRatio1Lag = 0, pitchRatio1Ramp = 0, pitchRatio2Lag = 0, pitchRatio2Ramp = 0, pitchRatio3Lag = 0, pitchRatio3Ramp = 0, pitchRatio4Lag = 0, pitchRatio4Ramp = 0, vol1Lag = 0, vol1Ramp = 0, vol2Lag = 0, vol2Ramp = 0, vol3Lag = 0, vol3Ramp = 0, vol4Lag = 0, vol4Ramp = 0, pitchDispertion1Lag = 0, pitchDispertion1Ramp = 0, pitchDispertion2Lag = 0, pitchDispertion2Ramp = 0, pitchDispertion3Lag = 0, pitchDispertion3Ramp = 0, pitchDispertion4Lag = 0, pitchDispertion4Ramp = 0, timeDispersion1Lag = 0, timeDispersion1Ramp = 0, timeDispersion2Lag = 0, timeDispersion2Ramp = 0, timeDispersion3Lag = 0, timeDispersion3Ramp = 0, timeDispersion4Lag = 0, timeDispersion4Ramp = 0, lag1Lag = 0, lag1Ramp = 0, lag2Lag = 0, lag2Ramp = 0, lag3Lag = 0, lag3Ramp = 0, lag4Lag = 0, lag4Ramp = 0, winSize1Lag = 0, winSize1Ramp = 0, winSize2Lag = 0, winSize2Ramp = 0, winSize3Lag = 0, winSize3Ramp = 0, winSize4Lag = 0, winSize4Ramp = 0;
+    {arg pitchRatio1=1.0 , pitchRatio2=1.0 ,
+    pitchRatio3=1.0 , pitchRatio4=1.0 ,
+    vol1=1.0 , vol2=1.0 , vol3=1.0 , vol4=1.0 ,
+    pitchDispertion1=0.0 , pitchDispertion2=0.0 ,
+    pitchDispertion3=0.0 , pitchDispertion4=0.0 ,
+    timeDispersion1=0.0001 , timeDispersion2=0.0001 ,
+    timeDispersion3=0.0001 , timeDispersion4=0.0001 ,
+    lag1=0.1 , lag2=0.1 , lag3=0.1 , lag4=0.1 ,
+    winSize1=0.02 , winSize2=0.02 , winSize3=0.02 , winSize4=0.02 ;
     var signal, pitch1, pitch2, pitch3, pitch4, input;
     input = Ndef.ar('inTrack1', 1);
-    pitch1 = PitchShift.ar(input, winSize1, (pitchRatio1).lag(lag1), pitchDispertion1,
-        timeDispersion1) * vol1.lag(lag1);
-    pitch2 = PitchShift.ar(input, winSize2, (pitchRatio2).lag(lag2), pitchDispertion2,
-        timeDispersion2) * vol2.lag(lag2);
-    pitch3 = PitchShift.ar(input, winSize3, (pitchRatio3).lag(lag3), pitchDispertion3,
-        timeDispersion3)    * vol3.lag(lag3);
-    pitch4 = PitchShift.ar(input, winSize4, (pitchRatio4).lag(lag4), pitchDispertion4,
-        timeDispersion4) * vol4.lag(lag4);
+    pitch1 = PitchShift.ar(input, winSize1, (pitchRatio1).lag(lag1), pitchDispertion1, timeDispersion1) * vol1.lag(lag1);
+    pitch2 = PitchShift.ar(input, winSize2, (pitchRatio2).lag(lag2), pitchDispertion2, timeDispersion2) * vol2.lag(lag2);
+    pitch3 = PitchShift.ar(input, winSize3, (pitchRatio3).lag(lag3), pitchDispertion3, timeDispersion3) * vol3.lag(lag3);
+    pitch4 = PitchShift.ar(input, winSize4, (pitchRatio4).lag(lag4), pitchDispertion4, timeDispersion4) * vol4.lag(lag4);
     signal = pitch1 + pitch2 + pitch3 + pitch4;
     signal = signal/4;
     signal;
-});
-Ndef('filterTrack_1_1', {arg lag=5.0, pitchDispertion=0.0, timeDispersion=0.0001,
- winSize=0.02, pitchRatio1=1.0,
-    pitchRatio2=1.0, pitchRatio3=1.0, pitchRatio4=1.0, vol1=1.0, vol2=1.0, vol3=1.0,
- vol4=1.0;
+}.value(Assemblage.specRamp(pitchRatio1, pitchRatio1Ramp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchRatio2, pitchRatio2Ramp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchRatio3, pitchRatio3Ramp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchRatio4, pitchRatio4Ramp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Select.kr(vol1Ramp > 0, [vol1, VarLag.kr(vol1, vol1Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(vol2Ramp > 0, [vol2, VarLag.kr(vol2, vol2Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(vol3Ramp > 0, [vol3, VarLag.kr(vol3, vol3Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(vol4Ramp > 0, [vol4, VarLag.kr(vol4, vol4Ramp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(pitchDispertion1, pitchDispertion1Ramp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(pitchDispertion2, pitchDispertion2Ramp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(pitchDispertion3, pitchDispertion3Ramp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(pitchDispertion4, pitchDispertion4Ramp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion1, timeDispersion1Ramp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion2, timeDispersion2Ramp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion3, timeDispersion3Ramp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion4, timeDispersion4Ramp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(lag1Ramp > 0, [lag1, VarLag.kr(lag1, lag1Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lag2Ramp > 0, [lag2, VarLag.kr(lag2, lag2Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lag3Ramp > 0, [lag3, VarLag.kr(lag3, lag3Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lag4Ramp > 0, [lag4, VarLag.kr(lag4, lag4Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(winSize1Ramp > 0, [winSize1, VarLag.kr(winSize1, winSize1Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(winSize2Ramp > 0, [winSize2, VarLag.kr(winSize2, winSize2Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(winSize3Ramp > 0, [winSize3, VarLag.kr(winSize3, winSize3Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(winSize4Ramp > 0, [winSize4, VarLag.kr(winSize4, winSize4Ramp.max(ControlDur.ir), warp: \lin)])) });
+Ndef('filterTrack_1_1').xset('lag3', 3.7, 'vol4', 0.74, 'timeDispersion4', 0.06, 'vol1', 0.74, 'vol3', 0.74, 'winSize4', 1.1163, 'pitchRatio3', 0.83, 'pitchRatio4', 0.83, 'pitchDispertion3', 0.06, 'pitchDispertion4', 0.06, 'vol2', 0.74, 'winSize1', 1.1163, 'winSize3', 1.1163, 'timeDispersion1', 0.06, 'pitchDispertion1', 0.06, 'pitchRatio1', 0.83, 'lag1', 3.7, 'timeDispersion3', 0.06, 'timeDispersion2', 0.06, 'winSize2', 1.1163, 'lag4', 3.7, 'lag2', 3.7, 'pitchDispertion2', 0.06, 'pitchRatio2', 0.83);
+Ndef('filterTrack_1_1', {arg lag = 5.0, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, pitchRatio1 = 1.0, pitchRatio2 = 1.0, pitchRatio3 = 1.0, pitchRatio4 = 1.0, vol1 = 1.0, vol2 = 1.0, vol3 = 1.0, vol4 = 1.0, lagLag = 0, lagRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, winSizeLag = 0, winSizeRamp = 0, pitchRatio1Lag = 0, pitchRatio1Ramp = 0, pitchRatio2Lag = 0, pitchRatio2Ramp = 0, pitchRatio3Lag = 0, pitchRatio3Ramp = 0, pitchRatio4Lag = 0, pitchRatio4Ramp = 0, vol1Lag = 0, vol1Ramp = 0, vol2Lag = 0, vol2Ramp = 0, vol3Lag = 0, vol3Ramp = 0, vol4Lag = 0, vol4Ramp = 0;
+    {arg lag=5.0 , pitchDispertion=0.0 ,
+    timeDispersion=0.0001 , winSize=0.02 ,
+    pitchRatio1=1.0 , pitchRatio2=1.0 ,
+    pitchRatio3=1.0 , pitchRatio4=1.0 ,
+    vol1=1.0 , vol2=1.0 , vol3=1.0 , vol4=1.0 ;
     var signal, pitch1, pitch2, pitch3, pitch4, input;
     input = Ndef.ar('inTrack1', 1);
-    pitch1 = PitchShift.ar(input, winSize, pitchRatio1.lag(lag), pitchDispertion,
- timeDispersion)
-    * vol1.lag(lag);
-    pitch2 = PitchShift.ar(input, winSize, pitchRatio2.lag(lag), pitchDispertion,
- timeDispersion)
-    * vol2.lag(lag);
-    pitch3 = PitchShift.ar(input, winSize, pitchRatio3.lag(lag), pitchDispertion,
- timeDispersion)
-    * vol3.lag(lag);
-    pitch4 = PitchShift.ar(input, winSize, pitchRatio4.lag(lag), pitchDispertion,
- timeDispersion)
-    * vol4.lag(lag);
+    pitch1 = PitchShift.ar(input, winSize, pitchRatio1.lag(lag), pitchDispertion, timeDispersion) * vol1.lag(lag);
+    pitch2 = PitchShift.ar(input, winSize, pitchRatio2.lag(lag), pitchDispertion, timeDispersion) * vol2.lag(lag);
+    pitch3 = PitchShift.ar(input, winSize, pitchRatio3.lag(lag), pitchDispertion, timeDispersion) * vol3.lag(lag);
+    pitch4 = PitchShift.ar(input, winSize, pitchRatio4.lag(lag), pitchDispertion, timeDispersion) * vol4.lag(lag);
     signal = pitch1 + pitch2 + pitch3 + pitch4;
     signal = signal/4;
     signal;
-});
-Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+}.value(Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(pitchRatio1, pitchRatio1Ramp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchRatio2, pitchRatio2Ramp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchRatio3, pitchRatio3Ramp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchRatio4, pitchRatio4Ramp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Select.kr(vol1Ramp > 0, [vol1, VarLag.kr(vol1, vol1Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(vol2Ramp > 0, [vol2, VarLag.kr(vol2, vol2Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(vol3Ramp > 0, [vol3, VarLag.kr(vol3, vol3Ramp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(vol4Ramp > 0, [vol4, VarLag.kr(vol4, vol4Ramp.max(ControlDur.ir), warp: \lin)])) });
+Ndef('filterTrack_1_1').xset('vol4', 0.74, 'vol2', 0.74, 'timeDispersion', 0.06, 'pitchRatio1', 0.83, 'pitchDispertion', 0.06, 'vol1', 0.74, 'lag', 5.55, 'vol3', 0.74, 'winSize', 1.1163, 'pitchRatio3', 0.83, 'pitchRatio2', 0.83, 'pitchRatio4', 0.83);
+Ndef('filterTrack_1_1', {arg pitchRatio = 1.0, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, pitchRatioLag = 0, pitchRatioRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, winSizeLag = 0, winSizeRamp = 0;
+    {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
  ;
         PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
- });
+ }.value(Assemblage.specRamp(pitchRatio, pitchRatioRamp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('pitchDispertion', 0.06, 'pitchRatio', 0.83, 'winSize', 1.1163, 'timeDispersion', 0.06);
-Ndef('filterTrack_1_1', {arg centerpitch=440, pitchDispertion=0.0, timeDispersion=0.0,
-        lag=0.1, winSize=0.1;
+Ndef('filterTrack_1_1', {arg centerpitch = 440, pitchDispertion = 0.0, timeDispersion = 0.0, lag = 0.1, winSize = 0.1, centerpitchLag = 0, centerpitchRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, lagLag = 0, lagRamp = 0, winSizeLag = 0, winSizeRamp = 0;
+    {arg centerpitch=440 , pitchDispertion=0.0 ,
+    timeDispersion=0.0 , lag=0.1 , winSize=0.1 ;
     var freq, hasFreq;
-        # freq, hasFreq = Pitch.kr(Ndef.ar(\bus1), ampThreshold: 0.0, median: 7);
-    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (freq[0]/centerpitch).lag(lag), pitchDispertion,
- timeDispersion) });
-Ndef('filterTrack_1_1', {arg centerpitch=440, bus=0, adjvol=4, pitchDispertion=0.0,
- timeDispersion=0.0001,
-    lag=0.1, winSize=0.02;
+    # freq, hasFreq = Pitch.kr(Ndef.ar(\bus1), ampThreshold: 0.0, median: 7);
+    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (freq[0]/centerpitch).lag(lag), pitchDispertion, timeDispersion) }.value(Select.kr(centerpitchRamp > 0, [centerpitch, VarLag.kr(centerpitch.max(1e-9).log, centerpitchRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
+Ndef('filterTrack_1_1').xset('pitchDispertion', 0.06, 'winSize', 1.1163, 'centerpitch', 195.76, 'lag', 3.7, 'timeDispersion', 0.06);
+Ndef('filterTrack_1_1', {arg centerpitch = 440, bus = 1, adjvol = 4, pitchDispertion = 0.0, timeDispersion = 0.0001, lag = 0.1, winSize = 0.02, centerpitchLag = 0, centerpitchRamp = 0, adjvolLag = 0, adjvolRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, lagLag = 0, lagRamp = 0, winSizeLag = 0, winSizeRamp = 0;
+    {arg centerpitch=440 , bus=1 , adjvol=4 ,
+    pitchDispertion=0.0 ,
+    timeDispersion=0.0001 , lag=0.1 , winSize=0.02 ;
     var freq, hasFreq, input, amp;
-    input = SoundIn.ar(bus.round(1));
+    input = SoundIn.ar((bus.round(1) - 1).max(0));
     amp = Amplitude.kr(input, 0.05, 0.05);
     # freq, hasFreq = Pitch.kr(input, ampThreshold: 0.0, median: 7);
-    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (freq/centerpitch).lag(lag), pitchDispertion,
-
-        timeDispersion)*(amp*adjvol) });
-Ndef('filterTrack_1_1', {arg pitchRatio=1.0, amp=1,
- pitchDispertion=0.0, timeDispersion=0.0001, winSize=0.02, transp=1;
-    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (pitchRatio*transp), pitchDispertion,
-            timeDispersion)*amp});
-Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (freq/centerpitch).lag(lag), pitchDispertion, timeDispersion)*(amp*adjvol) }.value(Select.kr(centerpitchRamp > 0, [centerpitch, VarLag.kr(centerpitch.max(1e-9).log, centerpitchRamp.max(ControlDur.ir), warp: \lin).exp]),
+        bus,
+        Select.kr(adjvolRamp > 0, [adjvol, VarLag.kr(adjvol, adjvolRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
+Ndef('filterTrack_1_1').xset('pitchDispertion', 0.06, 'bus', 4.0, 'centerpitch', 195.76, 'lag', 3.7, 'winSize', 1.1163, 'timeDispersion', 0.06, 'adjvol', 3.7);
+Ndef('filterTrack_1_1', {arg pitchRatio = 1.0, amp = 1, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, transp = 1, pitchRatioLag = 0, pitchRatioRamp = 0, ampLag = 0, ampRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, winSizeLag = 0, winSizeRamp = 0, transpLag = 0, transpRamp = 0;
+    {arg pitchRatio=1.0 , amp=1 ,
+    pitchDispertion=0.0 ,
+    timeDispersion=0.0001 , winSize=0.02 , transp=1 ;
+    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (pitchRatio*transp), pitchDispertion, timeDispersion)*amp }.value(Assemblage.specRamp(pitchRatio, pitchRatioRamp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Select.kr(ampRamp > 0, [amp, VarLag.kr(amp, ampRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(transpRamp > 0, [transp, VarLag.kr(transp.max(1e-9).log, transpRamp.max(ControlDur.ir), warp: \lin).exp])) });
+Ndef('filterTrack_1_1').xset('pitchDispertion', 0.06, 'pitchRatio', 0.83, 'amp', 0.74, 'winSize', 1.1163, 'transp', 0.7, 'timeDispersion', 0.06);
+Ndef('filterTrack_1_1', {arg pitchRatio = 1.0, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, pitchRatioLag = 0, pitchRatioRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, winSizeLag = 0, winSizeRamp = 0;
+    {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
  ;
     PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion)*SinOsc.ar(440);
-});
+}.value(Assemblage.specRamp(pitchRatio, pitchRatioRamp, [-6, 6], {|val| val.round(0.4).midiratio }),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 1.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('pitchDispertion', 0.06, 'pitchRatio', 0.91, 'winSize', 0.7463, 'timeDispersion', 0.05);
 == radpostcont ==
 (none)

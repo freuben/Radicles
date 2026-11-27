@@ -1,4 +1,4 @@
-Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=nil,
+Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>fxLag = 0.5, <>blkLag = 0.5, <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedFuncAction, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>oscCode, <>myImprov, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>postCapture, <>colorCritical, <>colorMeter, <>colorWarning,
@@ -60,6 +60,17 @@ Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>mainPath, <>libPath, <>no
 		secs = secs.max(0);
 		("Radicles.mixLag = " ++ secs ++ ";").radcode;
 		aZ !? { aZ.setMixLag(secs) };
+	}
+
+	// lag N: one time for the whole session. Every mixer control (as
+	// mixlag), and every effect and block parameter that is on (as fxlag and
+	// blklag); it becomes the three times, for what is made or switched on
+	// later.
+	*setAllLag {arg secs;
+		secs = secs.max(0);
+		this.setMixLag(secs);
+		if(aZ.notNil, { aZ.setFxLag(secs) }, { ("Radicles.fxLag = " ++ secs ++ ";").radcode });
+		Block.setLag(secs);
 	}
 
 	// the Ndefs of one thing, for its own fade time: kind is \t, \b, \m,
@@ -348,11 +359,11 @@ Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>mainPath, <>libPath, <>no
 			//mixerWin is nil until the mixer has been opened
 			cmds = [Radicles.cW.text.string,
 				Radicles.aZ.mixerWin.notNil and: { Radicles.aZ.mixerWin.visible == true }];
-			//the mixer's two times (ctllag, mixlag); the times single controls
+			//the session's times (ctllag, mixlag, fxlag, blklag); the times single controls
 			//were given are among the mixer's values
 			resultArr = [arr3] ++ [aZ.prepWritePreset] ++
 			[[blkArr, blkArrSettings]] ++ [hids] ++ [cmds] ++
-			[[[\ctlLag, ctlLag], [\mixLag, mixLag]]];
+			[[[\ctlLag, ctlLag], [\mixLag, mixLag], [\fxLag, fxLag], [\blkLag, blkLag]]];
 			/*resultArr.postln;*/
 			PresetFile.write(\radicles, presetName, resultArr, path: 0);
 		});
@@ -374,10 +385,10 @@ Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>mainPath, <>libPath, <>no
 			mixView = cmdArr[1];
 			cond = Condition(false);
 			if(aZ.isNil, {
-				//the mixer's two times, before the strips are made (sessions
+				//the session's times, before the strips are made (sessions
 				//saved before Nov 2026 have none: they are left as they are)
 				(firstArr[5] ? []).asArray.do{|pair|
-					if(pair.isArray and: { [\ctlLag, \mixLag].includes(pair[0]) } and: { pair[1].isNumber }, {
+					if(pair.isArray and: { [\ctlLag, \mixLag, \fxLag, \blkLag].includes(pair[0]) } and: { pair[1].isNumber }, {
 						("Radicles." ++ pair[0] ++ " = " ++ pair[1] ++ ";").radcode;
 					});
 				};

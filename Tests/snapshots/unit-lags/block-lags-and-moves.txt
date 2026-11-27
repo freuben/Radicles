@@ -1,0 +1,56 @@
+>> blklag 1 on
+== radpost ==
+Ndef('block1').set('freqLag', 0.5, 'phaseLag', 0.5, 'mulLag', 0.5);
+== radpostcont ==
+(none)
+
+>> blkset 1 freq 300
+== radpost ==
+Ndef('block1').set('freq', 300, 'freqRamp', 0.5);
+== radpostcont ==
+(none)
+
+>> blklag 1 exc [phase]
+== radpost ==
+Ndef('block1').set('phaseLag', 0);
+== radpostcont ==
+(none)
+
+>> blklag 1 2
+== radpost ==
+Ndef('block1').set('freqLag', 2, 'mulLag', 2);
+== radpostcont ==
+(none)
+
+>> blklag 1 mul 1
+== radpost ==
+Ndef('block1').set('mulLag', 1);
+== radpostcont ==
+(none)
+
+>> blkset 1 freq 500 3
+== radpost ==
+Ndef('block1').set('freq', 500, 'freqRamp', 3);
+== radpostcont ==
+(none)
+
+>> blkset 1 freq 200
+== radpost ==
+Ndef('block1').set('freq', 200, 'freqRamp', 2);
+== radpostcont ==
+(none)
+
+>> blklag 3
+== radpost ==
+Radicles.blkLag = 3;
+Ndef('block1').set('freqLag', 3, 'mulLag', 3);
+== radpostcont ==
+(none)
+
+>> <code>
+== radpost ==
+Ndef('block1').set('freqLag', 1, 'phaseLag', 2);
+Ndef('block1').set('freqLag', 0, 'phaseLag', 0, 'mulLag', 0);
+== radpostcont ==
+(none)
+

@@ -248,9 +248,19 @@
 		};
 		if(pairs.notEmpty, {
 			if(setFunc.notNil, { setFunc.(ndef, pairs) }, {
-				("Ndef(" ++ ndef.key.cs ++ ").set(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
+				//at once, whatever time the parameters' last moves had
+				Assemblage.unitSetCode(ndef.key, pairs, 0).radcode;
 			});
 		});
+		// 2b. the times for typed values, when the target says which
+		// parameters are on (a preset saved without any leaves them as they are)
+		target[\lags] !? {|tgtLags|
+			var lagPairs = [];
+			Assemblage.lagParams(ndef).do{|key|
+				var want = tgtLags[key] ? 0;
+				if(want.isNumber and: { Assemblage.unitLag(ndef, key) != want }, { lagPairs = lagPairs ++ [key, want] }) };
+			if(lagPairs.notEmpty, { Assemblage.unitLagSet(ndef.key, lagPairs) });
+		};
 		// 3. modulators: make the new ones, then set each modulator's own
 		// values and its own modulators the same way
 		tgtMods.keysValuesDo{|key, mod|

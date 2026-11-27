@@ -1,18 +1,30 @@
+>> fxlag t 1 1 on
+== radpost ==
+Ndef('filterTrack_1_1').set('pitchRatioLag', 0.5, 'pitchDispertionLag', 0.5, 'timeDispersionLag', 0.5, 'winSizeLag', 0.5);
+== radpostcont ==
+(none)
+
 >> fxlag t 1 1 10
 == radpost ==
+Ndef('filterTrack_1_1').set('pitchRatioLag', 10, 'pitchDispertionLag', 10, 'timeDispersionLag', 10, 'winSizeLag', 10);
+== radpostcont ==
 (none)
+
+>> fxlag 1 2 on
+== radpost ==
+Ndef('filterTrack_1_2').set('delayTimeLag', 0.5, 'decayTimeLag', 0.5);
 == radpostcont ==
 (none)
 
 >> fxlag 1 2 5
 == radpost ==
-(none)
+Ndef('filterTrack_1_2').set('delayTimeLag', 5, 'decayTimeLag', 5);
 == radpostcont ==
 (none)
 
 >> fxlagn t 1 2 10
 == radpost ==
-Ndef('filterTrack_1_2').lag('delayTime', 10, 'decayTime', 10);
+Ndef('filterTrack_1_2').set('delayTimeLag', 10, 'decayTimeLag', 10);
 == radpostcont ==
 (none)
 

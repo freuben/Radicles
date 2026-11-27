@@ -2,51 +2,72 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg mix=0 , freq=493.8833 , sinamp=0.5 , lagTime=10 , adjVol=0;
+Ndef('filterTrack_1_1', {arg mix = 0, freq = 493.8833, sinamp = 0.5, lagTime = 10, adjVol = 0, mixLag = 0, mixRamp = 0, freqLag = 0, freqRamp = 0, sinampLag = 0, sinampRamp = 0, lagTimeLag = 0, lagTimeRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg mix=0 , freq=493.8833 , sinamp=0.5 , lagTime=10 , adjVol=0;
 var signal;
     signal = Ndef.ar('inTrack1', 1)*SinOsc.ar(freq.lag(lagTime),0,sinamp);
-adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));});
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(sinampRamp > 0, [sinamp, VarLag.kr(sinamp, sinampRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagTimeRamp > 0, [lagTime, VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.05);
 Ndef('filterTrack_1_1').xset('sinamp', 0.37, 'freq', 257.65, 'adjVol', -5.2, 'lagTime', 3.7, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix=0 , sinamp=0.5 , lagTime=0.1 , adjVol=0;
+Ndef('filterTrack_1_1', {arg mix = 0, sinamp = 0.5, lagTime = 0.1, adjVol = 0, mixLag = 0, mixRamp = 0, sinampLag = 0, sinampRamp = 0, lagTimeLag = 0, lagTimeRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg mix=0 , sinamp=0.5 , lagTime=0.1 , adjVol=0;
     var signal, freq, hasFreq;
 # freq, hasFreq = Pitch.kr(Ndef.ar('inTrack1', 1), ampThreshold: 0.0, median: 7);
 signal = Ndef.ar('inTrack1', 1)*SinOsc.ar(freq.lag(lagTime),0,sinamp);
-adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));});
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(sinampRamp > 0, [sinamp, VarLag.kr(sinamp, sinampRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagTimeRamp > 0, [lagTime, VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('sinamp', 0.37, 'adjVol', -5.2, 'lagTime', 3.7, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix=0 , sinamp=0.5 , lagTime=0.1 , adjVol=0;
+Ndef('filterTrack_1_1', {arg mix = 0, sinamp = 0.5, lagTime = 0.1, adjVol = 0, mixLag = 0, mixRamp = 0, sinampLag = 0, sinampRamp = 0, lagTimeLag = 0, lagTimeRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg mix=0 , sinamp=0.5 , lagTime=0.1 , adjVol=0;
 var signal, freq, hasFreq, amp;
 # freq, hasFreq = Pitch.kr(Ndef.ar('inTrack1', 1), ampThreshold: 0.0, median: 7);
 amp = Amplitude.kr(Ndef.ar('inTrack1', 1), 0.05, 0.05);
 signal = Ndef.ar('inTrack1', 1)*SinOsc.ar(freq.lag(lagTime),0,sinamp*amp);
-adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));});
+adjVol.dbamp * ((signal*mix.linlin(0,1,0,1))+(Ndef.ar('inTrack1', 1)*mix.linlin(0,1,1,0)));}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(sinampRamp > 0, [sinamp, VarLag.kr(sinamp, sinampRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagTimeRamp > 0, [lagTime, VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('sinamp', 0.37, 'adjVol', -5.2, 'lagTime', 3.7, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg freeze=0, adjVol=1;
+Ndef('filterTrack_1_1', {arg freeze = 0, adjVol = 1, adjVolLag = 0, adjVolRamp = 0;
+    {arg freeze=0, adjVol=1;
 var chain, input, frameSize=2048;
     input = Ndef.ar('inTrack1', 1);
 chain = FFT(LocalBuf(frameSize, input.numChannels), input);
 chain = PV_MagFreeze(chain, freeze);
-    (adjVol * IFFT(chain));});
+    (adjVol * IFFT(chain));}.value(freeze,
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('freeze', 0.0, 'adjVol', 2.11);
-Ndef('filterTrack_1_1', {arg thresh=1, adjVol=1, lagTime=0.1;
+Ndef('filterTrack_1_1', {arg thresh = 1, adjVol = 1, lagTime = 0.1, threshLag = 0, threshRamp = 0, adjVolLag = 0, adjVolRamp = 0, lagTimeLag = 0, lagTimeRamp = 0;
+    {arg thresh=1, adjVol=1, lagTime=0.1;
 var freeze, chain, input, frameSize=2048;
     input = Ndef.ar('inTrack1', 1);
     chain = FFT(LocalBuf(frameSize, input.numChannels), input);
     freeze = Onsets.kr(chain, thresh).lag(lagTime);
     chain = PV_MagFreeze(chain, freeze);
-    (adjVol * IFFT(chain));});
+    (adjVol * IFFT(chain));}.value(Select.kr(threshRamp > 0, [thresh, VarLag.kr(thresh, threshRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(lagTimeRamp > 0, [lagTime, VarLag.kr(lagTime, lagTimeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('thresh', 0.74, 'adjVol', 2.11, 'lagTime', 0.148);
-Ndef('filterTrack_1_1', {arg thresh=0, adjVol=1;
+Ndef('filterTrack_1_1', {arg thresh = 0, adjVol = 1, threshLag = 0, threshRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg thresh=0, adjVol=1;
 var chain, frameSize=2048, input;
     input = Ndef.ar('inTrack1', 1);
 chain = FFT(LocalBuf(frameSize, input.numChannels), input);
 chain = PV_MagAbove(chain, thresh);
-(adjVol * IFFT(chain));});
+(adjVol * IFFT(chain));}.value(Assemblage.specRamp(thresh, threshRamp, [0.01, 50.01, 'exp'], {|val| val-0.01}),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('adjVol', 1.48, 'thresh', 0.22);
-Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+Ndef('filterTrack_1_1', {arg mix = 0, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg mix=0, adjVol=1;
     var chain, origmagsphases, magsphases, input;
     input = Ndef.ar('inTrack1', 1);
     chain = FFT(LocalBuf(1024, input.numChannels), input);
@@ -60,9 +81,11 @@ Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
     magsphases = magsphases.flop.flatten;
     chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
     (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-});
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('adjVol', 1.48, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+Ndef('filterTrack_1_1', {arg mix = 0, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg mix=0, adjVol=1;
     var chain, origmagsphases, magsphases, input;
     input = Ndef.ar('inTrack1', 1);
     chain = FFT(LocalBuf(1024, input.numChannels), input);
@@ -76,9 +99,11 @@ Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
     magsphases = magsphases.flop.flatten;
     chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
     (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-});
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('adjVol', 1.48, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
+Ndef('filterTrack_1_1', {arg mix = 0, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
+    {arg mix=0, adjVol=1;
     var chain, origmagsphases, magsphases, input;
     input = Ndef.ar('inTrack1', 1);
     chain = FFT(LocalBuf(1024, input.numChannels), input);
@@ -92,7 +117,8 @@ Ndef('filterTrack_1_1', {arg mix=0, adjVol=1;
     magsphases = magsphases.flop.flatten;
     chain = PackFFT(chain, 1024, magsphases, 0, 250, 0);
     (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
-});
+}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('adjVol', 1.48, 'mix', 0.37);
 == radpostcont ==
 (none)

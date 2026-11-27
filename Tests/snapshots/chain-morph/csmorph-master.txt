@@ -4,7 +4,9 @@ Ndef('inMaster').fadeTime = 1;
 Ndef('master').fadeTime = 1;
 Ndef.ar('filterMaster_1_1', 2);
 Ndef('filterMaster_1_1').fadeTime = 0.5;
-Ndef('filterMaster_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inMaster', 2), freq.lag(lag));});
+Ndef('filterMaster_1_1', {arg freq = 20000, lag = 0.1, freqLag = 0, freqRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inMaster', 2), freq.lag(lag));}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterMaster_1_1').set('lag', 0.1, 'freq', 20000);
 Ndef('master', {arg volume=0, lagTime=0.05, mute=0, off=0, ramp=0.05;
                     (Ndef.ar('filterMaster_1_1', 2) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)

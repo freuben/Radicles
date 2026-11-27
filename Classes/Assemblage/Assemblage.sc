@@ -9,6 +9,7 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	<recordingButton, <recordingValBut, <setOutputMenu, <setInputMenu, <modSendArr,
 	<trackDataArr, <trackBufferArr, <setInKnob, <>updateFreq=10,
 	<sourceWindows, srcWinTracks, srcButtonArr, srcMenuWindow, <bypassed, morphs;
+	classvar specPaths, <>specPathSteps = 30, unitTimesFound, <unitTouched;
 
 	*new {arg trackNum=1, busNum=0, chanNum=1, spaceType, memSize, action;
 		^super.new.initAssemblage(trackNum, busNum, chanNum, spaceType, memSize, action);
@@ -444,6 +445,217 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		^("{arg " ++ args.join(", ") ++ ";\n\t" ++ func.cs ++ ".value(" ++ values.join(", ") ++ ") }").interpret
 	}
 
+	// An effect's or a block's function with a ramp on each parameter that can
+	// travel: one whose spec is a range (with or without a scale, or with a
+	// function that gives a path: specPath). Not a parameter with no spec, a
+	// spec with real steps, or a default that is not a number. The ramps are built in and off: each
+	// parameter x gets xLag (its time for typed values; 0 is off) and xRamp
+	// (the time of the move under way), both 0, and at 0 the value passes
+	// through as it is. The library function is kept whole and called with the
+	// ramped values; its controls keep their places, the times come after
+	// them. A move follows the spec's scale: even in value for a linear one,
+	// even in pitch for an exponential one, the fader's law for a dB one.
+	// (docs/design/lags-blocks-effects.md)
+	*rampUnit {arg func, specs;
+		var names, defaults, keys, args, values, byName;
+		if(func.isKindOf(Function).not, { ^func });
+		names = func.def.argNames ? [];
+		defaults = func.def.prototypeFrame ? [];
+		//already wrapped
+		if(names.any{|name| this.timeControl(names, name) }, { ^func });
+		if((func.def.sourceCode ? "").contains("Assemblage.unitTimes("), { ^func });
+		keys = names.select{|name, index|
+			this.rampableSpec((specs ? []).detect{|spec| spec.isArray and: { spec[0] == name } })
+			and: { defaults[index].isNumber }
+			and: { names.includes((name ++ "Lag").asSymbol).not }
+			and: { names.includes((name ++ "Ramp").asSymbol).not } };
+		if(keys.isEmpty, { ^func });
+		//a function takes 255 arguments at most: a unit whose parameters and
+		//time controls together would be more has its time controls made by
+		//name inside the function (unitTimes), not as arguments
+		byName = (names.size + (keys.size * 2)) > 255;
+		args = names.collect{|name, index| name ++ " = " ++ defaults[index].cs }
+		++ if(byName, { [] }, { keys.collect{|key| key ++ "Lag = 0, " ++ key ++ "Ramp = 0" } });
+		values = names.collect{|name| if(keys.includes(name), {
+			var spec = specs.detect{|spec| spec.isArray and: { spec[0] == name } };
+			this.rampCode(name, spec[1], spec.detect(_.isKindOf(Function)), byName) }, { name.asString }) };
+		^("{arg " ++ args.join(", ") ++ ";\n\t"
+			++ if(byName, { "Assemblage.unitTimes(" ++ keys.cs ++ ");\n\t" }, { "" })
+			++ func.cs ++ ".value(" ++ values.join(",\n\t\t") ++ ") }").interpret
+		?? { "the ramps could not be added to this function; it is used as it is".warn; func }
+	}
+
+	// true for a library spec ([name, [min, max, scale, step ...], function])
+	// whose parameter can travel
+	*rampableSpec {arg spec;
+		var range;
+		if(spec.isNil, { ^false });
+		range = spec[1];
+		if(range.isArray.not or: { range.size < 2 }, { ^false });
+		if(range[0].isNumber.not or: { range[1].isNumber.not }, { ^false });
+		if(range[3].isNumber and: { range[3] != 0 }, { ^false });
+		//a function: when it gives a path along the range (specPath)
+		spec.detect(_.isKindOf(Function)) !? {|func| ^this.specPath(range, func).notNil };
+		^true
+	}
+
+	// The path a parameter whose spec has a function travels: places along
+	// the spec's range (0 to 1, on the spec's own scale) and the function's
+	// value at each, or nil when the parameter cannot travel. Worked out from
+	// the function itself, so the library files say nothing more:
+	// - rounding makes the function a staircase. Fewer than 30 steps across
+	//   the range are real steps (a switch, a bus number): nil, the value
+	//   jumps. 30 or more are rounding for the display (pch's 0.4 of a
+	//   semitone): the path goes through the middle of each step, so a move
+	//   is smooth;
+	// - the function must go steadily up or steadily down, so that a value
+	//   has one place on the range.
+	// (docs/design/lags-blocks-effects.md, decision 2)
+	*specPath {arg range, func;
+		var key, spec, places, values, steps, nodes, pick, signs;
+		if(func.def.sourceCode.isNil, { ^nil });
+		key = (range.cs ++ func.def.sourceCode ++ this.specPathSteps).asSymbol;
+		specPaths = specPaths ?? { IdentityDictionary.new };
+		//(false: worked out before, and it cannot travel)
+		if(specPaths.includesKey(key), { ^if(specPaths[key] == false, { nil }, { specPaths[key] }) });
+		spec = try { range.asSpec };
+		if(spec.isKindOf(ControlSpec).not, { specPaths[key] = false; ^nil });
+		places = (0..2048) / 2048;
+		values = try { places.collect{|place| func.value(spec.map(place)) } };
+		//(a function that failed is not remembered: it may work the next time)
+		if(values.isNil, { ^nil });
+		specPaths[key] = false;
+		if(values.any{|value| value.isNumber.not or: { value.isNaN } or: { value.abs == inf } }, { ^nil });
+		//the steps: runs of one value, each with the place of its middle
+		//(the ends of the range for the first and the last)
+		steps = [];
+		values.do{|value, index|
+			if(steps.notEmpty and: { steps.last[1] == value }, { steps.last[2] = index }, {
+				steps = steps.add([index, value, index]) }) };
+		if(steps.size < this.specPathSteps, { ^nil });
+		//steadily up or steadily down, at every step
+		signs = steps.collect(_[1]).differentiate.drop(1).sign;
+		if(signs.every(_ == 1).not and: { signs.every(_ == -1).not }, { ^nil });
+		nodes = steps.collect{|step, index|
+			[case { index == 0 } { 0.0 } { index == (steps.size - 1) } { 1.0 } { (step[0] + step[2]) / 2 / 2048 }, step[1]] };
+		//at most 65 points
+		if(nodes.size > 65, {
+			pick = (0..64).collect{|index| (index * (nodes.size - 1) / 64).round.asInteger };
+			nodes = pick.collect{|index| nodes[index] } });
+		specPaths[key] = nodes.flop;
+		^specPaths[key]
+	}
+
+	// A parameter whose spec has a function, ramped along the spec's range
+	// (called from the code rampUnit makes, as the effect or block is built).
+	// The value's place on the range is found on the path, the ramp runs
+	// between places, and the path gives the value back. While nothing moves
+	// the value is passed as it is.
+	*specRamp {arg value, ramp, range, func;
+		var path = this.specPath(range, func), places, values, sign, place, moved;
+		if(path.isNil, { ^value });
+		places = path[0]; values = path[1];
+		sign = (values.last - values.first).sign;
+		place = IEnvGen.kr(Env(places, (values * sign).differentiate.drop(1)), (value * sign) - (values.first * sign));
+		moved = VarLag.kr(place, ramp.max(ControlDur.ir), warp: \lin);
+		^Select.kr((ramp > 0) * ((moved absdif: place) > 0),
+			[value, IEnvGen.kr(Env(values, places.differentiate.drop(1)), moved)])
+	}
+
+	// the time controls of a unit with too many parameters for them to be
+	// arguments (called from the code rampUnit makes, as the unit is built):
+	// xLag and xRamp for each parameter, at 0
+	*unitTimes {arg keys;
+		keys.do{|key|
+			NamedControl.kr((key ++ "Lag").asSymbol, 0);
+			NamedControl.kr((key ++ "Ramp").asSymbol, 0) };
+	}
+
+	// the code of one ramped parameter, on its spec's scale
+	*rampCode {arg name, range, func, byName = false;
+		var ramp = if(byName, { "\\" ++ name ++ "Ramp.kr(0)" }, { name ++ "Ramp" });
+		var time = ramp ++ ".max(ControlDur.ir)", warp = range[2], lo, hi;
+		warp = if(warp.isKindOf(Symbol) or: { warp.isString }, { warp.asSymbol }, { \lin });
+		^case
+		//a function in the spec: along the spec's range, the function applied on the way
+		{ func.notNil } {
+			"Assemblage.specRamp(" ++ name ++ ", " ++ ramp ++ ", " ++ range.cs ++ ", " ++ func.def.sourceCode ++ ")" }
+		//even in pitch: the ramp runs on the logarithm
+		{ warp == \exp and: { range[0] > 0 } and: { range[1] > 0 } } {
+			"Select.kr(" ++ ramp ++ " > 0, [" ++ name ++ ", VarLag.kr(" ++ name
+			++ ".max(1e-9).log, " ++ time ++ ", warp: \\lin).exp])" }
+		//the fader's law, as the mixer's volume
+		{ warp == \db and: { range[1] != inf } and: { range[0] < range[1] } } {
+			lo = range[0].dbamp; hi = range[1].dbamp;
+			"Select.kr(" ++ ramp ++ " > 0, [" ++ name ++ ", (VarLag.kr(((" ++ name ++ ".dbamp - " ++ lo ++ ") / "
+			++ (hi - lo) ++ ").max(0).sqrt, " ++ time ++ ", warp: \\lin).squared * " ++ (hi - lo) ++ " + " ++ lo ++ ").ampdb])" }
+		//(the same way out as the others: with no time the value is passed
+		//as it is, in the same control period; a ramp arrives one late, which
+		//a trigger set with it would miss)
+		{ "Select.kr(" ++ ramp ++ " > 0, [" ++ name ++ ", VarLag.kr(" ++ name ++ ", " ++ time ++ ", warp: \\lin)])" }
+	}
+
+	// a unit's own parameters, in their places (not its time controls)
+	*paramKeys {arg ndef;
+		var keys = ndef.controlKeys;
+		^keys.reject{|key| this.timeControl(keys, key) }
+	}
+
+	// the parameters of a unit that can travel (they have a time control)
+	*lagParams {arg ndef;
+		var keys;
+		//(a panner's time controls are the mixer's: panlag)
+		if(ndef.key.asString.beginsWith("space"), { ^[] });
+		keys = ndef.controlKeys;
+		//(only what the unit's function has: the node map can still hold the
+		//controls of an earlier unit in this place)
+		if(ndef.source.isKindOf(Function), {
+			//(a unit whose time controls are made by name: unitTimes)
+			this.unitTimesKeys(ndef) !? {|named| ^named };
+			keys = keys.select{|key| (ndef.source.def.argNames ? []).includes(key) } });
+		^keys.select{|key| keys.includes((key ++ "Lag").asSymbol) and: { keys.includes((key ++ "Ramp").asSymbol) } }
+	}
+
+	// the parameters that can travel of a unit whose time controls are made
+	// by name (rampUnit, a unit with too many parameters): read from the
+	// unit's own code, and remembered for as long as the unit has that function
+	*unitTimesKeys {arg ndef;
+		var func = ndef.source, code, from, to, keys;
+		unitTimesFound = unitTimesFound ?? { IdentityDictionary.new };
+		if(unitTimesFound[ndef.key].notNil and: { unitTimesFound[ndef.key][0] === func }, {
+			^unitTimesFound[ndef.key][1] });
+		code = func.def.sourceCode ? "";
+		from = code.find("Assemblage.unitTimes(");
+		if(from.notNil, {
+			to = code.find(");", offset: from);
+			keys = try { code.copyRange(from + "Assemblage.unitTimes(".size, to - 1).interpret } });
+		unitTimesFound[ndef.key] = [func, keys];
+		^keys
+	}
+
+	// a unit parameter's time for typed values (0: off), nil when it cannot travel
+	*unitLag {arg ndef, key;
+		if(this.lagParams(ndef).includes(key).not, { ^nil });
+		^ndef.nodeMap.at((key ++ "Lag").asSymbol) ? 0
+	}
+
+	// the arguments that move a unit's parameter to value over time seconds;
+	// the time is sent only when the last move had another and the value is
+	// new (a new time on a running ramp makes it overshoot)
+	*unitRampArgs {arg ndef, key, value, time;
+		var rampKey = (key ++ "Ramp").asSymbol;
+		if(this.lagParams(ndef).includes(key).not, { ^key.cs ++ ", " ++ value.cs });
+		time = time ? this.unitLag(ndef, key);
+		^key.cs ++ ", " ++ value.cs ++ if((ndef.nodeMap.at(rampKey) ? 0) != time and: { ndef.nodeMap.at(key) != value },
+			{ ", " ++ rampKey.cs ++ ", " ++ time }, { "" })
+	}
+
+	// the time the window's sliders and mapped controls move a unit's
+	// parameter over: the native time when the parameter is on, none when off
+	*unitNativeTime {arg ndef, key;
+		^if((this.unitLag(ndef, key) ? 0) > 0, { Radicles.ctlLag }, { 0 })
+	}
+
 	// true for a panner's time controls (xLag, xRamp, where x is another of
 	// its controls): they are not values of the panner
 	*timeControl {arg keys, key;
@@ -455,6 +667,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	ndefPrepare {arg ndef, func;
 		var extraArgs, key, result;
 		extraArgs = ndef.controlKeysValues;
+		//(not a unit's time controls that are off: nothing to put back)
+		extraArgs = extraArgs.clump(2).reject{|pair| pair[1] == 0 and: {
+			Assemblage.timeControl(ndef.controlKeys, pair[0]) } }.flatten(1);
 		key = ndef.key;
 		if(extraArgs.isEmpty, {
 			result = [key, func].presetToNdefCS;

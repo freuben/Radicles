@@ -8,7 +8,10 @@ Ndef('block4').fadeTime = 0.5;
 Ndef('inTrack3', {arg trim=0, lagTime=0.05, ramp=0.05;
                 (Ndef.ar('block4', 1) * VarLag.kr(trim, ramp.max(ControlDur.ir), warp: \lin).dbamp )});
 Ndef('inTrack3').set('trim', 0, 'lagTime', 0.05, 'ramp', 0.05);
-Ndef('block4', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
+Ndef('block4', {arg freq = 440, phase = 0, mul = 0.4, freqLag = 0, freqRamp = 0, phaseLag = 0, phaseRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(phaseRamp > 0, [phase, VarLag.kr(phase, phaseRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('block4').xset('freq', 440, 'phase', 0, 'mul', 0.4);
 == radpostcont ==
 (none)

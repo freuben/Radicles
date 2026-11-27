@@ -164,19 +164,21 @@
 		cW.add(\blkset, [\str, \num], {|str1, num1|
 			var thisIndex, thisKey;
 			thisIndex = Block.indexOfBlock(num1);
-			thisKey = Block.ndefs[thisIndex].getKeysValues.radpostwarn;
+			thisKey = Block.ndefs[thisIndex].getKeysValues.select{|pair|
+				Assemblage.paramKeys(Block.ndefs[thisIndex]).includes(pair[0]) }.radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num], {|str1, num1, num2|
 			var thisIndex, thisKey;
 			thisIndex = Block.indexOfBlock(num1);
-			thisKey = Block.ndefs[thisIndex].getKeysValues[num2-1][1].radpostwarn;
+			thisKey = Block.ndefs[thisIndex].getKeysValues.select{|pair|
+				Assemblage.paramKeys(Block.ndefs[thisIndex]).includes(pair[0]) }[num2-1][1].radpostwarn;
 		}, "blocksetn: blk, arg");
 
 		cW.add(\blkset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
 			thisIndex = Block.indexOfBlock(num1);
-			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
+			thisKey = Assemblage.paramKeys(Block.ndefs[thisIndex])[num2-1];
 			Block.set(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
 
@@ -187,7 +189,7 @@
 		cW.add(\blkset, [\str, \num, \num, \str], {|str1, num1, num2, str2|
 			var thisIndex, thisKey, modArgs, modifier;
 			thisIndex = Block.indexOfBlock(num1);
-			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
+			thisKey = Assemblage.paramKeys(Block.ndefs[thisIndex])[num2-1];
 			modArgs = str2.asString.radStringMod;
 			if(HIDMap.getHIDType(modArgs[0]).notNil, {modifier = \hid}, {modifier = \mod});
 			Block.modBlk(num1, thisKey, modArgs[0], modArgs[1], modifier: modifier);
@@ -200,10 +202,58 @@
 			Block.modBlk(num1, str2, modArgs[0], modArgs[1], modifier: modifier);
 		}, "blocksetn: blk, arg");
 
+		// The times a block's parameters travel over, as fxlag for effects
+		// (docs/design/lags-blocks-effects.md):
+		//   blklag            posts the blocks' lag time
+		//   blklag 4          the blocks' lag time: every parameter that is on
+		//   blklag 1 on       block 1's parameters that can travel, on; off
+		//   blklag 1 4        its parameters that are on: 4 s
+		//   blklag 1 freq 4   one parameter (by name or number)
+		//   blklag 1 exc [freq,mul]   those off; inc: only those on
+		//   blklags 1 [4,1,0]         times by position
+		//   blkset 1 freq 800 4       a value, and the time of that one move
+		//   blkgetlag 1               each parameter that can travel, with its time
+		cW.add(\blklag, [\str], {|str1|
+			Radicles.blkLag.radpostwarn;
+		}, "blklag: (posts the blocks' lag time)");
+		cW.add(\blklag, [\str, \num], {|str1, num1|
+			Block.setLag(num1);
+		}, "blklag: time (every block parameter that is on, and what is switched on later)");
+		cW.add(\blklag, [\str, \num, \str], {|str1, num1, str2|
+			Block.lagMode(num1, str2.asSymbol);
+		}, "blklag: blk, on|off");
+		cW.add(\blklag, [\str, \num, \num], {|str1, num1, num2|
+			Block.lagMode(num1, num2.max(0));
+		}, "blklag: blk, time (its parameters that are on)");
+		cW.add(\blklag, [\str, \num, \str, \arr], {|str1, num1, str2, arr1|
+			Block.lagMode(num1, str2.asSymbol, arr1);
+		}, "blklag: blk, exc|inc, [parameters]");
+		cW.add(\blklags, [\str, \num, \arr], {|str1, num1, arr1|
+			Block.lags(num1, arr1);
+		}, "blklags: blk, [times by position]");
+		cW.add(\blkgetlag, [\str, \num], {|str1, num1|
+			var thisIndex = Block.indexOfBlock(num1);
+			if(thisIndex.notNil, {
+				Assemblage.lagParams(Block.ndefs[thisIndex]).collect{|key|
+					[key, Assemblage.unitLag(Block.ndefs[thisIndex], key)] }.flat.radpostwarn;
+			}, { "Block not found".warn });
+		}, "blkgetlag: blk (each parameter that can travel, with its time)");
+		cW.add(\blkset, [\str, \num, \num, \num, \num], {|str1, num1, num2, num3, num4|
+			var thisIndex, thisKey;
+			thisIndex = Block.indexOfBlock(num1);
+			if(thisIndex.isNil, { "Block not found".warn }, {
+				thisKey = Assemblage.paramKeys(Block.ndefs[thisIndex])[num2-1];
+				Block.set(num1, [thisKey, num3], time: num4.max(0));
+			});
+		}, "blkset: blk, arg, val, time");
+		cW.add(\blkset, [\str, \num, \str, \num, \num], {|str1, num1, str2, num3, num4|
+			Block.set(num1, [str2, num3], time: num4.max(0));
+		}, "blkset: blk, arg, val, time");
+
 		cW.add(\blklag, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
 			thisIndex = Block.indexOfBlock(num1);
-			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
+			thisKey = Assemblage.paramKeys(Block.ndefs[thisIndex])[num2-1];
 			Block.lag(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
 
@@ -214,7 +264,7 @@
 		cW.add(\blkxset, [\str, \num, \num, \num], {|str1, num1, num2, num3|
 			var thisIndex, thisKey;
 			thisIndex = Block.indexOfBlock(num1);
-			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
+			thisKey = Assemblage.paramKeys(Block.ndefs[thisIndex])[num2-1];
 			Block.xset(num1, [thisKey, num3]);
 		}, "blocksetn: blk, arg");
 
@@ -277,7 +327,7 @@
 		cW.add(\blkgetspec, [\str, \num, \num], {|str1, num1, num2|
 			var thisIndex, thisKey;
 			thisIndex = Block.indexOfBlock(num1);
-			thisKey = Block.ndefs[thisIndex].controlKeys[num2-1];
+			thisKey = Assemblage.paramKeys(Block.ndefs[thisIndex])[num2-1];
 			Block.getSpec(num1, thisKey).radpostwarn;
 		}, "blocksetn: blk, arg");
 

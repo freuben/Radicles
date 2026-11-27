@@ -1,0 +1,182 @@
+# Lags on blocks and effects
+
+Status: **decided 22 Nov 2026** in conversation with Federico ("Build the
+lags"). It closes the last open part of the Time step (the mixer's part is
+[mixer-ramps.md](mixer-ramps.md)). What each PR built is added under
+"Planned PRs" as it lands.
+
+## The idea
+
+A parameter of an effect or a block can travel to a typed value over a time,
+as the mixer's values do, but only when the performer has asked for it. It is
+a nice feature, not a central one, so it must cost nothing when it is not
+used and must not change how library files are written.
+
+## Decided
+
+1. **Built in, but off.** A parameter that can ramp is made with its ramp at
+   a time of 0. At 0 the value passes through untouched, so nothing sounds
+   different until a time is set. Setting a time never rebuilds the unit
+   (today `fxlag` and `blklag` rebuild it: a sound file can restart, a reverb
+   starts empty).
+2. **Which parameters can ramp: those with a spec.** The library's spec (the
+   part after `->`) is the declaration. Not ramped: a parameter with no
+   spec, a spec with real steps, and any value that is not a number.
+   **A spec with a function** (corrected 23 Nov 2026; the note first left
+   these out, which was a misunderstanding):
+   - the parameter travels along the spec's range and the function is
+     applied on the way. `pch`'s `pitchRatio` (range -12 to 12, function
+     `val.round(0.4).midiratio`) moves evenly in semitones;
+   - rounding in the function that leaves 30 steps or more across the range
+     is for the display, and is left out of the move (`pch`'s 0.4 is 60
+     steps). The move ends on the value typed or saved;
+   - fewer than 30 steps are real steps (a switch, a choice, a bus or track
+     number: 24 steps at most in the libraries): the value jumps;
+   - the function must go steadily up or steadily down; one that does not
+     leaves its parameter as "cannot travel".
+3. **A move follows the spec's scale and arrives on time** (the mixer's
+   principle): an exponential spec moves evenly in pitch, a linear one evenly
+   in value.
+4. **One time per parameter.** "On" means the parameter's time is above 0;
+   "off" and "excluded" mean 0. So on, off, excluded and included all live in
+   the unit's own values, and presets and sessions keep them with no second
+   list.
+5. **Library files do not change.** Radicles adds the ramp around the unit's
+   function when it builds it, as it does for the panners.
+6. **Scopes, each a time for what is on within it:**
+   - `fxlag N`: all effects. `blklag N`: all blocks. Default 0.5 s each.
+   - `mixlag N`: the mixer only (as built).
+   - `tlag`: one track: its effects, its block and its mixer values.
+   - `lag N`: the whole session.
+   - The mixer has no "off": `tlag` and `lag` set every mixer value in their
+     scope, but only the effect and block parameters that are on.
+   - A later, wider command overwrites the times it covers (the rule of
+     `fade N`). An excluded parameter (time 0) is not on, so it stays
+     excluded.
+7. **Per effect** (blocks the same way with `blklag`):
+   - `fxlag t 1 2 on`: on, with the effects' lag time; `fxlag t 1 2 off`;
+     `blklag 1 on`, `blklag 1 off` (the words, because `blklag 1` and
+     `blklag 4` would be the same form);
+   - `fxlag t 1 2 4`: its parameters that are on take 4;
+   - `fxlag t 1 2 freq 4`: one parameter;
+   - `fxlag t 1 2 exc [freq,amp]` or `exc [1,2]`: those off;
+   - `fxlag t 1 2 inc [pitchRatio,mix]` or `inc [3,4]`: only those on;
+   - lists both ways: times by position, and pairs of name and time.
+8. **`glide` in a load follows the same rule:** values that can ramp travel
+   on their spec's scale over the load's time; the others jump **at the
+   end**.
+9. **The window's sliders, MIDI, HID and OSC use the native time**
+   (`ctllag`), never the typed time.
+10. **Look-ups move to `fxgetlag`** (it exists) and a `blkgetlag` by the same
+    pattern. Today `fxlag t 1 2` posts the effect's parameter names and
+    `fxlag t 1 2 4` posts the lag of its fourth parameter; both get the new
+    meanings above.
+11. **A time typed after a value is for that one move,** as on the mixer:
+    `fxset t 1 2 freq 800 4`, and the same on `blkset`. It works on a
+    parameter that is off too; the parameter's own time is unchanged.
+
+## Checked (22 Nov)
+
+- **Processor cost of ramps on everything** (offline renders, dev Mac, 120 s
+  at 48 kHz, 30 units, three runs each): 180 ramped parameters add about
+  0.13% of one core; moving on an exponential scale adds nothing measurable.
+  Not measured: moving values, real-time running, the performance Mac, the
+  time to build a larger unit.
+- **The Main library as written** (about 650 specs): about 435 are a plain
+  range and 70 have a scale: these ramp. 11 have a step and 131 have a
+  function: these do not. Of the 131, 41 are only a small offset on an
+  exponential range and could glide if a mark allowed it. RadiclesLibs was
+  not surveyed.
+
+## Checked (23 Nov, specs with a function)
+
+- **Every spec with a function in Main and RadiclesLibs** (515, worked out by
+  `Assemblage.specPath` itself): 96 travel and 419 jump. Those that jump have
+  2 to 24 steps (switches, choices, bus, track and key numbers); those that
+  travel have 31 or more. No function fails to give a path.
+- **Whole numbers that travel under the 30-step rule:** `bits` (0 to 31),
+  `p` (2 to 64), `numharm` (0 to 70), `ratio` (10 to 100), `rate` and `freq`
+  rounded to 1. During a move they pass through values between the whole
+  numbers; the move ends on the typed value.
+- **Close to the line:** `pitchRatio` on a range of -6 to 6 has 31 steps
+  (it travels); `sinekey`'s `key` (0 to 23) has 24 (it jumps).
+- **Processor cost** (offline renders as on 22 Nov, 30 pitch shifters with 5
+  parameters each, at rest): the ramp for a spec with a function costs about
+  three times a plain ramp: 150 of them add about 0.5% of one core (150
+  plain ramps: about 0.15%). Not measured: moving values, real-time running,
+  the performance Mac.
+
+## Planned PRs (Model: Fable for all; each gets a second look)
+
+1. **Effects** (built): the ramp built in and off (`Assemblage.rampUnit`,
+   added when an effect is made; times are the controls `xLag` and `xRamp`
+   after the effect's own); `fxlag` on, off, per effect, per parameter,
+   `exc`, `inc`; `fxlag N` (it came into this part because "on" needs it;
+   a session keeps it from part 3); `fxset` with a time; `fxgetlag`; the
+   window's sliders and mapped controls; modulators; presets keep which
+   parameters are on. Defaults taken:
+   - a list by position is `fxlags t 1 2 [4,1,0,2]`; `fxlag t 1 2 [...]`
+     keeps its pairs (number or name, then time), as it read them before;
+   - a preset saved with no lags leaves the effect's times alone;
+   - sliders and mapped controls use `ctllag` only on a parameter that is on;
+   - a dB spec moves by the fader's law, as the mixer's volume does.
+2. **Blocks** (built): the same ramp when a block is made (`Block.play`);
+   `blklag` on, off, per block, per parameter, `exc`, `inc`; `blklags` by
+   position; `blklag N` with its own time (`Radicles.blkLag`, 0.5 s; a
+   session keeps it from part 3); `blkset` with a time; `blkgetlag`; the
+   source window; modulators by number.
+3. **Scopes** (built): `lag N` (`Radicles.setAllLag`), `lag`, `tlag`
+   (`Assemblage.setTrackLag`); a session keeps `fxlag N` and `blklag N`.
+4. **Specs with a function** (built): `Assemblage.specPath` works the path
+   out from the function itself (it samples the function along the range,
+   takes each run of one value as a step, and puts a point in the middle of
+   each; at most 65 points), so no library file changes and the function
+   need not run on the server. `Assemblage.specRamp` finds the value's place
+   on the path, ramps between places and reads the value back; while
+   nothing moves the value is passed as it is.
+   **A unit with too many parameters** (decided 23 Nov): a function takes
+   255 arguments at most, and the RAVE library's `afterImprov` and
+   `afterImprov2` (157 parameters, 96 that can travel) would need more with
+   their time controls. Such a unit has its time controls made by name
+   inside the wrapper (`Assemblage.unitTimes`), so it gets the same ramps
+   as any other. Before this, parts 1 to 3 made these two units without
+   ramps and SuperCollider posted error lines.
+5. **Loads** (built): `glide` in `fxload` and `blkload` (and through them
+   `csload` and `tload`) moves the values that can travel on their own ramps
+   over the load's time, in one set, with nothing rebuilt. Values that
+   cannot travel jump at the end, unless the performer has set or mapped
+   them since the load began (a command during a load wins). A load stopped
+   by another does not set them.
+   **Specs for six units** (decided 23 Nov): `pch2`, `pch3`, `pch4`, `harm`,
+   `harm2` and `cct1`'s `sinadd` had none, so a glide load of them would
+   have jumped where it glided before. They have specs now (the pitch
+   shifters' as `pch`). `pch3`'s `bus` reads 1 to 8, as the other units'
+   inputs do; a number below 1 from an older preset is the first input.
+
+## To check while building
+
+- Whether the call window reads a list of bare names (`[freq,amp]`) as it is.
+- How today's list form of `fxlag` (`fxlag t 1 2 [...]`) is laid out, so the
+  new lists do not contradict it.
+- `fxlagn`, `fxlags`, `lagfx`, `lagsfx`, `blklagn`: which stay, which become
+  forms of the above.
+
+## Known consequences
+
+- Every effect and block with a rampable parameter is posted inside a short
+  wrapper, so most snapshots change.
+- Each rampable parameter gets time controls; presets and sessions carry
+  them, and a session keeps the scope times as it keeps `mixlag`.
+- A modulator mapped to a parameter that is on takes its ramp off while it
+  is mapped (as in the mixer).
+- A parameter whose function shifts the range (`adjVol`: 0.2 to 2.0, less
+  0.01) has a path that ends just short of a value typed at the end of the
+  range: a move to 2.0 arrives at 1.99 and then steps to 2.0.
+- Later, if missed: a mark in a spec that overrides the 30-step rule, a mark
+  for "never ramp", and specs for units that have none. None is needed to
+  start.
+- A value typed outside the function's own range (a pitch ratio above the
+  spec's highest) stops at the end of the path during a move, then jumps to
+  the value.
+- A unit that smooths a value inside its own function (`pch2`'s `lag`) keeps
+  doing so.

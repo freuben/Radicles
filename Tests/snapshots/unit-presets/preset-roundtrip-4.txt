@@ -2,37 +2,61 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg freq=3 , decayTime=0.025 ;
+Ndef('filterTrack_1_1', {arg freq = 3, decayTime = 0.025, freqLag = 0, freqRamp = 0, decayTimeLag = 0, decayTimeRamp = 0;
+    {arg freq=3 , decayTime=0.025 ;
     var trig;
     trig = Decay.kr(Dust.kr(freq), decayTime);
-    Gate.ar(Ndef.ar('inTrack1', 1), trig)});
+    Gate.ar(Ndef.ar('inTrack1', 1), trig)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(decayTimeRamp > 0, [decayTime, VarLag.kr(decayTime.max(1e-9).log, decayTimeRamp.max(ControlDur.ir), warp: \lin).exp])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.05);
 Ndef('filterTrack_1_1').xset('decayTime', 0.0, 'freq', 0.3);
-Ndef('filterTrack_1_1', {arg freq=3 , decayTime=0.025 ,
+Ndef('filterTrack_1_1', {arg freq = 3, decayTime = 0.025, minFreq = 0.1, maxFreq = 10, freqLag = 0, freqRamp = 0, decayTimeLag = 0, decayTimeRamp = 0, minFreqLag = 0, minFreqRamp = 0, maxFreqLag = 0, maxFreqRamp = 0;
+    {arg freq=3 , decayTime=0.025 ,
     minFreq=0.1 , maxFreq=10 ;
     var trig;
     trig = Decay.kr(Impulse.kr(LFNoise1.kr(freq).linlin(-1,1,minFreq,maxFreq)), decayTime);
-    Gate.ar(Ndef.ar('inTrack1', 1), trig)});
+    Gate.ar(Ndef.ar('inTrack1', 1), trig)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(decayTimeRamp > 0, [decayTime, VarLag.kr(decayTime.max(1e-9).log, decayTimeRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(minFreqRamp > 0, [minFreq, VarLag.kr(minFreq.max(1e-9).log, minFreqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(maxFreqRamp > 0, [maxFreq, VarLag.kr(maxFreq.max(1e-9).log, maxFreqRamp.max(ControlDur.ir), warp: \lin).exp])) });
 Ndef('filterTrack_1_1').xset('freq', 0.3, 'decayTime', 0.0, 'maxFreq', 18.15, 'minFreq', 0.13);
-Ndef('filterTrack_1_1', {arg gates=1, adjVol=1;
-    Gate.ar(Ndef.ar('inTrack1', 1), gates.round(1))*adjVol});
+Ndef('filterTrack_1_1', {arg gates = 1, adjVol = 1, adjVolLag = 0, adjVolRamp = 0;
+    {arg gates=1, adjVol=1;
+    Gate.ar(Ndef.ar('inTrack1', 1), gates.round(1))*adjVol}.value(gates,
+        Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('gates', 0.0, 'adjVol', 3.7);
-Ndef('filterTrack_1_1', {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).distort * (lagdr.sqrt/lagdr))*adjVol});
+Ndef('filterTrack_1_1', {arg drive = 1, adjVol = 1, lag = 0.1, driveLag = 0, driveRamp = 0, adjVolLag = 0, adjVolRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).distort * (lagdr.sqrt/lagdr))*adjVol}.value(Select.kr(driveRamp > 0, [drive, VarLag.kr(drive, driveRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(adjVol, adjVolRamp, [0.2, 2.0], {|val| val.round(0.01)-0.01}),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('drive', 74.63, 'lag', 5.5563, 'adjVol', 0.86);
-Ndef('filterTrack_1_1', {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).softclip * (lagdr.sqrt/lagdr))*adjVol});
+Ndef('filterTrack_1_1', {arg drive = 1, adjVol = 1, lag = 0.1, driveLag = 0, driveRamp = 0, adjVolLag = 0, adjVolRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).softclip * (lagdr.sqrt/lagdr))*adjVol}.value(Select.kr(driveRamp > 0, [drive, VarLag.kr(drive, driveRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(adjVol, adjVolRamp, [0.2, 2.0], {|val| val.round(0.01)-0.01}),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('drive', 74.63, 'lag', 5.5563, 'adjVol', 0.86);
-Ndef('filterTrack_1_1', {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).clip2 * (lagdr.sqrt/lagdr))*adjVol});
+Ndef('filterTrack_1_1', {arg drive = 1, adjVol = 1, lag = 0.1, driveLag = 0, driveRamp = 0, adjVolLag = 0, adjVolRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).clip2 * (lagdr.sqrt/lagdr))*adjVol}.value(Select.kr(driveRamp > 0, [drive, VarLag.kr(drive, driveRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(adjVol, adjVolRamp, [0.2, 2.0], {|val| val.round(0.01)-0.01}),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('drive', 74.63, 'lag', 5.5563, 'adjVol', 0.86);
-Ndef('filterTrack_1_1', {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).fold2(1) * (lagdr.sqrt/lagdr))*adjVol});
+Ndef('filterTrack_1_1', {arg drive = 1, adjVol = 1, lag = 0.1, driveLag = 0, driveRamp = 0, adjVolLag = 0, adjVolRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).fold2(1) * (lagdr.sqrt/lagdr))*adjVol}.value(Select.kr(driveRamp > 0, [drive, VarLag.kr(drive, driveRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(adjVol, adjVolRamp, [0.2, 2.0], {|val| val.round(0.01)-0.01}),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('drive', 74.63, 'lag', 5.5563, 'adjVol', 0.86);
-Ndef('filterTrack_1_1', {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).wrap2(1) * (lagdr.sqrt/lagdr))*adjVol});
+Ndef('filterTrack_1_1', {arg drive = 1, adjVol = 1, lag = 0.1, driveLag = 0, driveRamp = 0, adjVolLag = 0, adjVolRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg drive=1, adjVol=1, lag=0.1; var lagdr; lagdr = drive.lag(lag);((Ndef.ar('inTrack1', 1)*lagdr).wrap2(1) * (lagdr.sqrt/lagdr))*adjVol}.value(Select.kr(driveRamp > 0, [drive, VarLag.kr(drive, driveRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(adjVol, adjVolRamp, [0.2, 2.0], {|val| val.round(0.01)-0.01}),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('drive', 74.63, 'lag', 5.5563, 'adjVol', 0.86);
-Ndef('filterTrack_1_1', {arg vol=0 ;
+Ndef('filterTrack_1_1', {arg vol = 0, volLag = 0, volRamp = 0;
+    {arg vol=0 ;
     (Ndef.ar('inTrack1', 1)*vol.dbamp).softclip;
- });
+ }.value(Select.kr(volRamp > 0, [vol, (VarLag.kr(((vol.dbamp - 0.0) / 2.0).max(0).sqrt, volRamp.max(ControlDur.ir), warp: \lin).squared * 2.0 + 0.0).ampdb])) });
 Ndef('filterTrack_1_1').xset('vol', -11.27);
 == radpostcont ==
 (none)

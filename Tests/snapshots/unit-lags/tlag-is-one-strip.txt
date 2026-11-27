@@ -1,0 +1,33 @@
+>> tlag t 1 4
+== radpost ==
+Ndef('track1').set('lagTime', 4);
+Ndef('inTrack1').set('lagTime', 4);
+Ndef('spaceTrack1').set('panLag', 4);
+Ndef('busIn1').set('lag1', 4);
+Ndef('filterTrack_1_1').set('freqLag', 4);
+Ndef('block1').set('freqLag', 4, 'phaseLag', 4, 'mulLag', 4);
+== radpostcont ==
+(none)
+
+>> tlag m 2
+== radpost ==
+Ndef('master').set('lagTime', 2);
+Ndef('inMaster').set('lagTime', 2);
+Ndef('spaceMaster').set('panLag', 2);
+== radpostcont ==
+(none)
+
+>> tlag 3 1
+== radpost ==
+Ndef('bus1').set('lagTime', 1);
+Ndef('inBus1').set('lagTime', 1);
+Ndef('spaceBus1').set('panLag', 1);
+== radpostcont ==
+(none)
+
+>> tlag t 9 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

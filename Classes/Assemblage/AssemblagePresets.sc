@@ -4,7 +4,11 @@
 + Assemblage {
 	rawFxPreset {arg ndefKey, filter=true;
 		var mods, keyValues, arr, arr2, arr3, rawWrite, thisKey;
-		Ndef(ndefKey).getKeysValues.do{|item|
+		//(not an effect's time controls that are off, nor the time of its
+		//last move)
+		Ndef(ndefKey).getKeysValues.reject{|item|
+			Assemblage.timeControl(Ndef(ndefKey).controlKeys, item[0]) and: {
+				item[1] == 0 or: { item[0].asString.endsWith("Ramp") } } }.do{|item|
 			var modArr;
 			if(item[1].cs.find("Ndef").notNil, {
 				modArr = ModMap.modInfoArr.detect({|it| it[0] == item[1].key });
@@ -159,7 +163,9 @@
 		//already there: nothing to do
 		current = RadUnit.read(ndefKey, this);
 		if(current.notNil and: {
-			RadDoc.diff(this.prMorphed(current), this.prMorphed(unit), 1e-9).isEmpty }, {
+			RadDoc.diff(this.prMorphed(current), this.prMorphed(unit), 1e-9).isEmpty } and: {
+			//(a preset that says which parameters are on brings that too)
+			this.prLagsDiffer(current, unit).not }, {
 			action.(); ^true
 		});
 		//the time: the command's, else the effect's own fade time
@@ -235,6 +241,8 @@
 				filterArgs = newArr[0];
 				newFilterNdef ?? {newFilterNdef = filterArgs[0]};
 				if([filterArgs[2], filterArgs[3]].detect({|item| item.notNil }).isNil, {
+					//(at once, whatever time the parameters' last moves had)
+					Assemblage.unitStillCode(newFilterNdef) !? {|code| code.radcode };
 					("Ndef(" ++ newFilterNdef.cs ++ ").set" ++
 						filterArgs[1].cs.replace("[", "(").replace("]", ")")++ ";").radcode;
 					server.sync;

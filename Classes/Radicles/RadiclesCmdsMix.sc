@@ -2853,6 +2853,34 @@
 		cW.add(\mixlag, [\str, \num], {|str1, num1|
 			Radicles.setMixLag(num1);
 		}, "mixlag: time (typed values: every mixer control running and made later)");
+		// lag N: the whole session (mixlag, fxlag and blklag together); tlag:
+		// one strip, with its effects and its block
+		// (docs/design/lags-blocks-effects.md, decision 6)
+		cW.add(\lag, [\str], {|str1|
+			("mixlag " ++ Radicles.mixLag ++ ", fxlag " ++ Radicles.fxLag ++ ", blklag " ++ Radicles.blkLag).radpostwarn;
+		}, "lag: (posts the times of typed values: mixer, effects, blocks)");
+		cW.add(\lag, [\str, \num], {|str1, num1|
+			Radicles.setAllLag(num1);
+		}, "lag: time (typed values in the whole session: the mixer, and the effect and block parameters that are on)");
+		[\num, \dash, \arr].do{|which|
+			cW.add(\tlag, [\str, \str, which, \num], {|str1, str2, nums, time|
+				this.prTrackLag(this.prTypeTargets(str2, nums), time) },
+			"tlag: [trackType, trackNum, time]");
+			cW.add(\tlag, [\str, which, \num], {|str1, nums, time|
+				this.prTrackLag(aZ !? { this.prMixTargets(nums) }, time) },
+			"tlag: [mixTrackNum, time]");
+		};
+		cW.add(\tlag, [\str, \str, \num], {|str1, str2, time|
+			if(str2.asSymbol == \m, { this.prTrackLag([[\master, 1]], time) }, {
+				("tlag " ++ str2 ++ " needs a number: tlag " ++ str2 ++ " 1 " ++ time).warn }) },
+		"tlag: [m, time]");
+	}
+
+	*prTrackLag {|targets, time|
+		case
+		{ aZ.isNil } { "could not find assemblage".warn }
+		{ targets.isNil or: { targets.isEmpty } } { "Track not found".warn }
+		{ targets.do{|target| aZ.setTrackLag(target[0], target[1], time) } };
 	}
 
 	// pan commands by the control's name, each with a time for that one move

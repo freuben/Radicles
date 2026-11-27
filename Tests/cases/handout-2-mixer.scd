@@ -68,7 +68,7 @@ var vol = {|key| Ndef(key).get('volume') };
 );
 ~radTest.("fx-lags-current",
 	setup: ["start 2", "fx t 1 pch", "fx 1 2 dl1"],
-	cmds: ["fxlag t 1 1 10", "fxlag 1 2 5", "fxlagn t 1 2 10"],
+	cmds: ["fxlag t 1 1 on", "fxlag t 1 1 10", "fxlag 1 2 on", "fxlag 1 2 5", "fxlagn t 1 2 10"],
 	noWarnings: true
 );
 

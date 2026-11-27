@@ -7,12 +7,13 @@
 //   \xfade (default): one xset with every changed argument, a single
 //     crossfade over the Ndef's fade time. Only when another time was typed
 //     is the fade time set to it first, and put back afterwards.
-//   \glide: each changed argument gets the time as its lag, then one set;
-//     the earlier lags go back afterwards.
+//   \glide: each changed argument that can travel (it has a ramp: a plain
+//     spec) moves over the time on its spec's scale, in one set, with
+//     nothing rebuilt; the others jump at the end.
 //   \none (or a time of 0): the values are set at once.
 // Modulators the preset adds, changes or removes fade with the rest (ModMap
-// maps with xset over the fade time). The fade time and lags always go
-// back, also when a load is interrupted by another or the effect is removed.
+// maps with xset over the fade time). The fade time always goes back, also
+// when a load is interrupted by another or the effect is removed.
 // Part of the Assemblage class: the class and its variables are in Assemblage.sc.
 
 + Assemblage {
@@ -34,6 +35,13 @@
 		});
 	}
 
+	// does a preset say which parameters are on, and differently from now?
+	// (one saved with none leaves the unit's times as they are)
+	prLagsDiffer {arg current, unit;
+		^unit.notNil and: { current.notNil } and: { unit[\lags].notNil } and: {
+			RadDoc.diff((l: current[\lags] ? ()), (l: unit[\lags]), 1e-9).notEmpty }
+	}
+
 	// the part of a unit a load changes
 	prMorphed {arg unit;
 		^(args: unit[\args], mods: unit[\mods], data: unit[\data], buffer: unit[\buffer])
@@ -50,7 +58,7 @@
 			shape = \none;
 		});
 		{
-			var routine = thisThread, restore, setFunc, lagKeys, oldLags;
+			var routine = thisThread, restore, setFunc, later, before;
 			this.prStopMorph(ndefKey); //an interrupted load puts its times back first
 			case
 			{ shape == \xfade } {
@@ -66,22 +74,13 @@
 				};
 			}
 			{ shape == \glide } {
-				restore = {
-					if(lagKeys.notNil, {
-						("Ndef(" ++ ndefKey.cs ++ ").lag(" ++
-							[lagKeys, oldLags].flop.flatten.collect(_.cs).join(", ") ++ ");").radcode;
-					});
-				};
+				//nothing is rebuilt and no time is changed, so nothing goes back
+				restore = {};
 				setFunc = {|ndef, pairs|
-					lagKeys = pairs[0, 2..];
-					oldLags = ndef.nodeMap.ratesFor(lagKeys) ?? { nil ! lagKeys.size };
-					("Ndef(" ++ ndef.key.cs ++ ").lag(" ++
-						lagKeys.collect{|key| [key, time] }.flatten.collect(_.cs).join(", ") ++ ");").radcode;
-					//the lag rebuilds the effect: let the old copy, which has no lag,
-					//fade out before the values change
-					server.sync;
-					ndef.fadeTime.wait;
-					("Ndef(" ++ ndef.key.cs ++ ").set(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
+					var split = Assemblage.glideSplit(ndef.key, pairs);
+					later = split[1];
+					if(split[0].notEmpty, { Assemblage.unitSetCode(ndef.key, split[0], time).radcode });
+					before = Assemblage.glideStart(ndef.key, later);
 				};
 			}
 			{ restore = {} };
@@ -94,11 +93,48 @@
 			});
 			//done (or not applied): put the times back
 			if(morphs !? {|m| m[ndefKey] } !? {|m| m[\routine] === routine } ? false, {
+				//a glide's values that cannot travel jump now, at the end (not
+				//when the load was stopped by another: they were this load's)
+				if(later.notNil and: { later.notEmpty }, {
+					later = Assemblage.glideLater(ndefKey, later, before);
+					if(later.notEmpty, {
+						Assemblage.unitSetCode(ndefKey, later, 0).radcode;
+						this.updateFxWin(ndefKey) }) });
 				restore.value;
 				morphs.removeAt(ndefKey);
 			});
 			action.();
 		}.fork(AppClock);
+	}
+
+	// a glide's values (a flat list of names and values) in two parts: those
+	// that travel over the load's time on their spec's scale (a parameter
+	// with a ramp, a number), and those that jump at the end
+	*glideSplit {arg ndefKey, pairs;
+		var can = Assemblage.lagParams(Ndef(ndefKey)), travel = [], jump = [];
+		pairs.pairsDo{|key, value|
+			if(can.includes(key) and: { value.isNumber }, { travel = travel ++ [key, value] }, { jump = jump ++ [key, value] }) };
+		^[travel, jump]
+	}
+
+	// A glide's values that jump at the end are still the performer's while
+	// the load runs: a value typed, moved on a slider or by a controller, or
+	// mapped to a modulator since the load began wins, as a command typed
+	// during any load does. glideStart notes where those values were and
+	// starts noting what is set; glideLater gives back the ones to set.
+	*glideStart {arg ndefKey, later;
+		unitTouched = unitTouched ?? { IdentityDictionary.new };
+		unitTouched[ndefKey] = IdentitySet.new;
+		^(later ? [])[0, 2..].collect{|key| Ndef(ndefKey).nodeMap.at(key) }
+	}
+
+	*glideLater {arg ndefKey, later, before;
+		var touched = unitTouched !? {|all| all.removeAt(ndefKey) } ? [], result = [];
+		later.pairsDo{|key, value, index|
+			var now = Ndef(ndefKey).nodeMap.at(key);
+			if(touched.includes(key).not and: { now == (before ? [])[index div: 2] }, {
+				result = result ++ [key, value] }) };
+		^result
 	}
 
 	// ---- chain load (Document Model, step 3, PR 3) ----
@@ -134,7 +170,7 @@
 			var cur = current[slot], tgt = target[slot];
 			cur.isNil or: { tgt.isNil } or: { cur[\def] != tgt[\def] } or: {
 				(cur[\bypass] == true) != (tgt[\bypass] == true) } or: {
-				RadDoc.diff(this.prMorphed(cur), this.prMorphed(tgt), 1e-9).notEmpty } };
+				RadDoc.diff(this.prMorphed(cur), this.prMorphed(tgt), 1e-9).notEmpty or: { this.prLagsDiffer(cur, tgt) } } };
 		if(changed.isEmpty, { built.(); action.(); ^this });
 		//the time: the command's, else the strip's own fade time
 		time = (time ?? { Radicles.ownFade(strip) } ? 0).max(0);
@@ -148,7 +184,8 @@
 			//stages that keep their own fade time: the panner (no load
 			//rebuilds it, and tload glides the pan with its lag, which
 			//crossfades over this fade time before the values move), and
-			//with glide the effects that stay (their lag does the same)
+			//with glide the effects that stay (their values move on their
+			//own ramps: nothing is crossfaded)
 			leave = [RadUnit.stripKeys(strip)[2]];
 			if(shape == \glide, { leave = leave ++ same.collect{|slot| RadUnit.chainTag(type, num, slot) } });
 			//a new load on the strip stops the one running, and those of its
@@ -198,7 +235,8 @@
 			// time is already the load's, and goes back with the strip's
 			same.do{|slot|
 				var unit = target[slot], tag = RadUnit.chainTag(type, num, slot);
-				if(RadDoc.diff(this.prMorphed(current[slot]), this.prMorphed(unit), 1e-9).notEmpty, {
+				if(RadDoc.diff(this.prMorphed(current[slot]), this.prMorphed(unit), 1e-9).notEmpty
+					or: { this.prLagsDiffer(current[slot], unit) }, {
 					this.morphUnit(tag, unit, time, shape, fadeBack: time, quiet: quiet);
 				});
 			};
