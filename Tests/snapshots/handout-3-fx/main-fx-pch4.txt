@@ -2,10 +2,16 @@
 == radpost ==
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
-Ndef('filterTrack_1_1', {arg pitchRatio=1.0, amp=1,
- pitchDispertion=0.0, timeDispersion=0.0001, winSize=0.02, transp=1;
-    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (pitchRatio*transp), pitchDispertion,
-            timeDispersion)*amp});
+Ndef('filterTrack_1_1', {arg pitchRatio = 1.0, amp = 1, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, transp = 1, pitchRatioLag = 0, pitchRatioRamp = 0, ampLag = 0, ampRamp = 0, pitchDispertionLag = 0, pitchDispertionRamp = 0, timeDispersionLag = 0, timeDispersionRamp = 0, winSizeLag = 0, winSizeRamp = 0, transpLag = 0, transpRamp = 0;
+    {arg pitchRatio=1.0 , amp=1 ,
+    pitchDispertion=0.0 ,
+    timeDispersion=0.0001 , winSize=0.02 , transp=1 ;
+    PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, (pitchRatio*transp), pitchDispertion, timeDispersion)*amp }.value(Assemblage.specRamp(pitchRatio, pitchRatioRamp, [-12, 12], {|val| val.round(0.4).midiratio }),
+        Select.kr(ampRamp > 0, [amp, VarLag.kr(amp, ampRamp.max(ControlDur.ir), warp: \lin)]),
+        Assemblage.specRamp(pitchDispertion, pitchDispertionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Assemblage.specRamp(timeDispersion, timeDispersionRamp, [0.01, 2.01, 'exp'], {|val| (val-0.01)}),
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(transpRamp > 0, [transp, VarLag.kr(transp.max(1e-9).log, transpRamp.max(ControlDur.ir), warp: \lin).exp])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});

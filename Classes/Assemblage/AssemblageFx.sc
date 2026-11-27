@@ -623,6 +623,8 @@
 	*unitSetCode {arg ndefKey, pairs, time, bracketStyle=false;
 		var ndef = Ndef(ndefKey), ramps = [], body;
 		if(Radicles.aZ.notNil and: { Radicles.aZ.isBypassed(ndefKey) }, { time = 0 });
+		//(what has been set since a glide load began: glideStart, glideLater)
+		unitTouched !? {|touched| touched[ndefKey] !? {|keys| keys.addAll(pairs[0, 2..]) } };
 		pairs.pairsDo{|key, value|
 			var rampKey = (key ++ "Ramp").asSymbol, move;
 			if((time ? 0) > 0 and: { Assemblage.lagParams(ndef).includes(key).not }, {

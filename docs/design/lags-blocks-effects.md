@@ -141,8 +141,17 @@ used and must not change how library files are written.
    inside the wrapper (`Assemblage.unitTimes`), so it gets the same ramps
    as any other. Before this, parts 1 to 3 made these two units without
    ramps and SuperCollider posted error lines.
-5. **Loads:** `glide` follows the rule; values that cannot travel jump at
-   the end.
+5. **Loads** (built): `glide` in `fxload` and `blkload` (and through them
+   `csload` and `tload`) moves the values that can travel on their own ramps
+   over the load's time, in one set, with nothing rebuilt. Values that
+   cannot travel jump at the end, unless the performer has set or mapped
+   them since the load began (a command during a load wins). A load stopped
+   by another does not set them.
+   **Specs for six units** (decided 23 Nov): `pch2`, `pch3`, `pch4`, `harm`,
+   `harm2` and `cct1`'s `sinadd` had none, so a glide load of them would
+   have jumped where it glided before. They have specs now (the pitch
+   shifters' as `pch`). `pch3`'s `bus` reads 1 to 8, as the other units'
+   inputs do; a number below 1 from an older preset is the first input.
 
 ## To check while building
 

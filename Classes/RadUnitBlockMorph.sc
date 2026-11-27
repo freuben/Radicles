@@ -12,11 +12,13 @@
 //   \xfade: one xset, a single crossfade between the block as it was and as
 //     the preset has it, over the Ndef's fade time. Only when another time
 //     was typed is the fade time set to it first, and put back afterwards.
-//   \glide: each changed value gets the time as its lag, then one set.
+//   \glide: each changed value that can travel (it has a ramp: a plain
+//     spec) moves over the time on its spec's scale, with nothing rebuilt;
+//     the others jump at the end.
 //   \none: the values are set at once.
 // A sound-file block that reports its position (RadPosition) keeps its
-// place: before anything makes a new copy of the block (the xset, a lag,
-// a modulator), startPos is set to where the file is, so the new copy
+// place: before anything makes a new copy of the block (the xset, a
+// modulator), startPos is set to where the file is, so the new copy
 // carries on from there; once the load is over startPos goes back
 // (PlayBuf reads it only when it starts or is triggered, so that is silent).
 // A preset with another sound file or table plays the block again with it
@@ -62,8 +64,8 @@
 		^true
 	}
 
-	// stop a load running on a block, putting its fade time and lags back
-	// (not when the block is being removed: putting a lag back rebuilds it)
+	// stop a load running on a block, putting its fade time back
+	// (not when the block is being removed)
 	*prStopBlockMorph {|tag, restore = true|
 		var morph = blockMorphs !? {|m| m[tag] };
 		if(morph.notNil, {
@@ -85,7 +87,7 @@
 		startPos = (unit[\args] ? ()).at(\startPos) ?? { (current[\args] ? ()).at(\startPos) };
 		if(keepPlace, { unit = unit.deepCopy; unit[\args].removeAt(\startPos) });
 		{
-			var routine = thisThread, restore, setFunc, fade, lagKeys, oldLags, ndef = Ndef(tag), putPlace;
+			var routine = thisThread, restore, setFunc, fade, later, before, ndef = Ndef(tag), putPlace;
 			this.prStopBlockMorph(tag); //an interrupted load puts its times back first
 			putPlace = {
 				if(keepPlace, {
@@ -107,28 +109,13 @@
 				};
 			}
 			{ shape == \glide } {
-				restore = {
-					if(lagKeys.notNil, {
-						//putting the lags back rebuilds the block too: keep the place
-						if(keepPlace, { this.prKeepPlace(block) });
-						("Ndef(" ++ tag.cs ++ ").lag(" ++
-							[lagKeys, oldLags].flop.flatten.collect(_.cs).join(", ") ++ ");").radcode;
-						if(keepPlace, { Server.default.sync; ndef.fadeTime.wait });
-					});
-					putPlace.();
-				};
+				//nothing is rebuilt and no time is changed: only the place goes back
+				restore = { putPlace.() };
 				setFunc = {|ndef, pairs|
-					lagKeys = pairs[0, 2..];
-					oldLags = ndef.nodeMap.ratesFor(lagKeys) ?? { nil ! lagKeys.size };
-					("Ndef(" ++ ndef.key.cs ++ ").lag(" ++
-						lagKeys.collect{|key| [key, time] }.flatten.collect(_.cs).join(", ") ++ ");").radcode;
-					//the lag rebuilds the block: let the old copy, which has no lag,
-					//fade out before the values change
-					Server.default.sync;
-					ndef.fadeTime.wait;
-					//(at once here: the glide is the lag's, whatever time the
-					//parameters' last moves had)
-					Assemblage.unitSetCode(ndef.key, pairs, 0).radcode;
+					var split = Assemblage.glideSplit(ndef.key, pairs);
+					later = split[1];
+					if(split[0].notEmpty, { Assemblage.unitSetCode(ndef.key, split[0], time).radcode });
+					before = Assemblage.glideStart(ndef.key, later);
 				};
 			}
 			{ restore = { putPlace.() } };
@@ -141,6 +128,13 @@
 			});
 			//done (or not applied): put the times back
 			if(blockMorphs !? {|m| m[tag] } !? {|m| m[\routine] === routine } ? false, {
+				//a glide's values that cannot travel jump now, at the end
+				//(not one set or mapped since the load began: glideLater)
+				if(later.notNil and: { later.notEmpty }, {
+					later = Assemblage.glideLater(tag, later, before);
+					if(later.notEmpty, {
+						Assemblage.unitSetCode(tag, later, 0).radcode;
+						Radicles.aZ !? {|az| az.updateSourceWin(tag) } }) });
 				restore.value;
 				blockMorphs.removeAt(tag);
 			});

@@ -480,3 +480,27 @@
 	}
 );
 
+
+// Six units of Main had parameters with no spec, so nothing of theirs could
+// travel and a glide load would jump (23 Nov 2026): pch2, pch3, pch4, harm,
+// harm2 and cct1's sinadd now have specs. pch3's bus is a number (it
+// jumps), and reads 1 to 8 as the other units' inputs do (a number below 1,
+// from a preset saved before, is the first input).
+~radTest.("units-given-specs-travel",
+	setup: ["start 2", "fx t 1 harm2", "fx t 1 2 pch4"],
+	cmds: ["fxlag t 1 1 pitchRatio1 2", "fxset t 1 2 transp 2 3"],
+	check: {
+		var ramps = {|unit| (Assemblage.rampUnit(SynthFile.read(\filter, unit), SpecFile.read(\filter, unit, false)).def.argNames ? [])
+			.count{|name| name.asString.endsWith("Ramp") } };
+		var counts = [\pch2, \pch3, \pch4, \harm, \harm2, \cct1].collect{|unit| ramps.(unit) };
+		var pch3 = SynthFile.read(\filter, \pch3);
+		case
+		{ counts != [5, 6, 6, 24, 12, 4] } { "parameters that can travel in pch2, pch3, pch4, harm, harm2, cct1: " ++ counts.cs }
+		{ pch3.def.prototypeFrame[pch3.def.argNames.indexOf(\bus)] != 1 } { "pch3's bus does not start at 1" }
+		{ pch3.def.sourceCode.contains("(bus.round(1) - 1).max(0)").not } { "pch3 does not read input bus - 1 (the first for a number below 1)" }
+		{ Assemblage.unitLag(Ndef(\filterTrack_1_1), \pitchRatio1) != 2 } { "harm2's pitchRatio1 time: " ++ Assemblage.unitLag(Ndef(\filterTrack_1_1), \pitchRatio1).cs }
+		{ Ndef(\filterTrack_1_2).nodeMap.at(\transpRamp) != 3 } { "pch4's transp, the time of its move: " ++ Ndef(\filterTrack_1_2).nodeMap.at(\transpRamp).cs }
+		{ true }
+	},
+	noWarnings: true
+);

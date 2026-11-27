@@ -33,30 +33,66 @@
 	teardown: ~radMorphClean
 );
 
-// glide: the changed argument gets the morph time as its lag, then one set;
-// the earlier lag (none) goes back after
+// glide: the changed argument moves over the morph time on its own ramp, in
+// one set (lags, part 5: nothing is rebuilt, so no NodeProxy lag and no
+// fade); the parameter's own time for typed values stays as it was (off)
 ~radTest.("morph-glide",
 	setup: ~radMorphSetup,
 	code: {
 		Radicles.cW.callFunc("fxload t 1 1 radtest_m 3 glide"); 1.5.wait;
-		~radMid = [~radLag.(), ~radFade.()];
+		~radMid = [Ndef(\filterTrack_1_1).nodeMap.at(\pitchRatioRamp), ~radFade.(), ~radLag.()];
 		3.wait;
 	},
 	check: {
 		case
-		{ ~radMid[0] != 3 } { "lag during the morph: " ++ ~radMid[0].cs }
+		{ ~radMid[0] != 3 } { "the time of the move during the morph: " ++ ~radMid[0].cs }
 		{ ~radMid[1] != 0.5 } { "glide changed the fade time: " ++ ~radMid[1] }
+		{ ~radMid[2].notNil } { "glide gave the argument a NodeProxy lag: " ++ ~radMid[2].cs }
 		{ ~radRatio.() != 0.5 } { "pitchRatio " ++ ~radRatio.() }
-		{ ~radLag.().notNil } { "lag after: " ++ ~radLag.().cs }
+		{ Assemblage.unitLag(Ndef(\filterTrack_1_1), \pitchRatio) != 0 } {
+			"pitchRatio's own time after: " ++ Assemblage.unitLag(Ndef(\filterTrack_1_1), \pitchRatio).cs }
 		{ true }
 	},
 	teardown: ~radMorphClean
 );
 
-// glide puts back a lag the argument had before
-// (fxlag no longer gives a parameter a NodeProxy lag: it sets the time of a
-// built-in ramp, which a glide leaves as it is; the glide's own lag is gone
-// at the end)
+// a value that cannot travel (frz1's freeze is a switch) jumps at the end
+// of a glide; the one that can travel (adjVol) is set at the start
+~radTest.("morph-glide-jump-at-the-end",
+	setup: ["start 2", "fx t 1 frz1", "fxset t 1 1 freeze 1", "fxset t 1 1 adjVol 3", "fxsave t 1 1 radtest_j",
+		"fxset t 1 1 freeze 0", "fxset t 1 1 adjVol 1"],
+	code: {
+		Radicles.cW.callFunc("fxload t 1 1 radtest_j 3 glide"); 1.5.wait;
+		~radMid = [Ndef(\filterTrack_1_1).get(\freeze), Ndef(\filterTrack_1_1).get(\adjVol),
+			Ndef(\filterTrack_1_1).nodeMap.at(\adjVolRamp)];
+		3.wait;
+	},
+	check: {
+		case
+		{ ~radMid[0] != 0 } { "freeze during the glide: " ++ ~radMid[0] }
+		{ ~radMid[1] != 3 or: { ~radMid[2] != 3 } } { "adjVol and the time of its move during the glide: " ++ ~radMid[1..].cs }
+		{ Ndef(\filterTrack_1_1).get(\freeze) != 1 } { "freeze after the glide: " ++ Ndef(\filterTrack_1_1).get(\freeze) }
+		{ true }
+	},
+	teardown: ~radMorphClean
+);
+
+// ...but not when the performer has set it since the load began, even to
+// the value it had: a command typed during a load wins
+~radTest.("morph-glide-command-wins-over-the-jump",
+	setup: ["start 2", "fx t 1 frz1", "fxset t 1 1 freeze 1", "fxset t 1 1 adjVol 3", "fxsave t 1 1 radtest_j",
+		"fxset t 1 1 freeze 0", "fxset t 1 1 adjVol 1"],
+	code: {
+		Radicles.cW.callFunc("fxload t 1 1 radtest_j 3 glide"); 1.wait;
+		Radicles.cW.callFunc("fxset t 1 1 freeze 0"); 3.5.wait;
+	},
+	check: { (Ndef(\filterTrack_1_1).get(\freeze) == 0 and: { Ndef(\filterTrack_1_1).get(\adjVol) == 3 }) or: {
+		"freeze " ++ Ndef(\filterTrack_1_1).get(\freeze) ++ ", adjVol " ++ Ndef(\filterTrack_1_1).get(\adjVol) } },
+	teardown: ~radMorphClean
+);
+
+// a glide leaves a time a parameter was given with fxlag as it is (the test
+// keeps its name from when a glide set NodeProxy lags and put them back)
 ~radTest.("morph-glide-restores-lag",
 	setup: ~radMorphSetup ++ ["fxlag t 1 1 winSize 0.2"],
 	cmds: [["fxload t 1 1 radtest_m 1 glide", 3]],

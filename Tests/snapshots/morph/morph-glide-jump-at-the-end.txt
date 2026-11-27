@@ -1,0 +1,7 @@
+>> <code>
+== radpost ==
+Ndef('filterTrack_1_1').set('adjVol', 3, 'adjVolRamp', 3);
+Ndef('filterTrack_1_1').set('freeze', 1);
+== radpostcont ==
+(none)
+
