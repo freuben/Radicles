@@ -589,11 +589,32 @@
 	setFxLag {arg time;
 		time = time.max(0);
 		("Radicles.fxLag = " ++ time ++ ";").radcode;
+		(filters ? []).do{|item| Assemblage.unitLagOn(item[0], time) };
+	}
+
+	// a time for the parameters of a unit that are on
+	*unitLagOn {arg ndefKey, time;
+		var ndef = Ndef(ndefKey), on;
+		on = Assemblage.lagParams(ndef).select{|key| Assemblage.unitLag(ndef, key) > 0 };
+		if(on.notEmpty, { Assemblage.unitLagSet(ndefKey, on.collect{|key| [key, time] }.flat) });
+	}
+
+	// tlag: one time for a strip. Its mixer values (volume, trim, pan and
+	// its sends), and the parameters that are on in its effects and in the
+	// block that feeds it.
+	setTrackLag {arg trackType=\track, trackNum=1, lag=0;
+		var name = if(trackType == \master, { \master }, { (trackType ++ trackNum).asSymbol });
+		if((mixTrackNames ? []).includes(name).not, { ^"Track not found".warn });
+		lag = lag.max(0);
+		this.setVolumeLag(trackType, trackNum, lag);
+		this.setTrimLag(trackType, trackNum, lag);
+		this.setPanLag(trackType, trackNum, lag);
+		(RadUnit.readSends(name, this) ? ()).keys.asArray.collect{|bus| bus.asString.divNumStr[1] }.sort.do{|bus|
+			this.setSendVolLag(trackType, trackNum, bus, lag) };
 		(filters ? []).do{|item|
-			var ndef = Ndef(item[0]), on;
-			on = Assemblage.lagParams(ndef).select{|key| Assemblage.unitLag(ndef, key) > 0 };
-			if(on.notEmpty, { Assemblage.unitLagSet(item[0], on.collect{|key| [key, time] }.flat) });
-		};
+			if(this.filterTagOnStrip(item[0], trackType, trackNum), { Assemblage.unitLagOn(item[0], lag) }) };
+		(RadUnit.readInput(name, this) ? []).do{|key|
+			if(RadUnit.blockTags.includes(key), { Assemblage.unitLagOn(key, lag) }) };
 	}
 
 	// the code that sets parameters of an effect to values (a flat list of

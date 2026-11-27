@@ -720,10 +720,7 @@ Block : Radicles {classvar stopFades, <lastDefs, <blocks, <ndefs, <liveBlocks, <
 	*setLag {arg time;
 		time = time.max(0);
 		("Radicles.blkLag = " ++ time ++ ";").radcode;
-		RadUnit.blockTags.do{|tag|
-			var on = Assemblage.lagParams(Ndef(tag)).select{|key| Assemblage.unitLag(Ndef(tag), key) > 0 };
-			if(on.notEmpty, { Assemblage.unitLagSet(tag, on.collect{|key| [key, time] }.flat) });
-		};
+		RadUnit.blockTags.do{|tag| Assemblage.unitLagOn(tag, time) };
 	}
 
 	*playNdefs {

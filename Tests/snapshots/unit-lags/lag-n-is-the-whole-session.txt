@@ -1,0 +1,34 @@
+>> lag
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> lag 3
+== radpost ==
+Radicles.mixLag = 3;
+Ndef('track1').set('lagTime', 3);
+Ndef('inTrack1').set('lagTime', 3);
+Ndef('spaceTrack1').set('panLag', 3);
+Ndef('track2').set('lagTime', 3);
+Ndef('inTrack2').set('lagTime', 3);
+Ndef('spaceTrack2').set('panLag', 3);
+Ndef('bus1').set('lagTime', 3);
+Ndef('inBus1').set('lagTime', 3);
+Ndef('spaceBus1').set('panLag', 3);
+Ndef('master').set('lagTime', 3);
+Ndef('inMaster').set('lagTime', 3);
+Ndef('spaceMaster').set('panLag', 3);
+Radicles.fxLag = 3;
+Ndef('filterTrack_1_1').set('freqLag', 3);
+Radicles.blkLag = 3;
+Ndef('block1').set('freqLag', 3);
+== radpostcont ==
+(none)
+
+>> lag
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
