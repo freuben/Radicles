@@ -1,11 +1,15 @@
 >> fx rm t 1 2
 == radpost ==
 Ndef('filterTrack_1_2').clear(0.5);
-Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+Ndef('filterTrack_1_1', {arg pitchRatio = 1.0, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, winSizeLag = 0, winSizeRamp = 0;
+    {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
  ;
         PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
- });
+ }.value(pitchRatio,
+        pitchDispertion,
+        timeDispersion,
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').set('pitchRatio', 1.0, 'pitchDispertion', 0.0, 'timeDispersion', 0.0001, 'winSize', 0.02);
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)

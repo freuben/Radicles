@@ -1,4 +1,4 @@
-Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=nil,
+Radicles {classvar <>ctlLag = 0.05, <>mixLag = 0.05, <>fxLag = 0.5, <>mainPath, <>libPath, <>nodeTime=0.08, <>server, <>postWin=nil,
 	<>postWhere=\ide, <>fadeTime=0.5, <>schedFunc, <>schedFuncAction, <>schedDiv=1,
 	<bpm, <postDoc, <>lineSize=68, <>oscCode, <>myImprov, <>reducePostControl=false,
 	<>ignorePost=false, <>ignorePostcont=false, <>postCapture, <>colorCritical, <>colorMeter, <>colorWarning,

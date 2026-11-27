@@ -201,6 +201,8 @@
 	*rampKey {arg ndef, key;
 		var name = key.asString, rampKey;
 		rampKey = case
+		//an effect's or a block's parameter that can travel (whatever its name)
+		{ Assemblage.lagParams(ndef).includes(key) } { (name ++ "Ramp").asSymbol }
 		{ key == \volume or: { key == \trim } } { \ramp }
 		{ name.size > 3 and: { name.beginsWith("vol") } and: { name.drop(3).every(_.isDecDigit) } } {
 			("ramp" ++ name.drop(3)).asSymbol }

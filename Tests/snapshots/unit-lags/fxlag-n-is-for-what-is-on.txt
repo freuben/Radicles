@@ -1,0 +1,34 @@
+>> fxlag 2
+== radpost ==
+Radicles.fxLag = 2;
+Ndef('filterTrack_1_1').set('freqLag', 2, 'lagLag', 2);
+== radpostcont ==
+(none)
+
+>> fxlag t 1 2 on
+== radpost ==
+Ndef('filterTrack_1_2').set('delayTimeLag', 2, 'decayTimeLag', 2);
+== radpostcont ==
+(none)
+
+>> fxlag 3
+== radpost ==
+Radicles.fxLag = 3;
+Ndef('filterTrack_1_1').set('freqLag', 3, 'lagLag', 3);
+Ndef('filterTrack_1_2').set('delayTimeLag', 3, 'decayTimeLag', 3);
+== radpostcont ==
+(none)
+
+>> fxlag t 1 2 off
+== radpost ==
+Ndef('filterTrack_1_2').set('delayTimeLag', 0, 'decayTimeLag', 0);
+== radpostcont ==
+(none)
+
+>> fxlag 1
+== radpost ==
+Radicles.fxLag = 1;
+Ndef('filterTrack_1_1').set('freqLag', 1, 'lagLag', 1);
+== radpostcont ==
+(none)
+

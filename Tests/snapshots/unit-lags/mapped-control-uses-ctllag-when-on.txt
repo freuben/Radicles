@@ -1,0 +1,8 @@
+>> <code>
+== radpost ==
+OSCdef('hid1', {arg ...args; {|val| Assemblage.unitSetCode('filterTrack_1_1', ['freq', val], Assemblage.unitNativeTime(Ndef('filterTrack_1_1'), 'freq')).drop(-1).radpostcont.interpret; }.([100.0, 1100.0].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestulfreq');
+OSCdef('hid2', {arg ...args; {|val| Assemblage.unitSetCode('filterTrack_1_1', ['mix', val], Assemblage.unitNativeTime(Ndef('filterTrack_1_1'), 'mix')).drop(-1).radpostcont.interpret; }.([0.0, 1.0].asSpec.map(args[0][1].linlin(0, 1, 0, 1.0)) )},'/radtestulmix');
+== radpostcont ==
+Ndef('filterTrack_1_1').set('freq', 600.0, 'freqRamp', 0.05)
+Ndef('filterTrack_1_1').set('mix', 0.25)
+

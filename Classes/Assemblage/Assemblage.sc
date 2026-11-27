@@ -444,6 +444,113 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 		^("{arg " ++ args.join(", ") ++ ";\n\t" ++ func.cs ++ ".value(" ++ values.join(", ") ++ ") }").interpret
 	}
 
+	// An effect's or a block's function with a ramp on each parameter that can
+	// travel: one whose spec is a plain range (with or without a scale). Not a
+	// parameter with no spec, a spec with a step or with a function, or a
+	// default that is not a number. The ramps are built in and off: each
+	// parameter x gets xLag (its time for typed values; 0 is off) and xRamp
+	// (the time of the move under way), both 0, and at 0 the value passes
+	// through as it is. The library function is kept whole and called with the
+	// ramped values; its controls keep their places, the times come after
+	// them. A move follows the spec's scale: even in value for a linear one,
+	// even in pitch for an exponential one, the fader's law for a dB one.
+	// (docs/design/lags-blocks-effects.md)
+	*rampUnit {arg func, specs;
+		var names, defaults, keys, args, values;
+		if(func.isKindOf(Function).not, { ^func });
+		names = func.def.argNames ? [];
+		defaults = func.def.prototypeFrame ? [];
+		//already wrapped
+		if(names.any{|name| this.timeControl(names, name) }, { ^func });
+		keys = names.select{|name, index|
+			this.rampableSpec((specs ? []).detect{|spec| spec.isArray and: { spec[0] == name } })
+			and: { defaults[index].isNumber }
+			and: { names.includes((name ++ "Lag").asSymbol).not }
+			and: { names.includes((name ++ "Ramp").asSymbol).not } };
+		if(keys.isEmpty, { ^func });
+		args = names.collect{|name, index| name ++ " = " ++ defaults[index].cs }
+		++ keys.collect{|key| key ++ "Lag = 0, " ++ key ++ "Ramp = 0" };
+		values = names.collect{|name| if(keys.includes(name), {
+			this.rampCode(name, (specs.detect{|spec| spec.isArray and: { spec[0] == name } })[1]) }, { name.asString }) };
+		^("{arg " ++ args.join(", ") ++ ";\n\t" ++ func.cs ++ ".value(" ++ values.join(",\n\t\t") ++ ") }").interpret
+		?? { "the ramps could not be added to this function; it is used as it is".warn; func }
+	}
+
+	// true for a library spec ([name, [min, max, scale, step ...], function])
+	// whose parameter can travel
+	*rampableSpec {arg spec;
+		var range;
+		if(spec.isNil, { ^false });
+		if(spec.any(_.isKindOf(Function)), { ^false });
+		range = spec[1];
+		if(range.isArray.not or: { range.size < 2 }, { ^false });
+		if(range[0].isNumber.not or: { range[1].isNumber.not }, { ^false });
+		if(range[3].isNumber and: { range[3] != 0 }, { ^false });
+		^true
+	}
+
+	// the code of one ramped parameter, on its spec's scale
+	*rampCode {arg name, range;
+		var time = name ++ "Ramp.max(ControlDur.ir)", warp = range[2], lo, hi;
+		warp = if(warp.isKindOf(Symbol) or: { warp.isString }, { warp.asSymbol }, { \lin });
+		^case
+		//even in pitch: the ramp runs on the logarithm
+		{ warp == \exp and: { range[0] > 0 } and: { range[1] > 0 } } {
+			"Select.kr(" ++ name ++ "Ramp > 0, [" ++ name ++ ", VarLag.kr(" ++ name
+			++ ".max(1e-9).log, " ++ time ++ ", warp: \\lin).exp])" }
+		//the fader's law, as the mixer's volume
+		{ warp == \db and: { range[1] != inf } and: { range[0] < range[1] } } {
+			lo = range[0].dbamp; hi = range[1].dbamp;
+			"Select.kr(" ++ name ++ "Ramp > 0, [" ++ name ++ ", (VarLag.kr(((" ++ name ++ ".dbamp - " ++ lo ++ ") / "
+			++ (hi - lo) ++ ").max(0).sqrt, " ++ time ++ ", warp: \\lin).squared * " ++ (hi - lo) ++ " + " ++ lo ++ ").ampdb])" }
+		//(the same way out as the others: with no time the value is passed
+		//as it is, in the same control period; a ramp arrives one late, which
+		//a trigger set with it would miss)
+		{ "Select.kr(" ++ name ++ "Ramp > 0, [" ++ name ++ ", VarLag.kr(" ++ name ++ ", " ++ time ++ ", warp: \\lin)])" }
+	}
+
+	// a unit's own parameters, in their places (not its time controls)
+	*paramKeys {arg ndef;
+		var keys = ndef.controlKeys;
+		^keys.reject{|key| this.timeControl(keys, key) }
+	}
+
+	// the parameters of a unit that can travel (they have a time control)
+	*lagParams {arg ndef;
+		var keys;
+		//(a panner's time controls are the mixer's: panlag)
+		if(ndef.key.asString.beginsWith("space"), { ^[] });
+		keys = ndef.controlKeys;
+		//(only what the unit's function has: the node map can still hold the
+		//controls of an earlier unit in this place)
+		if(ndef.source.isKindOf(Function), {
+			keys = keys.select{|key| (ndef.source.def.argNames ? []).includes(key) } });
+		^keys.select{|key| keys.includes((key ++ "Lag").asSymbol) and: { keys.includes((key ++ "Ramp").asSymbol) } }
+	}
+
+	// a unit parameter's time for typed values (0: off), nil when it cannot travel
+	*unitLag {arg ndef, key;
+		if(this.lagParams(ndef).includes(key).not, { ^nil });
+		^ndef.nodeMap.at((key ++ "Lag").asSymbol) ? 0
+	}
+
+	// the arguments that move a unit's parameter to value over time seconds;
+	// the time is sent only when the last move had another and the value is
+	// new (a new time on a running ramp makes it overshoot)
+	*unitRampArgs {arg ndef, key, value, time;
+		var rampKey = (key ++ "Ramp").asSymbol;
+		if(this.lagParams(ndef).includes(key).not, { ^key.cs ++ ", " ++ value.cs });
+		time = time ? this.unitLag(ndef, key);
+		^key.cs ++ ", " ++ value.cs ++ if((ndef.nodeMap.at(rampKey) ? 0) != time and: { ndef.nodeMap.at(key) != value },
+			{ ", " ++ rampKey.cs ++ ", " ++ time }, { "" })
+	}
+
+	// the time the window's sliders and mapped controls move a unit's
+	// parameter over: the native time when the parameter is on, none when off
+	*unitNativeTime {arg ndef, key;
+		^if((this.unitLag(ndef, key) ? 0) > 0, { Radicles.ctlLag }, { 0 })
+	}
+
 	// true for a panner's time controls (xLag, xRamp, where x is another of
 	// its controls): they are not values of the panner
 	*timeControl {arg keys, key;
@@ -455,6 +562,9 @@ Assemblage : Radicles {var <tracks, <specs, <inputs,
 	ndefPrepare {arg ndef, func;
 		var extraArgs, key, result;
 		extraArgs = ndef.controlKeysValues;
+		//(not a unit's time controls that are off: nothing to put back)
+		extraArgs = extraArgs.clump(2).reject{|pair| pair[1] == 0 and: {
+			Assemblage.timeControl(ndef.controlKeys, pair[0]) } }.flatten(1);
 		key = ndef.key;
 		if(extraArgs.isEmpty, {
 			result = [key, func].presetToNdefCS;

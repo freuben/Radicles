@@ -3,9 +3,13 @@
 Ndef('block1', {arg freq=440 , phase=0 , mul=0.4 ; SinOsc.ar(freq,phase,mul)});
 ~buffer0.free;
 ~buffer0 = nil;
-Ndef('filterTrack_1_1', {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inTrack1', 1), freq.lag(lag));});
+Ndef('filterTrack_1_1', {arg freq = 20000, lag = 0.1, freqLag = 0, freqRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg freq=20000 , lag=0.1 ; LPF.ar(Ndef.ar('inTrack1', 1), freq.lag(lag));}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_2').resume;
-Ndef('filterTrack_1_2', {arg freq=20000 , lag=0.1 ; HPF.ar(Ndef.ar('filterTrack_1_1', 1), freq.lag(lag));});
+Ndef('filterTrack_1_2', {arg freq = 20000, lag = 0.1, freqLag = 0, freqRamp = 0, lagLag = 0, lagRamp = 0;
+    {arg freq=20000 , lag=0.1 ; HPF.ar(Ndef.ar('filterTrack_1_1', 1), freq.lag(lag));}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq.max(1e-9).log, freqRamp.max(ControlDur.ir), warp: \lin).exp]),
+        Select.kr(lagRamp > 0, [lag, VarLag.kr(lag, lagRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_2', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
@@ -21,17 +25,23 @@ Ndef('busIn1').xset('vol1', -inf);
 Ndef('mod2').clear(0.5);
 Ndef('track1').set('mute', 1);
 Ndef('track1').set('mute', 0);
-Ndef('filterTrack_1_1', {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
+Ndef('filterTrack_1_1', {arg pitchRatio = 1.0, pitchDispertion = 0.0, timeDispersion = 0.0001, winSize = 0.02, winSizeLag = 0, winSizeRamp = 0;
+    {arg pitchRatio=1.0 , pitchDispertion=0.0 , timeDispersion=0.0001
  , winSize=0.02
  ;
         PitchShift.ar(Ndef.ar('inTrack1', 1), winSize, pitchRatio, pitchDispertion, timeDispersion);
- });
+ }.value(pitchRatio,
+        pitchDispertion,
+        timeDispersion,
+        Select.kr(winSizeRamp > 0, [winSize, VarLag.kr(winSize, winSizeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').set('pitchRatio', 1.0, 'pitchDispertion', 0.0, 'timeDispersion', 0.0001, 'winSize', 0.02);
 Ndef('mod3', {arg freq = 0.1, phase = 0, mul = 1, add = 0; {|val| (val-0.01)}.({arg freq=0.1, phase=0, mul=1, add=0;
     SinOsc.ar(freq, phase, mul).exprange(0.01, 2.01) + add}.(freq, phase, mul, add))});
 Ndef('filterTrack_1_1').xset('pitchDispertion', Ndef('mod3'));
 Ndef('mod1').clear(0.5);
-Ndef('filterTrack_1_2', {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('filterTrack_1_1', 1), 12, delayTime, decayTime)});
+Ndef('filterTrack_1_2', {arg delayTime = 0, decayTime = 1, delayTimeLag = 0, delayTimeRamp = 0, decayTimeLag = 0, decayTimeRamp = 0;
+    {arg delayTime=0, decayTime=1; CombL.ar(Ndef.ar('filterTrack_1_1', 1), 12, delayTime, decayTime)}.value(Select.kr(delayTimeRamp > 0, [delayTime, VarLag.kr(delayTime, delayTimeRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(decayTimeRamp > 0, [decayTime, VarLag.kr(decayTime, decayTimeRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_2').set('delayTime', 0, 'decayTime', 1);
 Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                 (Ndef.ar('filterTrack_1_1', 1) * (VarLag.kr((volume.dbamp / 6.dbamp).sqrt, ramp.max(ControlDur.ir), warp: \lin).squared * 6.dbamp)

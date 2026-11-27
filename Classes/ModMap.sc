@@ -28,7 +28,8 @@ ModMap : Radicles {
 		//running ramp makes it overshoot).
 		//(the same for a strip's trim and a send's level)
 		Assemblage.rampKey(ndef, key) !? {|rampKey|
-			if(ndef.nodeMap.at(rampKey) != 0, {
+			//(an effect's or a block's parameter starts at 0: nothing to do)
+			if((ndef.nodeMap.at(rampKey) ? if(Assemblage.lagParams(ndef).includes(key), { 0 }, { nil })) != 0, {
 				(ndef.cs ++ ".nodeMap.set(" ++ rampKey.cs ++ ", 0);").radcode;
 			});
 		};
@@ -51,7 +52,7 @@ ModMap : Radicles {
 		var indexNodes, thisArr, num;
 
 		if(key.isInteger, {
-			key = ndef.controlKeys[key];
+			key = Assemblage.paramKeys(ndef)[key];
 		});
 		modNodes.do{|item, index| if( item.includes(ndef) and: {item.includes(key)}, //entry holds this Ndef and argument
 			{

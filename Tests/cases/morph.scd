@@ -54,10 +54,15 @@
 );
 
 // glide puts back a lag the argument had before
+// (fxlag no longer gives a parameter a NodeProxy lag: it sets the time of a
+// built-in ramp, which a glide leaves as it is; the glide's own lag is gone
+// at the end)
 ~radTest.("morph-glide-restores-lag",
-	setup: ~radMorphSetup ++ ["fxlag t 1 1 pitchRatio 0.2"],
+	setup: ~radMorphSetup ++ ["fxlag t 1 1 winSize 0.2"],
 	cmds: [["fxload t 1 1 radtest_m 1 glide", 3]],
-	check: { (~radLag.() == 0.2 and: { ~radRatio.() == 0.5 }) or: { "lag " ++ ~radLag.().cs ++ ", pitchRatio " ++ ~radRatio.() } },
+	check: { (~radLag.().isNil and: { ~radRatio.() == 0.5 } and: { Assemblage.unitLag(Ndef(\filterTrack_1_1), \winSize) == 0.2 })
+		or: { "lag " ++ ~radLag.().cs ++ ", pitchRatio " ++ ~radRatio.() ++ ", winSize's time "
+			++ Assemblage.unitLag(Ndef(\filterTrack_1_1), \winSize) } },
 	teardown: ~radMorphClean
 );
 

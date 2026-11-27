@@ -36,6 +36,10 @@
 			if(wasBypassed, { this.prClearBypass(filterTag) });
 			//a load still running on the effect it replaces stops
 			if(replacing, { this.prClearMorph(filterTag) });
+			//the times of the effect that was here: the time of its last move
+			//never reaches the new copy (its values would glide in), and
+			//another effect does not inherit which parameters were on
+			Assemblage.unitTimesReset(filterTag, replacing);
 			ndefArr = this.getThisTrack(type, num);
 			ndefSpace = ndefArr.last;
 			ndefArr = ndefArr.copyRange(0, ndefArr.size-2);
@@ -54,8 +58,9 @@
 					startNdefs.();
 				});
 			});
-			filterInfo = [filterTag, SynthFile.read(\filter, filter);];
 			filterSpecs = [filterTag, SpecFile.read(\filter, filter, false)];
+			//each parameter that can travel gets its ramp, built in and off
+			filterInfo = [filterTag, Assemblage.rampUnit(SynthFile.read(\filter, filter), filterSpecs[1])];
 			cond = Condition(false);
 
 			//one entry per slot: replacing an effect replaces its data
@@ -434,26 +439,20 @@
 		^filters[filterIndex][0];
 	}
 
+	// an effect's own parameters (not its time controls): their names, a flat
+	// list of names and values, or pairs; \lags: each parameter that can
+	// travel with its time for typed values (0: off)
 	getFilterKeys {arg filterTag, type=\args;
-		var result, getKey, controlKeys, ratesFor;
+		var result, keys;
 		Ndef(filterTag).cleanNodeMap;
+		keys = Assemblage.paramKeys(Ndef(filterTag));
 		case
-		{type == \args} { result = Ndef(filterTag).controlKeys; }
-		{type == \vals} { result = Ndef(filterTag).controlKeysValues;}
-		{type == \pairs} { result = Ndef(filterTag).getKeysValues;}
+		{type == \args} { result = keys; }
+		{type == \vals} { result = Ndef(filterTag).getKeysValues.select{|pair| keys.includes(pair[0]) }.flatten(1);}
+		{type == \pairs} { result = Ndef(filterTag).getKeysValues.select{|pair| keys.includes(pair[0]) };}
 		{type == \lags} {
-			getKey = filterTag;
-			controlKeys = Ndef(getKey).controlKeys;
-			ratesFor = Ndef(getKey).nodeMap.ratesFor(
-				controlKeys);
-			if(ratesFor.notNil, {
-				ratesFor.do{|item, index|
-					if(item.notNil, {
-						result = result.add([controlKeys[index], item]);
-					});
-				};
-				result = result.flat;
-			});
+			result = Assemblage.lagParams(Ndef(filterTag)).collect{|key|
+				[key, Assemblage.unitLag(Ndef(filterTag), key)] }.flat;
 		};
 		^result;
 	}
@@ -478,17 +477,147 @@
 		}, {^nil});
 	}
 
+	// the time for typed values of an effect's parameters: one number for
+	// every parameter that can travel, or a list by position (the effect's
+	// parameters in their order; nil or a missing place leaves one as it is)
 	filterLags {arg filterNdefKey, lag=nil;
-		var ndefArgs, argValArr, newNdefArgs;
-		ndefArgs = Ndef(filterNdefKey).controlKeys;
-		if(lag	.isArray, {
-			argValArr = lag
+		var keys = Assemblage.paramKeys(Ndef(filterNdefKey)), pairs;
+		if(lag.isArray, {
+			pairs = lag.collect{|time, index| if(time.isNumber and: { keys[index].notNil }, { [keys[index], time] }) }
+			.reject(_.isNil);
 		}, {
-			argValArr = lag!ndefArgs.size;
+			pairs = Assemblage.lagParams(Ndef(filterNdefKey)).collect{|key| [key, lag] };
 		});
-		newNdefArgs = ([ndefArgs.copyRange(0,argValArr.size-1)] ++ [argValArr]).flop.flat;
-		("Ndef(" ++ filterNdefKey.cs ++ ").lag(" ++ newNdefArgs.cs.asString
-			.replace("[", "").replace("]", "") ++ ");").radcode;
+		Assemblage.unitLagSet(filterNdefKey, pairs.flat);
+	}
+
+	// posts the code that gives parameters of an effect (or a block) their
+	// time for typed values: pairs is a flat list of names and times. A
+	// parameter that cannot travel is named in a warning and left out.
+	// Nothing is rebuilt: the times are controls.
+	*unitLagSet {arg ndefKey, pairs;
+		var can = Assemblage.lagParams(Ndef(ndefKey)), args = [], cannot = [];
+		pairs.pairsDo{|key, time|
+			if(can.includes(key) and: { time.isNumber }, {
+				args = args ++ [(key ++ "Lag").asSymbol, time.max(0)];
+			}, {
+				if(time != 0, { cannot = cannot.add(key) });
+			});
+		};
+		if(cannot.notEmpty, {
+			("cannot travel (no spec, a stepped spec, or a spec with a function): " ++ cannot.join(", ")).warn;
+		});
+		if(args.notEmpty, {
+			("Ndef(" ++ ndefKey.cs ++ ").set(" ++ args.collect(_.cs).join(", ") ++ ");").radcode;
+			RadUnit.sync(ndefKey); //document: which parameters are on
+		});
+	}
+
+	// puts the times of a unit's moves back to none in its node map (and,
+	// with lagsToo, its parameters' own times: off), before it is made again
+	*unitTimesReset {arg ndefKey, lagsToo=false;
+		var ndef = Ndef(ndefKey), args = [];
+		Assemblage.lagParams(ndef).do{|key|
+			[(key ++ "Ramp").asSymbol] ++ if(lagsToo, { [(key ++ "Lag").asSymbol] }, { [] }) do: {|time|
+				if((ndef.nodeMap.at(time) ? 0) != 0, { args = args ++ [time, 0] }) } };
+		if(args.notEmpty, {
+			("Ndef(" ++ ndefKey.cs ++ ").nodeMap.set(" ++ args.collect(_.cs).join(", ") ++ ");").radcode;
+		});
+	}
+
+	// the code that ends the moves under way on a running unit (values set
+	// after it arrive at once), or nil when there is none
+	*unitStillCode {arg ndefKey;
+		var ndef = Ndef(ndefKey), args = [];
+		Assemblage.lagParams(ndef).do{|key|
+			var rampKey = (key ++ "Ramp").asSymbol;
+			if((ndef.nodeMap.at(rampKey) ? 0) != 0, { args = args ++ [rampKey, 0] }) };
+		^if(args.notEmpty, { "Ndef(" ++ ndefKey.cs ++ ").set(" ++ args.collect(_.cs).join(", ") ++ ");" }, { nil })
+	}
+
+	// names for a list of parameters given by name or by number (1 is the
+	// unit's first parameter)
+	*unitParamNames {arg ndefKey, list;
+		var keys = Assemblage.paramKeys(Ndef(ndefKey));
+		^list.asArray.collect{|item| if(item.isNumber, { keys[item.asInteger - 1] }, { item.asSymbol }) }.reject(_.isNil)
+	}
+
+	// on: every parameter that can travel takes the effects' lag time; off:
+	// none travels; a number: the parameters that are on take it; exc: the
+	// listed ones off; inc: only the listed ones on
+	*unitLagMode {arg ndefKey, mode, list, globalTime;
+		var ndef = Ndef(ndefKey), can = Assemblage.lagParams(ndef), names, on;
+		globalTime = globalTime ? Radicles.fxLag;
+		on = can.select{|key| Assemblage.unitLag(ndef, key) > 0 };
+		case
+		{ mode == \on } {
+			if(can.isEmpty, { "none of its parameters can travel".warn }, {
+				Assemblage.unitLagSet(ndefKey, can.collect{|key| [key, globalTime] }.flat) }) }
+		{ mode == \off } {
+			Assemblage.unitLagSet(ndefKey, on.collect{|key| [key, 0] }.flat) }
+		{ mode.isNumber } {
+			if(on.isEmpty, { "none of its parameters is on (on turns them on)".warn }, {
+				Assemblage.unitLagSet(ndefKey, on.collect{|key| [key, mode] }.flat) }) }
+		{ (mode == \exc or: { mode == \inc }) and: { list.asArray.isEmpty } } {
+			("fxlag " ++ mode ++ ": which parameters? (" ++ mode ++ " [freq, 2])").warn }
+		{ mode == \exc } {
+			names = Assemblage.unitParamNames(ndefKey, list);
+			Assemblage.unitLagSet(ndefKey, names.collect{|key| [key, 0] }.flat) }
+		{ mode == \inc } {
+			names = Assemblage.unitParamNames(ndefKey, list);
+			Assemblage.unitLagSet(ndefKey, (names.collect{|key|
+				[key, if((Assemblage.unitLag(ndef, key) ? 0) > 0, { Assemblage.unitLag(ndef, key) }, { globalTime })] }
+			++ can.reject{|key| names.includes(key) }.select{|key| on.includes(key) }.collect{|key| [key, 0] }).flat) }
+		{ ("fxlag: on, off, exc or inc, not " ++ mode).warn };
+	}
+
+	fxTrackLagMode {arg trackType, trackNum, trackSlot, mode, list;
+		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
+			Assemblage.unitLagMode(ndefKey, mode, list);
+		});
+	}
+
+	fxLagMode {arg filterNum, mode, list;
+		this.fxWarn(filterNum, {|ndefKey|
+			Assemblage.unitLagMode(ndefKey, mode, list);
+		});
+	}
+
+	// fxlag N: the effects' lag time, for every parameter of every effect
+	// that is on, and for what is switched on later
+	setFxLag {arg time;
+		time = time.max(0);
+		("Radicles.fxLag = " ++ time ++ ";").radcode;
+		(filters ? []).do{|item|
+			var ndef = Ndef(item[0]), on;
+			on = Assemblage.lagParams(ndef).select{|key| Assemblage.unitLag(ndef, key) > 0 };
+			if(on.notEmpty, { Assemblage.unitLagSet(item[0], on.collect{|key| [key, time] }.flat) });
+		};
+	}
+
+	// the code that sets parameters of an effect to values (a flat list of
+	// names and values): a parameter that is on travels over its own time, or
+	// over the one given (for this move only)
+	*unitSetCode {arg ndefKey, pairs, time, bracketStyle=false;
+		var ndef = Ndef(ndefKey), ramps = [], body;
+		if(Radicles.aZ.notNil and: { Radicles.aZ.isBypassed(ndefKey) }, { time = 0 });
+		pairs.pairsDo{|key, value|
+			var rampKey = (key ++ "Ramp").asSymbol, move;
+			if((time ? 0) > 0 and: { Assemblage.lagParams(ndef).includes(key).not }, {
+				(key ++ " cannot travel (no spec, a stepped spec, or a spec with a function): set at once").warn });
+			if(Assemblage.lagParams(ndef).includes(key), {
+				move = time ? Assemblage.unitLag(ndef, key);
+				if((ndef.nodeMap.at(rampKey) ? 0) != move and: { ndef.nodeMap.at(key) != value }, {
+					ramps = ramps ++ [rampKey, move];
+				});
+			});
+		};
+		body = if(bracketStyle, {
+			(pairs ++ ramps).cs.replace("[", "").replace("]", "")
+		}, {
+			(pairs ++ ramps).collect(_.cs).join(", ")
+		});
+		^"Ndef(" ++ ndefKey.cs ++ ").set(" ++ body ++ ");"
 	}
 
 	convRevBuf {arg filterTag, impulse=\ortf_s1r1, fftsize=2048, inVar,
@@ -662,80 +791,79 @@
 		});
 	}
 
-	prepArrArg {arg fxArg, ndefKey, type=\set, value;
-		var newArr1, newArr2, thisArg;
+	// fxArg: a list of pairs, number and value or name and value (1 is the
+	// effect's first parameter), or one name with value. type \set sets the
+	// values (time: for this move only); \lag gives the parameters their
+	// time for typed values.
+	prepArrArg {arg fxArg, ndefKey, type=\set, value, time;
+		var newArr1, newArr2, thisArg, keys = Assemblage.paramKeys(Ndef(ndefKey));
 		if(fxArg.isArray, {
 			if(fxArg.rank == 2, {fxArg = fxArg.flat});
 			if(fxArg.select({|item| item.isSymbol }).isEmpty, {
 				newArr1 = fxArg.reshape((fxArg.size/2).asInteger,2);
-				newArr2 = newArr1.flop[0].collect{|item| Ndef(ndefKey).controlKeys[item-1] };
+				newArr2 = newArr1.flop[0].collect{|item| keys[item-1] };
 				thisArg = [newArr2, newArr1.flop[1]].flop.flat;
-				("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
-					thisArg.cs.replace("[", "").replace("]", "") ++
-					");").radcode(\radpostcont);
 			}, {
-				("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
-					fxArg.cs.replace("[", "").replace("]", "") ++
-					");").radcode(\radpostcont);
+				thisArg = fxArg;
 			});
 		}, {
-			("Ndef(" ++ ndefKey.cs ++ ")." ++ type.asString ++ "(" ++
-				fxArg.cs ++ ", " ++ value.cs ++ ");").radcode(\radpostcont);
+			thisArg = [fxArg, value];
+		});
+		if(type == \lag, {
+			Assemblage.unitLagSet(ndefKey, thisArg);
+		}, {
+			Assemblage.unitSetCode(ndefKey, thisArg, time, fxArg.isArray).radcode(\radpostcont);
 		});
 	}
 
-	setFxArg {arg filterNum, fxArg, value;
+	setFxArg {arg filterNum, fxArg, value, time;
 		var thisArg, index;
 		this.fxWarn(filterNum, {|ndefKey|
 			if(fxArg.notNil, {
 				{
 					if(fxArg.isNumber, {
 						index = fxArg-1;
-						thisArg = Ndef(ndefKey).controlKeys[index];
+						thisArg = Assemblage.paramKeys(Ndef(ndefKey))[index];
 						if(thisArg.notNil, {
-							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ thisArg.cs ++ ", " ++
-								value.cs ++ ");").radcode(\radpostcont);
+							Assemblage.unitSetCode(ndefKey, [thisArg, value], time).radcode(\radpostcont);
 						}, {
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
 						if(fxArg.isSymbol, {
-							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
-								value.cs ++ ");").radcode(\radpostcont);
+							Assemblage.unitSetCode(ndefKey, [fxArg, value], time).radcode(\radpostcont);
 						}, {
-							this.prepArrArg(fxArg, ndefKey, \set, value);
+							this.prepArrArg(fxArg, ndefKey, \set, value, time);
 						});
 					});
 					server.sync;
 					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
 			}, {
-				Ndef(ndefKey).controlKeys.postln;
+				Assemblage.paramKeys(Ndef(ndefKey)).postln;
 			});
 		});
 	}
 
-	setFxArgTrack {arg trackType, trackNum, trackSlot, fxArg, value, update=true;
+	setFxArgTrack {arg trackType, trackNum, trackSlot, fxArg, value, update=true, time;
 		var ndefKey, thisArg, index, newArr1, newArr2;
 		this.fxTrackWarn(trackType, trackNum, trackSlot, {|ndefKey|
 			if(fxArg.notNil, {
 				{
 					if(fxArg.isNumber, {
 						index = fxArg-1;
-						thisArg = Ndef(ndefKey).controlKeys[index];
+						thisArg = Assemblage.paramKeys(Ndef(ndefKey))[index];
 						if(thisArg.notNil, {
-							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ thisArg.cs ++ ", " ++
-								value.cs ++ ");").radcode(\radpostcont);
+							Assemblage.unitSetCode(ndefKey, [thisArg, value], time).radcode(\radpostcont);
 						}, {
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
 						if(fxArg.isSymbol, {
-							("Ndef(" ++ ndefKey.cs ++ ").set(" ++ fxArg.cs ++ ", " ++
-								value.cs ++ ");").radcode(\radpostcont);
+							Assemblage.unitSetCode(ndefKey, [fxArg, value], time).radcode(\radpostcont);
 						}, {
 							if(fxArg.select({|item, index| index.even.and(item == 0) }).isEmpty, {
-								this.prepArrArg(fxArg, ndefKey, \set, value);
+								this.prepArrArg(fxArg, ndefKey, \set, value, time);
 							}, {
 								"wrong arg number, should be numbers starting with 1".warn;
 							});
@@ -747,7 +875,7 @@
 					});
 				}.fork(AppClock);
 			}, {
-				Ndef(ndefKey).controlKeys.postln;
+				Assemblage.paramKeys(Ndef(ndefKey)).postln;
 			});
 		});
 	}
@@ -759,21 +887,18 @@
 				{
 					if(fxArg.isNumber, {
 						index = fxArg-1;
-						thisArg = Ndef(ndefKey).controlKeys[index];
+						thisArg = Assemblage.paramKeys(Ndef(ndefKey))[index];
 						if(thisArg.notNil, {
-							("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ thisArg.cs ++ ", " ++
-								value.cs ++ ");").radcode;
+							Assemblage.unitLagSet(ndefKey, [thisArg, value]);
 						}, {
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
 						this.prepArrArg(fxArg, ndefKey, \lag, value);
 					});
-					server.sync;
-					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
 			}, {
-				Ndef(ndefKey).controlKeys.postln;
+				this.getFilterKeys(ndefKey, \lags).postln;
 			});
 		});
 	}
@@ -785,21 +910,18 @@
 				{
 					if(fxArg.isNumber, {
 						index = fxArg-1;
-						thisArg = Ndef(ndefKey).controlKeys[index];
+						thisArg = Assemblage.paramKeys(Ndef(ndefKey))[index];
 						if(thisArg.notNil, {
-							("Ndef(" ++ ndefKey.cs ++ ").lag(" ++ thisArg.cs ++ ", " ++
-								value.cs ++ ");").radcode;
+							Assemblage.unitLagSet(ndefKey, [thisArg, value]);
 						}, {
 							"Fx argument doesn't exist".warn;
 						});
 					}, {
 						this.prepArrArg(fxArg, ndefKey, \lag, value);
 					});
-					server.sync;
-					this.updateFxWin(ndefKey);
 				}.fork(AppClock);
 			}, {
-				Ndef(ndefKey).controlKeys.postln;
+				this.getFilterKeys(ndefKey, \lags).postln;
 			});
 		});
 	}
