@@ -1,6 +1,8 @@
 >> <code>
 == radpost ==
-Ndef('block1', {arg freq = 220, mul = 0.1; SinOsc.ar(freq, 0, mul)});
+Ndef('block1', {arg freq = 220, mul = 0.1, freqLag = 0, freqRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg freq = 220, mul = 0.1; SinOsc.ar(freq, 0, mul)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq, freqRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef.ar('filterTrack_1_1', 1);
 Ndef('filterTrack_1_1').fadeTime = 0.5;
 Ndef('filterTrack_1_1', {arg gain = 1, gainLag = 0, gainRamp = 0;
@@ -11,7 +13,9 @@ Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
 Ndef('track1').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.05);
 Radicles.selLibs(["Main", "RadTestLib"]);
 Ndef('track2').set('volume', -inf, 'ramp', 0.1);
-Ndef('block2', {arg freq = 220, mul = 0.1; SinOsc.ar(freq, 0, mul)});
+Ndef('block2', {arg freq = 220, mul = 0.1, freqLag = 0, freqRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg freq = 220, mul = 0.1; SinOsc.ar(freq, 0, mul)}.value(Select.kr(freqRamp > 0, [freq, VarLag.kr(freq, freqRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('block2').xset('mul', 0.1, 'freq', 220);
 Ndef.ar('filterTrack_2_1', 1);
 Ndef('filterTrack_2_1').fadeTime = 0.5;

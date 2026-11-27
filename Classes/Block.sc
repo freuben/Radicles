@@ -1,4 +1,4 @@
-Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=1,
+Block : Radicles {classvar stopFades, <lastDefs, <blocks, <ndefs, <liveBlocks, <blockCount=1,
 	<>recbuffers, <recNdefs, <recBlocks, <recBlockCount=1, <recBufInfo, timeInfo,
 	<pattCount=1, <timecond, startTickets, <>wavetableSize=2048, liveBuffers, positionBuses, making;
 
@@ -424,6 +424,12 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 								});
 							});
 						});
+						//each parameter that can travel gets its ramp, built in and off
+						//(docs/design/lags-blocks-effects.md); another block in this
+						//number does not inherit which parameters were on
+						if(blockFunc.isKindOf(Function), {
+							blockFunc = Assemblage.rampUnit(blockFunc, SpecFile.read(\block, blockName, false));
+						});
 						if(blockFunc.notNil, {
 						ndefCS = (ndefs[blockIndex].cs.replace(")")	++ ", "
 							++ blockFunc.cs ++ ");");
@@ -467,6 +473,16 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 						if(this.isCurrentStart(startKey, ticket), {
 							//replace out with cs string using presetToNdef
 							if(blockFunc.notNil, {
+								//(the block last played on this number is remembered: after
+								//a stop nothing else says what the node map's times were for)
+								if(blockFunc.isKindOf(Function), {
+									var names = blockFunc.def.argNames ? [], last = (lastDefs ? ())[startKey];
+									if(last.notNil, {
+										Assemblage.unitTimesReset(startKey, last[0] != blockName, last[1]) });
+									lastDefs = (lastDefs ?? { IdentityDictionary.new }).put(startKey, [blockName,
+										names.select{|name| names.includes((name ++ "Lag").asSymbol)
+											and: { names.includes((name ++ "Ramp").asSymbol) } }]);
+								});
 								ndefs[blockIndex].put(0, blockFunc, extraArgs: extraArgs);
 								liveBlocks[blockIndex] = [blocks[blockIndex][0], blockName, bufferID, data];
 								//document (step 2): the buffer by what it is, then the unit
@@ -633,13 +649,13 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 		}.fork;
 	}
 
-	*set {arg block, argArr, post=true;
+	// time: for this move only (a parameter that is on travels over its own)
+	*set {arg block, argArr, post=true, time;
 		var blockIndex;
 		blockIndex = this.indexOfBlock(block);
 		if(blockIndex.notNil, {
 			if(post == true, {
-				(ndefs[blockIndex].cs	++ ".set(" ++
-					argArr.cs.replace("[", "").replace("]", "") ++  ");").radcode;
+				Assemblage.unitSetCode(ndefs[blockIndex].key, argArr, time, true).radcode;
 			});
 		}, {
 			"Block not found".warn;
@@ -659,18 +675,55 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 		});
 	}
 
+	// the time for typed values of a block's parameters (names and times):
+	// nothing is rebuilt, the times are controls
 	*lag {arg block, argArr;
-		var blockIndex, string;
+		var blockIndex;
 		blockIndex = this.indexOfBlock(block);
 		if(blockIndex.notNil, {
-			argArr.keysValuesDo{|key, val|
-				string = ndefs[blockIndex].cs ++ ".lag(" ++ key.cs
-				++ ", " ++ val.cs ++ ");";
-				string.radcode;
-			};
+			//(a parameter by name or by number)
+			argArr = argArr.asArray.clump(2).collect{|pair|
+				[Assemblage.unitParamNames(ndefs[blockIndex].key, [pair[0]])[0], pair[1]] }
+			.reject{|pair| pair[0].isNil }.flatten(1);
+			Assemblage.unitLagSet(ndefs[blockIndex].key, argArr);
 		}, {
 			"Block not found".warn;
 		});
+	}
+
+	// on, off, a time for the parameters that are on, exc, inc
+	// (Assemblage.unitLagMode), with the blocks' lag time
+	*lagMode {arg block, mode, list;
+		var blockIndex = this.indexOfBlock(block);
+		if(blockIndex.notNil, {
+			Assemblage.unitLagMode(ndefs[blockIndex].key, mode, list, Radicles.blkLag);
+		}, {
+			"Block not found".warn;
+		});
+	}
+
+	// times by position (the block's parameters in their order)
+	*lags {arg block, times;
+		var blockIndex = this.indexOfBlock(block), keys, pairs;
+		if(blockIndex.notNil, {
+			keys = Assemblage.paramKeys(ndefs[blockIndex]);
+			pairs = times.asArray.collect{|time, index| if(time.isNumber and: { keys[index].notNil }, { [keys[index], time] }) }
+			.reject(_.isNil);
+			Assemblage.unitLagSet(ndefs[blockIndex].key, pairs.flat);
+		}, {
+			"Block not found".warn;
+		});
+	}
+
+	// blklag N: the blocks' lag time, for every block parameter that is on,
+	// and for what is switched on later
+	*setLag {arg time;
+		time = time.max(0);
+		("Radicles.blkLag = " ++ time ++ ";").radcode;
+		RadUnit.blockTags.do{|tag|
+			var on = Assemblage.lagParams(Ndef(tag)).select{|key| Assemblage.unitLag(Ndef(tag), key) > 0 };
+			if(on.notEmpty, { Assemblage.unitLagSet(tag, on.collect{|key| [key, time] }.flat) });
+		};
 	}
 
 	*playNdefs {
@@ -1134,7 +1187,7 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 		if(argIn.isNumber, {
 			index = argIn-1;
 		}, {
-			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
+			index = Assemblage.paramKeys(Ndef(ndefKey)).indexOf(argIn)
 		});
 		if(index.notNil, {
 			liveBlks = Block.liveBlocks;
@@ -1154,10 +1207,11 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 		if(argIn.isNumber, {
 			index = argIn-1;
 		}, {
-			index = Ndef(ndefKey).controlKeys.indexOf(argIn)
+			index = Assemblage.paramKeys(Ndef(ndefKey)).indexOf(argIn)
 		});
 		if(index.notNil, {
-			keyValues = Ndef(ndefKey).getKeysValues[index];
+			keyValues = Ndef(ndefKey).getKeysValues.select{|pair|
+				Assemblage.paramKeys(Ndef(ndefKey)).includes(pair[0]) }[index];
 			liveBlks = Block.liveBlocks;
 			spec = SpecFile.read(\block,
 				liveBlks.flop[1][liveBlks.flop[0].indexOf(ndefKey);]
@@ -1186,7 +1240,7 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 				mul, add, min, val, warp, lag, thisSpec, modifier);
 			if(aZ.notNil, { {server.sync; aZ.updateSourceWin(ndefKey)}.fork(AppClock) });
 		}, {
-			Ndef(ndefKey).controlKeys.postln;
+			Assemblage.paramKeys(Ndef(ndefKey)).postln;
 		});
 	}
 
@@ -1202,7 +1256,7 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 						{modifier == \mod} {
 							value ?? {
 								value = ModMap.modNodes.select({|item|
-									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Assemblage.paramKeys(Ndef(ndefKey))[modArg-1]);
 								})[0].last;
 							};
 							ModMap.unmap(Ndef(ndefKey), modArg-1, value);
@@ -1210,7 +1264,7 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 						{modifier == \hid} {
 							value ?? {
 								value = HIDMap.hidNodes.select({|item|
-									(item[1] == Ndef(ndefKey) ).and(item[2] == Ndef(ndefKey).controlKeys[modArg-1]);
+									(item[1] == Ndef(ndefKey) ).and(item[2] == Assemblage.paramKeys(Ndef(ndefKey))[modArg-1]);
 								})[0].last;
 							};
 							HIDMap.unmap(Ndef(ndefKey), modArg-1, value);
@@ -1228,7 +1282,7 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 	*modArgNum {arg ndefKey, modArg;
 		var index;
 		if(modArg.isNil or: {modArg.isInteger}, {^modArg});
-		index = Ndef(ndefKey).controlKeys.indexOf(modArg.asSymbol);
+		index = Assemblage.paramKeys(Ndef(ndefKey)).indexOf(modArg.asSymbol);
 		if(index.isNil, {
 			("argument not found: " ++ modArg).warn;
 			^nil;
@@ -1239,7 +1293,7 @@ Block : Radicles {classvar stopFades, <blocks, <ndefs, <liveBlocks, <blockCount=
 	*unmodFunc {arg ndefKey, modArg;
 		var modifier;
 		if(modArg.isInteger, {
-			modArg = Ndef(ndefKey).controlKeys[modArg-1];
+			modArg = Assemblage.paramKeys(Ndef(ndefKey))[modArg-1];
 		});
 		//a match needs the same entry to hold both this Ndef and this argument
 		if(ModMap.modNodes.notNil and: {

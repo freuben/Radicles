@@ -244,8 +244,10 @@
 		if(RadDoc.diff((data: current[\data], buffer: current[\buffer]),
 			(data: unit[\data], buffer: unit[\buffer])).isEmpty, {
 			//already there
+			//(a preset that says which parameters are on brings that too)
 			if(RadDoc.diff((args: current[\args], mods: current[\mods]),
-				(args: unit[\args], mods: unit[\mods]), 1e-9).isEmpty, {
+				(args: unit[\args], mods: unit[\mods]), 1e-9).isEmpty and: {
+				unit[\lags].isNil or: { RadDoc.diff((l: current[\lags] ? ()), (l: unit[\lags]), 1e-9).isEmpty } }, {
 				action.(); ^true
 			});
 			^this.morphBlockUnit(block, unit, time, shape, action)

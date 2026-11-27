@@ -126,7 +126,9 @@
 					//fade out before the values change
 					Server.default.sync;
 					ndef.fadeTime.wait;
-					("Ndef(" ++ ndef.key.cs ++ ").set(" ++ pairs.collect(_.cs).join(", ") ++ ");").radcode;
+					//(at once here: the glide is the lag's, whatever time the
+					//parameters' last moves had)
+					Assemblage.unitSetCode(ndef.key, pairs, 0).radcode;
 				};
 			}
 			{ restore = { putPlace.() } };

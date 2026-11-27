@@ -1,0 +1,24 @@
+>> blkset 1 freq 300
+== radpost ==
+Ndef('block1').set('freq', 300);
+== radpostcont ==
+(none)
+
+>> blkset 1 1 400
+== radpost ==
+Ndef('block1').set('freq', 400);
+== radpostcont ==
+(none)
+
+>> blkset 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+
+>> blkgetlag 1
+== radpost ==
+(none)
+== radpostcont ==
+(none)
+

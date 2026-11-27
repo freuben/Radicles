@@ -91,7 +91,11 @@ used and must not change how library files are written.
    - a preset saved with no lags leaves the effect's times alone;
    - sliders and mapped controls use `ctllag` only on a parameter that is on;
    - a dB spec moves by the fader's law, as the mixer's volume does.
-2. **Blocks:** the same with `blklag`, `blkset`, `blkgetlag`.
+2. **Blocks** (built): the same ramp when a block is made (`Block.play`);
+   `blklag` on, off, per block, per parameter, `exc`, `inc`; `blklags` by
+   position; `blklag N` with its own time (`Radicles.blkLag`, 0.5 s; a
+   session keeps it from part 3); `blkset` with a time; `blkgetlag`; the
+   source window; modulators by number.
 3. **Scopes:** `fxlag N`, `blklag N`, `tlag`, `lag N`; what a session keeps.
 4. **Loads:** `glide` follows the rule; values that cannot travel jump at
    the end.

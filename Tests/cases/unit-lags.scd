@@ -236,3 +236,84 @@
 	},
 	teardown: { File.delete(RadUnit.chainPresetPath('radtest_ul_chain')) }
 );
+
+// Blocks, the same way (blklag, blkset, blkgetlag)
+
+~radUlBlk = {|key| Ndef(\block1).nodeMap.at(key) };
+~radUlBlkLag = {|key| Assemblage.unitLag(Ndef(\block1), key) };
+
+// off: a block has its time controls at 0, they are not among its
+// parameters, and a typed value posts what it always did
+~radTest.("block-built-in-and-off",
+	setup: ["start 2", "blk 1 sine"],
+	cmds: ["blkset 1 freq 300", "blkset 1 1 400", "blkset 1", "blkgetlag 1"],
+	check: {
+		var keys = Ndef(\block1).controlKeys, unit = RadUnit.read(\block1);
+		case
+		{ keys.includes(\freqLag).not or: { keys.includes(\freqRamp).not } } { "no time controls: " ++ keys.cs }
+		{ ~radUlBlkLag.(\freq) != 0 } { "freq is on: " ++ ~radUlBlkLag.(\freq) }
+		{ ~radUlBlk.(\freq) != 400 } { "freq " ++ ~radUlBlk.(\freq) }
+		{ unit[\args].keys.any{|key| key.asString.endsWith("Lag") or: { key.asString.endsWith("Ramp") } } } {
+			"the document's values: " ++ unit[\args].keys.asArray.sort.cs }
+		{ unit[\lags].notNil } { "the document has lags: " ++ unit[\lags].cs }
+		{ true }
+	},
+	noWarnings: true
+);
+
+// on, off, exc, a time for what is on, one parameter, a time with a value,
+// and blklag N for every block parameter that is on
+~radTest.("block-lags-and-moves",
+	setup: ["start 2", "blk 1 sine"],
+	cmds: ["blklag 1 on", "blkset 1 freq 300", "blklag 1 exc [phase]", "blklag 1 2", "blklag 1 mul 1",
+		"blkset 1 freq 500 3", "blkset 1 freq 200", "blklag 3"],
+	code: {
+		~radUlBlkA = [\freq, \phase, \mul].collect{|k| ~radUlBlkLag.(k) };
+		~radUlBlkDoc = RadUnit.read(\block1)[\lags];
+		~radUlBlkRamp = ~radUlBlk.(\freqRamp);
+		Radicles.cW.callFunc("blklags 1 [1, 2]"); 0.3.wait;
+		~radUlBlkB = [\freq, \phase, \mul].collect{|k| ~radUlBlkLag.(k) };
+		Radicles.cW.callFunc("blklag 1 off"); 0.3.wait },
+	check: {
+		case
+		{ ~radUlBlkA != [3, 0, 3] } { "after blklag 3: " ++ ~radUlBlkA.cs }
+		{ ~radUlBlkDoc != (freq: 3, mul: 3) } { "the document's lags: " ++ ~radUlBlkDoc.cs }
+		{ ~radUlBlkRamp != 2 } { "the last move's time: " ++ ~radUlBlkRamp }
+		{ ~radUlBlkB != [1, 2, 3] } { "after blklags [1, 2]: " ++ ~radUlBlkB.cs }
+		{ [\freq, \phase, \mul].any{|k| ~radUlBlkLag.(k) != 0 } } { "not off" }
+		{ Radicles.blkLag != 3 } { "Radicles.blkLag " ++ Radicles.blkLag }
+		{ true }
+	},
+	noWarnings: true,
+	teardown: { Radicles.blkLag = 0.5 }
+);
+
+// the same block played again keeps its times; another block on the number
+// starts off, after a stop too
+~radTest.("another-block-on-the-number-starts-off",
+	setup: ["start 2", "blk 1 sine", "blklag 1 on"],
+	cmds: [["st 1", 2], ["blk 1 sine", 2]],
+	code: {
+		~radUlBlkSame = ~radUlBlkLag.(\freq);
+		Radicles.cW.callFunc("st 1"); 2.wait;
+		Radicles.cW.callFunc("blk 1 blip"); 2.wait },
+	check: {
+		case
+		{ ~radUlBlkSame != 0.5 } { "the same block again: " ++ ~radUlBlkSame }
+		{ (~radUlBlkLag.(\freq) ? 0) != 0 } { "blip's freq is on: " ++ ~radUlBlkLag.(\freq) }
+		{ true }
+	}
+);
+
+// a block preset keeps which parameters are on, also when nothing else differs
+~radTest.("blkload-brings-lags",
+	setup: ["start 2", "blk 1 sine", "blklag 1 freq 3", ["blksave 1 radtest_ul_blk", 1], "blklag 1 off"],
+	cmds: [["blkload 1 radtest_ul_blk none", 1.5]],
+	check: {
+		case
+		{ ~radUlBlkLag.(\freq) != 3 } { "freq's time after the load: " ++ ~radUlBlkLag.(\freq) }
+		{ ~radUlBlkLag.(\mul) != 0 } { "mul is on: " ++ ~radUlBlkLag.(\mul) }
+		{ true }
+	},
+	teardown: { File.delete(RadUnit.presetPath(\block, \sine, \radtest_ul_blk)) }
+);

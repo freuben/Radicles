@@ -1,7 +1,9 @@
 >> in 1 1
 == radpost ==
-Ndef('block1', {arg bus=1 , mul= 1 ;
-    SoundIn.ar((bus.round(1)-1).max(0), mul);});
+Ndef('block1', {arg bus = 1, mul = 1, busLag = 0, busRamp = 0, mulLag = 0, mulRamp = 0;
+    {arg bus=1 , mul= 1 ;
+    SoundIn.ar((bus.round(1)-1).max(0), mul);}.value(Select.kr(busRamp > 0, [bus, VarLag.kr(bus, busRamp.max(ControlDur.ir), warp: \lin)]),
+        Select.kr(mulRamp > 0, [mul, VarLag.kr(mul, mulRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('block1').xset('bus', 1);
 == radpostcont ==
 (none)
