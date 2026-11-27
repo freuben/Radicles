@@ -71,19 +71,131 @@
 	noWarnings: true
 );
 
-// a parameter whose spec has a function cannot travel: a warning, nothing set
+// a parameter with real steps (a switch: frz1's freeze, 0 or 1) cannot
+// travel: a warning, nothing set
 ~radTest.("cannot-travel-is-said",
-	setup: ["start 2", "fx t 1 pch"],
-	cmds: ["fxlag t 1 1 pitchRatio 2", "fxlag t 1 1 on", "fxset t 1 1 pitchRatio 2 3"],
+	setup: ["start 2", "fx t 1 frz1"],
+	cmds: ["fxlag t 1 1 freeze 2", "fxlag t 1 1 on", "fxset t 1 1 freeze 1 3"],
 	check: {
 		var keys = Ndef(\filterTrack_1_1).controlKeys;
 		case
-		{ keys.includes(\pitchRatioLag) } { "pitchRatio has a time control" }
-		{ keys.includes(\winSizeLag).not } { "winSize has no time control: " ++ keys.cs }
-		{ ~radUlLag.(\winSize) != 0.5 } { "winSize is not on: " ++ ~radUlLag.(\winSize) }
-		{ ~radUlCtl.(\pitchRatio) != 2 } { "pitchRatio " ++ ~radUlCtl.(\pitchRatio) }
+		{ keys.includes(\freezeLag) } { "freeze has a time control" }
+		{ keys.includes(\adjVolLag).not } { "adjVol has no time control: " ++ keys.cs }
+		{ ~radUlLag.(\adjVol) != 0.5 } { "adjVol is not on: " ++ ~radUlLag.(\adjVol) }
+		{ ~radUlCtl.(\freeze) != 1 } { "freeze " ++ ~radUlCtl.(\freeze) }
 		{ true }
 	}
+);
+
+// A spec with a function (23 Nov 2026): the parameter travels along the
+// spec's range and the function is applied on the way. Rounding that leaves
+// 30 steps or more is for the display and is left out of the move; fewer are
+// real steps, and the value jumps. The function must go steadily one way.
+~radTest.("function-spec-which-can-travel",
+	check: {
+		var path = {|range, func| Assemblage.specPath(range, func) }, pch;
+		pch = path.([-12, 12], {|val| val.round(0.4).midiratio });
+		case
+		{ pch.isNil } { "pch's pitchRatio (60 steps) cannot travel" }
+		{ pch[0].size != 61 } { "pch's path has " ++ pch[0].size ++ " points, not one for each step" }
+		{ (pch[1][30] - 1).abs > 1e-6 or: { (pch[0][30] - 0.5).abs > 1e-3 } } { "the middle of pch's path: " ++ [pch[0][30], pch[1][30]].cs }
+		{ path.([0, 1], {|val| val.round(1) }).notNil } { "a switch can travel" }
+		{ path.([1, 16], {|val| val.round(1) }).notNil } { "a bus number (15 steps) can travel" }
+		{ path.([0, 6], {|val| val.round(1) }).notNil } { "a choice of 7 can travel" }
+		{ path.([10, 100], {|val| val.round(1) }).isNil } { "ratio 10 to 100 by 1 (90 steps) cannot travel" }
+		{ path.([2000, 20000, \exp], {|val| val.round(10) }).isNil } { "fMax by 10 cannot travel" }
+		{ path.([0.01, 2.01, \exp], {|val| (val-0.01) }).isNil } { "an offset on an exponential range cannot travel" }
+		{ path.([1, 0], {|val| val * 2 }).isNil } { "a function that goes down cannot travel" }
+		{ path.([-1, 1], {|val| val.squared }).notNil } { "a function that goes down and up can travel" }
+		{ path.([0, 1], {|val| if(val > 0.5, { \a }, { \b }) }).notNil } { "a function that gives no number can travel" }
+		{ path.([0, 1], {|val| val + (0.004 * sin(val * 300)) }).notNil } { "a function that wobbles on its way up can travel" }
+		{ true }
+	}
+);
+
+// pch's pitch on the running server: half way through a move of an octave
+// it is half an octave up (even in value would be 1.5), it arrives, and with
+// no time a value between the display's steps is passed exactly as it is
+~radTest.("function-spec-moves-along-the-range",
+	setup: ["start 2"],
+	code: {
+		var bus = Bus.control(Server.default, 1), synth, cond = Condition.new;
+		synth = ("{arg pitchRatio = 1, pitchRatioRamp = 0; Out.kr(" ++ bus.index ++ ", "
+			++ Assemblage.rampCode(\pitchRatio, [-12, 12], {|val| val.round(0.4).midiratio }) ++ ") }").interpret.play;
+		Server.default.sync; 0.3.wait;
+		Server.default.makeBundle(nil, { synth.set(\pitchRatio, 2, \pitchRatioRamp, 2) });
+		1.wait;
+		bus.get{|v| ~radUlHalf = v; cond.unhang }; cond.hang;
+		1.3.wait; cond = Condition.new;
+		bus.get{|v| ~radUlEnd = v; cond.unhang }; cond.hang;
+		Server.default.makeBundle(nil, { synth.set(\pitchRatio, 1.2345, \pitchRatioRamp, 0) });
+		0.3.wait; cond = Condition.new;
+		bus.get{|v| ~radUlJump = v; cond.unhang }; cond.hang;
+		//a value set with the time left from the last move: it travels, and
+		//ends exactly on the value (not on the nearest point of the path)
+		Server.default.makeBundle(nil, { synth.set(\pitchRatio, 0.7071, \pitchRatioRamp, 0.5) });
+		1.wait; cond = Condition.new;
+		bus.get{|v| ~radUlRest = v; cond.unhang }; cond.hang;
+		synth.free; bus.free },
+	check: {
+		case
+		{ (~radUlHalf - 1.414).abs > 0.07 } { "half way: " ++ ~radUlHalf.round(0.001) ++ " (half an octave: 1.414)" }
+		{ ~radUlEnd != 2 } { "at the end: " ++ ~radUlEnd }
+		{ (~radUlJump - 1.2345).abs > 1e-6 } { "with no time the value is not passed as it is: " ++ ~radUlJump }
+		{ (~radUlRest - 0.7071).abs > 1e-6 } { "after a move the value is not exact: " ++ ~radUlRest }
+		{ true }
+	}
+);
+
+// in Radicles: pch's parameters are made with their ramps, switch on, and a
+// typed pitch carries its time
+~radTest.("function-spec-in-an-effect",
+	setup: ["start 2", "fx t 1 pch"],
+	cmds: ["fxlag t 1 1 on", "fxset t 1 1 pitchRatio 2", "fxlag t 1 1 off", "fxset t 1 1 pitchRatio 0.5 3", "fxgetlag t 1 1"],
+	check: {
+		case
+		{ ~radUlLag.(\pitchRatio) != 0 } { "pitchRatio's time after off: " ++ ~radUlLag.(\pitchRatio).cs }
+		{ ~radUlCtl.(\pitchRatio) != 0.5 or: { ~radUlCtl.(\pitchRatioRamp) != 3 } } {
+			"pitchRatio: " ++ [~radUlCtl.(\pitchRatio), ~radUlCtl.(\pitchRatioRamp)].cs }
+		{ true }
+	},
+	noWarnings: true
+);
+
+// A function takes 255 arguments at most. A unit whose parameters and time
+// controls together would be more (the RAVE library's afterImprov: 157
+// parameters, 96 that can travel) has its time controls made by name inside
+// the function. It is made without an error, the rest of Radicles finds its
+// times as any unit's, and a move is a move.
+~radTest.("a-unit-with-too-many-parameters",
+	setup: ["start 2"],
+	code: {
+		var names = 100.collect{|index| ("p" ++ index).asSymbol }, func, cond = Condition.new;
+		func = ("{arg " ++ names.collect{|name| name ++ " = 0" }.join(", ") ++ "; p0 + p99 }").interpret;
+		~radUlBig = Assemblage.rampUnit(func, names.collect{|name| [name, [0, 1]] });
+		Ndef(\radUlBig, ~radUlBig);
+		Server.default.sync; 0.3.wait;
+		~radUlBigParams = Assemblage.lagParams(Ndef(\radUlBig));
+		~radUlBigKeys = Assemblage.paramKeys(Ndef(\radUlBig));
+		Ndef(\radUlBig).set(\p0Lag, 2);
+		~radUlBigLag = Assemblage.unitLag(Ndef(\radUlBig), \p0);
+		Server.default.makeBundle(nil, { Ndef(\radUlBig).set(\p0, 1, \p0Ramp, 2) });
+		1.wait;
+		Ndef(\radUlBig).bus.get{|v| ~radUlBigHalf = v; cond.unhang }; cond.hang;
+		1.5.wait; cond = Condition.new;
+		Ndef(\radUlBig).bus.get{|v| ~radUlBigEnd = v; cond.unhang }; cond.hang;
+		Ndef(\radUlBig).clear },
+	check: {
+		case
+		{ ~radUlBig.def.argNames.size != 100 } { "the function has " ++ ~radUlBig.def.argNames.size ++ " arguments, not its own 100" }
+		{ ~radUlBigParams.size != 100 } { ~radUlBigParams.size.asString ++ " parameters can travel, not 100" }
+		{ ~radUlBigKeys.size != 100 } { "its parameters: " ++ ~radUlBigKeys.size ++ ", not 100 (the time controls are among them)" }
+		{ ~radUlBigLag != 2 } { "p0's time: " ++ ~radUlBigLag.cs }
+		{ (~radUlBigHalf - 0.5).abs > 0.2 } { "half way: " ++ ~radUlBigHalf }
+		{ ~radUlBigEnd != 1 } { "at the end: " ++ ~radUlBigEnd }
+		{ true }
+	},
+	noWarnings: true
 );
 
 // fxlag N is for every effect parameter that is on, and for what is

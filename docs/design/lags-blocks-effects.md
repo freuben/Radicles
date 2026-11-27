@@ -21,8 +21,19 @@ used and must not change how library files are written.
    starts empty).
 2. **Which parameters can ramp: those with a spec.** The library's spec (the
    part after `->`) is the declaration. Not ramped: a parameter with no
-   spec, a spec with a step, a spec with a function, and any value that is
-   not a number.
+   spec, a spec with real steps, and any value that is not a number.
+   **A spec with a function** (corrected 23 Nov 2026; the note first left
+   these out, which was a misunderstanding):
+   - the parameter travels along the spec's range and the function is
+     applied on the way. `pch`'s `pitchRatio` (range -12 to 12, function
+     `val.round(0.4).midiratio`) moves evenly in semitones;
+   - rounding in the function that leaves 30 steps or more across the range
+     is for the display, and is left out of the move (`pch`'s 0.4 is 60
+     steps). The move ends on the value typed or saved;
+   - fewer than 30 steps are real steps (a switch, a choice, a bus or track
+     number: 24 steps at most in the libraries): the value jumps;
+   - the function must go steadily up or steadily down; one that does not
+     leaves its parameter as "cannot travel".
 3. **A move follows the spec's scale and arrives on time** (the mixer's
    principle): an exponential spec moves evenly in pitch, a linear one evenly
    in value.
@@ -77,6 +88,24 @@ used and must not change how library files are written.
   exponential range and could glide if a mark allowed it. RadiclesLibs was
   not surveyed.
 
+## Checked (23 Nov, specs with a function)
+
+- **Every spec with a function in Main and RadiclesLibs** (515, worked out by
+  `Assemblage.specPath` itself): 96 travel and 419 jump. Those that jump have
+  2 to 24 steps (switches, choices, bus, track and key numbers); those that
+  travel have 31 or more. No function fails to give a path.
+- **Whole numbers that travel under the 30-step rule:** `bits` (0 to 31),
+  `p` (2 to 64), `numharm` (0 to 70), `ratio` (10 to 100), `rate` and `freq`
+  rounded to 1. During a move they pass through values between the whole
+  numbers; the move ends on the typed value.
+- **Close to the line:** `pitchRatio` on a range of -6 to 6 has 31 steps
+  (it travels); `sinekey`'s `key` (0 to 23) has 24 (it jumps).
+- **Processor cost** (offline renders as on 22 Nov, 30 pitch shifters with 5
+  parameters each, at rest): the ramp for a spec with a function costs about
+  three times a plain ramp: 150 of them add about 0.5% of one core (150
+  plain ramps: about 0.15%). Not measured: moving values, real-time running,
+  the performance Mac.
+
 ## Planned PRs (Model: Fable for all; each gets a second look)
 
 1. **Effects** (built): the ramp built in and off (`Assemblage.rampUnit`,
@@ -96,8 +125,23 @@ used and must not change how library files are written.
    position; `blklag N` with its own time (`Radicles.blkLag`, 0.5 s; a
    session keeps it from part 3); `blkset` with a time; `blkgetlag`; the
    source window; modulators by number.
-3. **Scopes:** `fxlag N`, `blklag N`, `tlag`, `lag N`; what a session keeps.
-4. **Loads:** `glide` follows the rule; values that cannot travel jump at
+3. **Scopes** (built): `lag N` (`Radicles.setAllLag`), `lag`, `tlag`
+   (`Assemblage.setTrackLag`); a session keeps `fxlag N` and `blklag N`.
+4. **Specs with a function** (built): `Assemblage.specPath` works the path
+   out from the function itself (it samples the function along the range,
+   takes each run of one value as a step, and puts a point in the middle of
+   each; at most 65 points), so no library file changes and the function
+   need not run on the server. `Assemblage.specRamp` finds the value's place
+   on the path, ramps between places and reads the value back; while
+   nothing moves the value is passed as it is.
+   **A unit with too many parameters** (decided 23 Nov): a function takes
+   255 arguments at most, and the RAVE library's `afterImprov` and
+   `afterImprov2` (157 parameters, 96 that can travel) would need more with
+   their time controls. Such a unit has its time controls made by name
+   inside the wrapper (`Assemblage.unitTimes`), so it gets the same ramps
+   as any other. Before this, parts 1 to 3 made these two units without
+   ramps and SuperCollider posted error lines.
+5. **Loads:** `glide` follows the rule; values that cannot travel jump at
    the end.
 
 ## To check while building
@@ -116,8 +160,14 @@ used and must not change how library files are written.
   them, and a session keeps the scope times as it keeps `mixlag`.
 - A modulator mapped to a parameter that is on takes its ramp off while it
   is mapped (as in the mixer).
-- Parameters whose spec has a function do not glide (`pch`'s `pitchRatio`,
-  for one). Later, if missed: a mark in the spec that allows it, a mark for
-  "never ramp", and specs for units that have none. None is needed to start.
+- A parameter whose function shifts the range (`adjVol`: 0.2 to 2.0, less
+  0.01) has a path that ends just short of a value typed at the end of the
+  range: a move to 2.0 arrives at 1.99 and then steps to 2.0.
+- Later, if missed: a mark in a spec that overrides the 30-step rule, a mark
+  for "never ramp", and specs for units that have none. None is needed to
+  start.
+- A value typed outside the function's own range (a pitch ratio above the
+  spec's highest) stops at the end of the path during a move, then jumps to
+  the value.
 - A unit that smooths a value inside its own function (`pch2`'s `lag`) keeps
   doing so.

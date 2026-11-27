@@ -18,7 +18,7 @@ Ndef('track1', {arg volume=0, lagTime=0.05, mute=0, solo=1, ramp=0.05;
                     *mute.linlin(0,1,1,0).lag(0.1)*solo.lag(0.1) )});
 Ndef('track1').set('volume', 0, 'lagTime', 0.05, 'mute', 0, 'solo', 1, 'ramp', 0.05);
 Ndef('filterTrack_1_1').xset('adjVol', 1.48, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0;
+Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
     {arg mix=0, soundin=1, frameSize=1024 , adjVol=1;
     var signal, input;
     signal = SoundIn.ar((soundin+1).round(1));
@@ -27,9 +27,9 @@ Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, frameSize = 1024, adjVol = 1,
     +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         soundin,
         frameSize,
-        adjVol) });
+        Assemblage.specRamp(adjVol, adjVolRamp, [1, 30], {|val| val.round(0.01)-0.01})) });
 Ndef('filterTrack_1_1').xset('soundin', 4.0, 'adjVol', 11.72, 'frameSize', 1024.0, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0;
+Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
     {arg mix=0, soundin=1, frameSize=1024 , adjVol=1;
     var signal, input;
     signal = SoundIn.ar((soundin+1).round(1));
@@ -38,9 +38,9 @@ Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, frameSize = 1024, adjVol = 1,
     +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         soundin,
         frameSize,
-        adjVol) });
+        Assemblage.specRamp(adjVol, adjVolRamp, [1, 30], {|val| val.round(0.01)-0.01})) });
 Ndef('filterTrack_1_1').xset('soundin', 4.0, 'adjVol', 11.72, 'frameSize', 1024.0, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0;
+Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
     {arg mix=0, track=1, frameSize=1024 , adjVol=1;
     var signal, input;
     signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
@@ -49,9 +49,9 @@ Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, m
         +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         track,
         frameSize,
-        adjVol) });
+        Assemblage.specRamp(adjVol, adjVolRamp, [0, 5], {|val| val.round(0.01)-0.01})) });
 Ndef('filterTrack_1_1').xset('track', 4.0, 'adjVol', 1.84, 'frameSize', 1024.0, 'mix', 0.37);
-Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0;
+Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
     {arg mix=0, track=1, frameSize=1024 , adjVol=1;
     var signal, input;
     signal = Select.ar(track-1, [Ndef(\track1).ar, Ndef(\track2).ar, Ndef(\track3).ar, Ndef(\track4).ar, Ndef(\track5).ar, Ndef(\track6).ar, Ndef(\track7).ar, Ndef(\track8).ar]);
@@ -60,7 +60,7 @@ Ndef('filterTrack_1_1', {arg mix = 0, track = 1, frameSize = 1024, adjVol = 1, m
         +(input*mix.linlin(0,1,1,0))}.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         track,
         frameSize,
-        adjVol) });
+        Assemblage.specRamp(adjVol, adjVolRamp, [0, 5], {|val| val.round(0.01)-0.01})) });
 Ndef('filterTrack_1_1').xset('track', 4.0, 'adjVol', 1.84, 'frameSize', 1024.0, 'mix', 0.37);
 Ndef('filterTrack_1_1', {arg mix = 0, soundin = 1, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
     {arg mix=0, soundin=1, adjVol=1;
@@ -75,7 +75,7 @@ Mix.new(adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0)))
         soundin,
         Select.kr(adjVolRamp > 0, [adjVol, VarLag.kr(adjVol, adjVolRamp.max(ControlDur.ir), warp: \lin)])) });
 Ndef('filterTrack_1_1').xset('mix', 0.37, 'adjVol', 2.11, 'soundin', 4.0);
-Ndef('filterTrack_1_1', {arg mix = 0, track = 1, adjVol = 1, mixLag = 0, mixRamp = 0;
+Ndef('filterTrack_1_1', {arg mix = 0, track = 1, adjVol = 1, mixLag = 0, mixRamp = 0, adjVolLag = 0, adjVolRamp = 0;
     {arg mix=0, track=1, adjVol=1;
 var input, inA, chainA, chainB, chain, frameSize=2048;
     input = Ndef.ar('inTrack1', 1);
@@ -86,7 +86,7 @@ chain = PV_MagMul(chainA, chainB);
 (adjVol * ((IFFT(chain)*mix.linlin(0,1,0,1))+(input*mix.linlin(0,1,1,0))));
 }.value(Select.kr(mixRamp > 0, [mix, VarLag.kr(mix, mixRamp.max(ControlDur.ir), warp: \lin)]),
         track,
-        adjVol) });
+        Assemblage.specRamp(adjVol, adjVolRamp, [0, 5], {|val| val.round(0.01)-0.01})) });
 Ndef('filterTrack_1_1').xset('track', 4.0, 'adjVol', 1.84, 'mix', 0.37);
 == radpostcont ==
 (none)
